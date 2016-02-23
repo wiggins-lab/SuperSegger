@@ -1,0 +1,283 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiCellMarker</title>
+  <meta name="keywords" content="trackOptiCellMarker">
+  <meta name="description" content="trackOptiCellMarker : puts together a list of complete cell cycles.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiCellMarker.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiCellMarker
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiCellMarker : puts together a list of complete cell cycles.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">  trackOptiCellMarker : puts together a list of complete cell cycles.
+  It goes through the dirname/*err.mat files and determines which
+  cells go through complete cell cycles (i.e. cells in which both birth and 
+  division are observed) Clist contains information about complete cell cycles 
+  (see information in clist_def). Note that this has to be run twice to get 
+  the pole information since this is set by the next step in the process. 
+  Complete clist is made by trackOptiClist.m
+
+ INPUT : 
+       dirname: seg folder eg. maindirectory/xy1/seg
+       CONST: the segmentation constants.
+       header : string displayed with information
+ OUTPUT :
+       clist : list of all cells found with non time dependent information about them. 
+       clist_def : definitions of the fields in clist set.
+
+ Copyright (C) 2016 Wiggins Lab 
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOpti.html" class="code" title="function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)">trackOpti</a>	trackOpti : calls the rest of the functions for segmentation</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function data = loaderInternal( filename );</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)</a>
+0002 <span class="comment">%  trackOptiCellMarker : puts together a list of complete cell cycles.</span>
+0003 <span class="comment">%  It goes through the dirname/*err.mat files and determines which</span>
+0004 <span class="comment">%  cells go through complete cell cycles (i.e. cells in which both birth and</span>
+0005 <span class="comment">%  division are observed) Clist contains information about complete cell cycles</span>
+0006 <span class="comment">%  (see information in clist_def). Note that this has to be run twice to get</span>
+0007 <span class="comment">%  the pole information since this is set by the next step in the process.</span>
+0008 <span class="comment">%  Complete clist is made by trackOptiClist.m</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% INPUT :</span>
+0011 <span class="comment">%       dirname: seg folder eg. maindirectory/xy1/seg</span>
+0012 <span class="comment">%       CONST: the segmentation constants.</span>
+0013 <span class="comment">%       header : string displayed with information</span>
+0014 <span class="comment">% OUTPUT :</span>
+0015 <span class="comment">%       clist : list of all cells found with non time dependent information about them.</span>
+0016 <span class="comment">%       clist_def : definitions of the fields in clist set.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0019 <span class="comment">% University of Washington, 2016</span>
+0020 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0021 
+0022 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0023     header = [];
+0024 <span class="keyword">end</span>
+0025 
+0026 MIN_CELL_AGE = CONST.trackOpti.MIN_CELL_AGE;
+0027 
+0028 
+0029 <span class="comment">% this variable contains the label for every set in the clist variable.</span>
+0030 clist_def =     { <span class="string">'Cell ID'</span>, <span class="keyword">...</span>
+0031     <span class="string">'Region Num Birth'</span>, <span class="keyword">...</span>
+0032     <span class="string">'Region Num Divide'</span>, <span class="keyword">...</span>
+0033     <span class="string">'Cell Birth Time'</span>, <span class="keyword">...</span>
+0034     <span class="string">'Cell Division Time'</span>, <span class="keyword">...</span>
+0035     <span class="string">'Cell Age'</span>, <span class="keyword">...</span>
+0036     <span class="string">'Cell Dist to edge'</span>, <span class="keyword">...</span>
+0037     <span class="string">'Old Pole Age--must be run after Batch to get this right'</span>, <span class="keyword">...</span>
+0038     <span class="string">'Long Axis Birth'</span>, <span class="keyword">...</span>
+0039     <span class="string">'Long Axis Divide'</span>};
+0040 
+0041 <span class="keyword">if</span> ~exist(<span class="string">'disp_flag'</span>);
+0042     disp_flag = 0;
+0043 <span class="keyword">end</span>
+0044 
+0045 list_touch = [];
+0046 
+0047 dirseperator = filesep;
+0048 
+0049 
+0050 
+0051 <span class="keyword">if</span>(nargin&lt;1 || isempty(dirname))
+0052     dirname=uigetdir()
+0053     dirname=[dirname,dirseperator];
+0054 <span class="keyword">elseif</span> dirname(length(dirname))~=dirseperator
+0055         dirname=[dirname,dirseperator];
+0056 <span class="keyword">end</span>
+0057 
+0058 contents=dir([dirname <span class="string">'*_err.mat'</span>]);
+0059 num_im = length(contents);
+0060 clist = [];
+0061 
+0062 <span class="keyword">if</span> CONST.show_status
+0063     h = waitbar( 0, <span class="string">'Marking complete cell cycles.'</span>);
+0064 <span class="keyword">else</span>
+0065     h = [];
+0066 <span class="keyword">end</span>
+0067 
+0068 <span class="comment">% Work barkwards starting at the last frame.</span>
+0069 <span class="keyword">for</span> i = (num_im-1):-1:2;
+0070     
+0071    
+0072     <span class="keyword">if</span> CONST.show_status
+0073         waitbar((num_im-i)/num_im,h,[<span class="string">'Marking complete cell cycles--Frame: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_im)]);
+0074     <span class="keyword">end</span>
+0075     <span class="comment">% load data</span>
+0076     data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname,contents(i).name]);
+0077     
+0078     <span class="comment">% calculate distance from the edge of the colony</span>
+0079     data_c.dist_mask = makeColonyDist( data_c.mask_bg );
+0080     
+0081     
+0082     <span class="comment">% loop through regions looking for cells that divide successfully in</span>
+0083     <span class="comment">% this frame.</span>
+0084     <span class="keyword">for</span> ii = 1:data_c.regs.num_regs
+0085         
+0086         <span class="comment">% get the regions that the current region maps to in the next frame</span>
+0087         list_f = data_c.regs.map.f{ii};
+0088         
+0089         
+0090         <span class="comment">% if the cell divides in this frame and the stat0 is true (meaning</span>
+0091         <span class="comment">% that it resulted itself from a good division) and the error</span>
+0092         <span class="comment">% history hasn't been set, the cell is tracked for a complete cell</span>
+0093         <span class="comment">% cycles.</span>
+0094         <span class="keyword">if</span> data_c.regs.divide(ii) &amp;&amp; <span class="keyword">...</span>
+0095                 data_c.regs.stat0(ii) &amp;&amp; <span class="keyword">...</span>
+0096                 (~data_c.regs.ehist(ii) &amp;&amp; <span class="keyword">...</span>
+0097                 (i-data_c.regs.birth(ii)) &gt;= MIN_CELL_AGE )
+0098             
+0099             
+0100             disp([header, <span class="string">'CellMarker: Complete Cell Cycle! Frame:'</span>, num2str(i),<span class="string">' reg: '</span>, num2str(ii)]);
+0101             
+0102             
+0103             <span class="comment">% get the distance of the cell from the edge of the colony and</span>
+0104             <span class="comment">% put that distance (in pixels) in cell_dist</span>
+0105             mask_cell             = (data_c.regs.regs_label==ii);
+0106             cell_dist             = min(data_c.dist_mask(mask_cell));
+0107             
+0108             <span class="comment">% Check to make sure that the cell has been assigned an ID</span>
+0109             <span class="comment">% number</span>
+0110             <span class="keyword">if</span> isfield(data_c.regs,<span class="string">'ID'</span>)
+0111                 
+0112                 <span class="comment">% The first time this function is called on a data set, the</span>
+0113                 <span class="comment">% CellA field doesn't exist yet. So.. if it doesn't exist,</span>
+0114                 <span class="comment">% record a NaN as the pole age</span>
+0115                 <span class="keyword">if</span> isfield( data_c, <span class="string">'CellA'</span> )
+0116                     pole_age = data_c.CellA{ii}.pole.op_age;
+0117                 <span class="keyword">else</span>
+0118                     pole_age = NaN;
+0119                 <span class="keyword">end</span>
+0120                 
+0121                 <span class="comment">% store data in clist so good cells can be set to have</span>
+0122                 <span class="comment">% stat0 == 2 for each frame.</span>
+0123                 clist = [clist; data_c.regs.ID(ii), ii, ii, data_c.regs.birth(ii), i, i-data_c.regs.birth(ii), cell_dist, pole_age, data_c.regs.L1(ii), data_c.regs.L1(ii)];
+0124                 
+0125                 <span class="comment">%                         clist_def =     { 'Cell ID', ...</span>
+0126                 <span class="comment">%                 'Region Num Birth', ...</span>
+0127                 <span class="comment">%                 'Region Num Divide', ...</span>
+0128                 <span class="comment">%                 'Cell Birth Time', ...</span>
+0129                 <span class="comment">%                 'Cell Division Time', ...</span>
+0130                 <span class="comment">%                 'Cell Age', ...</span>
+0131                 <span class="comment">%                 'Cell Dist to edge', ...</span>
+0132                 <span class="comment">%                 'Old Pole Age--must be run after Batch to get this right', ...</span>
+0133                 <span class="comment">%                 'Long Axis Birth', ...</span>
+0134                 <span class="comment">%                 'Long Axis Divide'};</span>
+0135                 
+0136                 <span class="comment">% field 2 will be updated when the code moves to the previous frame.</span>
+0137                 
+0138             <span class="keyword">else</span>
+0139                 <span class="comment">%clist = [clist; data_c.regs.birth(ii), i, ii, ii];</span>
+0140                 disp( [header, <span class="string">'CellMarker Error'</span>]);
+0141             <span class="keyword">end</span>
+0142         <span class="keyword">elseif</span> data_c.regs.divide(ii) &amp;&amp; <span class="keyword">...</span>
+0143                 data_c.regs.stat0(ii) &amp;&amp; <span class="keyword">...</span>
+0144                 (~data_c.regs.ehist(ii))
+0145             
+0146             data_c.regs.error.label{ii} = [data_c.regs.error.label{ii},<span class="keyword">...</span>
+0147                 <span class="string">'Frame: '</span>,num2str(i),<span class="string">', reg: '</span>, num2str(ii), <span class="keyword">...</span>
+0148                 <span class="string">'. Division Failed: Cell age '</span>, <span class="keyword">...</span>
+0149                 num2str(i-data_c.regs.birth(ii)), <span class="keyword">...</span>
+0150                 <span class="string">'&lt; min age '</span> , num2str(MIN_CELL_AGE), <span class="string">'.'</span>];
+0151             
+0152             disp([header, <span class="string">'CellMarker: '</span>, data_c.regs.error.label{ii}] );
+0153             
+0154         <span class="keyword">end</span>
+0155         
+0156     <span class="keyword">end</span>
+0157     
+0158     <span class="comment">% loop through clist to set the stat0 flag to 2 for cells that are</span>
+0159     <span class="comment">% observed for complete cell cycles</span>
+0160     ss = size(clist);
+0161     
+0162     <span class="keyword">for</span> ii = 1:ss(1);
+0163         
+0164         <span class="comment">% get the current region number for entry ii of the clist.</span>
+0165         jj = clist(ii,2);
+0166         
+0167         <span class="comment">% check the birth date of the cell and skip it if it is born after</span>
+0168         <span class="comment">% the current frame number.</span>
+0169         <span class="keyword">if</span> i &gt;=  clist(ii,4);
+0170             <span class="keyword">try</span>
+0171                 
+0172                 <span class="comment">% This cell is active, therefore update the region number</span>
+0173                 <span class="comment">% for the next frame</span>
+0174                 clist(ii,2) = data_c.regs.map.r{jj}(1);
+0175                 
+0176                 <span class="comment">% And also update the length of the cell since we want the</span>
+0177                 <span class="comment">% length @ birth.</span>
+0178                 clist(ii,9) = data_c.regs.L1(jj);
+0179                 
+0180                 <span class="comment">% set the stat0 to 2 meaning the the cell is observed for</span>
+0181                 <span class="comment">% an entire cell cycle.</span>
+0182                 data_c.regs.stat0(jj) = 2;
+0183                 
+0184             <span class="keyword">catch</span>
+0185                 disp([header, <span class="string">'Error is trackOptiCellMarker... FuckFuckFuck'</span>]);
+0186             <span class="keyword">end</span>
+0187         <span class="keyword">end</span>
+0188     <span class="keyword">end</span>
+0189     
+0190     <span class="comment">% resave the updated *err.mat file and move on to the previous frame.</span>
+0191     dataname=[dirname,contents(i).name];
+0192     save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data_c'</span>);
+0193     
+0194     
+0195 <span class="keyword">end</span>
+0196 
+0197 <span class="keyword">if</span> CONST.show_status
+0198     close(h);
+0199 <span class="keyword">end</span>
+0200 <span class="comment">% Resort the list of cells so it is listed by cell ID number.</span>
+0201 <span class="keyword">if</span> ~isempty(clist)
+0202     <span class="keyword">try</span>
+0203         [tmp,ind_order] = sort( clist(:,1) );
+0204         clist = clist(ind_order,:);
+0205     <span class="keyword">catch</span>
+0206         disp([header, <span class="string">'Error is trackOptiCellMarker...'</span>]);
+0207     <span class="keyword">end</span>
+0208 <span class="keyword">end</span>
+0209 
+0210 <span class="keyword">end</span>
+0211 
+0212 
+0213 
+0214 <a name="_sub1" href="#_subfunctions" class="code">function data = loaderInternal( filename );</a>
+0215 data = load( filename );
+0216 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

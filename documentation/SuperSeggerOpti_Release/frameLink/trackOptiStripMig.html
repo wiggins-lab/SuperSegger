@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiStripMig</title>
+  <meta name="keywords" content="trackOptiStripMig">
+  <meta name="description" content="trackOptiStripMig : removes small regions that">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiStripMig.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiStripMig
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiStripMig : removes small regions that</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function trackOptiStripMig(dirname,CONST) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiStripMig : removes small regions that
+ are probably not real, typically bubbles, dust, or minicells.
+
+ INPUT :
+   dirname : seg folder eg. maindirectory/xy1/seg
+   CONST : Constants file
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOpti.html" class="code" title="function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)">trackOpti</a>	trackOpti : calls the rest of the functions for segmentation</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function data = loaderInternal( filename );</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function trackOptiStripMig(dirname,CONST)</a>
+0002 <span class="comment">% trackOptiStripMig : removes small regions that</span>
+0003 <span class="comment">% are probably not real, typically bubbles, dust, or minicells.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%   dirname : seg folder eg. maindirectory/xy1/seg</span>
+0007 <span class="comment">%   CONST : Constants file</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0010 <span class="comment">% University of Washington, 2016</span>
+0011 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0012 
+0013 
+0014 MIN_AREA = CONST.trackOpti.MIN_AREA;
+0015 dirseperator = filesep;
+0016 
+0017 <span class="keyword">if</span>(nargin&lt;1 || isempty(dirname))
+0018     dirname=uigetdir()
+0019     dirname=[dirname,dirseperator];
+0020 <span class="keyword">else</span>
+0021     <span class="keyword">if</span> dirname(length(dirname))~=dirseperator
+0022         dirname=[dirname,dirseperator];
+0023     <span class="keyword">end</span>
+0024 <span class="keyword">end</span>
+0025 
+0026 contents=dir([dirname <span class="string">'*_seg.mat'</span>]);
+0027 num_im = length(contents);
+0028 clist = [];
+0029 
+0030 <span class="keyword">if</span> CONST.show_status
+0031     h = waitbar( 0, <span class="string">'Strip small cells.'</span>);
+0032 <span class="keyword">else</span>
+0033     h = [];
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">% Work barkwards starting at the last frame.</span>
+0037 <span class="keyword">for</span> i = 1:num_im;
+0038     
+0039     <span class="keyword">if</span> CONST.show_status
+0040         waitbar((num_im-i)/num_im,h,[<span class="string">'Strip small cells--Frame: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_im)]);
+0041     <span class="keyword">end</span>
+0042 
+0043     data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname,contents(i  ).name]);  <span class="comment">% load data</span>
+0044         
+0045     <span class="comment">%% strip off extra stuff</span>
+0046     <span class="comment">%mask__ = bwmorph(bwmorph( masktmp, 'erode'), 'dilate' );</span>
+0047     
+0048     <span class="comment">%% remove small area regions</span>
+0049     regs_label = bwlabel( data_c.mask_cell );
+0050     props = regionprops( regs_label, <span class="string">'Area'</span> );
+0051     
+0052     keepers = find([props(:).Area]&gt;MIN_AREA);
+0053     
+0054     data_c.mask_cell= ismember( regs_label, keepers );
+0055     
+0056     <span class="comment">%% fill holes</span>
+0057     ss = size( data_c.phase );
+0058     regs_label = bwlabel( data_c.mask_cell );
+0059     props = regionprops( regs_label, {<span class="string">'Area'</span>,<span class="string">'BoundingBox'</span>} );
+0060     num_props = numel(props);
+0061     mask_new = false(ss);
+0062     
+0063     <span class="keyword">for</span> ii = 1:num_props
+0064         [xx,yy] = getBBpad(props(ii).BoundingBox, ss,1);
+0065         
+0066         mask = (regs_label(yy,xx)==ii);
+0067         mask__ = bwmorph(bwmorph( mask, <span class="string">'dilate'</span>), <span class="string">'erode'</span> );
+0068         mask__ = imfill(mask__,<span class="string">'holes'</span>);
+0069         
+0070         mask_tmp = mask_new(yy,xx);
+0071         mask_tmp(mask__) = true;
+0072         mask_new(yy,xx) = mask_tmp;
+0073     <span class="keyword">end</span>
+0074     
+0075     data_c.mask_cell = mask_new;
+0076     
+0077     <span class="comment">% resave the updated *err.mat file and move on to the previous frame.</span>
+0078     dataname=[dirname,contents(i).name];
+0079     save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data_c'</span>);
+0080     
+0081     
+0082 <span class="keyword">end</span>
+0083 
+0084 <span class="keyword">if</span> CONST.show_status
+0085     close(h);
+0086 <span class="keyword">end</span>
+0087 
+0088 <span class="keyword">end</span>
+0089 
+0090 
+0091 <a name="_sub1" href="#_subfunctions" class="code">function data = loaderInternal( filename );</a>
+0092 data = load( filename );
+0093 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiNeighbors</title>
+  <meta name="keywords" content="trackOptiNeighbors">
+  <meta name="description" content="trackOptiNeighbors : finds the neighbors for region ii">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiNeighbors.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiNeighbors
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiNeighbors : finds the neighbors for region ii</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function ind  = trackOptiNeighbors(data,ii) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiNeighbors : finds the neighbors for region ii
+
+ INPUT : 
+       data : region (cell) data structure from file
+       ii : region id
+ OUTPUT :
+       ind : indices of neighboring regions
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiIntDiskNR.html" class="code" title="function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)">trackOptiIntDiskNR</a>	trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function ind  = trackOptiNeighbors(data,ii)</a>
+0002 <span class="comment">% trackOptiNeighbors : finds the neighbors for region ii</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       data : region (cell) data structure from file</span>
+0006 <span class="comment">%       ii : region id</span>
+0007 <span class="comment">% OUTPUT :</span>
+0008 <span class="comment">%       ind : indices of neighboring regions</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0011 <span class="comment">% University of Washington, 2016</span>
+0012 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0013 
+0014 <span class="keyword">persistent</span> sdisk;
+0015 
+0016 <span class="keyword">if</span> isempty( sdisk )
+0017     sdisk = strel( <span class="string">'disk'</span>, 5 );
+0018 <span class="keyword">end</span>
+0019 
+0020 ss = size( data.regs.regs_label );
+0021 num_regs = data.regs.num_regs;
+0022 [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 6);
+0023 
+0024 tmp_label = data.regs.regs_label(yy,xx);
+0025 
+0026 mask = logical(imdilate( tmp_label==ii, sdisk));
+0027 
+0028 ind = unique( tmp_label(mask ));
+0029 ind = ind(ind~=ii);
+0030 ind = ind(logical(ind));
+0031 
+0032 <span class="keyword">end</span>
+0033 
+0034 
+0035 
+0036 
+0037 
+0038</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of BatchSuperSeggerOpti</title>
+  <meta name="keywords" content="BatchSuperSeggerOpti">
+  <meta name="description" content="BatchSuperSeggerOpti runs everything from start to finish,">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">batch</a> &gt; BatchSuperSeggerOpti.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/batch&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>BatchSuperSeggerOpti
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>BatchSuperSeggerOpti runs everything from start to finish,</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> BatchSuperSeggerOpti runs everything from start to finish,
+ including alignment, building the directory structure,
+single image segmentation, error resolution, cell linking,
+ fluorescence analysis, and cell files.
+
+ Processes a raw data set by
+ (1) Aligning and cropping time series
+ (2) Organizing files into directories
+        xy points are put in their own dir's
+        phase, fluor files put in their own dir's
+        makes seg and cell directories
+ (3) Segmenting the frames into cell regions
+ (4) Linking the regions between time steps
+ (5) finding loci and calculating fluor statistics
+ (6) Putting complete cells into the cell dir.
+
+ INPUT :
+ dirname_ : dir containing raw tif files
+ skip     : The segmentation is performed every skip files
+          : this skip is very useful for high frequency timelapse where
+          : cells would switch back and forth between one and two
+          : segments leading to errors that are difficult to resolve.
+          : This segments every skip files, then copies the segments into
+          : the intermediate frames.
+ clean_flag : Set this to be true to start from scratch and reseg all the
+            : files regardless of whether any seg files exist. If this
+            : flag is false, use existing segments, if they exist and
+            : new segs if they don't yet exist.
+ res      : is a string that is passed to loadConstants(Mine).m to load
+          : the right constants for processing.
+
+
+ Copyright (C) 2016 Wiggins Lab
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>	MakeFileName converts from nameInfo to original file name</li><li><a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>	ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z*</li><li><a href="trackOptiAlignPad.html" class="code" title="function crop_box = trackOptiAlignPad(dirname_, CROP_FLAG, M, CONST)">trackOptiAlignPad</a>	trackOptiAlignPad : aligns images to correct for microscope drift</li><li><a href="trackOptiPD.html" class="code" title="function trackOptiPD(dirname, CONST)">trackOptiPD</a>	trackOptiPD Sets up directory structure for cell segmentation</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="processExp.html" class="code" title="function processExp( dirname )">processExp</a>	processExp main function for running the segmentation software.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box )</a></li><li><a href="#_sub2" class="code">function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, clean_flag, skip, CONST, header, crop_box)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)</a>
+0002 <span class="comment">% BatchSuperSeggerOpti runs everything from start to finish,</span>
+0003 <span class="comment">% including alignment, building the directory structure,</span>
+0004 <span class="comment">%single image segmentation, error resolution, cell linking,</span>
+0005 <span class="comment">% fluorescence analysis, and cell files.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Processes a raw data set by</span>
+0008 <span class="comment">% (1) Aligning and cropping time series</span>
+0009 <span class="comment">% (2) Organizing files into directories</span>
+0010 <span class="comment">%        xy points are put in their own dir's</span>
+0011 <span class="comment">%        phase, fluor files put in their own dir's</span>
+0012 <span class="comment">%        makes seg and cell directories</span>
+0013 <span class="comment">% (3) Segmenting the frames into cell regions</span>
+0014 <span class="comment">% (4) Linking the regions between time steps</span>
+0015 <span class="comment">% (5) finding loci and calculating fluor statistics</span>
+0016 <span class="comment">% (6) Putting complete cells into the cell dir.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% INPUT :</span>
+0019 <span class="comment">% dirname_ : dir containing raw tif files</span>
+0020 <span class="comment">% skip     : The segmentation is performed every skip files</span>
+0021 <span class="comment">%          : this skip is very useful for high frequency timelapse where</span>
+0022 <span class="comment">%          : cells would switch back and forth between one and two</span>
+0023 <span class="comment">%          : segments leading to errors that are difficult to resolve.</span>
+0024 <span class="comment">%          : This segments every skip files, then copies the segments into</span>
+0025 <span class="comment">%          : the intermediate frames.</span>
+0026 <span class="comment">% clean_flag : Set this to be true to start from scratch and reseg all the</span>
+0027 <span class="comment">%            : files regardless of whether any seg files exist. If this</span>
+0028 <span class="comment">%            : flag is false, use existing segments, if they exist and</span>
+0029 <span class="comment">%            : new segs if they don't yet exist.</span>
+0030 <span class="comment">% res      : is a string that is passed to loadConstants(Mine).m to load</span>
+0031 <span class="comment">%          : the right constants for processing.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0035 <span class="comment">% Unviersity of Washington, 2016</span>
+0036 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0037 
+0038 <span class="comment">% Init</span>
+0039 res_flag = false;
+0040 
+0041 <span class="keyword">if</span> nargin &lt; 2 || isempty( skip )
+0042     skip = 1; <span class="comment">% default : don't skip frames</span>
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="keyword">if</span> nargin &lt; 3 || isempty( clean_flag )
+0046     clean_flag = 0; <span class="comment">% default : don't resegment frames if segmented.</span>
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="keyword">if</span> nargin &lt; 4 || isempty( res )
+0050     res = []; 
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="keyword">if</span> ~exist( <span class="string">'SEGMENT_FLAG'</span>, <span class="string">'var'</span> ) || isempty( SEGMENT_FLAG )
+0054     SEGMENT_FLAG = 1;
+0055 <span class="keyword">end</span>
+0056 
+0057 <span class="keyword">if</span> dirname = <span class="string">'.'</span>
+0058     dirname = pwd;
+0059 <span class="keyword">end</span>
+0060 
+0061 
+0062 <span class="comment">%if you pass a res value, write over CONST values. If it isn't passed,</span>
+0063 <span class="comment">% use existing values, if they exist. If not, load the default values.</span>
+0064 <span class="keyword">if</span> strcmp(class(res),<span class="string">'struct'</span>)
+0065     CONST = res;
+0066 <span class="keyword">else</span>
+0067     disp (<span class="string">'BSSO : Loading constants file '</span>, res);
+0068     <span class="keyword">if</span> exist(<span class="string">'loadConstantsMine'</span>,<span class="string">'file'</span>);
+0069         CONST = loadConstantsMine(res);
+0070     <span class="keyword">else</span>
+0071         CONST = loadConstants(res,0);
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">end</span>
+0074 
+0075 
+0076 <span class="keyword">if</span> clean_flag 
+0077     disp (<span class="string">'Clean flag is set to true.'</span>)
+0078     answer=input(<span class="string">'Do you want to continue, Y/N [Y]:'</span>,<span class="string">'s'</span>);
+0079     <span class="keyword">if</span> lower(answer) ~=<span class="string">'y'</span>
+0080         disp (<span class="string">'Exiting BatchSuperSegger. Reset clean flag and rerun'</span>);
+0081         <span class="keyword">return</span>
+0082     <span class="keyword">end</span>
+0083 <span class="keyword">end</span>
+0084 
+0085 <span class="comment">%% align frames</span>
+0086 <span class="keyword">if</span> dirname_(end) == filesep
+0087     dirname_ = dirname_(1:end-1);
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="keyword">if</span> findstr ( <span class="string">'.'</span>, dirname_ ) == 1 <span class="comment">% check if this is needed or if pwd is enough</span>
+0091     <span class="keyword">return</span>;
+0092 <span class="keyword">elseif</span> exist( dirname_, <span class="string">'dir'</span> )
+0093     
+0094     <span class="keyword">if</span> exist( [dirname_,filesep,<span class="string">'raw_im'</span>] ,<span class="string">'dir'</span>) 
+0095         disp(<span class="string">'BSSO: aligned images exist'</span>);
+0096         <span class="keyword">if</span> exist([dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>],<span class="string">'file'</span>)
+0097             tmp = load( [dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>] );
+0098             crop_box_array = tmp.crop_box_array;
+0099         <span class="keyword">else</span>
+0100             crop_box_array = cell(1,10000);
+0101         <span class="keyword">end</span>
+0102     <span class="keyword">else</span>
+0103         
+0104         mkdir( [dirname_,filesep,<span class="string">'raw_im'</span>] );
+0105         <span class="keyword">if</span> CONST.align.ALIGN_FLAG           
+0106             Neo_Crop(dirname_);
+0107             crop_box_array = <a href="trackOptiAlignPad.html" class="code" title="function crop_box = trackOptiAlignPad(dirname_, CROP_FLAG, M, CONST)">trackOptiAlignPad</a>( dirname_, <span class="keyword">...</span>
+0108                 CONST.align.CROP_FLAG, CONST.parallel_pool_num, CONST );
+0109             movefile( [dirname_,filesep,<span class="string">'*.tif'</span>], [dirname_,filesep,<span class="string">'raw_im'</span>] )
+0110             movefile( [dirname_,<span class="string">'_align'</span>,filesep,<span class="string">'*.tif'</span>], [dirname_,filesep]);
+0111             rmdir( [dirname_,<span class="string">'_align'</span>] );
+0112         <span class="keyword">else</span>
+0113             crop_box_array = cell(1,10000);
+0114         <span class="keyword">end</span>
+0115     <span class="keyword">end</span>
+0116 <span class="keyword">else</span>
+0117     disp( [<span class="string">'BSSO: Can''t find directory '''</span>,dirname_,<span class="string">'''. Exiting.'</span>] );
+0118     <span class="keyword">return</span>
+0119 <span class="keyword">end</span>
+0120 
+0121 
+0122 <span class="comment">%% setup the dir structure for analysis.</span>
+0123 <a href="trackOptiPD.html" class="code" title="function trackOptiPD(dirname, CONST)">trackOptiPD</a>(dirname_, CONST);
+0124 dirname = [dirname_, filesep];
+0125 
+0126 save( [dirname,<span class="string">'CONST.mat'</span>],<span class="string">'-STRUCT'</span>, <span class="string">'CONST'</span> ); <span class="comment">% Save the Const set you were using in your analysis</span>
+0127 save( [dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>], <span class="string">'crop_box_array'</span> );
+0128 
+0129 <span class="comment">%% Loop through xy directories</span>
+0130 <span class="comment">% Reset n values incase directories have already been made.</span>
+0131 <span class="comment">% setup nxy values</span>
+0132 contents = dir([dirname,<span class="string">'xy*'</span>]);
+0133 
+0134 <span class="keyword">if</span> isempty(contents)
+0135     disp(<span class="string">'BSSO: Did not find any data.'</span>);
+0136 <span class="keyword">else</span>
+0137     num_dir_tmp = numel(contents);
+0138     nxy = [];
+0139     num_xy = 0;
+0140     
+0141     <span class="keyword">for</span> i = 1:num_dir_tmp
+0142         <span class="keyword">if</span> (contents(i).isdir) &amp;&amp; (numel(contents(i).name) &gt; 2)
+0143             num_xy = num_xy+1;
+0144             nxy = [nxy, str2num(contents(i).name(3:end))];
+0145             dirname_list{i} = [dirname,contents(i).name,filesep];
+0146         <span class="keyword">end</span>
+0147     <span class="keyword">end</span>
+0148     <span class="comment">%nxy</span>
+0149     
+0150     <span class="comment">% reset values for nc</span>
+0151     contents = dir([dirname_list{1},<span class="string">'fluor*'</span>]);
+0152     num_dir_tmp = numel(contents);
+0153     nc = 1;
+0154     num_c = 1;
+0155     
+0156     <span class="keyword">for</span> i = 1:num_dir_tmp
+0157         <span class="keyword">if</span> (contents(i).isdir) &amp;&amp; (numel(contents(i).name) &gt; numel(<span class="string">'fluor'</span>))
+0158             num_c = num_c+1;
+0159             nc = [nc, str2num(contents(i).name(numel(<span class="string">'fluor'</span>)+1:end))+1];
+0160         <span class="keyword">end</span>
+0161     <span class="keyword">end</span>
+0162     <span class="comment">%nc</span>
+0163     
+0164     
+0165     <span class="comment">%% Set up parallel loop for each xy point if more than one xy position</span>
+0166     <span class="comment">% exists. If not more than one xy, we will parallelize inner loops</span>
+0167     <span class="keyword">if</span> (num_xy&gt;1) &amp;&amp; (CONST.parallel_pool_num&gt;0)
+0168         MM = CONST.parallel_pool_num;
+0169         CONST.parallel_pool_num = 0;
+0170         SWITCH_FLAG = true;
+0171     <span class="keyword">else</span>
+0172         MM=0;
+0173         SWITCH_FLAG = false;
+0174     <span class="keyword">end</span>
+0175     
+0176     <span class="keyword">if</span> MM
+0177         h = [];
+0178     <span class="keyword">else</span>
+0179         h = waitbar( 0, [<span class="string">'Data segmentation xy: 0/'</span>,num2str(num_xy)] );
+0180     <span class="keyword">end</span>
+0181     
+0182     parfor(j = 1:num_xy,MM)
+0183         <span class="comment">%    for j = 1:num_xy</span>
+0184         
+0185         dirname_xy = dirname_list{j};
+0186         <a href="#_sub1" class="code" title="subfunction intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box )">intProcessXY</a>( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box_array{j} )
+0187         
+0188         <span class="keyword">if</span> MM
+0189             disp( [<span class="string">'BSSO: No status bar. xy '</span>,num2str(j), <span class="keyword">...</span>
+0190                 <span class="string">' of '</span>, num2str(num_xy),<span class="string">'.'</span>]);
+0191         <span class="keyword">else</span>
+0192             waitbar( j/num_xy,h,<span class="keyword">...</span>
+0193                 [<span class="string">'Data segmentation xy: '</span>,num2str(j),<span class="keyword">...</span>
+0194                 <span class="string">'/'</span>,num2str(num_xy)]);
+0195         <span class="keyword">end</span>
+0196         
+0197         
+0198     <span class="keyword">end</span>
+0199     <span class="keyword">if</span> ~MM
+0200         close(h);
+0201     <span class="keyword">end</span>
+0202     
+0203     <span class="comment">%% Compute Consensus Images</span>
+0204     
+0205     <span class="keyword">if</span> CONST.consensus
+0206         
+0207         h =  waitbar(0,[<span class="string">'Computing Consensus Images'</span>]);
+0208         
+0209         dircons = [dirname,<span class="string">'consensus'</span>,filesep];
+0210         mkdir( dircons );
+0211         
+0212         setHeader = <span class="string">'xy'</span> ;
+0213         
+0214         <span class="keyword">for</span> ii = 1:num_xy
+0215             
+0216             waitbar(ii/num_xy,h) ;
+0217             
+0218             ixy = ii ;
+0219             
+0220             dirname_xy = dirname_list{ii};
+0221             dirname_cell = [dirname_xy,filesep,<span class="string">'cell'</span>,filesep];
+0222             
+0223             [imTot, imColor, imBW, imInv, kymo, kymoMask, I, jjunk, jjunk, imTot10 ] = <span class="keyword">...</span>
+0224                 makeConsIm( [dirname_cell], CONST, [], [], false );
+0225             
+0226             <span class="keyword">if</span> ~isempty( imTot )
+0227                 imwrite( imBW,    [dircons, <span class="string">'consBW_'</span>,    setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+0228                 imwrite( imColor, [dircons, <span class="string">'consColor_'</span>, setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+0229                 imwrite( imInv,   [dircons, <span class="string">'consInv_'</span>,   setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+0230                 imwrite( imTot10,   [dircons, <span class="string">'typical_'</span>,   setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+0231                 save( [dircons, <span class="string">'fits'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.mat'</span>], <span class="string">'I'</span> );
+0232             <span class="keyword">else</span>
+0233                 
+0234                 disp( [<span class="string">'Found no cells in '</span>, dirname_cell, <span class="string">'.'</span>] );
+0235             <span class="keyword">end</span>
+0236             
+0237         <span class="keyword">end</span>
+0238         close(h)
+0239     <span class="keyword">end</span>
+0240 <span class="keyword">end</span>
+0241 
+0242 <span class="comment">% done!</span>
+0243 <span class="keyword">end</span>
+0244 
+0245 
+0246 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0247 <span class="comment">%</span>
+0248 <span class="comment">% intProcessXY</span>
+0249 <span class="comment">%</span>
+0250 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0251 <a name="_sub1" href="#_subfunctions" class="code">function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box )</a>
+0252 <span class="comment">% intProcessXY : the details of running the code in parallel.</span>
+0253 <span class="comment">% Essentially for parallel processing to work, you have to hand each</span>
+0254 <span class="comment">% processor all the information it needs to process the images..</span>
+0255 
+0256 <span class="comment">%% Initialization</span>
+0257 file_filter = <span class="string">'*.tif'</span>;
+0258 
+0259 <span class="comment">% get header to show xy position</span>
+0260 tmp1 = strfind( dirname_xy, <span class="string">'xy'</span>);
+0261 tmp2 = strfind( dirname_xy,[filesep]);
+0262 <span class="keyword">if</span> ~isempty(tmp1) &amp;&amp; ~isempty(tmp2)
+0263     header = [dirname_xy(tmp1(end):(tmp2(end)-1)),<span class="string">': '</span>];
+0264 <span class="keyword">else</span>
+0265     header = [dirname_xy];
+0266 <span class="keyword">end</span>
+0267 
+0268 <span class="comment">% reset nz values</span>
+0269 contents=dir([dirname_xy,<span class="string">'phase'</span>,filesep,file_filter]);
+0270 num_im = numel(contents);
+0271 
+0272 nz = [];
+0273 nt = [];
+0274 
+0275 <span class="keyword">for</span> i = 1:num_im;
+0276     nameInfo = <a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>( contents(i).name );   
+0277     nt = [nt, nameInfo.npos(1,1)];
+0278     nz = [nz, nameInfo.npos(4,1)];
+0279 <span class="keyword">end</span>
+0280 
+0281 
+0282 nt = sort(unique(nt));
+0283 nz = sort(unique(nz));
+0284 
+0285 num_t = numel(nt);
+0286 num_z = numel(nz);
+0287 
+0288 
+0289 <span class="keyword">if</span>  isempty(nz) || nz(1)==-1
+0290     nz = 1;
+0291 <span class="keyword">end</span>
+0292 
+0293 
+0294 
+0295 <span class="comment">%% Do segmentation, MM is max number of workers</span>
+0296 disp([header <span class="string">'BSSO: Do segmentation...'</span>]);
+0297 
+0298 <span class="keyword">if</span> (CONST.parallel_pool_num&gt;0)
+0299     MM = CONST.parallel_pool_num;
+0300     SWITCH_FLAG = true;
+0301 <span class="keyword">else</span>
+0302     MM=0;
+0303     SWITCH_FLAG = false;
+0304 <span class="keyword">end</span>
+0305 
+0306 <span class="keyword">if</span> ~CONST.show_status
+0307     h = [];
+0308 <span class="keyword">else</span>
+0309     h = waitbar( 0, [<span class="string">'BSSO: Frame 0/'</span>,num2str(num_t)] );
+0310 <span class="keyword">end</span>
+0311 
+0312 stamp_name = [dirname_xy,<span class="string">'seg'</span>,filesep,<span class="string">'.doSeg.mat'</span>];
+0313 <span class="keyword">if</span> clean_flag
+0314     delete(stamp_name)
+0315 <span class="keyword">end</span>
+0316 
+0317 
+0318 <span class="keyword">if</span> SEGMENT_FLAG &amp;&amp; ~exist( stamp_name, <span class="string">'file'</span> ) 
+0319     parfor(i=1:num_t,MM) <span class="comment">% through all frames</span>
+0320         <span class="keyword">if</span> isempty( crop_box )
+0321             crop_box_tmp = [];
+0322         <span class="keyword">else</span>
+0323             crop_box_tmp = crop_box(i,:);
+0324         <span class="keyword">end</span>
+0325         
+0326         <a href="#_sub2" class="code" title="subfunction  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, clean_flag, skip, CONST, header, crop_box)">doSeg</a>(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, <span class="keyword">...</span>
+0327             clean_flag, skip, CONST, [header,<span class="string">'t'</span>,num2str(i),<span class="string">': '</span>], crop_box_tmp );
+0328         
+0329         <span class="keyword">if</span> ~CONST.show_status
+0330             disp( [header, <span class="string">'BSSO: Segment. Frame '</span>,num2str(i), <span class="keyword">...</span>
+0331                 <span class="string">' of '</span>, num2str(num_t),<span class="string">'.'</span>]);
+0332         <span class="keyword">else</span>
+0333             waitbar( i/num_t, h,<span class="keyword">...</span>
+0334                 [<span class="string">'Data segmentation t: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_t)]);
+0335         <span class="keyword">end</span>
+0336     <span class="keyword">end</span>
+0337     <span class="keyword">if</span> CONST.show_status
+0338         close(h);
+0339     <span class="keyword">end</span>
+0340     time_stamp = clock;
+0341     save( stamp_name, <span class="string">'time_stamp'</span>); <span class="comment">% saves that xydir was full segmented</span>
+0342 <span class="keyword">end</span>
+0343 
+0344 
+0345 <span class="comment">%% Link the cells</span>
+0346 trackOpti(dirname_xy, skip, CONST, clean_flag, header );
+0347 
+0348 <span class="keyword">end</span>
+0349 
+0350 <span class="comment">%%</span>
+0351 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0352 <span class="comment">%</span>
+0353 <span class="comment">% doSeg</span>
+0354 <span class="comment">%</span>
+0355 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0356 <a name="_sub2" href="#_subfunctions" class="code">function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, clean_flag, skip, CONST, header, crop_box)</a>
+0357 <span class="comment">% doSeg : Segments data and saves _seg data structure.</span>
+0358 <span class="comment">% After it segments the data it copies the fluor fields into the data</span>
+0359 <span class="comment">% structure and save this structure in the seg directory. If the structure</span>
+0360 <span class="comment">% is already found it does not repeat segmentation.</span>
+0361 
+0362 
+0363 <span class="comment">% Init</span>
+0364 data = [];
+0365 
+0366 <span class="comment">% make the segment file name and check if it already exists</span>
+0367 nameInfo_tmp = nameInfo;
+0368 nameInfo_tmp.npos([2,4],:) = 0;
+0369 nameInfo_tmp.npos(1,1) = nt(i);
+0370 name = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>( nameInfo_tmp );
+0371 nameInfo_tmp = <a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>(name);
+0372 name = name( 1:max(nameInfo_tmp.npos(:,3))); <span class="comment">% has format imagename-tXX</span>
+0373 
+0374 data.basename = name;
+0375 dataname=[dirname_xy,<span class="string">'seg'</span>,filesep,name,<span class="string">'_seg.mat'</span>];
+0376 
+0377 <span class="keyword">if</span> ~exist(dataname,<span class="string">'file'</span>) || clean_flag 
+0378     nameInfo_tmp = nameInfo;
+0379     nameInfo_tmp.npos(1,1) = nt(i);
+0380     nameInfo_tmp.npos(4,1) = 1;
+0381     name = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>(nameInfo_tmp);
+0382     namePhase = [dirname_xy,<span class="string">'phase'</span>,filesep,name];    
+0383     phase = imread( namePhase );
+0384     
+0385     <span class="keyword">if</span> num_z &gt; 1
+0386         phaseCat = zeros( [size(phase), num_z], <span class="string">'uint16'</span> );
+0387         phaseCat(:,:,1) = phase;
+0388         
+0389         <span class="keyword">for</span> iz = 2:num_z
+0390             nameInfo_tmp.npos(4,1) = iz;
+0391             name  = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>(nameInfo_tmp);
+0392             phaseCat(:,:,iz) =  imread( [dirname_xy,<span class="string">'phase'</span>,filesep,name] );
+0393         <span class="keyword">end</span>
+0394         
+0395         phase = mean( phaseCat, 3);
+0396         
+0397     <span class="keyword">end</span>
+0398     
+0399     <span class="keyword">if</span> ~mod(i-1,skip)
+0400         
+0401         <span class="comment">% do the segmentation here</span>
+0402         [data, err_flag] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box );
+0403         <span class="keyword">if</span> ~isempty( crop_box )
+0404             data.crop_box = crop_box;
+0405         <span class="keyword">end</span>
+0406         
+0407         <span class="comment">% Copy fluor data into data structure</span>
+0408         nameInfo_tmp = nameInfo;
+0409         <span class="keyword">for</span> k = 2:num_c
+0410             nameInfo_tmp.npos(1,1) = nt(i);
+0411             nameInfo_tmp.npos(2,1) = nc(k);
+0412             nameInfo_tmp.npos(4,1) = 1;
+0413             name = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>( nameInfo_tmp );
+0414             fluor_tmp = imread( [dirname_xy,<span class="string">'fluor'</span>,num2str(nc(k)-1),filesep,name] );         
+0415             data = setfield( data, [<span class="string">'fluor'</span>,num2str(nc(k)-1)],fluor_tmp );            
+0416         <span class="keyword">end</span>
+0417                 
+0418         save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data'</span>); <span class="comment">% Save data structure into the seg file.</span>
+0419     <span class="keyword">end</span>
+0420 <span class="keyword">else</span>
+0421     disp([dataname, <span class="string">' already exists.'</span>]);
+0422 <span class="keyword">end</span>
+0423 
+0424 err_flag = false;
+0425 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

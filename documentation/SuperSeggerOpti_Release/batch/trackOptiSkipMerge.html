@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiSkipMerge</title>
+  <meta name="keywords" content="trackOptiSkipMerge">
+  <meta name="description" content="trackOptiSkipMerge : adds skipped frames back into a time series.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">batch</a> &gt; trackOptiSkipMerge.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/batch&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiSkipMerge
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiSkipMerge : adds skipped frames back into a time series.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function trackOptiSkipMerge(dirname_xy,skip,CONST,header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiSkipMerge : adds skipped frames back into a time series.
+ It makes the _err.mat files with the fluor images corresponding 
+ to the current time step. Frame skip is useful for reducing errors 
+ which you have a high frame rate.
+
+ INPUT : 
+   dirname_xy: is the xy directory
+   skip: frames mod skip are processed 
+   CONST: segmentation constants
+   header : string displayed with information
+ 
+ Copyright (C) 2016 Wiggins Lab 
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>	MakeFileName converts from nameInfo to original file name</li><li><a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>	ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z*</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function trackOptiSkipMerge(dirname_xy,skip,CONST,header)</a>
+0002 <span class="comment">% trackOptiSkipMerge : adds skipped frames back into a time series.</span>
+0003 <span class="comment">% It makes the _err.mat files with the fluor images corresponding</span>
+0004 <span class="comment">% to the current time step. Frame skip is useful for reducing errors</span>
+0005 <span class="comment">% which you have a high frame rate.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% INPUT :</span>
+0008 <span class="comment">%   dirname_xy: is the xy directory</span>
+0009 <span class="comment">%   skip: frames mod skip are processed</span>
+0010 <span class="comment">%   CONST: segmentation constants</span>
+0011 <span class="comment">%   header : string displayed with information</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0014 <span class="comment">% University of Washington, 2016</span>
+0015 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0016 
+0017 
+0018 
+0019 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0020     header = [];
+0021 <span class="keyword">end</span>
+0022 
+0023 <span class="keyword">if</span> nargin &lt; 2 || isempty( skip )
+0024     skip = 1; <span class="comment">% don't skip frames</span>
+0025 <span class="keyword">end</span>
+0026 
+0027 
+0028 file_filter = <span class="string">'*.tif'</span>;
+0029 <span class="keyword">if</span> dirname_xy(end) ~= filesep
+0030     dirname_xy = [dirname_xy, filesep];
+0031 <span class="keyword">end</span>
+0032 
+0033 
+0034 <span class="comment">%%</span>
+0035 <span class="comment">% Reset n values incase directories have already been made.</span>
+0036 
+0037 
+0038 
+0039 <span class="comment">% setup nxy values</span>
+0040 <span class="comment">% contents = dir([dirname,'xy*']);</span>
+0041 
+0042 <span class="comment">% reset values for nc</span>
+0043 contents = dir([dirname_xy,<span class="string">'fluor*'</span>]);
+0044 num_dir_tmp = numel(contents);
+0045 nc = [1];
+0046 num_c = 1;
+0047 
+0048 <span class="keyword">for</span> i = 1:num_dir_tmp
+0049     <span class="keyword">if</span> (contents(i).isdir) &amp;&amp; (numel(contents(i).name) &gt; numel(<span class="string">'fluor'</span>))
+0050         num_c = num_c+1;
+0051         nc = [nc, str2num(contents(i).name(numel(<span class="string">'fluor'</span>)+1:end))+1];
+0052     <span class="keyword">end</span>
+0053 <span class="keyword">end</span>
+0054 <span class="comment">%nc</span>
+0055 
+0056 <span class="comment">%%</span>
+0057 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0058 <span class="comment">%</span>
+0059 <span class="comment">% Process data....</span>
+0060 <span class="comment">%</span>
+0061 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0062 <span class="comment">% reset nz values</span>
+0063 contents=dir([dirname_xy,<span class="string">'phase'</span>,filesep,file_filter]);
+0064 num_im = numel(contents);
+0065 
+0066 nz = [];
+0067 nt = [];
+0068 
+0069 <span class="keyword">for</span> i = 1:num_im;
+0070     nameInfo = <a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>( contents(i).name );
+0071     
+0072     nt = [nt, nameInfo.npos(1,1)];
+0073     nz = [nz, nameInfo.npos(4,1)];
+0074 <span class="keyword">end</span>
+0075 
+0076 
+0077 nt = sort(unique(nt));
+0078 nz = sort(unique(nz));
+0079 
+0080 num_t = numel(nt);
+0081 num_z = numel(nz);
+0082 
+0083 <span class="keyword">if</span>  nz(1)==-1
+0084     nz = 1;
+0085 <span class="keyword">end</span>
+0086 
+0087 <span class="keyword">if</span> ~exist([dirname_xy,<span class="string">'seg_full'</span>],<span class="string">'dir'</span>)
+0088     mkdir( [dirname_xy,<span class="string">'seg_full'</span>] );
+0089 <span class="keyword">end</span>
+0090 
+0091 
+0092 
+0093 <span class="keyword">if</span> CONST.show_status
+0094     h = waitbar( 0, [<span class="string">'Merging Skipped frames xy: 0/'</span>,num2str(num_t)] );
+0095 <span class="keyword">else</span>
+0096     h=[];
+0097 <span class="keyword">end</span>
+0098 
+0099 <span class="comment">%parfor i=1:num_t;</span>
+0100 <span class="keyword">for</span> i=1:num_t;
+0101     <a href="#_sub1" class="code" title="subfunction intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z)">intSkipPar</a>(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z);
+0102     <span class="keyword">if</span> CONST.show_status
+0103         <span class="keyword">try</span>
+0104         waitbar( i/num_t,h,<span class="keyword">...</span>
+0105             [<span class="string">'Merging Skipped frames t: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_t)]);
+0106         <span class="keyword">end</span>
+0107     <span class="keyword">else</span>
+0108         disp( [header, <span class="string">'skipMerge: No status bar. Frame '</span>,num2str(i), <span class="keyword">...</span>
+0109             <span class="string">' of '</span>, num2str(num_t),<span class="string">'.'</span>]);
+0110     <span class="keyword">end</span>
+0111     
+0112 <span class="keyword">end</span>
+0113 <span class="keyword">if</span> CONST.show_status
+0114     close(h);
+0115 <span class="keyword">end</span>
+0116 <span class="keyword">end</span>
+0117 
+0118 
+0119 <a name="_sub1" href="#_subfunctions" class="code">function intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z)</a>
+0120 
+0121 data = [];
+0122 <span class="comment">% make the segment file name and check if it already exists</span>
+0123 nameInfo_tmp               = nameInfo;
+0124 nameInfo_tmp.npos([2,4],:) = 0;
+0125 nameInfo_tmp.npos(1,1)     = nt(i);
+0126 name                       = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>( nameInfo_tmp );
+0127 nameInfo_tmp               = <a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>(name);
+0128 name                       = name( 1:max(nameInfo_tmp.npos(:,3)));
+0129 
+0130 
+0131 
+0132 dataname  =[dirname_xy,<span class="string">'seg'</span>, filesep,name,<span class="string">'_err.mat'</span>];
+0133 dataname2 =[dirname_xy,<span class="string">'seg_full'</span>, filesep,name,<span class="string">'_err.mat'</span>];
+0134 
+0135 
+0136 
+0137 nameInfo_tmp = nameInfo;
+0138 nameInfo_tmp.npos(1,1) = nt(i);
+0139 nameInfo_tmp.npos(4,1) = 1;
+0140 name = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>(nameInfo_tmp);
+0141 
+0142 <span class="comment">% do the min merge of z phase:</span>
+0143 phase = imread( [dirname_xy,<span class="string">'phase'</span>,filesep,name] );
+0144 <span class="keyword">for</span> k = 2:num_z
+0145     nameInfo_tmp.npos(4,1) = nz(k);
+0146     name  = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>(nameInfo_tmp);
+0147     phase =  min( phase, double(imread( [dirname_xy,<span class="string">'phase'</span>,filesep,name] )));
+0148 <span class="keyword">end</span>
+0149 
+0150 
+0151 <span class="comment">%Make ref name to load;</span>
+0152 i_ref                      = i-mod(i-1,skip);
+0153 <span class="comment">%i_ref                      = i-mod(i-1,skip)-1;</span>
+0154 
+0155 
+0156 nameInfo_tmp_ref               = nameInfo;
+0157 nameInfo_tmp_ref.npos([2,4],:) = 0;
+0158 nameInfo_tmp_ref.npos(1,1)     = i_ref;
+0159 name_ref                       = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>( nameInfo_tmp_ref );
+0160 nameInfo_tmp_ref               = <a href="ReadFileName.html" class="code" title="function nameInfo = ReadFileName( str )">ReadFileName</a>(name_ref);
+0161 name_ref                       = name_ref( 1:max(nameInfo_tmp_ref.npos(:,3)));
+0162 
+0163 dataname_ref  =[dirname_xy,<span class="string">'seg'</span>, filesep,name_ref,<span class="string">'_err.mat'</span>];
+0164 
+0165 data = load(dataname_ref);
+0166 
+0167 <span class="keyword">if</span> mod(i-1,skip)
+0168     data.phase = phase;
+0169     data.basename = name;
+0170     
+0171     nameInfo_tmp = nameInfo;
+0172     <span class="keyword">for</span> k = 2:num_c
+0173         nameInfo_tmp.npos(1,1) = nt(i);
+0174         nameInfo_tmp.npos(2,1) = nc(k);
+0175         nameInfo_tmp.npos(4,1) = 1;
+0176         name = <a href="MakeFileName.html" class="code" title="function name = MakeFileName( nameInfo )">MakeFileName</a>( nameInfo_tmp );
+0177         data = setfield( data, [<span class="string">'fluor'</span>,num2str(nc(k)-1)], imread( [dirname_xy,<span class="string">'fluor'</span>,num2str(nc(k)-1),filesep,name] ));
+0178     <span class="keyword">end</span>
+0179     
+0180 <span class="keyword">end</span>
+0181 save(dataname2,<span class="string">'-STRUCT'</span>,<span class="string">'data'</span>);
+0182 
+0183 
+0184 
+0185 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of agd</title>
+  <meta name="keywords" content="agd">
+  <meta name="description" content="agd : autogains the image setting hot pixels to min value">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">Internal</a> &gt; agd.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/Internal&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>agd
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>agd : autogains the image setting hot pixels to min value</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function im = agd( im ,HOT_PX) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> agd : autogains the image setting hot pixels to min value
+ it sets pixels &gt; hot pixels * Std.Dev to the min value
+
+ INPUT : 
+       im : image
+       HOT_PX : hot pixel value
+ OUTPUT :
+       im : autogained image with increased contrast.
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function im = agd( im ,HOT_PX)</a>
+0002 <span class="comment">% agd : autogains the image setting hot pixels to min value</span>
+0003 <span class="comment">% it sets pixels &gt; hot pixels * Std.Dev to the min value</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%       im : image</span>
+0007 <span class="comment">%       HOT_PX : hot pixel value</span>
+0008 <span class="comment">% OUTPUT :</span>
+0009 <span class="comment">%       im : autogained image with increased contrast.</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">% University of Washington, 2016</span>
+0013 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0014 
+0015 <span class="keyword">if</span> ~exist(<span class="string">'HOT_PX'</span>)
+0016     HOT_PX = 50;
+0017 <span class="keyword">end</span>
+0018 
+0019 sz = size(im);
+0020 im = reshape(double(im),1,[]);
+0021 
+0022 s = std(im);
+0023 
+0024 im_min = min(im(:));
+0025 im(im &gt; HOT_PX*s) = im_min;
+0026 im_max = max(im(:));
+0027 
+0028 im = im - im_min;
+0029 im = double(255*im/im_max);
+0030 
+0031 im = reshape(im, sz);</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

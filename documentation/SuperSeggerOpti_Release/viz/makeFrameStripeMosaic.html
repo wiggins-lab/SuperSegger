@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of makeFrameStripeMosaic</title>
+  <meta name="keywords" content="makeFrameStripeMosaic">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">viz</a> &gt; makeFrameStripeMosaic.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>makeFrameStripeMosaic
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [imTot] = makeFrameStripeMosaic( dirName, CONST, ll_, disp_flag ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="makeFrameMosaic.html" class="code" title="function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )">makeFrameMosaic</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [imTot] = makeFrameStripeMosaic( dirName, CONST, ll_, disp_flag )</a>
+0002 
+0003 <span class="keyword">if</span> ~isfield( CONST.view, <span class="string">'saveFiles'</span> )
+0004 
+0005      CONST.view.saveFiles = false;
+0006 <span class="keyword">end</span>
+0007 
+0008 
+0009 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'falseColorFlag'</span> )
+0010     CONST.view.falseColorFlag = false;
+0011 <span class="keyword">end</span>
+0012 
+0013 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'maxNumCell'</span> )
+0014     CONST.view.maxNumCell = [];
+0015 <span class="keyword">end</span>
+0016 
+0017 <span class="comment">%CONST.view.maxNumCell</span>
+0018 
+0019 <span class="keyword">if</span> ~exist( <span class="string">'ll_'</span>, <span class="string">'var'</span> )
+0020     ll_ = [];
+0021 <span class="keyword">end</span>
+0022 
+0023 
+0024 
+0025 <span class="keyword">if</span> ~isfield( CONST, <span class="string">'view'</span>) || CONST.view.showFullCellCycleOnly
+0026     contents = dir([dirName,filesep,<span class="string">'Cell*.mat'</span>]);
+0027 <span class="keyword">else</span>
+0028     contents = dir([dirName,filesep,<span class="string">'*ell*.mat'</span>]);
+0029 <span class="keyword">end</span>
+0030 
+0031 
+0032 numCells = numel(contents);
+0033 
+0034 
+0035 <span class="comment">% debug</span>
+0036 <span class="keyword">if</span> ~isempty( CONST.view.maxNumCell )
+0037     numCells = min( [numCells, CONST.view.maxNumCell] );
+0038 <span class="keyword">end</span>
+0039 
+0040 disp( [<span class="string">'Numer of files: '</span>, num2str( numCells ), <span class="string">'.'</span>] );
+0041 
+0042 
+0043 cellArray = cell(1,numCells);
+0044 cellArrayPos = cell(1,numCells);
+0045 cellArrayNum = cell(1,numCells);
+0046 
+0047 
+0048 ssTot = [0,0];
+0049 
+0050 <span class="keyword">if</span> disp_flag
+0051     h = waitbar(0, <span class="string">'Computation'</span> );
+0052 <span class="keyword">end</span>
+0053 <span class="comment">% debug</span>
+0054 <span class="comment">% numCells = 20;</span>
+0055 
+0056 <span class="keyword">for</span> ii = 1:numCells
+0057     
+0058     <span class="keyword">if</span> disp_flag
+0059         waitbar(ii/numCells,h);
+0060     <span class="keyword">end</span>
+0061     
+0062     loadname = [dirName,filesep,contents(ii).name];
+0063     
+0064     data = load( loadname );
+0065     
+0066     lpos =  max(find(contents(ii).name == <span class="string">'l'</span>));
+0067     ppos =  min(find(contents(ii).name == <span class="string">'.'</span>));
+0068     
+0069     <span class="keyword">if</span> isempty( lpos ) || isempty( ppos )
+0070         disp(<span class="string">'Error in makeFrameStripeMosaic'</span> );
+0071         <span class="keyword">return</span>;
+0072     <span class="keyword">else</span>
+0073         cellArrayNum{ii} = floor(str2num(contents(ii).name(lpos+1:ppos-1)));
+0074     <span class="keyword">end</span>
+0075     
+0076     <span class="comment">%    cellArray{ii} = makeFrameStripe( data, CONST, 0, ll_ );</span>
+0077     tmp_im = <a href="makeFrameMosaic.html" class="code" title="function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )">makeFrameMosaic</a>(data,CONST,1,false, ll_ );
+0078     
+0079     <span class="keyword">if</span> isfield( CONST.view, <span class="string">'saveFiles'</span> ) &amp;&amp; CONST.view.saveFiles
+0080         loadname(end-2:end)=<span class="string">'png'</span>;
+0081         
+0082         imwrite( tmp_im, loadname, <span class="string">'png'</span> );
+0083     <span class="keyword">else</span>
+0084         cellArray{ii} = tmp_im;
+0085     <span class="keyword">end</span>
+0086     
+0087     ss = size(cellArray{ii});
+0088     
+0089     ssTot = [ max([ssTot(1),ss(1)]), ssTot(2)+ss(2) ];
+0090 <span class="keyword">end</span>
+0091 
+0092 <span class="keyword">if</span> disp_flag
+0093     close(h);
+0094 <span class="keyword">end</span>
+0095 
+0096 <span class="keyword">if</span> ~CONST.view.saveFiles
+0097     
+0098     <span class="keyword">if</span> CONST.view.falseColorFlag
+0099         
+0100         <span class="keyword">if</span> ~isfield( CONST.view, <span class="string">'background'</span> );
+0101             CONST.view.background = [0,0,0];
+0102         <span class="keyword">end</span>
+0103         
+0104         tmptmp = zeros( [ssTot(1), ssTot(2)] );
+0105         
+0106         imTot = uint8( cat( 3, tmptmp + CONST.view.background(1),<span class="keyword">...</span>
+0107             tmptmp + CONST.view.background(2),<span class="keyword">...</span>
+0108             tmptmp + CONST.view.background(3)));
+0109         
+0110     <span class="keyword">else</span>
+0111         del = 0.0;
+0112         
+0113         imTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
+0114     <span class="keyword">end</span>
+0115     
+0116     
+0117     colPos = 1;
+0118     
+0119     <span class="keyword">for</span> ii = 1:numCells
+0120         
+0121         ss = size(cellArray{ii});
+0122         
+0123         imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
+0124         
+0125         cellArrayPos{ii} = colPos + ss(2)/2;
+0126         
+0127         
+0128         colPos = colPos + ss(2);
+0129         
+0130     <span class="keyword">end</span>
+0131     
+0132     clf;
+0133     imshow( imTot );
+0134     
+0135     <span class="keyword">if</span> CONST.view.falseColorFlag
+0136         cc = <span class="string">'w'</span>;
+0137     <span class="keyword">else</span>
+0138         cc = <span class="string">'b'</span>;
+0139     <span class="keyword">end</span>
+0140     
+0141     
+0142     <span class="keyword">for</span> ii = 1:numCells
+0143         text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), <span class="string">'Color'</span>, cc, <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span> );
+0144         
+0145     <span class="keyword">end</span>
+0146 <span class="keyword">end</span>
+0147 
+0148 <span class="keyword">end</span>
+0149 
+0150 
+0151 
+0152</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
