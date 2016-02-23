@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of ssoSegFunPa</title>
+  <meta name="keywords" content="ssoSegFunPa">
+  <meta name="description" content="ssoSegFunPa : starts segmentation of phase image and sets error flags">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">segmentation</a> &gt; ssoSegFunPa.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/segmentation&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>ssoSegFunPa
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>ssoSegFunPa : starts segmentation of phase image and sets error flags</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [ data, err_flag ] = ssoSegFunPa( phase, CONST, header, dataname, crop_box ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> ssoSegFunPa : starts segmentation of phase image and sets error flags
+ 
+ INPUT :
+       phase_ : phase image
+       CONST : segmentation constants
+       header : string displayed with infromation
+       dataname : 
+       crop_box : information about alignement of the image
+ 
+  OUTPUT :
+       data : contains information about the segments and mask, for more
+       information look at superSeggerOpti.
+       err_flag : set to true if there are more segments than max
+       
+ Written by Paul Wiggins and Keith Cheveralls
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="regionOpti.html" class="code" title="function [data] = regionOpti( data, dispp, CONST,header)">regionOpti</a>	regionOpti : Segmentaion optimization using region characteristics.</li><li><a href="superSeggerOptiP.html" class="code" title="function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, adapt_flag, header, crop_box )">superSeggerOptiP</a>	superSeggerOptiP generates the initial segmentation of rod-shaped cells.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ data, err_flag ] = ssoSegFunPa( phase, CONST, header, dataname, crop_box )</a>
+0002 <span class="comment">% ssoSegFunPa : starts segmentation of phase image and sets error flags</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       phase_ : phase image</span>
+0006 <span class="comment">%       CONST : segmentation constants</span>
+0007 <span class="comment">%       header : string displayed with infromation</span>
+0008 <span class="comment">%       dataname :</span>
+0009 <span class="comment">%       crop_box : information about alignement of the image</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%  OUTPUT :</span>
+0012 <span class="comment">%       data : contains information about the segments and mask, for more</span>
+0013 <span class="comment">%       information look at superSeggerOpti.</span>
+0014 <span class="comment">%       err_flag : set to true if there are more segments than max</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% Written by Paul Wiggins and Keith Cheveralls</span>
+0017 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0018 <span class="comment">% University of Washington, 2016</span>
+0019 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0020 
+0021 disp(<span class="string">'superSeggerOptiP'</span>);
+0022 
+0023 data = <a href="superSeggerOptiP.html" class="code" title="function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, adapt_flag, header, crop_box )">superSeggerOptiP</a>( phase ,[], ~CONST.seg.OPTI_FLAG ,CONST,1,header, crop_box);
+0024 drawnow;
+0025 
+0026 <span class="keyword">if</span> numel(data.segs.score) &gt; CONST.superSeggerOpti.MAX_SEG_NUM;
+0027     err_flag = true;
+0028     save([dataname,<span class="string">'_too_many_segs'</span>],<span class="string">'-STRUCT'</span>,<span class="string">'data'</span>);
+0029     disp( [header,<span class="string">'BSSO '</span>,dataname,<span class="string">'_too_many_segs'</span>] );
+0030     <span class="keyword">return</span>
+0031 <span class="keyword">else</span>
+0032     err_flag = false;    
+0033 <span class="keyword">end</span>
+0034 
+0035 <span class="comment">% optimize the regions here</span>
+0036 <span class="keyword">if</span> CONST.seg.OPTI_FLAG
+0037     data = <a href="regionOpti.html" class="code" title="function [data] = regionOpti( data, dispp, CONST,header)">regionOpti</a>( data, 1, CONST,header);
+0038     drawnow;
+0039 <span class="keyword">end</span>
+0040 <span class="keyword">end</span>
+0041</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,8 +1,10 @@
-function showSegData( data, im_flag );
-% showSegData draws the outline for a cell
+function showSegData( data, im_flag )
+% showSegData draws the outlines for a region
+%
 % INPUT :
-%   data : cell file
-%   im_flag : value from 1 to 3
+%   data : data (region/cell) file
+%   im_flag : value from 1 to 3 for different plot styles
+%
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.

@@ -3,31 +3,31 @@ function trackOptiView(dirname,file_filter,err_flag)
 %
 % It has a lot of options such as :
 % f : Toggle between phase and fluorescence view
-% x# :  Switch xy dir # 
-% t  : Show Cell Numbers 
+% x# :  Switch xy dir #
+% t  : Show Cell Numbers
 % r  : Show/Hide Region Outlines
-% o  : Show Consensus   
-% K  : Kymograph Mosaic 
-% h# : Tower for Cell #  
-% g  : Make Gate  
+% o  : Show Consensus
+% K  : Kymograph Mosaic
+% h# : Tower for Cell #
+% g  : Make Gate
 % Clear : Clear all Gates
 % c  : Reset Plot to Default View'
-% s  : Show Fluor Foci     
+% s  : Show Fluor Foci
 % #  : Go to Frame Number #
 % CC : Use Complete Cell Cycles
-% F : Find Cell Number #  
-% p  : Show/Hide Cell Poles 
+% F : Find Cell Number #
+% p  : Show/Hide Cell Poles
 % H# : Show Kymograph for Cell #
-% Z  : Cell Towers Mosaic      
-% G  : Gate All Cell Files       
-% Movie : Export Movie Frames   
-% 
+% Z  : Cell Towers Mosaic
+% G  : Gate All Cell Files
+% Movie : Export Movie Frames
+%
 % INPUT :
 %       dirname : directory that contains file segemented by supeSegger
-%       file_filter :
-%       err_flag :
+%       file_filter : used to obtain the contents (deafult .err file)
+%       err_flag : if 1, displays errors found in frame, default 0
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
@@ -47,7 +47,7 @@ if nargin<2 || isempty(file_filter);
 end
 
 if nargin<3 || isempty(err_flag);
-    err_flag = 1;
+    err_flag = 0;
 end
 
 FLAGS.err_flag = err_flag;
@@ -187,7 +187,6 @@ first_flag = 1;
 
 % This flag controls whether you reload from file
 resetFlag = true;
-
 FLAGS.e_flag = 0 ;
 
 %% Run the main loop... and run it while the runFlag is true.
@@ -196,10 +195,8 @@ while runFlag
     % load current frame
     if resetFlag
         resetFlag = false;
-        %tic
         [data_r, data_c, data_f] = intLoadData( dirname, ...
             D_FLAG, contents, nn, num_im, nameInfo, clist, dirnum);
-        %toc
     end
     
     if ~first_flag
@@ -210,12 +207,9 @@ while runFlag
         end
         
     end
-    
-    %tic
-    %try
+
     showDA4new( data_c, data_r, data_f, FLAGS, clist, CONST);
-    %toc
-    %end
+
     
     if FLAGS.c_flag && ~first_flag
         axis( tmp_axis );
@@ -268,18 +262,11 @@ while runFlag
     
     c = input(':','s')
     
-    
+    % LIST OF COMMANDS  
     if isempty(c)
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %
-        % LIST OF COMMANDS
-        %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        % Quit Command
-    elseif c(1) == 'q'
-        % This is the quit command
+        % do nothing
+    
+    elseif c(1) == 'q' % Quit Command
         if D_FLAG == AD_FLAG
             try
                 save( [dirname0,contents_xy(dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
@@ -288,9 +275,8 @@ while runFlag
             end
         end
         runFlag = 0  ;
-        
-        % Toggle Between Full Cell Cycles
-    elseif strcmp(c,'CC')
+                
+    elseif strcmp(c,'CC') % Toggle Between Full Cell Cycles
         CONST.view.showFullCellCycleOnly = ~CONST.view.showFullCellCycleOnly ;
         if CONST.view.showFullCellCycleOnly
             disp('Only including complete Cell Cycles (press any key)')
@@ -299,16 +285,10 @@ while runFlag
             disp('Including Incomplete Cell Cycles (press any key)')
             pause
         end
-        
-        
-        
-        
-        % Find Single Cells
-    elseif c(1) == 'F'
-        
+           
+    elseif c(1) == 'F' % Find Single Cells        
         if numel(c) > 1
             find_num = floor(str2num(c(2:end)));
-            
             if FLAGS.v_flag
                 regnum = find( data_c.regs.ID == find_num);
                 
@@ -333,9 +313,8 @@ while runFlag
             input('Press any key','s');
             
         end
-        
-        % Change xy positions
-    elseif c(1) == 'x'
+                
+    elseif c(1) == 'x' % Change xy positions
         if D_FLAG ~= SD_FLAG
             
             if numel(c)>1
@@ -394,23 +373,19 @@ while runFlag
             disp( 'Not supported in this mode.' );
         end
         
-        % Show/Hide Region Outlines
-    elseif c(1) == 'r'
-        FLAGS.P_flag = ~FLAGS.P_flag;
         
-        % Reset Plot to Default View
-    elseif strcmp(c,'c')
+    elseif c(1) == 'r' % Show/Hide Region Outlines
+        FLAGS.P_flag = ~FLAGS.P_flag;
+               
+    elseif strcmp(c,'c') % Reset Plot to Default View
         FLAGS.c_flag = ~FLAGS.c_flag;
         clf;
         first_flag = 1;
-        
-        % Toggle Between Fluorescence and Phase Images
-    elseif c(1) == 'f'
+               
+    elseif c(1) == 'f'  % Toggle Between Fluorescence and Phase Images
         FLAGS.f_flag = ~FLAGS.f_flag;
-        
-        % Gate Cells
-    elseif c(1) == 'g'
-        
+              
+    elseif c(1) == 'g' % choose characteristics and values to gate cells       
         disp('Choose gating characteristic')
         disp(clist.def')
         cc = input('Gate Number(s) [ ] :','s') ;
@@ -419,25 +394,19 @@ while runFlag
         clist = tmp_clist ;
         clf;
         first_flag = 1;
-        
-        % Clear All Gates
-    elseif strcmp(c,'Clear')
+              
+    elseif strcmp(c,'Clear')  % Clear All Gates
         clist.gate = [] ;
         clf;
         first_flag = 1;
-        
-        % Gate Cell Files
-    elseif c(1) == 'G'
-        header = 'trackOptiView: ';
-        
+              
+    elseif c(1) == 'G'   % moves gated cell Files to a different directory
+        header = 'trackOptiView: ';       
         trackOptiGateCellFiles(dirname,dirname_cell,CONST, header, clist);
-        
-        
-        % Gate All XY Positions
-    elseif c(1) == 'C'
+            
+    elseif c(1) == 'C' % Gate All XY Positions
         if D_FLAG == AD_FLAG
-            
-            
+                       
             if ~isfield( clist, 'gate' );
                 clist.gate = [];
             end
@@ -458,22 +427,17 @@ while runFlag
         else
             disp('Not supported');
         end
-        
-        
-        % Show Cell Numbers
-    elseif c(1) == 't'
+                       
+    elseif c(1) == 't' % Show Cell Numbers
         FLAGS.t_flag = ~FLAGS.t_flag;
-        
-        % Show Fluorescent Foci Fits
-    elseif c(1) == 's'
+                
+    elseif c(1) == 's' % Show Fluorescent Foci Fits
         FLAGS.s_flag = ~FLAGS.s_flag;
-        
-        % Show Cell Poles
-    elseif c(1) == 'p'
+               
+    elseif c(1) == 'p'  % Show Cell Poles
         FLAGS.p_flag = ~FLAGS.p_flag;
-        
-        % Enter Debugging Mode
-    elseif c(1) == 'k'
+                
+    elseif c(1) == 'k' % Enter Debugging Mode
         tmp_axis = axis;
         disp('Type "return" to exit debugging mode')
         keyboard
@@ -481,13 +445,12 @@ while runFlag
         clf;
         axis( tmp_axis );
         
-        % Make Kymograph Mosaic for All Cells
-    elseif c(1) == 'K'
+        
+    elseif c(1) == 'K' % Make Kymograph Mosaic for All Cells
         if D_FLAG == AD_FLAG
             tmp_axis = axis;
             clf;
-            makeKymoMosaic( [dirname_cell], CONST );
-            
+            makeKymoMosaic( dirname_cell, CONST );           
             disp('press enter to continue.');
             pause;
             axis(tmp_axis);
@@ -495,13 +458,11 @@ while runFlag
             disp( 'Not supported in this mode.' );
         end
         
-        % Show Cell Towers for All Cells
-    elseif c(1) == 'Z'
+    elseif c(1) == 'Z' %  Show Cell Towers for All Cells
         if D_FLAG == AD_FLAG
             tmp_axis = axis;
             clf;
-            
-            
+                       
             if numel(c) > 1
                 ll_ = floor(str2num(c(2:end)));
             else
@@ -518,21 +479,16 @@ while runFlag
             disp( 'Not supported in this mode.' );
         end
         
-        % Show Consensus for this XY if exists or Calculate new one
-    elseif c(1) == 'o'
         
+    elseif c(1) == 'o' % Show existant consensus for this XY or calculate new one        
         intCons(dirname0, contents_xy(ixy), dircons, setHeader, CONST)%
-        
-        % Calculate Consensus for all XY
-    elseif c(1) == 'Y'
+                
+    elseif c(1) == 'Y' % Calculate Consensus for all XY
         
         tmp_axis = axis;
-        clf;
+        clf;     
         
-        
-        parfor iii = 1:num_xy
-            
-            
+        parfor iii = 1:num_xy                       
             try
                 intCons(dirname0, contents_xy(iii), dircons, setHeader, CONST)
             catch
@@ -583,28 +539,23 @@ while runFlag
                 
                 [data_r__, data_c__, data_f__] = intLoadData( dirname__, ...
                     D_FLAG, contents__, nn__, num_im, nameInfo__, clist__, iii);
-                
-                
-                
+                            
                 im_tmp = showDA4new( data_c__, data_r__, data_f__, FLAGS__, clist__, CONST);
                 imwrite( im_tmp, [dircons, 'field_', setHeader, '_', num2str(ixy__,'%02d'), '.tif'], 'tif' );
-            catch
-                
+            catch ME
+                printError(ME);
                 disp(['error with ',num2str(iii)]);
             end
         end
         
-        figure(1);
-        
-        
+        figure(1);       
         axis equal
-        
-        
+               
         figure(1);
         axis(tmp_axis);
         
-        % Cell Tower for Single Cell
-    elseif c(1) == 'h'
+        
+    elseif c(1) == 'h' % Cell Tower for Single Cell
         
         if D_FLAG == AD_FLAG
             
@@ -659,9 +610,8 @@ while runFlag
             disp( 'Not supported in this mode.' );
         end
         
-        % Show Kymograph for Single Cell
-    elseif c(1) == 'H'
         
+    elseif c(1) == 'H' % Show Kymograph for Single Cell
         
         if D_FLAG == AD_FLAG
             
@@ -710,13 +660,12 @@ while runFlag
             disp( 'Not supported in this mode.' );
         end
         
-        % Make Time-Lapse Images for Movies
-    elseif strcmp(c,'Movie')
+       
+    elseif strcmp(c,'Movie')  % Make Time-Lapse Images for Movies
         setAxis = axis;
-        nn_old = nn;
-        
+        nn_old = nn;       
         z_pad = ceil(log(num_im)/log(10));
-        
+
         movdir = 'mov';
         if ~exist( movdir, 'dir' )
             mkdir( movdir );
@@ -742,93 +691,63 @@ while runFlag
         nn = nn_old;
         resetFlag = true;
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %
-        % Developer Tools (use at own risk)
-        %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         
-        % Show Error List
-    elseif c(1) == 'e'
+    %% DEVELOPER TOOLS : Use at your own risk   
+    elseif c(1) == 'e' % Show Error List
         FLAGS.e_flag = ~FLAGS.e_flag;
-        
-        % Toggle between cell view and region view
-    elseif c(1) == 'v'
-        
-        FLAGS.v_flag = ~FLAGS.v_flag;
-        
-        
-        % Edit Segments
-    elseif strcmp(c,'editSegs')
+               
+    elseif c(1) == 'v'  % Toggle between cell view and region view
+        FLAGS.v_flag = ~FLAGS.v_flag;       
+      
+    elseif strcmp(c,'editSegs')  % Edit Segments
         segsTLEdit( dirname, nn);
         
-        % Re-Link
-    elseif strcmp(c, 'relink')
-        
-        if ispc
-            eval(['!del ',dirname_cell,'*.mat'      ]);
-            eval(['!del ',dirname,     '*trk.mat*'  ]);
-            eval(['!del ',dirname,     '*err.mat*'  ]);
-            eval(['!del ',dirname,     '.trackOpti*']);
-            eval(['!del ',dirname_xy,  'clist.mat'  ]);
-        else
-            eval(['!\rm ',dirname_cell,'*.mat'      ]);
-            eval(['!\rm ',dirname,     '*trk.mat*'  ]);
-            eval(['!\rm ',dirname,     '*err.mat*'  ]);
-            eval(['!\rm ',dirname,     '.trackOpti*']);
-            eval(['!\rm ',dirname_xy,  'clist.mat'  ]);
-        end
-        
+    elseif strcmp(c, 'relink') % Re-Link
+        delete([dirname_cell,'*.mat']);
+        delete([dirname,'*trk.mat*']);
+        delete([dirname,'*err.mat*']);
+        delete([dirname,'.trackOpti*']);
+        delete([dirname_xy,'clist.mat']);        
         % Re-Run trackOpti
         skip = 1;
         CLEAN_FLAG = false;
         header = 'trackOptiView: ';
-        trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
-        
-    elseif c(1) == 'n';
-        
+        trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);   
+    
+    elseif c(1) == 'n'; % pick region and ignore error      
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
-        else
-            
+        else           
             x = floor(ginput(1));
             
             if ~isempty(x)
                 ii = data_c.regs.regs_label(x(2),x(1));
                 tmp_axis = axis();
-                
-                
+                               
                 if ~ii
                     disp('missed region');
                 else
                     
                     if isfield( data_c.regs, 'ignoreError' )
-                        disp(['Picked region ',num2str(ii)]);
-                        
-                        
-                        data_c.regs.ignoreError(ii) = 1;
-                        
+                        disp(['Picked region ',num2str(ii)]);                                             
+                        data_c.regs.ignoreError(ii) = 1;                        
                         save([dirname,contents(nn  ).name],'-STRUCT','data_c');
-                    else
-                        
-                        disp( 'Ignore error not implemented for your version of trackOpti.');
-                        
+                    else                        
+                        disp( 'Ignore error not implemented for your version of trackOpti.');                        
                     end
                 end
             end
             
         end
         
-        % Reset Linking in Current Frame
-    elseif strcmp(c,'link');
+        
+    elseif strcmp(c,'link'); % Reset Linking in Current Frame
         
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
-        else
-            
-            
-            disp('pick region to reset linking in the current frame');
-            
+        else                      
+            disp('pick region to reset linking in the current frame');            
             x = floor(ginput(1));
             
             if ~isempty(x)
@@ -897,18 +816,16 @@ while runFlag
         end
         
         
-        % ReRun Error Resolution
-    elseif strcmp(c,'errRez');
-        % Re-run ErRes and linking code trackOpti
-        ctmp = input('Are you sure? (y/n): ','s');
+        
+    elseif strcmp(c,'errRez'); % ReRun Error Resolution and  linking code trackOpti
+        ctmp = input('Are you sure you want to re-run error resolution? (y/n): ','s');
         
         if ismember(ctmp(1),'yY')
             % Erase all stamp files after .trackOptiSetEr.mat
             contents_stamp = dir( [dirname,filesep,'.trackOpti*'] );
             num_stamp = numel( contents_stamp );
             
-            for iii = 1:num_stamp
-                
+            for iii = 1:num_stamp               
                 if isempty( strfind( contents_stamp(iii).name,...
                         '.trackOptiLink.mat'  ) ) && ...
                         isempty( strfind( contents_stamp(iii).name,...

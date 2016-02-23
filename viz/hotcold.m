@@ -1,4 +1,4 @@
-function cm = hotPlot( numC )
+function cm = hotcold( numC )
 
 dd = ceil((numC-1)/2);
 cc = ((1:numC)-dd-1)'/dd;

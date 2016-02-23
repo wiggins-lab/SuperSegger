@@ -1,0 +1,400 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of makeFrameMosaic</title>
+  <meta name="keywords" content="makeFrameMosaic">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">viz</a> &gt; makeFrameMosaic.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>makeFrameMosaic
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="makeFrameStripeMosaic.html" class="code" title="function [imTot] = makeFrameStripeMosaic( dirName, CONST, ll_, disp_flag )">makeFrameStripeMosaic</a>	</li><li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )</a>
+0002 
+0003 
+0004 del = 0.0;
+0005 
+0006 
+0007 <span class="keyword">persistent</span> strel1;
+0008 <span class="keyword">if</span> isempty( strel1 )
+0009     strel1 = strel(<span class="string">'disk'</span>,1);
+0010 <span class="keyword">end</span>
+0011 
+0012 <span class="keyword">persistent</span> colormap_;
+0013 <span class="keyword">if</span> isempty( colormap_ )
+0014     colormap_ = jet( 256 );
+0015     <span class="comment">%colormap_ = colormap( 'hsv' );</span>
+0016 <span class="keyword">end</span>
+0017 
+0018 
+0019 <span class="keyword">if</span> ~exist(<span class="string">'skip'</span>,<span class="string">'var'</span>) || isempty( skip )
+0020     skip = 1;
+0021 <span class="keyword">end</span>
+0022 
+0023 
+0024 <span class="keyword">if</span> ~exist(<span class="string">'disp_flag'</span>, <span class="string">'var'</span> ) || isempty( disp_flag )
+0025     disp_flag = true;
+0026 <span class="keyword">end</span>
+0027 
+0028 
+0029 <span class="keyword">if</span> isfield( CONST, <span class="string">'view'</span> ) &amp;&amp; isfield( CONST.view, <span class="string">'orientFlag'</span> )
+0030     orientFlag = CONST.view.orientFlag;
+0031 <span class="keyword">else</span>
+0032     orientFlag = true;
+0033 <span class="keyword">end</span>
+0034 
+0035 
+0036 clf;
+0037 
+0038 
+0039 TimeStep     = CONST.getLocusTracks.TimeStep;
+0040 
+0041 
+0042 numframe = numel( data.CellA );
+0043 
+0044 
+0045 imCell = cell( 1, numel(data.CellA) );
+0046 alpha = zeros(1, numel(data.CellA) );
+0047 ssCell = imCell;
+0048 xxCell = imCell;
+0049 yyCell = imCell;
+0050 
+0051 max_x = 0;
+0052 max_y = 0;
+0053 
+0054 
+0055 <span class="keyword">for</span> ii = 1:numframe
+0056     
+0057     
+0058     <span class="keyword">if</span> orientFlag
+0059         
+0060         <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'pole'</span> ) &amp;&amp; ~isnan( data.CellA{ii}.pole.op_ori ) &amp;&amp; (data.CellA{ii}.pole.op_ori ~= 0)
+0061             ssign = sign(data.CellA{ii}.pole.op_ori);
+0062         <span class="keyword">else</span>
+0063             ssign = 1;
+0064         <span class="keyword">end</span>
+0065         
+0066         <span class="comment">%ssign</span>
+0067         
+0068         e1 = data.CellA{ii}.coord.e1;
+0069         alpha(ii) = 90-180/pi*atan2(e1(1),e1(2)) + 180*double(ssign==1);
+0070         
+0071         mask = data.CellA{ii}.mask;
+0072         mask = logical(imdilate(mask,strel1));
+0073         
+0074         tmp = imrotate( double(mask), alpha(ii), <span class="string">'bilinear'</span> );
+0075         
+0076         sstmp = size( tmp );
+0077         
+0078         ttmp = sum(tmp);
+0079         xmin_ = max([1,find(ttmp&gt;0,1,<span class="string">'first'</span>)-1]);
+0080         xmax_ = min([sstmp(2),find(ttmp&gt;0,1, <span class="string">'last'</span>)+1]);
+0081         
+0082         ttmp = sum(tmp');
+0083         ymin_ = max([1,find(ttmp&gt;0,1,<span class="string">'first'</span>)-1]);
+0084         ymax_ = min([sstmp(1),find(ttmp&gt;0,1, <span class="string">'last'</span>)+1]);
+0085         
+0086         
+0087         yyCell{ii} = ymin_:ymax_;
+0088         xxCell{ii} = xmin_:xmax_;
+0089         
+0090         <span class="keyword">try</span>
+0091             imCell{ii} = tmp( ymin_:ymax_, xmin_:xmax_ );
+0092         <span class="keyword">catch</span>
+0093             
+0094             <span class="string">'hi'</span>
+0095         <span class="keyword">end</span>
+0096         
+0097         ss = size( imCell{ii} );
+0098         ssCell{ii} = ss;
+0099     <span class="keyword">else</span>
+0100         ss = size(data.CellA{ii}.mask);
+0101         ssCell{ii} = ss;
+0102     <span class="keyword">end</span>
+0103     
+0104     max_x = max( [max_x, ss(2)] );
+0105     max_y = max( [max_y, ss(1)] );
+0106 <span class="keyword">end</span>
+0107 
+0108 
+0109 
+0110 <span class="keyword">if</span> exist( <span class="string">'xdim'</span>, <span class="string">'var'</span>) &amp;&amp; ~isempty( xdim )
+0111     nx = xdim;
+0112     ny = ceil( numframe/nx/skip );
+0113 <span class="keyword">else</span>
+0114     nx = ceil( sqrt( numframe*max_y/max_x/skip ) );
+0115     ny = ceil( numframe/nx/skip );
+0116 <span class="keyword">end</span>
+0117 
+0118 max_x = max_x+1;
+0119 max_y = max_y+1;
+0120 
+0121 
+0122 imdim = [ max_y*ny + 1, max_x*nx + 1 ];
+0123 
+0124 im = uint8(zeros(imdim(1), imdim(2), 3 ));
+0125 
+0126 im1_= uint16(zeros(imdim(1), imdim(2)));
+0127 im2_= uint16(zeros(imdim(1), imdim(2)));
+0128 <span class="comment">%mask_ = logical(zeros(imdim(1), imdim(2)));</span>
+0129 mask_d = zeros(imdim(1), imdim(2));
+0130 
+0131 im_list = [];
+0132 
+0133 f1mm = [];
+0134 f2mm = [];
+0135 
+0136 
+0137 <span class="keyword">for</span> ii = 1:skip:numframe
+0138     
+0139     yy = floor((ii-1)/nx/skip);
+0140     xx = (ii-1)/skip-yy*nx;
+0141     
+0142     <span class="comment">%yy = floor((ii-1)/nx);</span>
+0143     <span class="comment">%xx = ii-yy*nx-1;</span>
+0144     
+0145     ss = ssCell{ii};
+0146     
+0147     dx = floor((max_x-ss(2))/2);
+0148     dy = floor((max_y-ss(1))/2);
+0149     
+0150     <span class="keyword">if</span> orientFlag
+0151         mask = imCell{ii};
+0152         mask = (imdilate( mask, strel1 ));
+0153     <span class="keyword">else</span>
+0154         mask = data.CellA{ii}.mask;
+0155         mask = (imdilate( mask, strel1 ));
+0156     <span class="keyword">end</span>
+0157     
+0158     mask_d(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = mask;
+0159     
+0160     <span class="comment">% fluor1</span>
+0161     <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fluor1'</span> )
+0162         
+0163         <span class="keyword">if</span> orientFlag
+0164             fluor1 = imrotate(data.CellA{ii}.fluor1,alpha(ii));
+0165             fluor1 = fluor1(yyCell{ii}, xxCell{ii});
+0166         <span class="keyword">else</span>
+0167             fluor1 = data.CellA{ii}.fluor1;
+0168         <span class="keyword">end</span>
+0169         
+0170         <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fl1'</span> ) &amp;&amp; <span class="keyword">...</span>
+0171                 isfield( data.CellA{ii}.fl1, <span class="string">'bg'</span> )
+0172             fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
+0173             fluor1(fluor1&lt;0) = 0;
+0174         <span class="keyword">else</span>
+0175             fluor1 = fluor1 - mean(fluor1(:));
+0176             fluor1(fluor1&lt;0) = 0;
+0177         <span class="keyword">end</span>
+0178         
+0179         im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;
+0180           
+0181         FLAG1 = true;
+0182     <span class="keyword">else</span>
+0183         im1_ = 0*mask_;
+0184         FLAG1 = false;
+0185         f1mm = [0,1];
+0186     <span class="keyword">end</span>
+0187     
+0188     
+0189     <span class="comment">% fluor2</span>
+0190     flag2 = isfield( data.CellA{ii}, <span class="string">'fluor2'</span> );
+0191     <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fluor2'</span> )
+0192                 
+0193         <span class="keyword">if</span> orientFlag
+0194             fluor2 = imrotate(data.CellA{ii}.fluor2,alpha(ii),<span class="string">'bilinear'</span>);
+0195             fluor2 = fluor2(yyCell{ii}, xxCell{ii});
+0196         <span class="keyword">else</span>
+0197             fluor2 = data.CellA{ii}.fluor2
+0198         <span class="keyword">end</span>
+0199         
+0200         <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fl2'</span> ) &amp;&amp; <span class="keyword">...</span>
+0201                 isfield( data.CellA{ii}.fl2, <span class="string">'bg'</span> )
+0202             fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
+0203             fluor2(fluor2&lt;0) = 0;
+0204         <span class="keyword">end</span>
+0205         
+0206         im2_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor2;
+0207         FLAG2 = true;
+0208     <span class="keyword">else</span>
+0209         im2_ = uint8(0*mask_d);
+0210         FLAG2 = false;
+0211         f2mm = [0,1];
+0212     <span class="keyword">end</span>
+0213     
+0214     
+0215     <span class="keyword">if</span> FLAG2
+0216         im_list = [im_list, data.CellA{ii}.fluor1(:)', data.CellA{ii}.fluor2(:)'];
+0217     <span class="keyword">elseif</span> FLAG1
+0218         im_list = [im_list, data.CellA{ii}.fluor1(:)'];
+0219     <span class="keyword">else</span>
+0220         im_list = [im_list];
+0221     <span class="keyword">end</span>
+0222     
+0223 <span class="keyword">end</span>
+0224 
+0225 
+0226 <span class="comment">% do ag</span>
+0227 <span class="comment">%im1_ = ag(log(double(im1_)),log(double(f1mm(1))),log(double(f1mm(2))));</span>
+0228 im1_ = ag(im1_);
+0229 
+0230 im2_ = ag(im2_);
+0231 
+0232 
+0233 disk1 = strel(<span class="string">'disk'</span>,1);
+0234 <span class="comment">%outer = imdilate(mask_, disk1).*double(~mask_);</span>
+0235 
+0236 <span class="keyword">if</span> isfield(CONST.view, <span class="string">'falseColorFlag'</span>) &amp;&amp; <span class="keyword">...</span>
+0237         CONST.view.falseColorFlag <span class="comment">%&amp;&amp; ~flag2</span>
+0238     
+0239     <span class="keyword">if</span> ~isfield( CONST.view, <span class="string">'background'</span> );
+0240                 CONST.view.background = [0,0,0];
+0241     <span class="keyword">end</span>
+0242     
+0243     im    = ag(<a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( im1_, colormap_ ));
+0244     back3 = uint8( cat( 3, double(CONST.view.background(1))*double(1-mask_d),<span class="keyword">...</span>
+0245         double(CONST.view.background(2))*double(1-mask_d),<span class="keyword">...</span>
+0246         double(CONST.view.background(3))*double(1-mask_d)));
+0247     
+0248     mask3 = cat( 3, mask_d, mask_d, mask_d );
+0249     im = uint8(uint8( double(im).*mask3)+back3);
+0250     
+0251 <span class="keyword">elseif</span> 0
+0252     del = 0.3;
+0253     
+0254     im_mean = mean( im_list(:) );
+0255     
+0256     im1_ = uint16( im1_ - im_mean );
+0257     im2_ = uint16( im2_ - im_mean );
+0258     
+0259     mask__ = ~((~mask_).*(~outer));
+0260     
+0261     im = cat( 3, <span class="keyword">...</span>
+0262         del*ag(~mask__)+ag(double(im2_).*(1+2*double(mask__))), <span class="keyword">...</span>
+0263         del*ag(~mask__)+ag(double(im1_).*(1+2*double(mask__))), <span class="keyword">...</span>
+0264         uint8(del*ag(~mask__)+ag(outer)) );
+0265     
+0266 <span class="keyword">elseif</span> 0
+0267     
+0268     del = 0.25;
+0269     
+0270     im_mean = mean( im_list(:) );
+0271     
+0272     im1_ = uint16( im1_ - im_mean );
+0273     im2_ = uint16( im2_ - im_mean );
+0274     
+0275     disk1 = strel(<span class="string">'disk'</span>,1);
+0276     outer = imdilate(mask_, disk1).*double(~mask_);
+0277     
+0278     im = cat( 3, <span class="keyword">...</span>
+0279         0*(1+2*double(mask_)), <span class="keyword">...</span>
+0280         ag(double(im1_).*double(mask_)), <span class="keyword">...</span>
+0281         del*ag(mask_) );
+0282 <span class="keyword">else</span>
+0283     del = 1;
+0284     
+0285     disk1 = strel(<span class="string">'disk'</span>,1);
+0286     <span class="comment">%    outer = imdilate(mask_, disk1).*double(~mask_);</span>
+0287     
+0288     im = cat( 3, <span class="keyword">...</span>
+0289         uint8(double(im2_).*mask_d)+del*ag(1-mask_d), <span class="keyword">...</span>
+0290         uint8(double(im1_).*mask_d)+del*ag(1-mask_d), <span class="keyword">...</span>
+0291         del*ag(1-mask_d) );
+0292     
+0293     
+0294 <span class="keyword">end</span>
+0295 
+0296 
+0297 
+0298 inv_flag = 0;
+0299 
+0300 
+0301 <span class="keyword">if</span> disp_flag
+0302     
+0303     <span class="keyword">if</span> inv_flag
+0304         imshow( 255-im );
+0305     <span class="keyword">else</span>
+0306         imshow( im );
+0307     <span class="keyword">end</span>
+0308     
+0309     
+0310     <span class="keyword">if</span> isfield( CONST.view, <span class="string">'falseColorFlag'</span> ) <span class="keyword">...</span>
+0311             &amp;&amp; CONST.view.falseColorFlag
+0312         cc = <span class="string">'w'</span>;
+0313     <span class="keyword">else</span>
+0314         cc = <span class="string">'b'</span>;
+0315     <span class="keyword">end</span>
+0316     
+0317     
+0318     
+0319     hold on;
+0320     
+0321     <span class="keyword">for</span> ii = 1:numframe
+0322         
+0323         yy = floor((ii-1)/nx);
+0324         xx = ii-yy*nx-1;
+0325         
+0326         y = 1+yy*max_y;
+0327         x = 1+xx*max_x;
+0328         
+0329         
+0330         <span class="comment">%text( x+2, y+2, num2str((ii-1)*TimeStep),'Color',cc,'FontSize',12,'VerticalAlignment','Top');</span>
+0331         <span class="comment">%      rr = data.CellA{ii}.coord.rcm-data.CellA{ii}.r_offset;</span>
+0332         <span class="comment">%      dr = data.CellA{ii}.length(1)*data.CellA{ii}.coord.e1;</span>
+0333         <span class="comment">%</span>
+0334         <span class="comment">%      plot( x+rr(1)+[0,dr(1)], y+rr(2)+[0,dr(2)], 'r.-' );</span>
+0335         
+0336         
+0337     <span class="keyword">end</span>
+0338     
+0339     
+0340     dd = [1,ny*max_y+1];
+0341     <span class="keyword">for</span> xx = 1:(nx-1)
+0342         plot( 0*dd + 1+xx*max_x, dd,[<span class="string">':'</span>,cc]);
+0343     <span class="keyword">end</span>
+0344     
+0345     dd = [1,nx*max_x+1];
+0346     <span class="keyword">for</span> yy = 1:(ny-1)
+0347         plot( dd, 0*dd + 1+yy*max_y, [<span class="string">':'</span>,cc]);
+0348     <span class="keyword">end</span>
+0349 <span class="keyword">end</span>
+0350 
+0351 <span class="keyword">end</span>
+0352 
+0353</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of fitKymo4</title>
+  <meta name="keywords" content="fitKymo4">
+  <meta name="description" content="UNTITLED Summary of this function goes here">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">viz</a> &gt; fitKymo4.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>fitKymo4
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>UNTITLED Summary of this function goes here</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [ I ] = fitKymo4( kymo, kymoMask, disp_flag ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">UNTITLED Summary of this function goes here
+   Detailed explanation goes here</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="colorize.html" class="code" title="function  imTmp_ = colorize( im, mask, colormap_, back )">colorize</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="makeConsIm.html" class="code" title="function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix,AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag )">makeConsIm</a>	makeConsIm Computes consensus fluorescence localization from cells in a cell files</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function y = fitFun( x, ymask, I0, x1, s1, I1, x2, s2, I2, x3, s3, I3 )</a></li><li><a href="#_sub2" class="code">function I = intDoInt( x, y, xi, depp )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ I ] = fitKymo4( kymo, kymoMask, disp_flag )</a>
+0002 <span class="comment">%UNTITLED Summary of this function goes here</span>
+0003 <span class="comment">%   Detailed explanation goes here</span>
+0004 
+0005 epp = 0.65;
+0006 
+0007 tmp = kymoMask(:);
+0008 diam = max( tmp );
+0009 diam = mean( tmp(tmp&gt;0.9*diam ) );
+0010 
+0011 cutter = epp*diam;
+0012 
+0013 kymoMask_ = kymoMask/diam;
+0014 kymoMask_(kymoMask_&gt;1) = 1;
+0015 
+0016 
+0017 kymoMaskCS    = cumsum(kymoMask_);
+0018 kymoMaskCSrev = cumsum(kymoMask_(end:-1:1,:));
+0019 kymoMaskCSrev = kymoMaskCSrev(end:-1:1,:);
+0020 
+0021 kymoMaskDif = 0.5*(kymoMaskCS-kymoMaskCSrev);
+0022 kymoMask_ = double(kymoMaskCS&gt;cutter).*double(kymoMaskCSrev&gt;cutter)+double(abs(kymoMaskDif)&gt;(cutter));
+0023 
+0024 
+0025 <span class="keyword">if</span> disp_flag
+0026 figure(88)
+0027 clf;
+0028 imagesc( uint8(0.33*(1+cat(3,kymoMask_,kymoMask_,kymoMask_)).*double(<a href="colorize.html" class="code" title="function  imTmp_ = colorize( im, mask, colormap_, back )">colorize</a>(kymo, kymoMask))));
+0029 
+0030 <span class="keyword">end</span>
+0031 depp = 0.2;
+0032 ivec = 0:depp:cutter;
+0033 
+0034 
+0035 
+0036 ss = size( kymo );
+0037 T0   = ss(2);
+0038 xmax = ss(1);
+0039 
+0040 I = zeros( T0, 5 );
+0041 
+0042 <span class="keyword">for</span> ii = 1:T0
+0043     I(ii,1)=<a href="#_sub2" class="code" title="subfunction I = intDoInt( x, y, xi, depp )">intDoInt</a>( kymoMaskCS(:,ii),           kymo(:,ii), <span class="keyword">...</span>
+0044         ivec, depp );
+0045     I(ii,2)=<a href="#_sub2" class="code" title="subfunction I = intDoInt( x, y, xi, depp )">intDoInt</a>(-kymoMaskDif(end:-1:1,ii),   kymo(end:-1:1,ii),<span class="keyword">...</span>
+0046         ivec, depp );
+0047     I(ii,3)=<a href="#_sub2" class="code" title="subfunction I = intDoInt( x, y, xi, depp )">intDoInt</a>( kymoMaskDif(:,ii),          kymo(:,ii),<span class="keyword">...</span>
+0048         ivec, depp );
+0049     I(ii,4)=<a href="#_sub2" class="code" title="subfunction I = intDoInt( x, y, xi, depp )">intDoInt</a>( kymoMaskCSrev(end:-1:1,ii), kymo(end:-1:1,ii),<span class="keyword">...</span>
+0050         ivec, depp );
+0051     I(ii,5)=sum( kymo(:,ii) );
+0052 <span class="keyword">end</span>
+0053 
+0054 <span class="keyword">if</span> disp_flag
+0055     figure(99);
+0056     clf;
+0057     imshow( I, [] );
+0058     colormap jet;
+0059     
+0060     figure(98);
+0061     clf;
+0062     tt = (0:(T0-1))/(T0-1);
+0063     plot( tt, I(:,1), <span class="string">'r.-'</span>);
+0064     hold on;
+0065     plot( tt, I(:,2), <span class="string">'g.-'</span>);
+0066     plot( tt, I(:,3), <span class="string">'b.-'</span>);
+0067     plot( tt, I(:,4), <span class="string">'y.-'</span>);
+0068     plot( tt, I(:,5), <span class="string">'m.-'</span>);
+0069     
+0070     legend(<span class="string">'Old Pole'</span>,<span class="string">'Mid Cell (Old)'</span>,<span class="keyword">...</span>
+0071         <span class="string">'Mid Cell (New)'</span>,<span class="string">'New Pole'</span>,<span class="string">'Total'</span>);
+0072     xlabel( <span class="string">'Time (Cell Cycles)'</span> );
+0073     ylabel( <span class="string">'Intensity (AU)'</span>);
+0074     
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="keyword">end</span>
+0078 
+0079 
+0080 <a name="_sub1" href="#_subfunctions" class="code">function y = fitFun( x, ymask, I0, x1, s1, I1, x2, s2, I2, x3, s3, I3 )</a>
+0081 
+0082 y = I0.*ymask + <span class="keyword">...</span>
+0083     sqrt(1/(2*pi*s1^2))*abs(I1)*exp( -(x-x1).^2/(2*s1^2) ) + <span class="keyword">...</span>
+0084     sqrt(1/(2*pi*s2^2))*abs(I2)*exp( -(x-x2).^2/(2*s2^2) ) + <span class="keyword">...</span>
+0085     sqrt(1/(2*pi*s3^2))*abs(I3)*exp( -(x-x3).^2/(2*s3^2) );
+0086 
+0087 <span class="keyword">end</span>
+0088 
+0089 
+0090 <a name="_sub2" href="#_subfunctions" class="code">function I = intDoInt( x, y, xi, depp )</a>
+0091 
+0092 
+0093     ind1 = find( x &gt; min(x), 1, <span class="string">'first'</span> )-1;
+0094     ind2 = find( x &lt; max(x), 1, <span class="string">'last'</span>  )+1;
+0095 
+0096     I = sum( depp * interp1( x(ind1:ind2), y(ind1:ind2), xi ));
+0097 
+0098 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

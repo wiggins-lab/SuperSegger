@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiFindLoci</title>
+  <meta name="keywords" content="trackOptiFindLoci">
+  <meta name="description" content="trackOptiFindLoci fits the foci. Note that this only runs if the number">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">locusTrack</a> &gt; trackOptiFindLoci.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/locusTrack&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiFindLoci
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiFindLoci fits the foci. Note that this only runs if the number</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [clist, clist_def] = trackOptiFindLoci(dirname,CONST,header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiFindLoci fits the foci. Note that this only runs if the number
+ of foci to be fit is set in CONST.trackLoci.numSpots.
+
+ INPUT : 
+   dirname_xy: is the xy directory
+   skip: frames mod skip are processed 
+   CONST: are the segmentation constants.
+   header : string displayed with information
+ 
+ Copyright (C) 2016 Wiggins Lab 
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="intTrackSpots.html" class="code" title="function locus = intTrackSpots(fluor, numLoci, celld, CONST);">intTrackSpots</a>	intTrackSpots : Fits locus positions from the fluorescence</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function data = loaderInternal( filename );</a></li><li><a href="#_sub2" class="code">function intDoLoci( i, dirname, contents, num_im, nc, CONST)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [clist, clist_def] = trackOptiFindLoci(dirname,CONST,header)</a>
+0002 <span class="comment">% trackOptiFindLoci fits the foci. Note that this only runs if the number</span>
+0003 <span class="comment">% of foci to be fit is set in CONST.trackLoci.numSpots.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%   dirname_xy: is the xy directory</span>
+0007 <span class="comment">%   skip: frames mod skip are processed</span>
+0008 <span class="comment">%   CONST: are the segmentation constants.</span>
+0009 <span class="comment">%   header : string displayed with information</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">% University of Washington, 2016</span>
+0013 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0014 
+0015 
+0016 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0017     header = [];
+0018 <span class="keyword">end</span>
+0019 
+0020 dirname = fixDir( dirname );
+0021 
+0022 <span class="comment">% Get the track file names...</span>
+0023 contents=dir([dirname  <span class="string">'*_err.mat'</span>]);
+0024 num_im = numel(contents);
+0025 data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname  contents(1).name]);
+0026 nc = 0;
+0027 tmp_fn = fieldnames( data_c );
+0028 nf = numel( tmp_fn );
+0029 
+0030 <span class="keyword">for</span> j = 1:nf;
+0031     <span class="keyword">if</span>(strfind(tmp_fn{j},<span class="string">'fluor'</span>)==1)
+0032         nc = nc+1;
+0033     <span class="keyword">end</span>
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">% Find Loci can be ||</span>
+0037 <span class="keyword">if</span> isfield( data_c, <span class="string">'fluor1'</span> );
+0038     <span class="keyword">if</span> CONST.show_status
+0039         h = waitbar( 0, <span class="string">'Find Loci.'</span>);
+0040     <span class="keyword">else</span>
+0041         h = [];
+0042     <span class="keyword">end</span>
+0043     <span class="keyword">for</span> i = 1:num_im
+0044         <span class="comment">%parfor i = 1:num_im;</span>
+0045         <a href="#_sub2" class="code" title="subfunction intDoLoci( i, dirname, contents, num_im, nc, CONST)">intDoLoci</a>( i, dirname, contents, num_im, nc, CONST);
+0046         <span class="keyword">if</span> CONST.show_status
+0047             waitbar(i/num_im,h,[<span class="string">'Find Loci--Frame: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_im)]);
+0048         <span class="keyword">else</span>
+0049             disp( [header, <span class="string">'FindLoci: No status bar. Frame '</span>,num2str(i), <span class="keyword">...</span>
+0050                 <span class="string">' of '</span>, num2str(num_im),<span class="string">'.'</span>]);
+0051         <span class="keyword">end</span>
+0052     <span class="keyword">end</span>
+0053     <span class="keyword">if</span> CONST.show_status
+0054         close(h);
+0055     <span class="keyword">end</span>
+0056 <span class="keyword">end</span>
+0057 
+0058 <span class="keyword">end</span>
+0059 
+0060 <a name="_sub1" href="#_subfunctions" class="code">function data = loaderInternal( filename );</a>
+0061 data = load( filename );
+0062 <span class="keyword">end</span>
+0063 
+0064 
+0065 
+0066 
+0067 <a name="_sub2" href="#_subfunctions" class="code">function intDoLoci( i, dirname, contents, num_im, nc, CONST)</a>
+0068 data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname,contents(i  ).name]);
+0069 <span class="keyword">for</span> ii = 1:data_c.regs.num_regs
+0070     <span class="keyword">for</span> j = 1:nc
+0071         <span class="keyword">if</span> isfield( CONST.trackLoci, <span class="string">'numSpots'</span> ) &amp;&amp; numel(CONST.trackLoci.numSpots)&gt;=j
+0072             numSpots = CONST.trackLoci.numSpots(j);
+0073             <span class="keyword">if</span> numSpots
+0074                 tmp              = getfield( data_c.CellA{ii}, [<span class="string">'fluor'</span>,num2str(j)]);
+0075                 data_c.CellA{ii} = setfield( data_c.CellA{ii}, [<span class="string">'locus'</span>,num2str(j)], <a href="intTrackSpots.html" class="code" title="function locus = intTrackSpots(fluor, numLoci, celld, CONST);">intTrackSpots</a>( tmp, numSpots, data_c.CellA{ii}, CONST ));
+0076             <span class="keyword">end</span>
+0077         <span class="keyword">end</span>
+0078     <span class="keyword">end</span>
+0079 <span class="keyword">end</span>
+0080 
+0081 dataname = [dirname,contents(i  ).name];
+0082 save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data_c'</span>);
+0083 
+0084 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

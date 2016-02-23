@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiListNeighbor</title>
+  <meta name="keywords" content="trackOptiListNeighbor">
+  <meta name="description" content="trackOptiListNeighbor : creates a neighbors list for each cell.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">cell</a> &gt; trackOptiListNeighbor.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/cell&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiListNeighbor
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiListNeighbor : creates a neighbors list for each cell.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [clist_tmp] = trackOptiListNeighbor(dirname,CONST,header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiListNeighbor : creates a neighbors list for each cell.
+
+ INPUT :
+       dirname: seg folder eg. maindirectory/xy1/seg
+       CONST: are the segmentation constants.
+       header : string displayed with information
+ OUTPUT :
+       clist_temp : contains list of neighbors
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiClist.html" class="code" title="function [clist] = trackOptiClist(dirname,CONST,header)">trackOptiClist</a>	trackOptiClist generates an array called the clist</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function data = loaderInternal( filename );</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [clist_tmp] = trackOptiListNeighbor(dirname,CONST,header)</a>
+0002 <span class="comment">% trackOptiListNeighbor : creates a neighbors list for each cell.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       dirname: seg folder eg. maindirectory/xy1/seg</span>
+0006 <span class="comment">%       CONST: are the segmentation constants.</span>
+0007 <span class="comment">%       header : string displayed with information</span>
+0008 <span class="comment">% OUTPUT :</span>
+0009 <span class="comment">%       clist_temp : contains list of neighbors</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">% University of Washington, 2016</span>
+0013 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0014 
+0015 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0016     header = [];
+0017 <span class="keyword">end</span>
+0018 
+0019 
+0020 dirseperator = filesep;
+0021 <span class="keyword">if</span>(nargin&lt;1 || isempty(dirname))
+0022     dirname = <span class="string">'.'</span>;
+0023 <span class="keyword">end</span>
+0024 dirname = fixDir(dirname);
+0025 
+0026 <span class="comment">% Get the track file names...</span>
+0027 contents=dir([dirname <span class="string">'*_err.mat'</span>]);
+0028 <span class="keyword">if</span> isempty( contents )
+0029     clist.data = [];
+0030     clist.def={};
+0031     clist.gate=[];
+0032 <span class="keyword">else</span>
+0033     data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname,contents(end).name]);
+0034     MAX_CELL = max(data_c.regs.ID) + 100;
+0035     num_im = numel(contents);
+0036     
+0037     <span class="keyword">if</span> CONST.show_status
+0038         h = waitbar( 0, <span class="string">'Make Neighbor List.'</span>);
+0039     <span class="keyword">else</span>
+0040         h = [];
+0041     <span class="keyword">end</span>
+0042     
+0043     clist_tmp = cell( 1, MAX_CELL );
+0044     
+0045     <span class="comment">% loop through all the cells.</span>
+0046     <span class="keyword">for</span> i = 1:num_im
+0047         data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename );">loaderInternal</a>([dirname,contents(i  ).name]);            
+0048         <span class="keyword">if</span> CONST.show_status
+0049             waitbar(i/num_im,h,[<span class="string">'Make Neighbor List--Frame: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_im)]);
+0050         <span class="keyword">else</span>
+0051             disp([header, <span class="string">'Make Neighbor List. frame: '</span>,num2str(i),<span class="string">' of '</span>,num2str(num_im)]);
+0052         <span class="keyword">end</span>
+0053 
+0054         <span class="keyword">for</span> j = 1:data_c.regs.num_regs
+0055            ID = data_c.regs.ID(j);      
+0056            <span class="keyword">if</span> ID
+0057                neigh = data_c.regs.ID( makenat(data_c.regs.neighbors{j}) );
+0058                neigh = neigh(logical(neigh));
+0059                <span class="keyword">if</span> ID &gt; MAX_CELL
+0060                    clist_tmp{ ID } = [neigh];
+0061                <span class="keyword">else</span>
+0062                     clist_tmp{ ID } = [clist_tmp{ID}, neigh];
+0063                <span class="keyword">end</span>
+0064            <span class="keyword">end</span>
+0065         <span class="keyword">end</span>
+0066         
+0067         
+0068     <span class="keyword">end</span>
+0069     
+0070     <span class="comment">% save the updated err files.</span>
+0071     <span class="keyword">if</span> CONST.show_status
+0072         close(h);
+0073     <span class="keyword">end</span>
+0074     
+0075    
+0076 <span class="keyword">end</span>
+0077 <span class="keyword">end</span>
+0078 
+0079 <a name="_sub1" href="#_subfunctions" class="code">function data = loaderInternal( filename );</a>
+0080 data = load( filename );
+0081 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

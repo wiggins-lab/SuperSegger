@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of doColorMap</title>
+  <meta name="keywords" content="doColorMap">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">viz</a> &gt; doColorMap.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>doColorMap
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function im_ = doColorMap( im, colormap_ ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="colorize.html" class="code" title="function  imTmp_ = colorize( im, mask, colormap_, back )">colorize</a>	</li><li><a href="makeConsIm.html" class="code" title="function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix,AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag )">makeConsIm</a>	makeConsIm Computes consensus fluorescence localization from cells in a cell files</li><li><a href="makeFrameMosaic.html" class="code" title="function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )">makeFrameMosaic</a>	</li><li><a href="makeKymoMosaic.html" class="code" title="function makeKymoMosaic( dirname, CONST );">makeKymoMosaic</a>	</li><li><a href="makeKymographC.html" class="code" title="function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );">makeKymographC</a>	</li><li><a href="pcanal4.html" class="code" title="function [A,B,imArray] = pcanal(dataCellArray,disp_flag)">pcanal4</a>	Copyright (C) 2016 Wiggins Lab</li><li><a href="showDA4new.html" class="code" title="function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST)">showDA4new</a>	Copyright (C) 2016 Wiggins Lab</li><li><a href="towerMergeImages.html" class="code" title="function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] =towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )">towerMergeImages</a>	towerMergeImages</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function im_ = doColorMap( im, colormap_ )</a>
+0002 
+0003 ss  = size( im );
+0004 im_ = im;
+0005 im_ = im_(:);
+0006 im_ = colormap_(im_+1,:);
+0007 im_ = reshape( im_, [ss,3]);
+0008 
+0009 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

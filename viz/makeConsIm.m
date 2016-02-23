@@ -1,7 +1,7 @@
 function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,...
     kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix, ...
     AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag )
-% makeConsIm Computes consensus fluorescence localization from cells in a cell files
+% makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
 %   dirName : (string) directory to load cell files from
@@ -26,7 +26,6 @@ function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,...
 
 del = 0.0;
 imMosaic10 = [];
-%disp_flag = 1;
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
@@ -36,13 +35,10 @@ if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
 
-
 % show images in false color
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end
-
-
 
 
 % Get the number of cells in the cell directory
@@ -58,7 +54,6 @@ numCells = numel(contents);
 if ~isfield(CONST.view, 'maxNumCell' )
     CONST.view.maxNumCell = [];
 end
-
 
 % force to do only first 1000
 CONST.view.maxNumCell = 1000;
@@ -83,26 +78,13 @@ h = waitbar(0, 'Computation' );
 
 % initialize the sum variables
 dataImArray = intInit( numCells );
-%         imSum : Summed up imBW
-%       maskSum : Summed up maskCons
-%     imCellSum : Summed up imCell
-%   maskCellSum : Summed up maskCell
-%    imCellSSum : Summed up imCellS
-%  maskCellSSum : Summed up maskCellS
-%     imNormSum : Summed up Normed Fluor (imBW)
-% imCellNormSum : Summed up Normed Fluor (imCell)
-%         ssTot : Im size of tower mosaic of cell contributing to cons
-
-
-% loop through the cells to make the consensus image and the mosaic
 
 
 
 imArray = cell(1,numCells);
-
 ii_ = 0;
 
-
+% loop through the cells to make the consensus image and the mosaic
 for ii = 1:numCells
     
     % update status bar
@@ -113,37 +95,19 @@ for ii = 1:numCells
     
     % load data and get file number
     [data, dataImArray.cellArrayNum{ii}] = intLoader( dirName, contents(ii).name );
-    
-    
-    
     data.CellA = data.CellA(1:skip:end);
     
-    %%
-    
-    % mag is used to resize the images of the cells to make them larger.
-    % the image will be mag X larger in each dimension
+    % mag is magnification : resizes the images of the cells to make them
+    % larger the image will be mag X larger in each dimension
     mag = 4;
     
-    
     % Compute consensus images for cell in data
-    
     if numel(data.CellA) > 4
-        
         
         ii_ = ii_ + 1;
         
-        
         dataIm = makeTowerCons(data,CONST,1,false, skip, mag );
         
-        
-        %     imshow([dataIm.towerNorm],[]);
-        %     min(dataIm.intWeight)
-        %     pause(.2)
-        %
-        %     if min(dataIm.intWeight) < 0
-        %         keyboard;
-        %     end
-        %
         % Scale images down to the original size
         imArray{ii_} = imresize( dataIm.tower, 1/mag);
         
@@ -203,42 +167,28 @@ else
         towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
     %dataImArray.towerNorm = dataImArray.towerNorm.*dataImArray.towerMask;
     
-    %%
     numIm = numel( dataImArray.tower );
     
     if numIm  > 0
-        %% make the color map for the color image
+        % make the color map for the color image
         [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, ...
             dataImArray.towerMask, dataImArray.towerCArray, ...
             dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );
-        %  imMosaic : Mosaic of towers of cells that make up the consensus image
-        %   imColor : Color cons image (w/ black background)
-        %      imBW : Grayscale cons image
-        %     imInv : Color cons image (w/ white background)
         imBWunmasked = dataImArray.towerNorm;
         imBWmask     = dataImArray.towerMask;
         
-        %% make the kymo
-        % [ kymo, kymoMask, kymoMax, kymoMaskMax ] = ...
-        %     intMakeKymo( dataImArray.imCellNormScale, dataImArray.maskCellScale, ...
-        %     disp_flag );
-        %      kymo : Consensus Kymograph
-        %  kymoMask : Consensus Kymograph Cell mask
         
-        %% make the kymo
+        % make the consensus kymograph
         [ kymo, kymoMask, kymoMax, kymoMaskMax ] = ...
             intMakeKymo( dataImArray.imCellNorm, dataImArray.maskCell, ...
             disp_flag );
-        %      kymo : Consensus Kymograph
-        %  kymoMask : Consensus Kymograph Cell mask
-        %% do the kymo fit
+        
+        % do the kymo fit, I is fit of intensities to a model for polar localization
         [I] = fitKymo4( kymo, kymoMask, disp_flag );
-        %         I : Fit of intensities to a model for polar localization
         
+        % Make hot pixel
         %hotPix = getHotPixelsCons( dataImArray.imCell, dataImArray.maskCell  );
-        hotPix = [] ;
-        %% Make hot pixel
-        
+        hotPix = [] ;      
         
     else
         I = [];
@@ -263,9 +213,23 @@ end
 function [ imMosaic, imColor, imBW, imInv, imMosaic10] = ...
     intDoMakeImage( imSum, maskSum, cellArray, ssTot, cellArrayNum, ...
     CONST, disp_flag )
-
-
-
+%
+% INPUT :
+%         imSum : Summed up imBW
+%         maskSum : Summed up maskCons
+%         imCellSum : Summed up imCell
+%         maskCellSum : Summed up maskCell
+%         imCellSSum : Summed up imCellS
+%         maskCellSSum : Summed up maskCellS
+%         imNormSum : Summed up Normed Fluor (imBW)
+%         imCellNormSum : Summed up Normed Fluor (imCell)
+%         ssTot : Im size of tower mosaic of cell contributing to cons
+% OUTPUT :
+%         intDoMakeImage : makes the color map for the color image
+%         imMosaic : Mosaic of towers of cells that make up the consensus image
+%         imColor : Color cons image (w/ black background)
+%          imBW : Grayscale cons image
+%         imInv : Color cons image (w/ white background)
 
 numCells = numel( cellArray );
 
@@ -316,10 +280,7 @@ width10 = 0;
 time10  = 0;
 
 for ii = 1:numCells
-    
-    
     ss = size(cellArray{ii});
-    
     
     if ii <= 10
         width10 = width10 + ss(2);
@@ -327,10 +288,7 @@ for ii = 1:numCells
     end
     
     imMosaic(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
-    
     cellArrayPos{ii} = colPos + ss(2)/2;
-    
-    
     colPos = colPos + ss(2);
     
 end
@@ -347,14 +305,12 @@ if disp_flag
         cc = 'b';
     end
     
-    
     for ii = 1:numCells
         text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, ...
             'HorizontalAlignment','center' );
     end
 end
 
-%'hi'
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -364,6 +320,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [ kymo,kymoMask,kymoMax, kymoMaskMax ] = ...
     intMakeKymo( imCellS, maskCellS, disp_flag )
+%  intMakeKymo : creates a consensus kymograph
+%
+% INPUT :
+%       imCellS :
+%       maskCellS :
+%       disp_flag : 1 to display the image
+% OUTPUT:
+%      kymo : Consensus Kymograph
+%      kymoMask : Consensus Kymograph Cell mask
+%      kymoMax :
+%      kymoMaskMax :
+
 
 T0 = numel( imCellS );
 mag = 4;
@@ -382,8 +350,6 @@ if T0 > 0
     for ii = 1:T0
         maskCellS{ii}( isnan( maskCellS{ii} ) ) = 0;
         imCellS{ii}( isnan( imCellS{ii} ) )     = 0;
-        
-        %kymo(:,ii) = sum(maskCellS{ii}.*imCellS{ii},1)./sum(maskCellS{ii});
         kymo(:,ii) = sum(maskCellS{ii}.*imCellS{ii},1);
         kymoMask(:,ii) = sum(maskCellS{ii},1);
         
@@ -402,7 +368,6 @@ if disp_flag
     ss = size( kymo );
     tt = (0:(ss(2)-1))/(ss(2)-1);
     xx = (0:(ss(1)-1))/(ss(1)-1);
-    
     
     imagesc( tt,xx, colorize(kymo,kymoMask,[],[0.33,0.33,0.33]) );
     set(gca, 'YDir', 'normal' );
@@ -511,17 +476,11 @@ end
 function dataArray = intNormalize( dataArray, numCells )
 
 dataArray.numCells = numCells;
-
-
 dataArray.towerCArray       = dataArray.towerCArray(1:numCells);
 dataArray.towerArray        = dataArray.towerArray(1:numCells);
 dataArray.towerNormArray    = dataArray.towerNormArray(1:numCells);
 dataArray.intWeightMinArray = dataArray.intWeightMinArray(1:numCells);
 dataArray.cellArrayNum      = dataArray.cellArrayNum(1:numCells);
-
-
-
-
 
 
 T0 = numel( dataArray.imCell );

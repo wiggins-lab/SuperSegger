@@ -1,23 +1,25 @@
 function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
     towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )
 % towerMergeImages
+%
 % INPUT :
-%   imCell
-%   maskCell
-%   ssCell
-%   xdim : x dimensions for the towers
-%   skip : skip frame
-%   mag :
-%   CONST : Constants file that was used.
+%       imCell
+%       maskCell
+%       ssCell
+%       xdim : x dimensions for the towers
+%       skip : skip frame
+%       mag :
+%       CONST : Constants file that was used.
 % OUTPUT :
-% mColor
-% imBW
-% towerIm
-% maskCons
-% nx
-% ny
-% max_x
-% max_y
+%         mColor
+%         imBW
+%         towerIm
+%         maskCons
+%         nx
+%         ny
+%         max_x
+%         max_y
+%
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.

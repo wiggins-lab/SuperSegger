@@ -1,5 +1,31 @@
 function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST)
-% Copyright (C) 2016 Wiggins Lab 
+% showDA4new : produces the trackOptiView image according to clist and
+% flags. If the clist has a gate it outlines cells passing the gate.
+%
+% INPUT : 
+%         data :
+%         data_r : 
+%         data_f :
+%         FLAGS : see below
+%         clist : list of cell files, could have a gate field.
+%         CONST : segmentation constants
+%   
+%   FLAGS : 
+%         P_Flag : shows regions
+%         t_flag : shows the cell numbers
+%         lyse_flag : outlines cell that lysed
+%         m_flag : shows mask
+%         c_flag : ? does absolutely nothing
+%         v_flag : shows cells outlines
+%         f_flag : shows flurescence image
+%         s_flag : shows the foci and their score
+%         T_flag : ? something related to regions
+%         p_flag : shows pole positions and connects daughter cells to each other
+%
+% OUTPUT :
+%         im : trackOptiView outlined image
+%
+% Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
@@ -20,7 +46,6 @@ end
 % if there are.
 FLAGS = intFixFlags( FLAGS );
 
-
 % having a clist enables you to only look at the cells included in the
 % clist.
 if ~isempty( clist );
@@ -36,9 +61,7 @@ else
     end
 end
 
-
 [xx,yy] = intGetImSize( data, FLAGS );
-
 
 
 % Not sure what the hell this first thing does anymore.
@@ -76,21 +99,14 @@ end
 
 imshow(im);
 
-%if FLAGS.m_flag
-%    imshow( im );
-%else
-%    imshow2( im );
-%end
-
-%imshow2( im(yy,xx) );
 
 if FLAGS.D_flag ~= 2
     hold on;
     
-    if ~FLAGS.m_flag 
-        doAnnotation( data, -xx(1)+1, -yy(1)+1 );     
+    if ~FLAGS.m_flag
+        doAnnotation( data, -xx(1)+1, -yy(1)+1 );
     else
-        doAnnotation( data, -xx(1)+xx(end)-xx(1)+1, -yy(1)+1 ); 
+        doAnnotation( data, -xx(1)+xx(end)-xx(1)+1, -yy(1)+1 );
         doAnnotation( data_r , -xx(1)+1, -yy(1)+1);
         doAnnotation( data_f , -xx(1)+1, -yy(1)+yy(end)-yy(1)+1 );
         doFrameMerge( -xx(1)+xx(end)-xx(1)+1+1, -yy(1)+yy(end)-yy(1)+1+1);
@@ -142,7 +158,7 @@ end
                         end
                     end
                 end
-            end  
+            end
         end
     end
 
@@ -169,11 +185,6 @@ im = cat(3, fluor2 + 0.5*back, fluor1 + 0.5*back, 0.5*back );
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%   Make Im : Puts together the image if the data is segmented.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function im = makeIm( data, FLAGS, ID_LIST, CONST )
 % makeIm puts together the image if data is segmented
 % but not the text/pole/other labels.
@@ -218,8 +229,6 @@ else
 end
 
 
-
-
 % if you are in fluorescence mode (f_flag ==true) then just draw the fluor
 % channels but not the regions.
 if FLAGS.f_flag
@@ -259,9 +268,7 @@ if FLAGS.f_flag
     else
         fluor2 = 0*data.phase;
     end
-    
-    
-    
+      
     %
     if isfield( data, 'fluor1')
         if CONST.view.falseColorFlag
@@ -292,9 +299,6 @@ if FLAGS.f_flag
         
     end
     
-    
-    
-    
     % add the lysis outline to the fluor image.
     im(:,:,1) = 255*uint8(lyse_im) + im(:,:,1);
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
@@ -314,8 +318,7 @@ elseif FLAGS.P_flag
     is_cell_V   = or(ismember( data.regs.ID, ID_LIST),~FLAGS.v_flag);
     is_div_V    = or(and(data.regs.birthF,data.regs.stat0),...
         data.regs.divide);
-    
-    
+        
     map_err_fr_ind = find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,...
         data.regs.error.r),~ignoreErrorV))));
     map_err_fr  = double(      ismember( data.regs.regs_label, ...
@@ -374,18 +377,14 @@ elseif FLAGS.P_flag
     map_stat0_0O_ind =  find(and(is_cell_V,and( is_div_V,...
         data.regs.stat0==0)));
     map_stat0_0O= intDoOutline(ismember( data.regs.regs_label, ...
-        map_stat0_0O_ind ));
-    
-    
+        map_stat0_0O_ind ));    
     
     reg_color = uint8( 255*cat( 3, ...
         double(lyse_im)+0.15*(2*(map_err_fr+map_err_frO)+(map_err_nf+map_err_nf)),...
         0.30*(map_no_err+map_no_errO),...
         0.30*(3*(map_stat0_2+map_stat0_2O)+...
         1.5*(map_stat0_1+map_stat0_1O)+...
-        0.5*(map_stat0_0+map_stat0_0O))));
-    
-    
+        0.5*(map_stat0_0+map_stat0_0O)))); 
     
     im = reg_color + im;
     
@@ -397,15 +396,8 @@ im = uint8(im);
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% intPlotNum
-%
-% Plot cell number or region numbers
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
-% intPlotNum Plots cell number or region numbers
+% intPlotNum : Plots cell number or region numbers
 for kk = 1:data.regs.num_regs
     rr = data.regs.props(kk).Centroid;
     
@@ -515,12 +507,6 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
 end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% intPlotLink
-%
-% show the pole positions and connect daughter cells to each other
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intPlotLink( data, x_, y_ )
 % intPlotLink shows pole positions and connects daughter cells to each other
 for kk = 1:data.regs.num_regs
@@ -594,21 +580,15 @@ function [xx,yy] = intGetImSize( data, FLAGS )
 if isfield( data, 'regs' )
     ss = size(data.regs.regs_label);
     
-    
-    
     if FLAGS.T_flag
         tmp_props = regionprops( data.regs.regs_label, 'BoundingBox' );
-        pad = 10;
-        
+        pad = 10;       
         yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
         yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
         xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
-        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
-        
-        
+        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;     
         num_segs = max(data.regs.regs_label(:));
-        
-        
+               
         
         for ii = 2:num_segs
             
@@ -623,8 +603,7 @@ if isfield( data, 'regs' )
             xxmax_ = max( [xxmax_, xxmax] );
             
             
-        end
-        
+        end  
         
         
         yy = max([1,yymin_]):min([ss(1),yymax_]);
@@ -640,16 +619,8 @@ else
 end
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% intFixFlags( FLAGS )
-%
-% sets default flag values.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function FLAGS = intFixFlags( FLAGS )
-% intFixFlags  sets default flag values.
+% intFixFlags :  sets default flag values.
 
 if ~isfield(FLAGS, 't_flag');
     'there is no filed t_flag'

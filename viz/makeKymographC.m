@@ -1,4 +1,23 @@
 function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );
+% makeKymographC creates a kymograph for given cell.
+% A kymograph shows the fluorescence of the cell along the long axis 
+% of the cell, with time.
+%  
+% INPUT :
+%       data : cell data file
+%       disp_flag : 1 to display image, 0 to not display image
+%       CONST : segmentation parameters
+% OUTPUT :
+%       Kymo: Kymo has images at .r .g and .b fields. The combination of
+%       which produces the kymgraph.
+%       ll1:  ? does not seem to be set anywhere
+%       f1mm: is the green channel kymogrpah
+%       f2mm: is the red channel kymograph
+%   
+% Copyright (C) 2016 Wiggins Lab 
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
+
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -158,16 +177,14 @@ if disp_flag
         
         f2mm(1) = min( Kymo.r(logical(Kymo.b)));
         f2mm(2) = max( Kymo.r(logical(Kymo.b)));
-        
-        
+               
         im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
         
         imagesc( im.*backer3+.6*(1-backer3) );
         
     else
         
-        clf;
-        
+        clf;      
         backer = autogain(Kymo.b);
         backer = 0.3*(max(backer(:))-backer);
         f1mm(1) = min( Kymo.g(logical(Kymo.b)));
@@ -185,8 +202,6 @@ end
 end
 
 function [imFix,roffset] = fixIm(im, ss)
-
-
 
 ssOld = size(im);
 imFix = zeros(ss);

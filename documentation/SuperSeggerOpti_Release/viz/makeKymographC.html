@@ -1,0 +1,260 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of makeKymographC</title>
+  <meta name="keywords" content="makeKymographC">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">viz</a> &gt; makeKymographC.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>makeKymographC
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST ); </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="makeKymoMosaic.html" class="code" title="function makeKymoMosaic( dirname, CONST );">makeKymoMosaic</a>	</li><li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [imFix,roffset] = fixIm(im, ss)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );</a>
+0002 
+0003 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'falseColorFlag'</span> )
+0004     CONST.view.falseColorFlag = false;
+0005 <span class="keyword">end</span>
+0006 
+0007 <span class="comment">%figure(1);</span>
+0008 <span class="keyword">persistent</span> colormap_;
+0009 <span class="keyword">if</span> isempty( colormap_ )
+0010     colormap_ = colormap( <span class="string">'jet'</span> );
+0011     <span class="comment">%colormap_ = colormap( 'hsv' );</span>
+0012 <span class="keyword">end</span>
+0013 
+0014 <span class="keyword">if</span> nargin &lt; 2
+0015     disp_flag = 0;
+0016 <span class="keyword">end</span>
+0017 
+0018 num_im = numel(data.CellA);
+0019 
+0020 ss = [0,0];
+0021 ll = [0,0];
+0022 
+0023 <span class="keyword">for</span> ii = 1:num_im
+0024     ss_tmp = size(data.CellA{ii}.phase);
+0025     
+0026     ss(1) = max([ss(1),ss_tmp(1)]);
+0027     ss(2) = max([ss(2),ss_tmp(2)]);
+0028     
+0029     ll_tmp = data.CellA{ii}.length;
+0030     
+0031     ll(1) = max([ll(1),ll_tmp(1)]);
+0032     ll(2) = max([ll(2),ll_tmp(2)]);
+0033 <span class="keyword">end</span>
+0034 
+0035 ss = ss + [5,5];
+0036 
+0037 [XX,YY] = meshgrid( 1:ss(2), 1:ss(1) );
+0038 ll0 = ll;
+0039 ll = ceil(ll/2);
+0040 
+0041 ll1 = [-ll(1):ll(1)];
+0042 ll2 = [-ll(2):ll(2)];
+0043 
+0044 [LL1,LL2] = meshgrid( ll1,ll2 );
+0045 
+0046 nn = numel( ll1 );
+0047 
+0048 kymoR = zeros(nn,num_im);
+0049 kymoG = zeros(nn,num_im);
+0050 kymoB = zeros(nn,num_im);
+0051 
+0052 e1old = [];
+0053 
+0054 <span class="keyword">for</span> ii = 1:num_im
+0055     mask  = data.CellA{ii}.mask;
+0056     
+0057     back  = autogain(data.CellA{ii}.phase);
+0058     
+0059     <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fluor1'</span>)
+0060         fluor1  = data.CellA{ii}.fluor1;
+0061         
+0062         <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fl1'</span> ) &amp;&amp; <span class="keyword">...</span>
+0063                 isfield( data.CellA{ii}.fl1, <span class="string">'bg'</span> )
+0064             fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
+0065             fluor1(fluor1&lt;0) = 0;
+0066         <span class="keyword">else</span>
+0067             fluor1 = fluor1 - mean( fluor1(mask));
+0068             fluor1(fluor1&lt;0) = 0;
+0069         <span class="keyword">end</span>
+0070     <span class="keyword">else</span>
+0071         fluor1 = 0*data.CellA{ii}.mask;
+0072     <span class="keyword">end</span>
+0073     
+0074     <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fluor2'</span>)
+0075         fluor2 = data.CellA{ii}.fluor2;
+0076         
+0077         <span class="keyword">if</span> isfield( data.CellA{ii}, <span class="string">'fl12'</span> ) &amp;&amp; <span class="keyword">...</span>
+0078                 isfield( data.CellA{ii}.fl2, <span class="string">'bg'</span> )
+0079             fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
+0080             fluor2(fluor1&lt;0) = 0;
+0081         <span class="keyword">else</span>
+0082             fluor2 = fluor2 - mean( fluor2(mask));
+0083             fluor2(fluor2&lt;0) = 0;
+0084             
+0085         <span class="keyword">end</span>
+0086     <span class="keyword">else</span>
+0087         fluor2 = 0*data.CellA{ii}.mask;
+0088     <span class="keyword">end</span>
+0089     
+0090     sq = [1 1 1; 1 1 1; 1 1 1];
+0091     mask_ = imdilate(data.CellA{ii}.mask,sq);
+0092     mask  = data.CellA{ii}.mask;
+0093     outline= mask_-mask;
+0094     
+0095     maski = autogain(outline);
+0096     
+0097     <span class="comment">% Make all the images the same sizes</span>
+0098     [rChan,roffset] = (<a href="#_sub1" class="code" title="subfunction [imFix,roffset] = fixIm(im, ss)">fixIm</a>(double(fluor2).*double(mask),ss));
+0099     [gChan,roffset] = (<a href="#_sub1" class="code" title="subfunction [imFix,roffset] = fixIm(im, ss)">fixIm</a>(double(fluor1).*double(mask),ss));
+0100     [bChan,roffset] = <a href="#_sub1" class="code" title="subfunction [imFix,roffset] = fixIm(im, ss)">fixIm</a>(mask,ss);
+0101     
+0102     ro = data.CellA{ii}.r_offset;
+0103     r = data.CellA{ii}.r;
+0104     
+0105     e1 = data.CellA{ii}.coord.e1;
+0106     e2 = data.CellA{ii}.coord.e2;
+0107     
+0108     LL1x =  LL1*e1(1)+LL2*e2(1)+r(1)-ro(1)+1+roffset(1);
+0109     LL2y =  LL1*e1(2)+LL2*e2(2)+r(2)-ro(2)+1+roffset(2);
+0110     
+0111     rChanp = (interp2(XX,YY,double(rChan),LL1x,LL2y));
+0112     gChanp = (interp2(XX,YY,double(gChan),LL1x,LL2y));
+0113     bChanp = (interp2(XX,YY,double(bChan),LL1x,LL2y));
+0114     
+0115     rChanps = sum( double(rChanp) );
+0116     gChanps = sum( double(gChanp) );
+0117     bChanps = sum( double(bChanp) );
+0118     
+0119     kymoR(:,ii) = rChanps';
+0120     kymoG(:,ii) = gChanps';
+0121     kymoB(:,ii) = bChanps';
+0122 <span class="keyword">end</span>
+0123 
+0124 Kymo = [];
+0125 
+0126 <span class="keyword">if</span> ~isfield(data.CellA{1}, <span class="string">'pole'</span>);
+0127     data.CellA{1}.pole.op_ori = 1;
+0128 <span class="keyword">end</span>
+0129 
+0130 
+0131 <span class="keyword">if</span> data.CellA{1}.pole.op_ori &lt; 0
+0132     Kymo.g = kymoG(end:-1:1,:);
+0133     Kymo.b = kymoB(end:-1:1,:);
+0134     Kymo.b(isnan(Kymo.b)) = 0;
+0135     Kymo.r = kymoR(end:-1:1,:);
+0136 <span class="keyword">else</span>
+0137     Kymo.g = kymoG;
+0138     Kymo.b = kymoB;
+0139     Kymo.b(isnan(Kymo.b)) = 0;
+0140     Kymo.r = kymoR;
+0141     
+0142 <span class="keyword">end</span>
+0143 
+0144 f1mm(1) = min( Kymo.g(logical(Kymo.b)));
+0145 f1mm(2) = max( Kymo.g(logical(Kymo.b)));
+0146 
+0147 f2mm(1) = min( Kymo.r(logical(Kymo.b)));
+0148 f2mm(2) = max( Kymo.r(logical(Kymo.b)));
+0149 
+0150 <span class="keyword">if</span> disp_flag
+0151     
+0152     <span class="keyword">if</span> CONST.view.falseColorFlag
+0153         clf;
+0154         
+0155         backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)&gt;1);
+0156         f1mm(1) = min( Kymo.g(logical(Kymo.b)));
+0157         f1mm(2) = max( Kymo.g(logical(Kymo.b)));
+0158         
+0159         f2mm(1) = min( Kymo.r(logical(Kymo.b)));
+0160         f2mm(2) = max( Kymo.r(logical(Kymo.b)));
+0161         
+0162         
+0163         im = <a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
+0164         
+0165         imagesc( im.*backer3+.6*(1-backer3) );
+0166         
+0167     <span class="keyword">else</span>
+0168         
+0169         clf;
+0170         
+0171         backer = autogain(Kymo.b);
+0172         backer = 0.3*(max(backer(:))-backer);
+0173         f1mm(1) = min( Kymo.g(logical(Kymo.b)));
+0174         f1mm(2) = max( Kymo.g(logical(Kymo.b)));
+0175         
+0176         f2mm(1) = min( Kymo.r(logical(Kymo.b)));
+0177         f2mm(2) = max( Kymo.r(logical(Kymo.b)));
+0178         
+0179         imagesc( cat(3, autogain(Kymo.r )+backer, <span class="keyword">...</span>
+0180             autogain(Kymo.g)+backer,<span class="keyword">...</span>
+0181             backer ));
+0182     <span class="keyword">end</span>
+0183 <span class="keyword">end</span>
+0184 
+0185 <span class="keyword">end</span>
+0186 
+0187 <a name="_sub1" href="#_subfunctions" class="code">function [imFix,roffset] = fixIm(im, ss)</a>
+0188 
+0189 
+0190 
+0191 ssOld = size(im);
+0192 imFix = zeros(ss);
+0193 
+0194 offset = floor((ss-ssOld)/2)-[1,1];
+0195 <span class="keyword">if</span> offset(1)&lt;0
+0196     offset(1) = offset(1) + 1;
+0197 <span class="keyword">end</span>
+0198 <span class="keyword">if</span> offset(2)&lt;0
+0199     offset(2) = offset(2) + 1;
+0200 <span class="keyword">end</span>
+0201 
+0202 <span class="keyword">try</span>
+0203     imFix(offset(1)+(1:ssOld(1)),offset(2)+(1:ssOld(2))) = im;
+0204 <span class="keyword">catch</span>
+0205     <span class="string">''</span>;
+0206 <span class="keyword">end</span>
+0207 roffset = offset(2:-1:1);
+0208 imFix = imFix;
+0209 <span class="keyword">end</span>
+0210 
+0211</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

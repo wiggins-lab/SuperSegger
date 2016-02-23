@@ -1,4 +1,18 @@
-function makeKymoMosaic( dirname, CONST );
+function makeKymoMosaic (dirname, CONST)
+% makeKymoMosaic creates a mosaic kymograph of multiple cells.
+% make kymo mosaic is only for fl1 in makeKymograph, which is currently 
+% set to gfp. A kymograph shows the fluorescence of the cell along the
+% long axis of the cell, with time.
+%  
+% INPUT :
+%       dirname : directory with cell data files
+%       CONST : segmentation parameters
+%   
+% Copyright (C) 2016 Wiggins Lab 
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
+
+
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -154,17 +168,12 @@ ny = ceil( num_list/nx );
 max_T = max(T_);
 max_X = max(X_);
 
-for ii = 1:num_list
-    
+for ii = 1:num_list    
     yy = floor((ii-1)/numb);
-    xx = ii-yy*numb-1;
-    
+    xx = ii-yy*numb-1;    
     y = yy*(max_X/numa);
     x = xx*(max_T/numb);
-
     text( x+max_T/20/numb, y+max_X/20/numa, [num2str(name(ii))],'Color',cc,'FontSize',12,'VerticalAlignment','Top','HorizontalAlignment','Left');
-%    text( x+max_T/20/numb, y+max_X/20/numa, [num2str(name(ii)),', ',num2str(pole(ii))],'Color',cc,'FontSize',12,'VerticalAlignment','Top','HorizontalAlignment','Left');
-    %text( x+1.3, y+1, num2str(pole(ii)),'Color','k','FontSize',12,'VerticalAlignment','Top');
 end
 
 

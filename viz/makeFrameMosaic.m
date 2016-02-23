@@ -1,5 +1,20 @@
 function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )
-
+% makeFrameMosaic: Creates a tower for a single cell.
+% The cell is oriented horizontally, and is shown masked, 
+% in the fluorescent channel.
+%
+% INPUT :
+%       data : cell file
+%       CONST : segmentation parameters
+%       xdim : number of frames in a row in final image
+%       disp_flag : 1 to display image, 0 to not display iamge
+%       skip : frames to be skipped in final iamge
+% OUTPUT :
+%       im : frame mosaic image
+%
+% Copyright (C) 2016 Wiggins Lab 
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
 del = 0.0;
 
@@ -12,7 +27,6 @@ end
 persistent colormap_;
 if isempty( colormap_ )
     colormap_ = jet( 256 );
-    %colormap_ = colormap( 'hsv' );
 end
 
 
@@ -32,15 +46,10 @@ else
     orientFlag = true;
 end
 
-
 clf;
 
-
 TimeStep     = CONST.getLocusTracks.TimeStep;
-
-
 numframe = numel( data.CellA );
-
 
 imCell = cell( 1, numel(data.CellA) );
 alpha = zeros(1, numel(data.CellA) );
@@ -54,7 +63,6 @@ max_y = 0;
 
 for ii = 1:numframe
     
-    
     if orientFlag
         
         if isfield( data.CellA{ii}, 'pole' ) && ~isnan( data.CellA{ii}.pole.op_ori ) && (data.CellA{ii}.pole.op_ori ~= 0)
@@ -63,7 +71,6 @@ for ii = 1:numframe
             ssign = 1;
         end
         
-        %ssign
         
         e1 = data.CellA{ii}.coord.e1;
         alpha(ii) = 90-180/pi*atan2(e1(1),e1(2)) + 180*double(ssign==1);
@@ -89,9 +96,8 @@ for ii = 1:numframe
         
         try
             imCell{ii} = tmp( ymin_:ymax_, xmin_:xmax_ );
-        catch
-            
-            'hi'
+        catch ME
+            printError(ME);
         end
         
         ss = size( imCell{ii} );
@@ -125,7 +131,6 @@ im = uint8(zeros(imdim(1), imdim(2), 3 ));
 
 im1_= uint16(zeros(imdim(1), imdim(2)));
 im2_= uint16(zeros(imdim(1), imdim(2)));
-%mask_ = logical(zeros(imdim(1), imdim(2)));
 mask_d = zeros(imdim(1), imdim(2));
 
 im_list = [];
@@ -138,9 +143,6 @@ for ii = 1:skip:numframe
     
     yy = floor((ii-1)/nx/skip);
     xx = (ii-1)/skip-yy*nx;
-    
-    %yy = floor((ii-1)/nx);
-    %xx = ii-yy*nx-1;
     
     ss = ssCell{ii};
     

@@ -1,7 +1,20 @@
-function [imTot] = makeFrameStripeMosaic( dirName, CONST, ll_, disp_flag )
+function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag )
+% makeFrameStripeMosaic :  Creates a cell tower for all the cells in
+% dirName
+%
+% INPUT :
+%       dirName : directory with cell files
+%       CONST : segmentation parameters
+%       skip :
+%       disp_flag : 1 to display image, 0 to not display iamge
+% OUTPUT :
+%       imTot : final image
+%
+% Copyright (C) 2016 Wiggins Lab 
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
 if ~isfield( CONST.view, 'saveFiles' )
-
      CONST.view.saveFiles = false;
 end
 
@@ -14,12 +27,9 @@ if ~isfield(CONST.view, 'maxNumCell' )
     CONST.view.maxNumCell = [];
 end
 
-%CONST.view.maxNumCell
-
-if ~exist( 'll_', 'var' )
-    ll_ = [];
+if ~exist( 'skip', 'var' )
+    skip = [];
 end
-
 
 
 if ~isfield( CONST, 'view') || CONST.view.showFullCellCycleOnly
@@ -32,7 +42,6 @@ end
 numCells = numel(contents);
 
 
-% debug
 if ~isempty( CONST.view.maxNumCell )
     numCells = min( [numCells, CONST.view.maxNumCell] );
 end
@@ -50,8 +59,6 @@ ssTot = [0,0];
 if disp_flag
     h = waitbar(0, 'Computation' );
 end
-% debug
-% numCells = 20;
 
 for ii = 1:numCells
     
@@ -73,8 +80,7 @@ for ii = 1:numCells
         cellArrayNum{ii} = floor(str2num(contents(ii).name(lpos+1:ppos-1)));
     end
     
-    %    cellArray{ii} = makeFrameStripe( data, CONST, 0, ll_ );
-    tmp_im = makeFrameMosaic(data,CONST,1,false, ll_ );
+    tmp_im = makeFrameMosaic(data,CONST,1,false, skip );
     
     if isfield( CONST.view, 'saveFiles' ) && CONST.view.saveFiles
         loadname(end-2:end)='png';

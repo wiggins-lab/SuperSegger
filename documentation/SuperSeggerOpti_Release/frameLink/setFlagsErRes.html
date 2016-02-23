@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of setFlagsErRes</title>
+  <meta name="keywords" content="setFlagsErRes">
+  <meta name="description" content="setFlagsErRes : sets the error resolution flags">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">frameLink</a> &gt; setFlagsErRes.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>setFlagsErRes
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>setFlagsErRes : sets the error resolution flags</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> setFlagsErRes : sets the error resolution flags</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiErRes.html" class="code" title="function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)">trackOptiErRes</a>	trackOptiErRes : defines and resolves the errors produced during</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% setFlagsErRes : sets the error resolution flags</span>
+0002 
+0003 <span class="comment">% If there is an area mapping regions to the previous frame</span>
+0004 <span class="comment">% -&gt; Need to resolve a tracking error</span>
+0005 DA_MIN            = CONST.trackOpti.DA_MIN;
+0006 DA_MAX            = CONST.trackOpti.DA_MAX;
+0007 
+0008 <span class="comment">% project list_r back onto current frame to see what other</span>
+0009 <span class="comment">% regions are involved in the current frame in resolving the</span>
+0010 <span class="comment">% error</span>
+0011 list_rc    = [];
+0012 
+0013 <span class="keyword">for</span> mm = list_r;
+0014     <span class="keyword">try</span>
+0015         ind__ = find(data_r.regs.ol.f{mm}(1,:) &gt; OVERLAP_LIMIT_MIN);
+0016         list_rc = [list_rc, data_r.regs.ol.f{mm}(2,ind__)];
+0017     <span class="keyword">catch</span> ME
+0018         printError( ME )
+0019     <span class="keyword">end</span>
+0020 <span class="keyword">end</span>
+0021 
+0022 list_rc = unique(list_rc );
+0023 list_rc_other = list_rc(list_rc~=ii);
+0024 list_rcf = [];
+0025 list_rcf = unique([data_c.regs.map.f{list_rc}]);
+0026 
+0027 <span class="keyword">try</span>
+0028     list_rcr = unique([data_c.regs.map.r{list_rc}]);
+0029 <span class="keyword">catch</span>
+0030     list_rcr = list_r;
+0031 <span class="keyword">end</span>
+0032 
+0033 <span class="comment">% These are the number of regions in the two projections</span>
+0034 num_list_r  = numel(list_r);
+0035 num_list_rc = numel(list_rc);
+0036 
+0037 <span class="keyword">try</span>
+0038     AreaChangeFlag = all( data_c.regs.dA.r(list_rc)&gt; dA_LIMIT_ErRes );
+0039 <span class="keyword">catch</span>
+0040     AreaChangeFlag = 0;
+0041 <span class="keyword">end</span>
+0042 
+0043 localMapGoodFlag = and(data_c.regs.DA.r(ii) &gt; DA_MIN,<span class="keyword">...</span>
+0044     data_c.regs.DA.r(ii) &lt; DA_MAX);
+0045 
+0046 
+0047 merged_flag = or(data_c.regs.DA.r(ii) &lt; DA_MIN,<span class="keyword">...</span>
+0048     data_c.regs.DA.r(ii) &gt; DA_MAX ) <span class="keyword">...</span>
+0049     &amp;&amp; (num_list_r&gt;1) &amp;&amp; CONST.trackOpti.MERGED_FLAG &amp;&amp; <span class="keyword">...</span>
+0050     (num_list_rc == 1);
+0051 
+0052 <span class="keyword">if</span> num_im == 1
+0053     stray_flag = false;
+0054 <span class="keyword">else</span>
+0055     stray_flag = (~isempty(data_c.regs.ol.r{ii}) &amp;&amp; <span class="keyword">...</span>
+0056         ~sum( data_c.regs.ol.r{ii}(1,:) )) <span class="keyword">...</span>
+0057         || <span class="keyword">...</span>
+0058         (~isempty(data_c.regs.ol.f{ii}) &amp;&amp; <span class="keyword">...</span>
+0059         ~ sum( data_c.regs.ol.f{ii}(1,:) )) <span class="keyword">...</span>
+0060         || stray_flag;
+0061 <span class="keyword">end</span>
+0062 
+0063 <span class="comment">% check to make sure there are no errors in the map from the</span>
+0064 <span class="comment">% overlapping regions in the previous frame (list_r) to the</span>
+0065 <span class="comment">% next frame. Also make sure that the current regions map</span>
+0066 <span class="comment">% both forward and backwards--ie aren't strays.</span>
+0067 <span class="keyword">try</span>
+0068     fskip_flag = ~isempty(data_f) &amp;&amp; ~isempty(data_c.regs.error.rf) &amp;&amp; <span class="keyword">...</span>
+0069         ~isempty(list_rcr)                   &amp;&amp; <span class="keyword">...</span>
+0070         ~any(data_c.regs.error.rf(list_rcr)) &amp;&amp; <span class="keyword">...</span>
+0071         any(data_f.regs.error.r([data_c.regs.map.rf{list_rcr}])) &amp;&amp; <span class="keyword">...</span>
+0072         any( data_c.regs.ol.f{ii}(1,:) )  &amp;&amp; <span class="keyword">...</span>
+0073         any( data_c.regs.ol.r{ii}(1,:) )  &amp;&amp; <span class="keyword">...</span>
+0074         CONST.trackOpti.FSKIP_FLAG;
+0075 <span class="keyword">catch</span> ME
+0076     printError( ME )  
+0077     fskip_flag = false;
+0078 <span class="keyword">end</span>
+0079 
+0080 
+0081 
+0082 
+0083 s21_flag = any(data_c.regs.error.rf(list_r)) &amp;&amp; <span class="keyword">...</span>
+0084     (num_list_r == 2 ) &amp;&amp; <span class="keyword">...</span>
+0085     ( num_list_rc == 1);
+0086 
+0087 <span class="comment">% to set the 1-&gt;2 flag insist that the mapping in 1-&gt;2</span>
+0088 <span class="comment">% and that there is no mapping error in the next frame for the</span>
+0089 <span class="comment">% prospective daughter cells</span>
+0090 <span class="comment">% s12_flag =  ~any( data_c.regs.error.f(list_rc) &amp; ...</span>
+0091 <span class="comment">%     ((data_c.regs.DA.f(list_rc)&lt;CONST.trackOpti.DA_MIN) | ...</span>
+0092 <span class="comment">%      (data_c.regs.DA.f(list_rc)&gt;CONST.trackOpti.DA_MAX))) &amp;&amp; ...</span>
+0093 <span class="comment">%     (num_list_r ==1 ) &amp;&amp; ...</span>
+0094 <span class="comment">%     ( num_list_rc == 2);</span>
+0095 
+0096 
+0097 s12_flag =  (numel(list_rcf)&gt;1) &amp;&amp; <span class="keyword">...</span>
+0098     (num_list_r ==1 ) &amp;&amp; <span class="keyword">...</span>
+0099     ( num_list_rc &gt; 1);
+0100 
+0101 
+0102 <span class="comment">% cell shift is an error that occurs because cells are pushing each</span>
+0103 <span class="comment">% other.</span>
+0104 cshift_flag = (num_list_r ==1 ) &amp;&amp; ( num_list_rc == 1) &amp;&amp; <span class="keyword">...</span>
+0105     ~isempty( data_c.regs.dA.r(ii) ) &amp;&amp; (data_c.regs.dA.r(ii) &gt; dA_LIMIT_ErRes);
+0106 <span class="keyword">try</span>
+0107     split_flag = ((~isempty(data_r) &amp;&amp; <span class="keyword">...</span>
+0108         (numel(list_r) &gt; 0) &amp;&amp; <span class="keyword">...</span>
+0109         all(data_r.regs.L2(list_r) &lt; MAX_WIDTH)) <span class="keyword">...</span>
+0110         <span class="keyword">...</span>
+0111         || (~isempty(data_f) &amp;&amp; <span class="keyword">...</span>
+0112         (numel(list_f) &gt; 0) &amp;&amp; <span class="keyword">...</span>
+0113         all(data_f.regs.L2(list_f) &lt; MAX_WIDTH))) <span class="keyword">...</span>
+0114         <span class="keyword">...</span>
+0115         &amp;&amp; (data_c.regs.L2(ii) &gt; MAX_WIDTH);
+0116 <span class="keyword">catch</span>
+0117     keyboard
+0118 <span class="keyword">end</span>
+0119 
+0120 
+0121 
+0122 localMapGoodFlagEnd = and(data_c.regs.DA.r(ii) &gt; 2*DA_MIN,<span class="keyword">...</span>
+0123     data_c.regs.DA.r(ii) &lt; 2*DA_MAX);
+0124 
+0125 
+0126 rrrrr = 0;
+0127 
+0128 
+0129 <span class="comment">% set to 1 if you want to display the flags</span>
+0130 <span class="keyword">if</span> 0
+0131     disp([<span class="string">'Frame: '</span>, num2str(i), <span class="string">' seg: '</span>, num2str(ii)] );
+0132     <span class="keyword">if</span> stray_flag
+0133         disp(<span class="string">'Stray'</span>);
+0134     <span class="keyword">elseif</span> cshift_flag
+0135         disp(<span class="string">'Shift'</span>);
+0136     <span class="keyword">elseif</span> localMapGoodFlag
+0137         disp(<span class="string">'localMapGood'</span>);
+0138     <span class="keyword">elseif</span> merged_flag
+0139         disp(<span class="string">'Merge Flag'</span>);
+0140     <span class="keyword">elseif</span> fskip_flag
+0141         disp(<span class="string">'Skip 1'</span>);
+0142     <span class="keyword">elseif</span> split_flag
+0143         disp(<span class="string">'Split'</span>);
+0144     <span class="keyword">elseif</span> s21_flag
+0145         disp(<span class="string">'Stable 2-&gt;1'</span>);
+0146     <span class="keyword">elseif</span> s12_flag
+0147         disp(<span class="string">'Stable 1-&gt;2'</span>);
+0148     <span class="keyword">else</span>
+0149         disp(<span class="string">'Unresolved.'</span>);
+0150     <span class="keyword">end</span>
+0151    
+0152     <span class="keyword">if</span> ~(s12_flag || localMapGoodFlag)
+0153         
+0154         <span class="comment">%showDA4( data_c, data_r, data_f);</span>
+0155         rl_c = data_c.regs.regs_label;
+0156         <span class="keyword">if</span> isempty( data_r )
+0157             rl_r = 0*rl_c;
+0158         <span class="keyword">else</span>
+0159             rl_r = data_r.regs.regs_label;
+0160         <span class="keyword">end</span>
+0161         <span class="keyword">if</span> isempty( data_f )
+0162             rl_f = 0*rl_c;
+0163         <span class="keyword">else</span>
+0164             rl_f = data_f.regs.regs_label;
+0165         <span class="keyword">end</span>
+0166         
+0167         
+0168         figure(1);
+0169         clf;
+0170         imshow( uint8(cat( 3, <span class="keyword">...</span>
+0171             0.3*ag(rl_r&gt;0)+<span class="keyword">...</span>
+0172             0.7*ag(ismember(rl_r,list_r)),<span class="keyword">...</span>
+0173             0.7*double(ag(rl_c==ii))+<span class="keyword">...</span>
+0174             0.3*double(ag(rl_c&gt;0)),<span class="keyword">...</span>
+0175             0.0*ag(rl_f&gt;0) )));
+0176         title( <span class="string">'Red r, Green c'</span>);
+0177         drawnow;
+0178         
+0179         figure(2);
+0180         clf;
+0181         imshow( double(rl_r) <span class="keyword">...</span>
+0182             - 10*double(rl_r==0), [] );
+0183         colormap jet;
+0184         title( <span class="string">'Red r'</span>);
+0185         
+0186         figure(3);
+0187         clf;
+0188         imshow( double(rl_c) <span class="keyword">...</span>
+0189             - 10*double(rl_c==0), [] );
+0190         colormap jet;
+0191         title( <span class="string">'Green c'</span>);
+0192         
+0193         figure(4);
+0194         clf;
+0195         imshow( double(rl_f) <span class="keyword">...</span>
+0196             - 10*double(rl_f==0), [] );
+0197         colormap jet;
+0198         title( <span class="string">'blue f'</span>);
+0199         
+0200         disp( [<span class="string">'Frame: '</span>, num2str(i), <span class="string">' region: '</span>, num2str(ii),<span class="string">'.'</span>] );
+0201         
+0202         <span class="string">''</span>;
+0203     <span class="keyword">end</span>
+0204 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

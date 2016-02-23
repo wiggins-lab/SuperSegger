@@ -1,6 +1,7 @@
 function showMask( phase, mask, mask2)
 % showMask shows an image of the phase image of the cell 
 % masked with the found boundaries.
+%
 % INPUT : 
 %   phase : phase image of the cell
 %   mask : mask

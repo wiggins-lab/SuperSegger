@@ -1,4 +1,4 @@
-function [A,B,imArray] = pcanal(dataCellArray,disp_flag)
+function [A,B,imArray] = pcanal4(dataCellArray,disp_flag)
 % Copyright (C) 2016 Wiggins Lab 
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.

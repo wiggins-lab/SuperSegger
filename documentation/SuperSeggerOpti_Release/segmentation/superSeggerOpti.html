@@ -1,0 +1,706 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of superSeggerOpti</title>
+  <meta name="keywords" content="superSeggerOpti">
+  <meta name="description" content="superSeggerOpti generates the initial segmentation of rod-shaped cells.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerOpti_Release</a> &gt; <a href="index.html">segmentation</a> &gt; superSeggerOpti.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerOpti_Release/segmentation&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>superSeggerOpti
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>superSeggerOpti generates the initial segmentation of rod-shaped cells.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> superSeggerOpti generates the initial segmentation of rod-shaped cells.
+ It uses a local minimum filter (similar to a median filter) to enhance
+ contrast and then uses Matlab's WATERSHED command to generate
+ cell boundaries. The spurious boundaries (i.e., those that lie in the
+ cell interiors) are removed by an intensity thresholding routine
+ on each boundary. Any real boundaries incorrectly removed
+ by this thresholding are added back by an iterative algorithm that
+ uses knowledge of cell shape to determine which regions are missing
+ boundaries.
+
+ INPUT :
+       phase_ : phase image
+       mask : cell mask, given externally or calculated with band-pass filter
+       disp_flag : display flag
+       CONST : segmentation constants
+       adapt_flag : break up regions that are too big to be cells
+       header : string displayed with infromation
+       crop_box : information about alignement of the image
+
+ OUTPUT :
+       data.segs : defined below
+       data.mask_bg : a binary image in which all background (non-cell) pixels are masked
+       data.mask_cell : cell mask, a binary image the same size as phase in
+       which each cell is masked by a connected region of white pixels
+       data.phase : Original phase image
+       A : scoring vector optimized for different cells and imaging conditions
+
+   segs.
+     phaseMagic: % phase image processed with magicContrast only
+      segs_good: % on segments, image of the boundaries between cells that the program
+      has determined are correct (i.e., not spurious).
+       segs_bad: % off segments, image of program-determined spurious boundaries between cells
+        segs_3n: % an image of all of boundary intersections, segments that cannot be switched off
+           info: % segment parameters that are used to generate the raw
+           score, looke below
+     segs_label: % bwlabel of good and bad segs.
+          score: % cell scores for regions
+       scoreRaw: % raw scores for segments
+          props: % segement properties for segments
+
+
+         seg.info(:,1) : the minimum phase intensity on the seg
+         seg.info(:,2) : the mean phase intensity on the seg
+         seg.info(:,3) : area of the seg
+         seg.info(:,4) : the mean second d of the phase normal to the seg
+         seg.info(:,5) : second d of the phase normal to the seg at the min pixel
+         seg.info(:,6) : second d of the phase parallel to the seg at the min pixel
+         seg.info(:,7) and seg_info(:,8) : min and max area of neighboring regions
+         seg.info(:,9) and seg_info(:,10) : min and max lengths of the minor axis of the neighboring regions
+         seg.info(:,11) and seg_info(:,12) : min and max lengths of the major axis of the neighboring regions
+         seg.info(:,11) : length of minor axis
+         seg.info(:,12) : length of major axis
+         seg.info(:,13) : square of length of major axis
+         seg.info(:,16) : max length of region projected onto the major axis
+         segment
+         seg.info(:,17) : min length of region projected onto the major axis
+         segment
+         seg.info(:,18) : max length of region projected onto the minor axis
+         segment
+         seg.info(:,19) : min length of region projected onto the minor axis
+         segment
+
+ The output images are related by
+ mask_cell = mask_bg .* (~segs_good) .* (~segs_3n);
+
+
+
+ Written by Paul Wiggins and Keith Cheveralls
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="compConn.html" class="code" title="function im = compConn( im_, conn )">compConn</a>	compConn : calculates the connectivity of each pixel</li><li><a href="magicContrastFast2.html" class="code" title="function im = magicContrastFast2( im, mask, radius )">magicContrastFast2</a>	magicContrastFast2 : applied a filter to enhance contrast to the image.</li><li><a href="makeRegionAxisFast.html" class="code" title="function [e1,e2] = makeRegionAxisFast( angle_deg )">makeRegionAxisFast</a>	makeRegionAxis : calculates the principal axis of the segment mask.</li><li><a href="makeRegionSize.html" class="code" title="function [L1,L2] = makeRegionSize( mask,e1,e2 )">makeRegionSize</a>	makeRegionSize : computes the projections lengths on e1 and e2</li><li><a href="makeRegionSizeProjectionBBint2.html" class="code" title="function [L1,L2] = makeRegionSizeProjectionBBint2( mask, props )">makeRegionSizeProjectionBBint2</a>	makeRegionSizeProjectionBBint2 : THIS IS EXACTLY THE SAME AS makeRegSize,</li><li><a href="make_bg_mask.html" class="code" title="function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)">make_bg_mask</a>	make_bg_mask : makes a background mask for the phase image</li><li><a href="segmentScoreFun.html" class="code" title="function score = segmentScoreFun(info, A )">segmentScoreFun</a>	segmentScoreFun calls a function to calculates the score of the segment.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="ssoSegFun.html" class="code" title="function [ data, err_flag ] = ssoSegFun( phase, CONST, header, dataname, crop_box )">ssoSegFun</a>	ssoSegFun : starts segmentation of phase image and sets error flags</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A)</a></li><li><a href="#_sub2" class="code">function Lmax = maxMinAxis(mask)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box )</a>
+0002 <span class="comment">% superSeggerOpti generates the initial segmentation of rod-shaped cells.</span>
+0003 <span class="comment">% It uses a local minimum filter (similar to a median filter) to enhance</span>
+0004 <span class="comment">% contrast and then uses Matlab's WATERSHED command to generate</span>
+0005 <span class="comment">% cell boundaries. The spurious boundaries (i.e., those that lie in the</span>
+0006 <span class="comment">% cell interiors) are removed by an intensity thresholding routine</span>
+0007 <span class="comment">% on each boundary. Any real boundaries incorrectly removed</span>
+0008 <span class="comment">% by this thresholding are added back by an iterative algorithm that</span>
+0009 <span class="comment">% uses knowledge of cell shape to determine which regions are missing</span>
+0010 <span class="comment">% boundaries.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% INPUT :</span>
+0013 <span class="comment">%       phase_ : phase image</span>
+0014 <span class="comment">%       mask : cell mask, given externally or calculated with band-pass filter</span>
+0015 <span class="comment">%       disp_flag : display flag</span>
+0016 <span class="comment">%       CONST : segmentation constants</span>
+0017 <span class="comment">%       adapt_flag : break up regions that are too big to be cells</span>
+0018 <span class="comment">%       header : string displayed with infromation</span>
+0019 <span class="comment">%       crop_box : information about alignement of the image</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% OUTPUT :</span>
+0022 <span class="comment">%       data.segs : defined below</span>
+0023 <span class="comment">%       data.mask_bg : a binary image in which all background (non-cell) pixels are masked</span>
+0024 <span class="comment">%       data.mask_cell : cell mask, a binary image the same size as phase in</span>
+0025 <span class="comment">%       which each cell is masked by a connected region of white pixels</span>
+0026 <span class="comment">%       data.phase : Original phase image</span>
+0027 <span class="comment">%       A : scoring vector optimized for different cells and imaging conditions</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">%   segs.</span>
+0030 <span class="comment">%     phaseMagic: % phase image processed with magicContrast only</span>
+0031 <span class="comment">%      segs_good: % on segments, image of the boundaries between cells that the program</span>
+0032 <span class="comment">%      has determined are correct (i.e., not spurious).</span>
+0033 <span class="comment">%       segs_bad: % off segments, image of program-determined spurious boundaries between cells</span>
+0034 <span class="comment">%        segs_3n: % an image of all of boundary intersections, segments that cannot be switched off</span>
+0035 <span class="comment">%           info: % segment parameters that are used to generate the raw</span>
+0036 <span class="comment">%           score, looke below</span>
+0037 <span class="comment">%     segs_label: % bwlabel of good and bad segs.</span>
+0038 <span class="comment">%          score: % cell scores for regions</span>
+0039 <span class="comment">%       scoreRaw: % raw scores for segments</span>
+0040 <span class="comment">%          props: % segement properties for segments</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">%</span>
+0043 <span class="comment">%         seg.info(:,1) : the minimum phase intensity on the seg</span>
+0044 <span class="comment">%         seg.info(:,2) : the mean phase intensity on the seg</span>
+0045 <span class="comment">%         seg.info(:,3) : area of the seg</span>
+0046 <span class="comment">%         seg.info(:,4) : the mean second d of the phase normal to the seg</span>
+0047 <span class="comment">%         seg.info(:,5) : second d of the phase normal to the seg at the min pixel</span>
+0048 <span class="comment">%         seg.info(:,6) : second d of the phase parallel to the seg at the min pixel</span>
+0049 <span class="comment">%         seg.info(:,7) and seg_info(:,8) : min and max area of neighboring regions</span>
+0050 <span class="comment">%         seg.info(:,9) and seg_info(:,10) : min and max lengths of the minor axis of the neighboring regions</span>
+0051 <span class="comment">%         seg.info(:,11) and seg_info(:,12) : min and max lengths of the major axis of the neighboring regions</span>
+0052 <span class="comment">%         seg.info(:,11) : length of minor axis</span>
+0053 <span class="comment">%         seg.info(:,12) : length of major axis</span>
+0054 <span class="comment">%         seg.info(:,13) : square of length of major axis</span>
+0055 <span class="comment">%         seg.info(:,16) : max length of region projected onto the major axis</span>
+0056 <span class="comment">%         segment</span>
+0057 <span class="comment">%         seg.info(:,17) : min length of region projected onto the major axis</span>
+0058 <span class="comment">%         segment</span>
+0059 <span class="comment">%         seg.info(:,18) : max length of region projected onto the minor axis</span>
+0060 <span class="comment">%         segment</span>
+0061 <span class="comment">%         seg.info(:,19) : min length of region projected onto the minor axis</span>
+0062 <span class="comment">%         segment</span>
+0063 <span class="comment">%</span>
+0064 <span class="comment">% The output images are related by</span>
+0065 <span class="comment">% mask_cell = mask_bg .* (~segs_good) .* (~segs_3n);</span>
+0066 <span class="comment">%</span>
+0067 <span class="comment">%</span>
+0068 <span class="comment">%</span>
+0069 <span class="comment">% Written by Paul Wiggins and Keith Cheveralls</span>
+0070 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0071 <span class="comment">% University of Washington, 2016</span>
+0072 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0073 
+0074 <span class="comment">% Load the constants from the package settings file</span>
+0075 MIN_BG_AREA     = CONST.superSeggerOpti.MIN_BG_AREA;
+0076 MAGIC_RADIUS    = CONST.superSeggerOpti.MAGIC_RADIUS;
+0077 MAGIC_THRESHOLD = CONST.superSeggerOpti.MAGIC_THRESHOLD;
+0078 CUT_INT         = CONST.superSeggerOpti.CUT_INT;
+0079 MIN_THRESHOLD   = CONST.superSeggerOpti.MIN_THRESHOLD;
+0080 MEAN_THRESHOLD  = CONST.superSeggerOpti.MEAN_THRESHOLD;
+0081 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
+0082 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
+0083 A               = CONST.superSeggerOpti.A;
+0084 
+0085 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0086     header = [];
+0087 <span class="keyword">end</span>
+0088 
+0089 <span class="keyword">if</span> ~exist(<span class="string">'crop_box'</span>)
+0090     crop_box = [];
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="comment">% ------------------------------------------------------------------</span>
+0094 <span class="comment">%</span>
+0095 <span class="comment">% Initial image smoothing</span>
+0096 <span class="comment">%</span>
+0097 <span class="comment">% ------------------------------------------------------------------</span>
+0098 
+0099 <span class="comment">%this step is necessary to reduce the camera and read noise in the raw</span>
+0100 <span class="comment">%phase image. Without it, the watershed algorithm will over-segment the</span>
+0101 <span class="comment">%image.</span>
+0102 
+0103 <span class="keyword">if</span> CONST.ResFlag == CONST.R100X
+0104     phase = imfilter(phase_,fspecial(<span class="string">'disk'</span>,1),<span class="string">'replicate'</span>);
+0105 <span class="keyword">elseif</span> CONST.ResFlag == CONST.R100XPa
+0106     phase = imfilter(phase_,fspecial(<span class="string">'disk'</span>,1),<span class="string">'replicate'</span>);
+0107     
+0108 <span class="keyword">else</span>
+0109     phase = phase_;
+0110 <span class="keyword">end</span>
+0111 
+0112 
+0113 <span class="comment">% fix the range...</span>
+0114 mult_max = 2.5;
+0115 mult_min = 0.3;
+0116 mp       = mean(phase(:));
+0117 
+0118 phase( phase &gt; (mult_max*mp) ) = mult_max*mp;
+0119 phase( phase &lt; (mult_min*mp) ) = mult_min*mp;
+0120 
+0121 
+0122 <span class="comment">% if the size of the matrix is even, we get a half pixel shift in the</span>
+0123 <span class="comment">% position of the mask which turns out to be a probablem later.</span>
+0124 <span class="comment">%f = fspecial('gaussian', 10, SMOOTH_WIDTH);</span>
+0125 f = fspecial(<span class="string">'gaussian'</span>, 11, SMOOTH_WIDTH);
+0126 phase = imfilter(phase, f,<span class="string">'replicate'</span>);
+0127 
+0128 
+0129 <span class="comment">% ------------------------------------------------------------------</span>
+0130 <span class="comment">%</span>
+0131 <span class="comment">% Create a Background mask</span>
+0132 <span class="comment">%</span>
+0133 <span class="comment">% ------------------------------------------------------------------</span>
+0134 
+0135 <span class="comment">% we create the background mask MASK_BG by globally thresholding the band-pass</span>
+0136 <span class="comment">% filtered phase image. We determine the thresholds empirically.</span>
+0137 <span class="comment">% We use one threshold to remove the background, and another to remove</span>
+0138 <span class="comment">% the smaller background regions between cells.</span>
+0139 
+0140 <span class="keyword">if</span> nargin &lt; 2 || isempty(mask)
+0141     <span class="comment">% no background making mask</span>
+0142     filt_3 = fspecial( <span class="string">'gaussian'</span>,25, 15 );
+0143     filt_4 = fspecial( <span class="string">'gaussian'</span>,5, 1/2 );
+0144     mask_bg_ = <a href="make_bg_mask.html" class="code" title="function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)">make_bg_mask</a>(phase,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+0145 <span class="keyword">else</span>
+0146     mask_bg_ = mask;
+0147 <span class="keyword">end</span>
+0148 
+0149 <span class="keyword">if</span> nargin &lt; 3 || isempty(disp_flag)
+0150     disp_flag=1;
+0151 <span class="keyword">end</span>
+0152 
+0153 <span class="keyword">if</span> nargin &lt; 5 || isempty(adapt_flag)
+0154     adapt_flag=1;
+0155 <span class="keyword">end</span>
+0156 
+0157 
+0158 <span class="comment">% ------------------------------------------------------------------</span>
+0159 <span class="comment">%</span>
+0160 <span class="comment">% Enhance inter-cellular image contrast</span>
+0161 <span class="comment">%</span>
+0162 <span class="comment">% ------------------------------------------------------------------</span>
+0163 
+0164 <span class="comment">%this filter enhances the contrast of the phase image by subtracting from</span>
+0165 <span class="comment">%each pixel the minimum intensity in its neighborhood. It</span>
+0166 <span class="comment">%forces the interior of the cells closer to zero intensity.</span>
+0167 phase = ag(phase);
+0168 <span class="comment">%phase = magicContrast(phase, imdilate(mask_bg, strel('disk', MAGIC_RADIUS+3)),MAGIC_RADIUS);</span>
+0169 <span class="comment">%disp('magic contrast')</span>
+0170 <span class="comment">%tic</span>
+0171 phase__ = <a href="magicContrastFast2.html" class="code" title="function im = magicContrastFast2( im, mask, radius )">magicContrastFast2</a>(phase, mask_bg_, MAGIC_RADIUS);
+0172 <span class="comment">%toc</span>
+0173 
+0174 phase = double(uint16(phase__-MAGIC_THRESHOLD));
+0175 
+0176 <span class="comment">%-------------------------------------------------------------------</span>
+0177 <span class="comment">%</span>
+0178 <span class="comment">% This cuts out bright spots from the mask</span>
+0179 <span class="comment">%</span>
+0180 <span class="comment">%-------------------------------------------------------------------</span>
+0181 <span class="comment">%CUT_INT = 50;</span>
+0182 
+0183 mask_mod = (phase&gt;CUT_INT);
+0184 mask_bg = logical((mask_bg_-mask_mod)&gt;0);
+0185 
+0186 
+0187 
+0188 <span class="comment">% ------------------------------------------------------------------</span>
+0189 <span class="comment">%</span>
+0190 <span class="comment">% Watershed the image</span>
+0191 <span class="comment">%</span>
+0192 <span class="comment">% ------------------------------------------------------------------</span>
+0193 
+0194 <span class="comment">%here we use matlab's standard watershed algorithm to watershed just the</span>
+0195 <span class="comment">%cell-filled regions of the image.</span>
+0196 
+0197 phaseMask = uint8(agd(phase) + 255*(1-(mask_bg)));
+0198 ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
+0199 
+0200 
+0201 <span class="keyword">if</span> adapt_flag
+0202     <span class="comment">% ------------------------------------------------------------------</span>
+0203     <span class="comment">%</span>
+0204     <span class="comment">% If the adapt_flag is set (on by default), break the things up that</span>
+0205     <span class="comment">% are too big to be cells. This function slows the code down, AND it</span>
+0206     <span class="comment">% significantly slows down the regionOpti code since there are many</span>
+0207     <span class="comment">% more marginal segments to consider.</span>
+0208     <span class="comment">%</span>
+0209     <span class="comment">% ------------------------------------------------------------------</span>
+0210     wsc = 1- ws;
+0211     regs_label = bwlabel( wsc );
+0212     props = regionprops( regs_label, <span class="string">'BoundingBox'</span>,<span class="string">'Orientation'</span> );
+0213     
+0214     num_wsc = max(regs_label(:));
+0215     L1 = zeros(1,num_wsc);
+0216     L2 = zeros(1,num_wsc);
+0217     
+0218     <span class="keyword">for</span> ii = 1:num_wsc
+0219         [xx,yy] = getBB(props(ii).BoundingBox);
+0220         [L1(ii),L2(ii)] = <a href="makeRegionSizeProjectionBBint2.html" class="code" title="function [L1,L2] = makeRegionSizeProjectionBBint2( mask, props )">makeRegionSizeProjectionBBint2</a>( (regs_label(yy,xx)==ii), props(ii) );
+0221         
+0222         <span class="keyword">if</span> L2(ii) &gt; MAX_WIDTH;
+0223             
+0224             <span class="comment">%disp([header, 'sSO: Adaptive filter.']);</span>
+0225             [xx,yy] = getBB( props(ii).BoundingBox );
+0226             
+0227             
+0228             mask_reg = (regs_label(yy,xx)==ii);
+0229             
+0230             pp = double(phase__(yy,xx)).*mask_reg;
+0231             mm = 1-mask_reg;
+0232             ppp = pp+max(pp(:))*mm;
+0233             wsl = double(watershed( ppp )&gt;0);
+0234             wsl = (1-wsl).*mask_reg;
+0235             
+0236             <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0237             <span class="comment">%</span>
+0238             <span class="comment">% prune added segs by adding just enough to</span>
+0239             <span class="comment">% fix the cell width problem</span>
+0240             <span class="comment">%</span>
+0241             <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0242             wsl_cc = <a href="compConn.html" class="code" title="function im = compConn( im_, conn )">compConn</a>( wsl, 4 );
+0243             wsl_3n = double(wsl_cc&gt;2);
+0244             wsl_segs = wsl-wsl_3n;
+0245             wsl_label = bwlabel(wsl_segs,4);
+0246             num_wsl_label = max(wsl_label(:));
+0247             wsl_mins = zeros(1,num_wsl_label);
+0248             <span class="keyword">for</span> ff = 1:num_wsl_label
+0249                 wsl_mins(ff) = min(pp(ff==wsl_label));
+0250             <span class="keyword">end</span>
+0251             [wsl_mins, sort_ord] = sort(wsl_mins,<span class="string">'descend'</span>);
+0252             
+0253             wsl_segs_good = wsl_3n;
+0254             
+0255             <span class="keyword">for</span> ff = sort_ord;
+0256                 wsl_segs_good = wsl_segs_good + double(wsl_label==ff);
+0257                 mask_reg_tmp = mask_reg-wsl_segs_good;
+0258                 <span class="comment">%imshow( cat(3, ag(wsl_segs_good), ag(wsl), ag(ws(yy,xx)) ) )</span>
+0259                 <span class="comment">%pause;</span>
+0260                 <span class="keyword">if</span> <a href="#_sub2" class="code" title="subfunction Lmax = maxMinAxis(mask)">maxMinAxis</a>(mask_reg_tmp) &lt; MAX_WIDTH
+0261                     <span class="keyword">break</span>
+0262                 <span class="keyword">end</span>
+0263             <span class="keyword">end</span>
+0264             
+0265             
+0266             
+0267             ws(yy,xx) = double(0&lt;(ws(yy,xx) + wsl_segs_good));
+0268             
+0269             <span class="comment">%              imshow( cat(3, ag(wsl_segs_good), ag(wsl), ag(ws(yy,xx)) ) )</span>
+0270         <span class="keyword">end</span>
+0271     <span class="keyword">end</span>
+0272 <span class="keyword">end</span>
+0273 
+0274 
+0275 <span class="comment">% ------------------------------------------------------------------</span>
+0276 <span class="comment">%</span>
+0277 <span class="comment">% Determine the &quot;good&quot; and &quot;bad&quot; segments</span>
+0278 <span class="comment">%</span>
+0279 <span class="comment">% ------------------------------------------------------------------</span>
+0280 
+0281 <span class="comment">% (this function is commented below)</span>
+0282 <span class="comment">%disp( 'Run seg-analyzer');</span>
+0283 <span class="comment">%tic</span>
+0284 [data] = <a href="#_sub1" class="code" title="subfunction [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A)">defineGoodSegs</a>(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A);
+0285 <span class="comment">%toc</span>
+0286 
+0287 data.mask_cell   = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)&gt;0);
+0288 data.phase       = phase_;
+0289 
+0290 <span class="comment">% ------------------------------------------------------------------</span>
+0291 <span class="comment">%</span>
+0292 <span class="comment">% Calculate and return the final cell mask</span>
+0293 <span class="comment">%</span>
+0294 <span class="comment">% ------------------------------------------------------------------</span>
+0295 <span class="keyword">if</span> disp_flag
+0296     figure(1)
+0297     clf;
+0298     showSegDataPhase( data );
+0299     drawnow;
+0300 <span class="keyword">end</span>
+0301 
+0302 
+0303 
+0304 <span class="keyword">end</span>
+0305 
+0306 
+0307 <a name="_sub1" href="#_subfunctions" class="code">function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A)</a>
+0308 
+0309 <span class="comment">% ------------------------------------------------------------------</span>
+0310 <span class="comment">% defineGoodSegs is a sub function that uses intensity thresholds to</span>
+0311 <span class="comment">% segregate the set of segments produced by the watershed algorithm</span>
+0312 <span class="comment">% into &quot;good&quot; segments (segs_good) which lie along a real cellular</span>
+0313 <span class="comment">% boundary, and &quot;bad&quot; segments, which lie along spurious boundaries</span>
+0314 <span class="comment">% within single cells.</span>
+0315 <span class="comment">% note that we assume (safely) that the watershed always over- rather</span>
+0316 <span class="comment">% than under-segment the image. That is, the set of all real segments is</span>
+0317 <span class="comment">% contained with the set of all segments produced by the watershed algorithm.</span>
+0318 <span class="comment">% -------------------------------------------------------------------------</span>
+0319 
+0320 sim = size( phase );
+0321 
+0322 <span class="comment">% ------------------------------------------------------------------</span>
+0323 <span class="comment">%</span>
+0324 <span class="comment">% Create labeled image of the segments</span>
+0325 <span class="comment">%</span>
+0326 <span class="comment">% ------------------------------------------------------------------</span>
+0327 
+0328 <span class="comment">%here we obtain the cell-background boundary, which we know is correct.</span>
+0329 sqr3 = strel(<span class="string">'square'</span>,3);
+0330 disk1 = strel(<span class="string">'disk'</span>,1);
+0331 outer_bound = xor(bwmorph(mask_bg,<span class="string">'dilate'</span>),mask_bg);
+0332 
+0333 <span class="comment">%label the cell regions in the mask and calculate the properties</span>
+0334 regs_label = bwlabel( ~ws, 8);
+0335 regs_prop = regionprops( regs_label,<span class="keyword">...</span>
+0336     {<span class="string">'BoundingBox'</span>,<span class="string">'MinorAxisLength'</span>,<span class="string">'MajorAxisLength'</span>,<span class="string">'Area'</span>});
+0337 
+0338 <span class="comment">% calculate the connectivity of each pixel in the segments</span>
+0339 ws = double(ws.*mask_bg);
+0340 ws_cc = <a href="compConn.html" class="code" title="function im = compConn( im_, conn )">compConn</a>( ws+outer_bound, 4 );
+0341 
+0342 <span class="comment">% segs_3n are the non-negotiable segments. They are on no matter what.</span>
+0343 <span class="comment">% this includes the outer boundary of the clumps (outer_bound), as well as the</span>
+0344 <span class="comment">% intersections between seg lines (pixels with connectivity_4 &gt; 2).</span>
+0345 segs_3n = double(((ws_cc &gt; 2)+outer_bound)&gt;0);
+0346 
+0347 <span class="comment">% segs are the guys that divide cells in the clumps that may or may not be</span>
+0348 <span class="comment">% on. Since we have removed all the intersections, we can label these and</span>
+0349 <span class="comment">% calculate their properties.</span>
+0350 segs    = ws-segs_3n.*ws;
+0351 
+0352 <span class="comment">%turn on all the segs smaller than MIN_SEGS_SIZE</span>
+0353 MIN_SEGS_SIZE = 2;
+0354 cc = bwconncomp( segs, 4 );
+0355 segs_props = regionprops(cc, <span class="string">'Area'</span>);
+0356 logmask = [segs_props.Area] &lt; MIN_SEGS_SIZE;
+0357 
+0358 idx = find(logmask);
+0359 segs_3n = segs_3n + ismember(labelmatrix(cc), idx);
+0360 idx = find(~logmask);
+0361 segs = ismember(labelmatrix(cc), idx);
+0362 
+0363 <span class="comment">% redefine segs after eliminating the small segs and calculate all the</span>
+0364 <span class="comment">% region properties we will need.</span>
+0365 <span class="comment">% here we create coordinates to crop around each segment. This decreases the time</span>
+0366 <span class="comment">% required to process each segment.segs = double(segs_label&gt;0);</span>
+0367 segs_label = bwlabel( segs,4);
+0368 numSegs    = max( segs_label(:) );
+0369 segs_props = regionprops(  segs_label,  {<span class="string">'Area'</span>, <span class="string">'BoundingBox'</span>,<span class="string">'MinorAxisLength'</span>,<span class="keyword">...</span>
+0370     <span class="string">'MajorAxisLength'</span>, <span class="string">'Orientation'</span>} );
+0371 
+0372 
+0373 <span class="comment">% segs_good is the im created by the segments that will be on</span>
+0374 <span class="comment">% segs_bad  is the im created by the rejected segs</span>
+0375 segs_good  = false(sim);
+0376 segs_bad   = false(sim);
+0377 
+0378 <span class="comment">% these define the size of the image for use in crop sub regions in the</span>
+0379 <span class="comment">% loop--basically used to reduced the computation time.</span>
+0380 xmin = 1;
+0381 ymin = 1;
+0382 xmax = sim(2);
+0383 ymax = sim(1);
+0384 
+0385 <span class="comment">% seg_info holds all the properties of each segment</span>
+0386 seg_info = zeros(numSegs,19);
+0387 
+0388 <span class="comment">% score is a binary include (1)/exclude (0) flag generated</span>
+0389 <span class="comment">% by a vector multiplcation of A with seg_info.</span>
+0390 score    = zeros(numSegs,1);
+0391 scoreRaw = zeros(numSegs,1);
+0392 
+0393 <span class="comment">% ------------------------------------------------------------------</span>
+0394 <span class="comment">%</span>
+0395 <span class="comment">% Loop through all segments to decide which are good and which are</span>
+0396 <span class="comment">% bad.</span>
+0397 <span class="comment">%</span>
+0398 <span class="comment">% ------------------------------------------------------------------</span>
+0399 <span class="keyword">for</span> ii = 1:numSegs
+0400     
+0401     <span class="comment">% Crop around each segment with two pixels of padding in x and y</span>
+0402     [xx,yy] = getBBpad( segs_props(ii).BoundingBox, sim, 2 );
+0403     
+0404     <span class="comment">% here we get the cropped segment mask and corresponding phase image</span>
+0405     mask_ii  = (segs_label(yy, xx) == ii);
+0406     phase_ii = phase(yy, xx);
+0407     sim_ii   = size(phase_ii);
+0408     regs_label_ii = regs_label(yy,xx);
+0409     <span class="comment">%and its length</span>
+0410     nn = segs_props(ii).Area;
+0411     
+0412     <span class="comment">% mask_ii_out are the pixels around the segment so that a second d over</span>
+0413     <span class="comment">% the segment can be computed.</span>
+0414     <span class="keyword">if</span> nn&gt;2
+0415         mask_ii_end  = (<a href="compConn.html" class="code" title="function im = compConn( im_, conn )">compConn</a>(mask_ii,4)==1);
+0416         mask_ii_out  = xor(bwmorph( xor(mask_ii,mask_ii_end), <span class="string">'dilate'</span> ),mask_ii);
+0417     <span class="keyword">elseif</span> nn == 1
+0418         mask_ii_out  = xor(bwmorph( mask_ii, <span class="string">'dilate'</span>),mask_ii);
+0419     <span class="keyword">else</span>
+0420         mask_ii_out  = imdilate( mask_ii, disk1)-mask_ii;
+0421         mask_ii_out  = and(mask_ii_out,(<a href="compConn.html" class="code" title="function im = compConn( im_, conn )">compConn</a>(mask_ii_out,4)&gt;0));
+0422     <span class="keyword">end</span>
+0423     
+0424     <span class="comment">% seg_info(:,1) is the minimum phase intensity on the seg</span>
+0425     [seg_info(ii,1),ind] = min(phase_ii(:).*double(mask_ii(:))+1e6*double(~mask_ii(:)));
+0426     
+0427     <span class="comment">% seg_info(:,2) is the mean phase intensity on the seg</span>
+0428     seg_info(ii,2) = mean(phase_ii(mask_ii));
+0429     
+0430     <span class="comment">% seg_info(:,3) is area of the seg</span>
+0431     seg_info(ii,3) = nn;
+0432     
+0433     <span class="comment">% seg_info(:,4) is the mean second d of the phase normal to the seg</span>
+0434     seg_info(ii,4) = mean(phase_ii(mask_ii_out)) - seg_info(ii,2);
+0435     
+0436     <span class="comment">% next we want to do some more calculation around the minimum phase</span>
+0437     <span class="comment">% pixel. sub1 and sub2 are the indicies in the cropped image</span>
+0438     [sub1,sub2] = ind2sub(sim_ii,ind);
+0439     <span class="comment">% sub1_ and sub2_ are the indices in the whole image.</span>
+0440     <span class="comment">%     sub1_ = sub1-1+yymin;</span>
+0441     <span class="comment">%     sub2_ = sub2-1+xxmin;</span>
+0442     
+0443     <span class="comment">% calculate the local second d of the phase at the min pixel</span>
+0444     <span class="comment">% normal to the seg and parallel to it.</span>
+0445     <span class="comment">% min_pixel is the mask of the min pixel</span>
+0446     min_pixel = false(sim_ii);
+0447     min_pixel(sub1,sub2) = true;
+0448     <span class="comment">% outline the min pixel</span>
+0449     min_pixel_out = bwmorph( min_pixel, <span class="string">'dilate'</span>);
+0450     <span class="comment">% and mask/anti-mask it</span>
+0451     ii_min_para   = and(min_pixel_out,mask_ii);
+0452     ii_min_norm   = xor(min_pixel_out,ii_min_para);
+0453     
+0454     <span class="comment">% seg_info(:,5) is the second d of the phase normal to the seg at the</span>
+0455     <span class="comment">% min pixel</span>
+0456     seg_info(ii,5) = mean(phase_ii(ii_min_norm))-mean(phase_ii(ii_min_para));
+0457     
+0458     <span class="comment">% seg_info(:,6) is the second d of the phase parallel to the seg at the</span>
+0459     <span class="comment">% min pixel</span>
+0460     tmp_mask = xor(ii_min_para,min_pixel);
+0461     seg_info(ii,6) = mean(phase_ii(tmp_mask))-seg_info(ii,1);
+0462     
+0463     <span class="keyword">if</span> isnan(seg_info(ii,6))
+0464         disp([header,<span class="string">'NaN in seg_info!'</span>]);
+0465     <span class="keyword">end</span>
+0466     
+0467     <span class="comment">% We also wish to add information about the neighboring regions. First we</span>
+0468     <span class="comment">% have to determine what these regions are... ie the regs_label number</span>
+0469     <span class="comment">% By construction, each seg touches two regions. Ind_reg is the vector</span>
+0470     <span class="comment">% of the region indexes--after we eliminate '0'.</span>
+0471     uu = regs_label_ii(imdilate( mask_ii, disk1));
+0472     ind_reg = unique(uu(logical(uu)));
+0473     
+0474     <span class="comment">% seg_info(:,7) and seg_info(:,8) are the min and max area of the</span>
+0475     <span class="comment">% neighboring regions</span>
+0476     seg_info(ii,7)  = min( regs_prop(ind_reg(:)).Area);
+0477     seg_info(ii,8)  = max( regs_prop(ind_reg(:)).Area);
+0478     
+0479     <span class="comment">% seg_info(:,9) and seg_info(:,10) are the min and max minor axis</span>
+0480     <span class="comment">% length of the neighboring regions</span>
+0481     seg_info(ii,9)  = min( regs_prop(ind_reg(:)).MinorAxisLength);
+0482     seg_info(ii,10) = max( regs_prop(ind_reg(:)).MinorAxisLength);
+0483     
+0484     <span class="comment">% seg_info(:,11) and seg_info(:,12) are the min and max major axis</span>
+0485     <span class="comment">% length of the neighboring regions</span>
+0486     seg_info(ii,11) = min( regs_prop(ind_reg(:)).MajorAxisLength);
+0487     seg_info(ii,12) = max( regs_prop(ind_reg(:)).MajorAxisLength);
+0488     
+0489     <span class="comment">% seg_info(:,11), seg_info(:,12), and seg_info(:,13) are the min</span>
+0490     <span class="comment">% and max major axis length of the segment itself, including the</span>
+0491     <span class="comment">% square of the major axis length... which would allow a non-</span>
+0492     <span class="comment">% linarity in the length cutoff. No evidence that this helps...</span>
+0493     <span class="comment">% just added it because I could.</span>
+0494     seg_info(ii,13) = segs_props(ii).MinorAxisLength;
+0495     seg_info(ii,14) = segs_props(ii).MajorAxisLength;
+0496     seg_info(ii,15) = segs_props(ii).MajorAxisLength^2;
+0497     
+0498     
+0499     <span class="comment">% Next we want to do some calculation looking at the size of</span>
+0500     <span class="comment">% the regions, normal and parallel to the direction of the</span>
+0501     <span class="comment">% segment. This is a bit computationally expensive, but worth</span>
+0502     <span class="comment">% it I think.</span>
+0503     
+0504     <span class="comment">% Get size of the regions in local coords</span>
+0505     
+0506     <span class="comment">% This function computes the principal axes of the segment</span>
+0507     <span class="comment">% mask. e1 is aligned with the major axis and e2 with the</span>
+0508     <span class="comment">% minor axis and com is the center of mass.</span>
+0509     [e1,e2] = <a href="makeRegionAxisFast.html" class="code" title="function [e1,e2] = makeRegionAxisFast( angle_deg )">makeRegionAxisFast</a>( segs_props(ii).Orientation );
+0510     
+0511     <span class="comment">% L1 is the length of the projection of the region on the</span>
+0512     <span class="comment">% major axis and L2 is the lenght of the projection on the</span>
+0513     <span class="comment">% minor axis.</span>
+0514     L1 = [0 0];
+0515     L2 = [0 0];
+0516     
+0517     <span class="comment">% Loop through the two regions</span>
+0518     <span class="keyword">for</span> kk = 1:numel(ind_reg);
+0519         <span class="comment">% get a new cropping region for each region with 2 pix padding</span>
+0520         [xx_,yy_] = getBBpad(regs_prop(ind_reg(kk)).BoundingBox,sim,2);
+0521         
+0522         <span class="comment">% mask the region of interest</span>
+0523         kk_mask = (regs_label(yy_, xx_) == ind_reg(kk));
+0524         
+0525         <span class="comment">% This function computes the projections lengths on e1 and e2.</span>
+0526         [L1(kk),L2(kk)] = <a href="makeRegionSize.html" class="code" title="function [L1,L2] = makeRegionSize( mask,e1,e2 )">makeRegionSize</a>( kk_mask,e1,e2);
+0527     <span class="keyword">end</span>
+0528     
+0529     <span class="comment">% seg_info(:,16) and seg_info(:,17) are the min and max Length of the</span>
+0530     <span class="comment">% regions projected onto the major axis of the segment.</span>
+0531     seg_info(ii,16) = max(L1); <span class="comment">% max and min region length para to seg</span>
+0532     seg_info(ii,17) = min(L1);
+0533     <span class="comment">% seg_info(:,16) and seg_info(:,17) are the min and max Length of the</span>
+0534     <span class="comment">% regions projected onto the minor axis of the segment.</span>
+0535     seg_info(ii,18) = max(L2); <span class="comment">% max and min region length normal to seg</span>
+0536     seg_info(ii,19) = min(L2);
+0537     
+0538     
+0539     <span class="comment">% Calculate the score to determine if the seg will be included.</span>
+0540     <span class="comment">% if score is less than 0 set the segment off</span>
+0541     scoreRaw(ii) = <a href="segmentScoreFun.html" class="code" title="function score = segmentScoreFun(info, A )">segmentScoreFun</a>( seg_info(ii,:), A );
+0542     score(ii) = double( 0 &lt; scoreRaw (ii));
+0543     
+0544     <span class="comment">% update the good and bad segs images.</span>
+0545     
+0546     <span class="keyword">if</span> score(ii)
+0547         segs_good(yy, xx)  = or(segs_good(yy, xx),mask_ii);
+0548     <span class="keyword">else</span>
+0549         segs_bad(yy, xx)   = or(segs_bad(yy, xx),mask_ii);
+0550     <span class="keyword">end</span>
+0551     
+0552 <span class="keyword">end</span>
+0553 
+0554 
+0555 data = [];
+0556 
+0557 data.segs.phaseMagic  = phase;
+0558 
+0559 data.mask_bg          = mask_bg;
+0560 data.segs.segs_good   = segs_good;
+0561 data.segs.segs_bad    = segs_bad;
+0562 data.segs.segs_3n     = segs_3n;
+0563 data.segs.info        = seg_info;
+0564 data.segs.segs_label  = segs_label;
+0565 data.segs.score       = score;
+0566 data.segs.scoreRaw    = scoreRaw;
+0567 data.segs.props       = segs_props;
+0568 <span class="keyword">end</span>
+0569 
+0570 
+0571 <a name="_sub2" href="#_subfunctions" class="code">function Lmax = maxMinAxis(mask)</a>
+0572 
+0573 mask_label = bwlabel(mask);
+0574 props = regionprops( mask_label, <span class="string">'Orientation'</span> );
+0575 num_regs = max(mask_label(:));
+0576 Lmax = 0;
+0577 
+0578 <span class="keyword">for</span> ii = 1:num_regs
+0579     
+0580     [L1,L2] = <a href="makeRegionSizeProjectionBBint2.html" class="code" title="function [L1,L2] = makeRegionSizeProjectionBBint2( mask, props )">makeRegionSizeProjectionBBint2</a>( (mask_label==ii), props(ii) );
+0581     Lmax = max([Lmax,L2]);
+0582 <span class="keyword">end</span>
+0583 <span class="keyword">end</span>
+0584 
+0585 
+0586 
+0587</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 13:44:44 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
