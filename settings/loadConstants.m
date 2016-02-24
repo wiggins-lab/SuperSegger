@@ -159,6 +159,9 @@ elseif strcmp(cl, 'char' );
     elseif strcmp(res,'60XEc')
         disp('loadConstants:  60X Ecoli');
         ResFlag = R60X;
+     elseif strcmp(res,'100XEc')
+        disp('loadConstants:  100X Ecoli');
+        ResFlag = R100X;
     elseif strcmp(res,'60XPa')
         disp('loadConstants:  60X Pseudomonas');
         ResFlag = R60XPa;
@@ -181,12 +184,12 @@ elseif strcmp(cl, 'char' );
         disp('loadConstants:  60X B Thai');
         ResFlag = R60XBthai;
     else
-        disp('loadConstants:  100X Ecoli');
-        ResFlag = R100X;
+        disp(' No match found - loading default : loadConstants:  60X Ecoli');
+        ResFlag = R60X;
     end
 else
-    disp('loadConstants:  100X Ecoli');
-    ResFlag = R100X;
+    disp(' No match found - loading default : loadConstants:  60X Ecoli');
+    ResFlag = R60X;
 end
 
 

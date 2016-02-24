@@ -39,7 +39,7 @@ fluorFilt = 'gfp';
 % Using correct resolution ensures correct pixel size and segmentation constants
 % '60XEc' : loadConstants 60X Ecoli
 % '100XEc': loadConstants 100X Ecoli
-res = '60XEc';
+res = '100XEc';
 
 %% Paralell Processing Mode
 %

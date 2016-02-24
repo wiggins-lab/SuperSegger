@@ -84,7 +84,7 @@ dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
-dirname = fixDir(dirname;
+dirname = fixDir(dirname);
 
 
 % Get the track file names...

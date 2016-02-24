@@ -54,8 +54,8 @@ if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
     SEGMENT_FLAG = 1;
 end
 
-if dirname = '.'
-    dirname = pwd;
+if dirname_ == '.'
+    dirname_ = pwd;
 end
 
 
