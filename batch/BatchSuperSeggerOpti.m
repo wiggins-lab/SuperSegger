@@ -73,7 +73,7 @@ else
 end
 
 
-if clean_flag 
+if clean_flag && SEGMENT_FLAG
     disp ('Clean flag is set to true.')
     answer=input('Do you want to continue, Y/N [Y]:','s');
     if lower(answer) ~='y'
@@ -253,7 +253,7 @@ function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_F
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
 
-%% Initialization
+% Initialization
 file_filter = '*.tif';
 
 % get header to show xy position
@@ -292,11 +292,11 @@ end
 
 
 
-%% Do segmentation, MM is max number of workers
+%% Do segmentation
 disp([header 'BSSO: Do segmentation...']);
 
 if (CONST.parallel_pool_num>0)
-    MM = CONST.parallel_pool_num;
+    MM = CONST.parallel_pool_num; % number of workers
     SWITCH_FLAG = true;
 else
     MM=0;
@@ -347,7 +347,6 @@ trackOpti(dirname_xy, skip, CONST, clean_flag, header );
 
 end
 
-%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % doSeg
