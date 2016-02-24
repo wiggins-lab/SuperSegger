@@ -1,4 +1,5 @@
-function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, adapt_flag, header, crop_box )
+function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, ...
+    adapt_flag, header, crop_box )
 % superSeggerOptiP generates the initial segmentation of rod-shaped cells.
 % It uses a local minimum filter (similar to a median filter) to enhance
 % contrast and then uses Matlab's WATERSHED command to generate
@@ -100,11 +101,7 @@ end
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
 
-% phase = ag(phase_);
-
 if CONST.ResFlag == CONST.R100X
-    %    phase = imresize(imresize(phase_,0.5),2);
-    
     phase = imfilter(phase_,fspecial('disk',1),'replicate');
 elseif CONST.ResFlag == CONST.R100XPa
     phase = imfilter(phase_,fspecial('disk',1),'replicate');
@@ -130,21 +127,11 @@ f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phase = imfilter(phase, f,'replicate');
 
 
-% phase_ss = size(phase);
-% if ~mod(phase_ss(1),2)
-%     phase = phase(1:end-1,:);
-% end
-%
-% if ~mod(phase_ss(2),2)
-%    phase = phase(:,1:end-1);
-% end
-
 % ------------------------------------------------------------------
 %
 % Create a Background mask
 %
 % ------------------------------------------------------------------
-
 
 % we create the background mask MASK_BG by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
@@ -152,20 +139,16 @@ phase = imfilter(phase, f,'replicate');
 % the smaller background regions between cells.
 
 if nargin < 2 || isempty(mask)
-    %disp('no background mask. Making mask.');
+    % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
     filt_4 = fspecial( 'gaussian',5, 1/2 );
     
-    %    disp('bg mask');
-    %    tic
-    %mask_bg_ = make_bg_mask(phase,filt_3,filt_4,MIN_BG_AREA, CONST);
     mask_bg = make_bg_mask_Pa_(phase_,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
     
-    %'hi'
-    %    toc
 else
     mask_bg_ = mask;
 end
+
 if nargin < 3 || isempty(dispp)
     dispp=1;
 end
@@ -178,47 +161,23 @@ if nargin < 5 || isempty(adapt_flag)
 end
 
 
-% ------------------------------------------------------------------
-%
-% Enhance inter-cellular image contrast
-%
-% ------------------------------------------------------------------
 
+% Enhance inter-cellular image contrast
 %this filter enhances the contrast of the phase image by subtracting from
 %each pixel the minimum intensity in its neighborhood. It
 %forces the interior of the cells closer to zero intensity.
 phase = ag(phase);
-%phase = magicContrast(phase, imdilate(mask_bg, strel('disk', MAGIC_RADIUS+3)),MAGIC_RADIUS);
-%disp('magic contrast')
-%tic
 phase__ = magicContrastFast2(phase, [], MAGIC_RADIUS);
-%toc
+phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
-phase___ = double(uint16(phase__-MAGIC_THRESHOLD));
 
-%data = [];
-%data.junk = 'hi';
-%A = [];
-%return
-phase = phase___;
-
-% ------------------------------------------------------------------
-%
 % Watershed the image
-%
-% ------------------------------------------------------------------
-
 %here we use matlab's standard watershed algorithm to watershed just the
 %cell-filled regions of the image.
-
 phaseMask = uint8(agd(phase) + 255*(1-(mask_bg)));
-
-%disp( 'Run watershed.')
-%tic
 ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
-%toc
 
-%disp('adapt')
+
 
 if adapt_flag
     % If the adapt_flag is set to true (on by default) it breaks regions 
@@ -349,7 +308,6 @@ segs_3n = segs_3n + ismember(labelmatrix(cc), idx);
 idx = find(~logmask);
 segs = ismember(labelmatrix(cc), idx);
 
-
 % redefine segs after eliminating the small segs and calculate all the
 % region properties we will need.
 % here we create coordinates to crop around each segment. This decreases the time
@@ -359,11 +317,6 @@ numSegs    = max( segs_label(:) );
 segs_props = regionprops(  segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
     'MajorAxisLength', 'Orientation'} );
 
-%del = 0.5;
-% figure(3);
-% imshow( cat(3, del*ag(phase) + 0.3*ag(outer_bound)*0,...
-%     del*ag(phase) + 0.3*ag(segs_3n),...
-%     del*ag(phase) + 0.3*ag(segs)));
 
 % segs_good is the im created by the segments that will be on
 % segs_bad  is the im created by the rejected segs
@@ -377,10 +330,10 @@ ymin = 1;
 xmax = sim(2);
 ymax = sim(1);
 
-% we pre-allocate this array to save time.
 % seg_info holds all the properties of each segment
 seg_info = zeros(numSegs,19);
-% score is a binary include (1)/exclude (0) flag generate
+
+% score is a binary include (1)/exclude (0) flag generated
 % by a vector multiplcation of A with seg_info.
 score    = zeros(numSegs,1);
 scoreRaw = zeros(numSegs,1);
@@ -390,8 +343,7 @@ scoreRaw = zeros(numSegs,1);
 % bad.
 for ii = 1:numSegs
     
-    % crop around each segment. Taking two pixels outside in each direction
-    
+    % Crop around each segment with two pixels of padding in x and y
     [xx,yy] = getBBpad( segs_props(ii).BoundingBox, sim, 2 );
     
     % here we get the cropped segment mask and corresponding phase image
@@ -450,7 +402,6 @@ for ii = 1:numSegs
     
     % seg_info(:,6) is the second d of the phase parallel to the seg at the
     % min pixel
-    
     tmp_mask = xor(ii_min_para,min_pixel);
     seg_info(ii,6) = mean(phase_ii(tmp_mask))-seg_info(ii,1);
     
@@ -462,14 +413,8 @@ for ii = 1:numSegs
     % have to determine what these regions are... ie the regs_label number
     % By construction, each seg touches two regions. Ind_reg is the vector
     % of the region indexes--after we eliminate '0'.
-    %ind_reg = unique(regs_label_ii(bwmorph( mask_ii, 'dilate')));
-    
     uu = regs_label_ii(imdilate( mask_ii, disk1));
     ind_reg = unique(uu(logical(uu)));
-        
-    %     if( numel(ind_reg) ~= 2 )
-    %         disp(['Warning: Segment ',num2str(ii), ' doesnt touch two regions!']);
-    %     end
     
     % seg_info(:,7) and seg_info(:,8) are the min and max area of the
     % neighboring regions
@@ -518,10 +463,7 @@ for ii = 1:numSegs
     
     
     for kk = 1:numel(ind_reg);
-        
-        
-        % mask a new cropping region for each of the regions
-        % to speed the calculation.
+        % get a new cropping region for each region with 2 pix padding
         [xx_,yy_] = getBBpad(regs_prop(ind_reg(kk)).BoundingBox,sim,2);
         
         
@@ -545,29 +487,10 @@ for ii = 1:numSegs
     seg_info(ii,19) = min(L2);
     
     
-    
-    %       imshow( cat(3,ag(ii_min_para),ag(min_pixel),ag(ii_min_normal)),'InitialMagnification',1000)
-    %             try
-    %                 text( sub2_,sub1_, ...
-    %                     [num2str(seg_info(ii,7),2),', ',...
-    %                     num2str(seg_info(ii,8),2),', ',...
-    %                     num2str(seg_info(ii,13),2),', ',...
-    %                     num2str(seg_info(ii,14),2)...
-    %                     ],'Color','w');
-    %
-    %             catch
-    %                 'hi'
-    %             end
-    %
-    %
-    
-    
-    % Calculate the score to determine if the seg will be included. The
-    % score is A dot seg_info + A0 > 0 where A0 is the last element of A.
-    % if the dot product is greater that -A0, then the segment is on
-    % whereas if it is less that zero the segment if off.
+    % Calculate the score to determine if the seg will be included.
+    % if score is less than 0 set the segment off
     scoreRaw(ii) = segmentScoreFun( seg_info(ii,:), A );
-    score(ii) = double( 0< scoreRaw (ii));
+    score(ii) = double( 0 < scoreRaw (ii));
     
     % update the good and bad segs images.
     

@@ -22,8 +22,26 @@ function trackOptiView(dirname,file_filter,err_flag)
 % G  : Gate All Cell Files
 % Movie : Export Movie Frames
 %
+% important notes :
+% - it saves a file in the directory named .trackOptiView.mat where it 
+% saves the flags from the previous launch
+%
+%   FLAGS : 
+%         P_Flag : shows regions
+%         t_flag : shows the cell numbers
+%         lyse_flag : outlines cell that lysed
+%         m_flag : shows mask
+%         c_flag : ? does absolutely nothing
+%         v_flag : shows cells outlines
+%         f_flag : shows flurescence image
+%         s_flag : shows the foci and their score
+%         T_flag : ? something related to regions
+%         p_flag : shows pole positions and connects daughter cells to each other
+%
+
 % INPUT :
-%       dirname : directory that contains file segemented by supeSegger
+%       dirname : main directory that contains files segemented by supeSegger
+%       it must be the directory that has raw_im and xy1 etc folders.
 %       file_filter : used to obtain the contents (deafult .err file)
 %       err_flag : if 1, displays errors found in frame, default 0
 %
@@ -35,12 +53,9 @@ function trackOptiView(dirname,file_filter,err_flag)
 
 hf = figure(1);
 clf;
-%set( hf, 'Color', [0.1,0.1,0.1] );
-
 mov = struct;
 CONST = [];
 touch_list = [];
-
 
 if nargin<2 || isempty(file_filter);
     file_filter = '*err.mat';
@@ -52,33 +67,27 @@ end
 
 FLAGS.err_flag = err_flag;
 
-
 if ~exist('strip_flag');
     strip_flag = 1;
 end
 
 % Add slash to the file name if it doesn't exist
-if(nargin<1 || isempty(dirname))
-    
+if(nargin<1 || isempty(dirname))    
     dirname=uigetdir()
-    dirname=[dirname,filesep];
-else
-    if dirname(end)~=filesep
-        dirname=[dirname,filesep];
-    end
 end
+dirname = fixDir(dirname);
 
 D_FLAG = [];
-
 n_char    = numel(dirname);
 seg_pos   = strfind( dirname, ['seg',filesep]);
 
+% if loaded from seg folder it goes into segmentation mode
 if (n_char - seg_pos) == (numel(['seg',filesep])-1)
     disp( 'seg mode' );
     D_FLAG = SD_FLAG;
 else
     if exist( [dirname,filesep,'raw_im'],'dir')
-        D_FLAG = AD_FLAG;
+        D_FLAG = AD_FLAG; % visulization mdoe
     else
         D_FLAG = ND_FLAG;
     end
@@ -86,14 +95,12 @@ end
 
 dirname0 = dirname;
 
-
 % load flags if they already exist to maintain state between launches
 filename_flags = [dirname0,'.trackOptiView.mat'];
 if  (D_FLAG == AD_FLAG) && exist( filename_flags, 'file' )
     load(filename_flags);
 else
-    FLAGS = intSetDefaultFlags();
-    
+    FLAGS = intSetDefaultFlags();   
     error_list = [];
     nn = 1;
     dirnum = 1;
@@ -152,7 +159,6 @@ elseif D_FLAG == ND_FLAG
     [nameInfo] = getDirStruct( dirname0 );
     num_xy = numel(nameInfo.nxy);
     header = ['xy',num2str(dirnum),': '];
-    
 end
 
 
@@ -738,12 +744,9 @@ while runFlag
                     end
                 end
             end
-            
         end
         
-        
-    elseif strcmp(c,'link'); % Reset Linking in Current Frame
-        
+    elseif strcmp(c,'link'); % Reset Linking in Current Frame       
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
         else                      
@@ -779,9 +782,7 @@ while runFlag
                     
                     if ~isempty(list_of_regs)
                         
-                        %list_of_regs
-                        
-                        
+                        %list_of_regs                       
                         data_c.regs.ol.f{ii}    = zeros(2, 5);
                         
                         nnn = min([5,numel(list_of_regs)]);
@@ -814,9 +815,7 @@ while runFlag
                 end
             end
         end
-        
-        
-        
+       
     elseif strcmp(c,'errRez'); % ReRun Error Resolution and  linking code trackOpti
         ctmp = input('Are you sure you want to re-run error resolution? (y/n): ','s');
         
@@ -869,6 +868,8 @@ while runFlag
             elseif nn< 1
                 nn = 1;
             end
+        else 
+            disp ('Command not found');
         end
         resetFlag = true;
         
@@ -887,7 +888,6 @@ end
 
 % END OF MAIN FUNCTION (trackOptiView)
 
-
 %% INTERNAL FUNCTIONS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -902,38 +902,21 @@ data = load( filename );
 ss = size( data.phase );
 
 if isfield( data, 'mask_cell' )
-    data.outline =  xor(bwmorph( data.mask_cell, 'dilate' ), data.mask_cell);
+    data.outline =  xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
 end
 
-
 if isempty( clist )
-    
+    disp (' Clist is empty, can not load any files');
 else
-    clist = gate(clist);
-    
-    data.cell_outline = false(ss);
-    
-    %tic
+    clist = gate(clist);    
+    data.cell_outline = false(ss);  
     if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
-        
-        ind = find(ismember(data.regs.ID,clist.data(:,1)));
-        
-        %     for ii = ind
-        %         [xx,yy] = getBBpad(data.regs.props(ii).BoundingBox,ss,1);
-        %
-        %         mask_tmp = data.regs.regs_label(yy,xx)==ii;
-        %         data.cell_outline(yy,xx) = or( data.cell_outline(yy,xx), ...
-        %             xor(bwmorph( mask_tmp, 'dilate' ),...
-        %             mask_tmp));
-        %     end
-        
-        mask_tmp = ismember( data.regs.regs_label, ind );
-        
+        ind = find(ismember(data.regs.ID,clist.data(:,1)));        
+        mask_tmp = ismember( data.regs.regs_label, ind );        
         data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
         
     end
 end
-%toc
 
 end
 
@@ -944,7 +927,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [nameInfo] = getDirStruct( dirname )
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 contents = dir( [dirname,filesep,'*.tif'] );
 
 nt  = [];
@@ -976,12 +958,10 @@ num_c  = numel(nc);
 num_z  = numel(nz);
 num_t  = numel(nt);
 
-
 nameInfo.nt  = nt;
 nameInfo.nc  = nc;
 nameInfo.nxy = nxy;
 nameInfo.nz  = nz;
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -990,7 +970,7 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function padStr = getPadSize( dirname )
-
+% getPadSize : returns number of numbers in cell id's.
 contents = dir([dirname,'*ell*.mat']);
 
 if numel(contents) == 0
@@ -1021,83 +1001,58 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [data_r, data_c, data_f] = intLoadData( dirname, ...
     D_FLAG, contents, nn, num_im, nameInfo, clist, ixy)
-
+% intLoadData : loads current, revers and forward data.
 
 if (D_FLAG == AD_FLAG) || (D_FLAG == SD_FLAG)
     
-    %'start'
-    
-    if (nn ==1) && (1 == num_im)
+    %'start'    
+    if (nn ==1) && (1 == num_im) % 1 frame only
         data_r = [];
-        data_c = loaderInternal([dirname,contents(nn  ).name], clist);
+        data_c = loaderInternal([dirname,contents(nn).name], clist);
         data_f = [];
-    elseif nn == 1;
+    elseif nn == 1;  % first frame
         data_r = [];
-        data_c = loaderInternal([dirname,contents(nn  ).name], clist);
+        data_c = loaderInternal([dirname,contents(nn).name], clist);
         data_f = [];
-        %data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-        %data_ff= loaderInternal([dirname,contents(nn+2).name]);
-    elseif nn == num_im
-        %data_r = loaderInternal([dirname,contents(nn-1).name], clist);
+    elseif nn == num_im % last frame
         data_r = [];
-        data_c = loaderInternal([dirname,contents(nn  ).name], clist);
+        data_c = loaderInternal([dirname,contents(nn).name], clist);
         data_f = [];
-        %data_ff= [];
-    elseif nn == num_im-1
-        %data_r = loaderInternal([dirname,contents(nn-1).name], clist);
+    elseif nn == num_im-1 % frame before last
         data_r = [];
-        data_c = loaderInternal([dirname,contents(nn  ).name], clist);
+        data_c = loaderInternal([dirname,contents(nn).name], clist);
         data_f = [];
-        %data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-        %data_ff= [];
-    else
-        
-        if 1
+    else       
+        if 1 % all other cases
             data_r = loaderInternal([dirname,contents(nn-1).name], clist);
             data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-        else
+        else % something for debugging i guess?
             data_r = [];
             data_f = [];
         end
-        data_c = loaderInternal([dirname,contents(nn  ).name], clist);
-        %data_ff= loaderInternal([dirname,contents(nn+1).name]);
+        data_c = loaderInternal([dirname,contents(nn).name], clist);
     end
-    
-    %'finish'
-    
+
 else
     
     data_f = [];
     data_r = [];
     data_c = [];
     
-    % it  = nameInfo.npos(1,1);
-    % ic  = nameInfo.npos(2,1);
-    % ixy = nameInfo.npos(3,1);
-    % iz  = nameInfo.npos(4,1);
-    
     nameInfo.npos(1,1) = nameInfo.nt(nn);
     nameInfo.npos(3,1) = nameInfo.nxy(ixy);
     nameInfo.npos(2,1) = 1;
-    nameInfo.npos(4,1) = 1;
-    
+    nameInfo.npos(4,1) = 1;    
     name = [dirname,MakeFileName(nameInfo)];
-    
-    
-    data_c.phase = imread(name);
-    for ic = nameInfo.nc(2:end)
         
+    data_c.phase = imread(name);
+    for ic = nameInfo.nc(2:end)        
         nameInfo.npos(2,1) = nameInfo.nc(ic);
         name = [dirname,MakeFileName(nameInfo)];
-        
         tmp = imread(name);
         data_c = setfield( data_c, ['fluor',num2str(ic-1)], tmp );
     end
 end
-
-
-
-
 
 end
 
@@ -1107,9 +1062,11 @@ end
 function val = AD_FLAG()
 val = 0;
 end
+
 function val = SD_FLAG()
 val = 1;
 end
+
 function val = ND_FLAG()
 val = 2;
 end
@@ -1142,7 +1099,6 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function FLAGS = intSetDefaultFlags()
-
 FLAGS.v_flag  = 1;
 FLAGS.m_flag  = 0;
 FLAGS.t_flag  = 0;
@@ -1156,7 +1112,6 @@ FLAGS.p_flag  = 0;
 FLAGS.c_flag  = 1;
 FLAGS.lyse_flag = false;
 FLAGS.err_flag = false;
-
 end
 
 
@@ -1166,7 +1121,6 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intCons(dirname0, contents_xy, dircons, setHeader, CONST)
-%try
 
 ixy = intGetNum( contents_xy.name );
 header = ['xy',num2str(ixy),': '];
@@ -1178,22 +1132,19 @@ if exist([dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'])
     clf
     imshow(imColor);
     disp('Press any key to continue')
-    pause
-    
+    pause;  
 else
     
     disp('No Images Found.')
     disp('Calculate New Consensus?')
     d = input('[y/n]:','s');
     
-    if strcmp(d,'y')
-        
+    if strcmp(d,'y')        
         if isdir([dirname0,contents_xy.name,filesep,'seg_full'])
             dirname = [dirname0,contents_xy.name,filesep,'seg_full',filesep];
         end
-        
-        dirname_cell = [dirname0,contents_xy.name,filesep,'cell',filesep];
-        
+       
+        dirname_cell = [dirname0,contents_xy.name,filesep,'cell',filesep];        
         disp( ['Doing ',num2str(ixy)] );
         
         %makeFrameStripeMosaicCenter( [dirname_cell], CONST, ll_ );
@@ -1215,14 +1166,9 @@ else
             imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
             imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
             imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-            imwrite( imTot10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-            
-            %figure(99);
-            %print( '-depsc', [dircons, 'dyn', num2str(ixy,'%02d'), '.eps'] );
-            
+            imwrite( imTot10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );                   
             save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
-        else
-            
+        else           
             disp( ['Found no cells in ', dirname_cell, '.'] );
         end
         

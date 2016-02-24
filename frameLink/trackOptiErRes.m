@@ -1,14 +1,14 @@
 function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)
-% trackOptiErRes : defines and resolves the errors produced during
-% linking. This function can do calculations on the segments and fix segments
-% by frame skipping, removing, and splitting segements, as well as call good
-% divisions, again based on the cell score function regionScoreFun
+% trackOptiErRes : defines and resolves errors produced during frame linking.
+% This function can do calculations on the segments and fix segments
+% by frame skipping, removing, and splitting segements and by calling good
+% divisions based on the cell score function from regionScoreFun.
 %
 % INPUT :
 %       dirname_ : seg folder eg. maindirectory/xy1/seg
 %       disp_flag : 1 to display images
 %                   0 to not display images (default)
-%       nc_flag : no change flag, passed the second time error resolution
+%       nc_flag : no change flag, passed the second time in error resolution
 %       runs
 %       CONST : Constants file
 %       header : information string.
@@ -46,13 +46,8 @@ list_touch = [];
 
 if(nargin<1 || isempty(dirname))
     dirname='.';
-    dirname=[dirname,filesep];
-else
-    if dirname(length(dirname))~=filesep
-        dirname=[dirname,filesep];
-    end
 end
-
+dirname = fixDir(dirname);
 
 contents=dir([dirname '*_trk.mat']);
 if isempty(contents)
@@ -68,41 +63,38 @@ else
 end
 
 list_change_last = [];
-
 break_flag = 0;
 i = 1;
-
 cell_count = 0;
 
-while i <= num_im
+while i <= num_im % loop through number of frames
     
     if CONST.show_status
         waitbar((i-1)/num_im,h,['Error Resolution--Frame: ',...
             num2str(i),'/',num2str(num_im)])
     end
     
-    if (i ==1) && (1 == num_im)
+    if (i ==1) && (1 == num_im) % if there is only one image
         data_r = [];
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         data_f = [];
-    elseif i == 1;
+    elseif i == 1 % first frame - load current and forward
         data_r = [];
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         data_f = loaderInternal([dirname,contents(i+1).name]);
-    elseif i == num_im
+    elseif i == num_im % last frame - load reverse and currrent
         data_r = loaderInternal([dirname,contents(i-1).name]);
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         data_f = [];
-    else
+    else % all other frames
         data_r = loaderInternal([dirname,contents(i-1).name]);
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         data_f = loaderInternal([dirname,contents(i+1).name]);
     end
     
     
     % Calculate overlaps
-    % Loop through regions
-    
+    % Loop through regions    
     list_c_del = [];
     list_f_add = [];
     list_r_add = [];
@@ -124,14 +116,12 @@ while i <= num_im
                         disp([header, 'ErRes: Frame: ', num2str(i), ', reg: ',...
                             num2str(ii),'. removed stray region' ]);
                         
-                        % is the regions are mapped to by nobody of map into
-                        % nobody, zero them out.
-                        
+                        % if the regions are mapped to by nobody of map into
+                        % nobody, zero them out.                        
                         list_c_del = [list_c_del, ii];
                         data_c.regs.stat0(ii) = 3;
                         % set the break flag to recalculate the regions
-                        break_flag = 1;
-                        
+                        break_flag = 1;                       
                     end
                 else
                     data_c.regs.error.label{ii} = ['Frame: ', ...
@@ -546,7 +536,6 @@ else
     fclose(fid);
     data =  load( filename_mod );
 end
-
 
 end
 

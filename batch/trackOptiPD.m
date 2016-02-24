@@ -1,7 +1,11 @@
 function trackOptiPD(dirname, CONST)
-% trackOptiPD Sets up directory structure for cell segmentation
-% analysis for the SuperSeggerOpti package and moves
-% aligned images to their respective folders.
+% trackOptiPD : Sets up directories and moves files for SuperSeggerOpti.
+% It sets up directory structure for cell segmentation
+% analysis and moves aligned images to their respective folders.
+%
+% INPUT : 
+%       dirname : directory that contains images
+%       CONST : segmentation constants
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
@@ -14,17 +18,11 @@ file_filter = '*.tif';
 dirseperator = filesep;
 
 
-if(nargin<1 || isempty(dirname))
-    
+if(nargin<1 || isempty(dirname))    
     dirname=uigetdir()
-    dirname=[dirname,dirseperator];
-else
-    if dirname(length(dirname))~=dirseperator
-        dirname=[dirname,dirseperator];
-    end
 end
 
-
+dirname = fixDir(dirname);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -33,21 +31,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 contents=dir([dirname file_filter]);
 
-
 if ~isempty(contents);
     
     num_im = numel(contents);
-    
-    
-    nt  = [];
-    nc  = [];
-    nxy = [];
-    nz  = [];
-    
-    
-    for i = 1:num_im;
-        nameInfo = ReadFileName( contents(i).name );
+       
+    nt  = []; % time
+    nc  = []; % channel
+    nxy = []; % xy
+    nz  = []; % z
         
+    for i = 1:num_im;
+        % creates an array with the the numbers after the strings t,c,xy,z
+        % for the filename of each image
+        nameInfo = ReadFileName(contents(i).name);    
         nt  = [nt,  nameInfo.npos(1,1)];
         nc  = [nc,  nameInfo.npos(2,1)];
         nxy = [nxy, nameInfo.npos(3,1)];
@@ -58,10 +54,7 @@ if ~isempty(contents);
     nc  = sort(unique(nc));
     nxy = sort(unique(nxy));
     nz  = sort(unique(nz));
-    
-    %xyPadSize = floor(log(max(nxy))/log(10))+1;
-    %padString = ['%0',num2str(xyPadSize),'d'];
-    
+
     num_xy = numel(nxy);
     num_c  = numel(nc);
     num_z  = numel(nz);
@@ -81,8 +74,9 @@ if ~isempty(contents);
     
     padString = ['%0',num2str(xyPadSize),'d'];
     
-    for i = 1:num_xy
-        
+    for i = 1:num_xy 
+        % creates the needed xy directories with phase, fluor, seg and cell
+        % sub-directories
         dirname_list{i} = [dirname,'xy',num2str(nxy(i), padString),dirseperator];
         mkdir( dirname_list{i} );
         mkdir( [dirname_list{i},'phase', dirseperator] );
@@ -108,8 +102,7 @@ if ~isempty(contents);
         ic  = nameInfo.npos(2,1);
         ixy = nameInfo.npos(3,1);
         iz  = nameInfo.npos(4,1);
-        
-        
+               
         if ixy==-1
             ii = 1;
         else
@@ -128,27 +121,8 @@ if ~isempty(contents);
         end
         
         tmp_source =   [dirname,contents(i).name];
-        
-        if ispc
-            move_cmd = '!move ';
-            tmp_target = [ tmp_target ];
-            tmp_source = [ tmp_source ];
-            
-            try
-                movefile( tmp_source, tmp_target ,'f');
-            catch
+        movefile( tmp_source, tmp_target ,'f');
                 
-                keyboard
-                
-            end
-        else
-            move_cmd = '!mv ';
-            move_cmd = [move_cmd,tmp_source,' ',tmp_target];
-            eval(move_cmd);
-        end
-        
-        
-        
     end
     if CONST.show_status
         close(h);

@@ -3,9 +3,9 @@ function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)
 %
 % INPUT :
 %       data    : region (cell) data structure
-%       data_r  : linked reverse region (cell) data structure
-%       data_f  : linked forward region (cell) data structure
-%       CONST      : SuperSeggerOpti set parameters
+%       data_r  : reverse region (cell) data structure
+%       data_f  : forward region (cell) data structure
+%       CONST   : SuperSeggerOpti set parameters
 %
 %
 % OUTPUT :
@@ -34,6 +34,7 @@ function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+% calculate overlap between current, reverse and forward regions
 [data.regs.ol.f,  data.regs.map.f,  data.regs.error.f,  data.regs.dA.f, ...
     data.regs.DA.f, dF1_f, dF2_f,dF1b_f,dF2b_f]   ...
     = calcRegsInt( data,   data_f, CONST);
@@ -61,56 +62,40 @@ data.regs.L2           = zeros(1,data.regs.num_regs);
 data.regs.contact     = zeros(1,data.regs.num_regs);
 data.regs.neighbors   = cell(1,data.regs.num_regs);
 data.regs.contactHist = zeros(1,data.regs.num_regs);
-
 data.regs.info      = zeros(data.regs.num_regs,CONST.regionScoreFun.NUM_INFO);
 data.regs.scoreRaw  = zeros(1,data.regs.num_regs);
-
-
-data.regs.death          = zeros(1,data.regs.num_regs); % Death/divide time
-data.regs.deathF         = zeros(1,data.regs.num_regs);    % Divides in this frame
-
-data.regs.birth          = zeros(1,data.regs.num_regs); % Birth Time: either
-% Division or appearance
-data.regs.birthF         = zeros(1,data.regs.num_regs);    % Divide in this frame
-
-data.regs.age            = zeros(1,data.regs.num_regs);    % cell age. starts at 1.
-data.regs.divide         = zeros(1,data.regs.num_regs);    % succesful divide in this
-% this frame.
-
-data.regs.ehist          = zeros(1,data.regs.num_regs);    % True if cell has an unresolved
-% error before this time.
+data.regs.death          = zeros(1,data.regs.num_regs); % Death/division time
+data.regs.deathF         = zeros(1,data.regs.num_regs); % division in this frame
+data.regs.birth          = zeros(1,data.regs.num_regs);% Birth Time: either division or appearance
+data.regs.birthF         = zeros(1,data.regs.num_regs);% division in this frame
+data.regs.age            = zeros(1,data.regs.num_regs);% cell age. starts at 1.
+data.regs.divide         = zeros(1,data.regs.num_regs);% succesful division in this frame.
+data.regs.ehist          = zeros(1,data.regs.num_regs);% True if cell has an unresolved error before this time.
 
 % add lysis detection if lysis flag is set
 if CONST.trackOpti.LYSE_FLAG
     data.regs.lyse.errorColor1         = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
     data.regs.lyse.errorColor1Cum      = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
     data.regs.lyse.errorColor2         = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-    data.regs.lyse.errorColor2Cum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error
-    
+    data.regs.lyse.errorColor2Cum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
     data.regs.lyse.errorColor1b         = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
     data.regs.lyse.errorColor1bCum      = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
     data.regs.lyse.errorColor2b         = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-    data.regs.lyse.errorColor2bCum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error
-    
+    data.regs.lyse.errorColor2bCum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
     data.regs.lyse.errorShape          = zeros(1,data.regs.num_regs); % Fluor intensity change error in this frame
     data.regs.lyse.errorShapeCum       = zeros(1,data.regs.num_regs); % Cum intensity change error
 end
 
-data.regs.stat0          = zeros(1,data.regs.num_regs);    % Results from a successful
-% division.
-
+data.regs.stat0          = zeros(1,data.regs.num_regs); %  Successful division.
 data.regs.sisterID       = zeros(1,data.regs.num_regs);   % sister cell ID
 data.regs.motherID       = zeros(1,data.regs.num_regs);   % mother cell ID
 data.regs.daughterID     = cell(1,data.regs.num_regs);   % daughter cell ID
 data.regs.ID             = zeros(1,data.regs.num_regs); % cell ID number
-
-
 data.regs.error.label    = cell(1,data.regs.num_regs);   % err
 data.regs.ignoreError    = zeros(1,data.regs.num_regs); % a flag for ignoring the error in a region.
 %data.regs.neighbors       = cell(1,data.regs.num_regs);   % err
 
 loop_ind       = 1:data.regs.num_regs;
-
 
 for ii = loop_ind
     [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
@@ -157,8 +142,6 @@ if CONST.trackOpti.LYSE_FLAG
     
 end
 
-
-%toc
 end
 
 

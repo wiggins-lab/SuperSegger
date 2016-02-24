@@ -37,7 +37,7 @@ if ~exist('header')
 end
 
 % turn skip off if skip isn't set.
-if isempty( skip )
+if isempty(skip)
     skip = 1;
 end
 
@@ -166,7 +166,7 @@ if skip>1
 end
 
 %% ErRes (2)
-% Resolve Errors passing the no change flag as the last argument
+% Resolve Errors for a second time passing the no change flag as 1
 stamp_name = [dirname_seg,'.trackOptiErRes2.mat'];
 if ~exist( stamp_name, 'file' );
     list_touch = trackOptiErRes(dirname_seg,[],1, CONST, header);

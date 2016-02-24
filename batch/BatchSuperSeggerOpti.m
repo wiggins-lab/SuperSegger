@@ -36,8 +36,6 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)
 % This file is part of SuperSeggerOpti.
 
 % Init
-res_flag = false;
-
 if nargin < 2 || isempty( skip )
     skip = 1; % default : don't skip frames
 end
@@ -58,13 +56,14 @@ if dirname_ == '.'
     dirname_ = pwd;
 end
 
+dirname_ = fixDir(dirname_);
 
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.
-if strcmp(class(res),'struct')
+if isstruct(res)
     CONST = res;
 else
-    disp ('BSSO : Loading constants file ', res);
+    disp (['BSSO : Loading constants file ', res]);
     if exist('loadConstantsMine','file');
         CONST = loadConstantsMine(res);
     else
@@ -83,15 +82,8 @@ if clean_flag && SEGMENT_FLAG
 end
 
 %% align frames
-if dirname_(end) == filesep
-    dirname_ = dirname_(1:end-1);
-end
-
-if findstr ( '.', dirname_ ) == 1 % check if this is needed or if pwd is enough
-    return;
-elseif exist( dirname_, 'dir' )
-    
-    if exist( [dirname_,filesep,'raw_im'] ,'dir') 
+if exist( dirname_, 'dir' )    
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
         disp('BSSO: aligned images exist');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
@@ -99,16 +91,15 @@ elseif exist( dirname_, 'dir' )
         else
             crop_box_array = cell(1,10000);
         end
-    else
-        
+    else 
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             Neo_Crop(dirname_);
             crop_box_array = trackOptiAlignPad( dirname_, ...
                 CONST.align.CROP_FLAG, CONST.parallel_pool_num, CONST );
-            movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] )
-            movefile( [dirname_,'_align',filesep,'*.tif'], [dirname_,filesep]);
-            rmdir( [dirname_,'_align'] );
+            movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
+            movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
+            rmdir( [dirname_,'align'] ); % removes _align directory
         else
             crop_box_array = cell(1,10000);
         end
@@ -121,15 +112,14 @@ end
 
 %% setup the dir structure for analysis.
 trackOptiPD(dirname_, CONST);
-dirname = [dirname_, filesep];
 
-save( [dirname,'CONST.mat'],'-STRUCT', 'CONST' ); % Save the Const set you were using in your analysis
-save( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
+save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Save the Const set you were using in your analysis
+save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 
 %% Loop through xy directories
 % Reset n values incase directories have already been made.
 % setup nxy values
-contents = dir([dirname,'xy*']);
+contents = dir([dirname_,'xy*']);
 
 if isempty(contents)
     disp('BSSO: Did not find any data.');
@@ -142,7 +132,7 @@ else
         if (contents(i).isdir) && (numel(contents(i).name) > 2)
             num_xy = num_xy+1;
             nxy = [nxy, str2num(contents(i).name(3:end))];
-            dirname_list{i} = [dirname,contents(i).name,filesep];
+            dirname_list{i} = [dirname_,contents(i).name,filesep];
         end
     end
     %nxy
@@ -204,17 +194,14 @@ else
     
     if CONST.consensus
         
-        h =  waitbar(0,['Computing Consensus Images']);
-        
-        dircons = [dirname,'consensus',filesep];
-        mkdir( dircons );
-        
+        h =  waitbar(0,['Computing Consensus Images']);        
+        dircons = [dirname_,'consensus',filesep];
+        mkdir( dircons );       
         setHeader = 'xy' ;
         
         for ii = 1:num_xy
             
-            waitbar(ii/num_xy,h) ;
-            
+            waitbar(ii/num_xy,h) ;          
             ixy = ii ;
             
             dirname_xy = dirname_list{ii};
@@ -229,8 +216,7 @@ else
                 imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imTot10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
-            else
-                
+            else              
                 disp( ['Found no cells in ', dirname_cell, '.'] );
             end
             
@@ -278,13 +264,11 @@ for i = 1:num_im;
     nz = [nz, nameInfo.npos(4,1)];
 end
 
-
 nt = sort(unique(nt));
 nz = sort(unique(nz));
 
 num_t = numel(nt);
 num_z = numel(nz);
-
 
 if  isempty(nz) || nz(1)==-1
     nz = 1;
@@ -293,7 +277,7 @@ end
 
 
 %% Do segmentation
-disp([header 'BSSO: Do segmentation...']);
+disp([header 'BSSO: Segmentation starts...']);
 
 if (CONST.parallel_pool_num>0)
     MM = CONST.parallel_pool_num; % number of workers
@@ -352,11 +336,31 @@ end
 % doSeg
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, clean_flag, skip, CONST, header, crop_box)
-% doSeg : Segments data and saves _seg data structure.
+function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
+    dirname_xy, clean_flag, skip, CONST, header, crop_box)
+% doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
+% If the seg files are already found it does not repeat the segmentation.
+% It calls the segmentation function found in CONST.seg.segFun to achieve
+% this. 
+% Note that these images are not ideally segmented because they do not use
+% any temporal information, i.e. what came before or after, to optimize the 
+% segment choices; this comes next
+
+% It uses a local minimum filter (similar to a median filter) to enhance 
+% contrast and then uses Matlab's WATERSHED command to generate cell
+% boundaries. The spurious boundaries (e.g. those that lie in the cell 
+% interiors) are removed by an intensity thresholding routine on each 
+% boundary. Any real boundaries incorrectly removed by this thresholding 
+% are added back by an iterative algorithm that uses knowledge of 
+% cell shape (set by the RES value passed in the Constants file) to 
+% determine which regions are missing boundaries. There is a lot of stuff
+% going on under the hood here, but you?ll rarely have to adjust anything 
+% in this code. 
+
 % After it segments the data it copies the fluor fields into the data 
-% structure and save this structure in the seg directory. If the structure
-% is already found it does not repeat segmentation.
+% structure and save this structure in the seg directory.
+
+
 
 
 % Init

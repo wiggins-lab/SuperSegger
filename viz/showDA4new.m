@@ -678,11 +678,9 @@ end
 function outline = intDoOutline( map )
 
 persistent sqrStrel;
-
 if isempty( sqrStrel );
     sqrStrel = strel('square',3);
 end
-
 outline = 2*double(imdilate( map, sqrStrel ))-double(map);
 end
 

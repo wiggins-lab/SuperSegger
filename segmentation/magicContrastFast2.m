@@ -1,6 +1,9 @@
 function im = magicContrastFast2( im, mask, radius )
-% magicContrastFast2 : applied a filter to enhance contrast to the image.
-% It is local minimum filter (similar to a median filter) to enhance contrast 
+% magicContrastFast2 : applies a filter to enhance inter-cellular contrast.
+% It is local minimum filter (similar to a median filter) to enhance contrast. 
+% It subtracting from each pixel the minimum intensity in its neighborhood. It
+% forces the interior of the cells closer to zero intensity. Used to create
+% a background mask.
 %
 % INPUT :
 %       im : phase image
@@ -16,9 +19,9 @@ function im = magicContrastFast2( im, mask, radius )
 
 si = size( im );
 
-impad = [[im(radius:-1:1,radius:-1:1), im(radius:-1:1,:), im(radius:-1:1,end:-1:(end-radius));...
+impad = [im(radius:-1:1,radius:-1:1), im(radius:-1:1,:), im(radius:-1:1,end:-1:(end-radius));...
     im(:, radius:-1:1), im(:, :), im(:,end:-1:(end-radius));...
-    im(end:-1:end-radius,radius:-1:1), im(end:-1:end-radius,:), im(end:-1:end-radius, end:-1:(end-radius))]];
+    im(end:-1:end-radius,radius:-1:1), im(end:-1:end-radius,:), im(end:-1:end-radius, end:-1:(end-radius))];
 
 xx = (-radius):(radius);
 

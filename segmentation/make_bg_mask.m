@@ -3,11 +3,11 @@ function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 %
 % INPUT :
 %       phase : phase image
-%       filt_3 : 
-%       filt_4 : 
-%       AREA : 
+%       filt_3 : first filter used
+%       filt_4 : second filter used
+%       AREA : the minimum area of cells/cell clumps
 %       CONST : segmentation constants
-%       crop_box :
+%       crop_box : information about alignement of the image
 %
 % OUTPUT :
 %       mask : output cell mask
@@ -15,6 +15,7 @@ function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
+
 
 
 

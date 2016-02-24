@@ -9,7 +9,8 @@ function CONST = loadConstants( res, PARALLEL_FLAG )
 % to loadConstantsMine to avoid confusion.
 %
 % INPUT :
-%   res :
+%   res : number for resolution of microscope used (60 or 100) for E. coli 
+%         or use a string as shown below
 %   PARALLEL_FLAG : 1 if you want to use parallel computation
 %                   0 for single core computation
 %
@@ -44,14 +45,6 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...    % c1 channel name
 % up. This is for parallel processing on multiple cores.                  %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%PARALLEL_FLAG = 0;
-
-%splash_im = imread('splash.tif');
-%h = figure();
-%try
-%imshow( splash_im );
-%end
 
 % PARALLEL FOR MATLAB 2015
 if PARALLEL_FLAG
@@ -947,6 +940,13 @@ CONST.findFocusSR.SED_P         = 10;
 
 CONST.findFocusSR.A_MIN         =  6;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Const for consesnus
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+CONST.consensus = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Const for SR

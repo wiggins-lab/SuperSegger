@@ -1,6 +1,8 @@
 function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] ...
     = calcRegsInt( data1, data2, CONST )
 % calcRegsInt : calculates the max overlap between data1 and data2 regions
+% data 1 and data 2 can be the reverse and current, current and forward
+% regions (order does not matter).
 %
 % INPUT :
 %       data_c: region (cell) data structure 1
@@ -44,8 +46,7 @@ if ~isempty( data1 )
     dF1b  = 2*ones(1, data1.regs.num_regs);
     dF2b  = 2*ones(1, data1.regs.num_regs);
     
-    if ~isempty( data2 )
-        
+    if ~isempty( data2 )        
         for ii = loop_ind
             XX{ii} = zeros(2,5);
             X     = zeros(1,data2.regs.num_regs);

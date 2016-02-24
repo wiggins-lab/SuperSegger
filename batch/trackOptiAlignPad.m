@@ -4,6 +4,7 @@ function crop_box = trackOptiAlignPad(dirname_, CROP_FLAG, M, CONST)
 % cropping the resulting images it builds a larger image
 % that encompases all drift positions.  It saves the alignment information
 % in a file called crop_box.mat
+% The aligned images are placed in a directory dirname/align.
 %
 % INPUT :
 %       dirname_ : folder were .tif image files in NIS format are contained
@@ -29,14 +30,14 @@ end
 
 precision = 100;
 
+if dirname_ == '.'
+    dirname_ = pwd;
+end
+dirname_ = fixDir(dirname_);
+
 if ~isempty(dirname_)
     file_filter = '*.tif';
-    
-    dirseperator = filesep;
-    
-    dirname = [dirname_,dirseperator];
-    
-    contents=dir([dirname file_filter]);
+    contents=dir([dirname_ file_filter]);
     num_im = numel( contents );
     
     nt  = [];
@@ -44,17 +45,12 @@ if ~isempty(dirname_)
     nxy = [];
     nz  = [];
     
-    for i = 1:num_im
-        
-        nameInfo = ReadFileName(contents(i).name);
-        
-        
+    for i = 1:num_im        
+        nameInfo = ReadFileName(contents(i).name);               
         nt  = [nt, nameInfo.npos(1,1)];
         nc  = [nc, nameInfo.npos(2,1)];
         nxy = [nxy,nameInfo.npos(3,1)];
-        nz  = [nz, nameInfo.npos(4,1)];
-        
-        
+        nz  = [nz, nameInfo.npos(4,1)];               
     end
     
     nt  = sort(unique(nt));
@@ -62,12 +58,7 @@ if ~isempty(dirname_)
     nxy = sort(unique(nxy));
     nz  = sort(unique(nz));
     
-    if dirname(1) == '.'
-        targetd = [dirname,'align',dirseperator];
-    else
-        targetd = [dirname_,'_align',dirseperator];
-    end
-    
+    targetd = [dirname_,'align',filesep];
     mkdir(targetd);
     
     num_xy = numel(nxy);
@@ -87,7 +78,7 @@ if ~isempty(dirname_)
     %for jj=1:num_xy
         nnxy = nxy(jj);
         crop_box{jj} = intFrameAlignXY( CROP_FLAG, SHOW_FLAG, nt, nz, nc, nnxy, ...
-            dirname, targetd, nameInfo, precision, CONST );
+            dirname_, targetd, nameInfo, precision, CONST );
     end
 end
 end
@@ -154,7 +145,7 @@ for it = nt;
             
             
             if numel(size(im)) > 2
-                disp('Nate you fucking idiot! These images are color.');
+                disp('These images are color.');
                 im = squeeze(im(:,:,1));
                 
             end

@@ -14,6 +14,8 @@ function nameInfo = ReadFileName( str )
 % npos (i,2) is the position of strD(i) in the string
 % npos (i,3) is the position of the last number after strD(i) in the string
 % npos (i,4) is the length of the numbers after strD(i) in the string
+% for example for the string file_t5xy1
+% str(1,:) would be : 5, 6 , 7, 1
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Unviersity of Washington, 2016

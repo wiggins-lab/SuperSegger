@@ -65,7 +65,6 @@ function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag,
 % mask_cell = mask_bg .* (~segs_good) .* (~segs_3n);
 %
 %
-%
 % Written by Paul Wiggins and Keith Cheveralls
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
@@ -90,21 +89,15 @@ if ~exist('crop_box')
     crop_box = [];
 end
 
-% ------------------------------------------------------------------
-%
-% Initial image smoothing
-%
-% ------------------------------------------------------------------
 
+% Initial image smoothing
 %this step is necessary to reduce the camera and read noise in the raw
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
-
 if CONST.ResFlag == CONST.R100X
     phase = imfilter(phase_,fspecial('disk',1),'replicate');
 elseif CONST.ResFlag == CONST.R100XPa
-    phase = imfilter(phase_,fspecial('disk',1),'replicate');
-    
+    phase = imfilter(phase_,fspecial('disk',1),'replicate'); 
 else
     phase = phase_;
 end
@@ -121,17 +114,11 @@ phase( phase < (mult_min*mp) ) = mult_min*mp;
 
 % if the size of the matrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
-%f = fspecial('gaussian', 10, SMOOTH_WIDTH);
 f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phase = imfilter(phase, f,'replicate');
 
 
-% ------------------------------------------------------------------
-%
 % Create a Background mask
-%
-% ------------------------------------------------------------------
-
 % we create the background mask MASK_BG by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
 % We use one threshold to remove the background, and another to remove
@@ -155,58 +142,36 @@ if nargin < 5 || isempty(adapt_flag)
 end
 
 
-% ------------------------------------------------------------------
-%
-% Enhance inter-cellular image contrast
-%
-% ------------------------------------------------------------------
 
+% Enhance inter-cellular image contrast
 %this filter enhances the contrast of the phase image by subtracting from
 %each pixel the minimum intensity in its neighborhood. It
 %forces the interior of the cells closer to zero intensity.
 phase = ag(phase);
-%phase = magicContrast(phase, imdilate(mask_bg, strel('disk', MAGIC_RADIUS+3)),MAGIC_RADIUS);
-%disp('magic contrast')
-%tic
 phase__ = magicContrastFast2(phase, mask_bg_, MAGIC_RADIUS);
-%toc
-
 phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
-%-------------------------------------------------------------------
-%
-% This cuts out bright spots from the mask
-%
-%-------------------------------------------------------------------
-%CUT_INT = 50;
 
+% This cuts out bright spots from the mask
 mask_mod = (phase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_mod)>0);
 
 
 
-% ------------------------------------------------------------------
-%
-% Watershed the image
-%
-% ------------------------------------------------------------------
 
+% Watershed the image
 %here we use matlab's standard watershed algorithm to watershed just the
 %cell-filled regions of the image.
-
 phaseMask = uint8(agd(phase) + 255*(1-(mask_bg)));
 ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
 
 
 if adapt_flag
-    % ------------------------------------------------------------------
-    %
-    % If the adapt_flag is set (on by default), break the things up that
-    % are too big to be cells. This function slows the code down, AND it
-    % significantly slows down the regionOpti code since there are many
+    % If the adapt_flag is set to true (on by default) it breaks regions 
+    % that are too big to be cells. This function slows the code down, AND 
+    % it significantly slows down the regionOpti code since there are many
     % more marginal segments to consider.
-    %
-    % ------------------------------------------------------------------
+
     wsc = 1- ws;
     regs_label = bwlabel( wsc );
     props = regionprops( regs_label, 'BoundingBox','Orientation' );
@@ -220,12 +185,9 @@ if adapt_flag
         [L1(ii),L2(ii)] = makeRegionSizeProjectionBBint2( (regs_label(yy,xx)==ii), props(ii) );
         
         if L2(ii) > MAX_WIDTH;
-            
-            %disp([header, 'sSO: Adaptive filter.']);
-            [xx,yy] = getBB( props(ii).BoundingBox );
-            
-            
-            mask_reg = (regs_label(yy,xx)==ii);
+
+            [xx,yy] = getBB( props(ii).BoundingBox );                        
+            mask_reg = (regs_label(yy,xx)==ii);          
             
             pp = double(phase__(yy,xx)).*mask_reg;
             mm = 1-mask_reg;
@@ -233,12 +195,7 @@ if adapt_flag
             wsl = double(watershed( ppp )>0);
             wsl = (1-wsl).*mask_reg;
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % prune added segs by adding just enough to
-            % fix the cell width problem
-            %
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % prune added segs by adding just enough to fix the cell width problem
             wsl_cc = compConn( wsl, 4 );
             wsl_3n = double(wsl_cc>2);
             wsl_segs = wsl-wsl_3n;
@@ -255,43 +212,23 @@ if adapt_flag
             for ff = sort_ord;
                 wsl_segs_good = wsl_segs_good + double(wsl_label==ff);
                 mask_reg_tmp = mask_reg-wsl_segs_good;
-                %imshow( cat(3, ag(wsl_segs_good), ag(wsl), ag(ws(yy,xx)) ) )
-                %pause;
                 if maxMinAxis(mask_reg_tmp) < MAX_WIDTH
                     break
                 end
-            end
-            
-            
-            
+            end 
             ws(yy,xx) = double(0<(ws(yy,xx) + wsl_segs_good));
-            
-            %              imshow( cat(3, ag(wsl_segs_good), ag(wsl), ag(ws(yy,xx)) ) )
         end
     end
 end
 
 
-% ------------------------------------------------------------------
-%
 % Determine the "good" and "bad" segments
-%
-% ------------------------------------------------------------------
-
-% (this function is commented below)
-%disp( 'Run seg-analyzer');
-%tic
 [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A);
-%toc
-
 data.mask_cell   = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
 data.phase       = phase_;
 
-% ------------------------------------------------------------------
-%
+
 % Calculate and return the final cell mask
-%
-% ------------------------------------------------------------------
 if disp_flag
     figure(1)
     clf;
@@ -305,8 +242,6 @@ end
 
 
 function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A)
-
-% ------------------------------------------------------------------
 % defineGoodSegs is a sub function that uses intensity thresholds to
 % segregate the set of segments produced by the watershed algorithm
 % into "good" segments (segs_good) which lie along a real cellular
@@ -315,16 +250,11 @@ function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A
 % note that we assume (safely) that the watershed always over- rather
 % than under-segment the image. That is, the set of all real segments is
 % contained with the set of all segments produced by the watershed algorithm.
-% -------------------------------------------------------------------------
 
 sim = size( phase );
 
-% ------------------------------------------------------------------
-%
-% Create labeled image of the segments
-%
-% ------------------------------------------------------------------
 
+% Create labeled image of the segments
 %here we obtain the cell-background boundary, which we know is correct.
 sqr3 = strel('square',3);
 disk1 = strel('disk',1);
@@ -349,6 +279,7 @@ segs_3n = double(((ws_cc > 2)+outer_bound)>0);
 % calculate their properties.
 segs    = ws-segs_3n.*ws;
 
+
 %turn on all the segs smaller than MIN_SEGS_SIZE
 MIN_SEGS_SIZE = 2;
 cc = bwconncomp( segs, 4 );
@@ -368,7 +299,6 @@ segs_label = bwlabel( segs,4);
 numSegs    = max( segs_label(:) );
 segs_props = regionprops(  segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
     'MajorAxisLength', 'Orientation'} );
-
 
 % segs_good is the im created by the segments that will be on
 % segs_bad  is the im created by the rejected segs
@@ -390,12 +320,9 @@ seg_info = zeros(numSegs,19);
 score    = zeros(numSegs,1);
 scoreRaw = zeros(numSegs,1);
 
-% ------------------------------------------------------------------
-%
+
 % Loop through all segments to decide which are good and which are
 % bad.
-%
-% ------------------------------------------------------------------
 for ii = 1:numSegs
     
     % Crop around each segment with two pixels of padding in x and y
@@ -515,9 +442,12 @@ for ii = 1:numSegs
     L2 = [0 0];
     
     % Loop through the two regions
+    
+    
     for kk = 1:numel(ind_reg);
         % get a new cropping region for each region with 2 pix padding
         [xx_,yy_] = getBBpad(regs_prop(ind_reg(kk)).BoundingBox,sim,2);
+        
         
         % mask the region of interest
         kk_mask = (regs_label(yy_, xx_) == ind_reg(kk));

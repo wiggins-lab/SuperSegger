@@ -1,6 +1,6 @@
 function [L1,L2] = makeRegSize( mask, props )
 % makeRegSize : computes the projections lengths after rotating.
-% The mask is rotated by props.Orientation. 
+% The mask is rotated by the angle in props.Orientation. 
 %
 % INPUT :
 %       mask : masked region of interest

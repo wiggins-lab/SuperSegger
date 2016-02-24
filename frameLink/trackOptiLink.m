@@ -1,12 +1,13 @@
-function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)
+function trackOptiLink(dirname,disp_flag,frames,err_flag,CONST,header)
 % trackOptiLink : computes the links (or overlaps) between subsequent frames
 % and sets an error flag if the mapping isn't 1-to-1.
-%
+% After this runs, it creates either filename_trk.mat_ (first time)
+% or filename_err.mat_ (after error resolution).
 % INPUT :
 %       dirname    : seg folder eg. maindirectory/xy1/seg
 %       disp_flag  : a flag set for displaying the results
 %       iii        : is the list of frames to relink.
-%       err_flag   : is set when this function is called from trackOptiErRes.
+%       err_flag   : is set when called after error resolution. 
 %       CONST      : SuperSeggerOpti set parameters
 %       header     : displayed string
 %
@@ -42,11 +43,11 @@ end
 
 num_im = length(contents);
 
-if ~exist('iii') || isempty(iii)
-    iii = 1:num_im;
+if ~exist('frames') || isempty(frames)
+    frames = 1:num_im;
 end
 
-num_loop = numel(iii);
+num_loop = numel(frames);
 
 if CONST.show_status
     h = waitbar( 0, 'Linking Cells');
@@ -54,13 +55,13 @@ else
     h = [];
 end
 
-num_iii = numel(iii);
+num_iii = numel(frames);
 
 parfor(i = 1:num_iii, CONST.parallel_pool_num)
 %for i = 1:num_iii
-    intParFun( iii(i), num_im, dirname, contents, err_flag, CONST );
+    intParFun( frames(i), num_im, dirname, contents, err_flag, CONST );
     if CONST.show_status
-        waitbar(i/num_iii,h,['Linking Cells--Frame: ',num2str(iii(i)),'/',num2str(num_im)]);
+        waitbar(i/num_iii,h,['Linking Cells--Frame: ',num2str(frames(i)),'/',num2str(num_im)]);
     else
         disp( [header, 'Link: No status bar. Frame ',num2str(i), ...
             ' of ', num2str(num_im),'.']);
@@ -94,19 +95,19 @@ end
 
 
 function intParFun( i, num_im, dirname, contents, err_flag, CONST )
-if (i ==1) && (1 == num_im)
+if (i ==1) && (1 == num_im) % one frame only
     data_r = [];
-    data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
+    data_c = prepData(loaderInternal([dirname,contents(i).name]));
     data_f = [];
-elseif i == 1;
+elseif i == 1; % first frame, load current and forward
     data_r = [];
-    data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
+    data_c = prepData(loaderInternal([dirname,contents(i).name]));
     data_f = prepData(loaderInternal([dirname,contents(i+1).name]));
-elseif (i == num_im)
+elseif (i == num_im) % last frame, loard current and reverse
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
     data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
     data_f = [];
-else
+else % all other frames, loadd currrent, reverse and forward
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
     data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
     data_f = prepData(loaderInternal([dirname,contents(i+1).name]));
@@ -136,6 +137,8 @@ end
 
 function data = prepData( data)
 % prepData : extracts region information from data
+% INPUT : initial data file
+% OUTPUT : data file with regs info
 data.regs.regs_label = bwlabel( data.mask_cell, 4 );
 data.regs.props      = regionprops( data.regs.regs_label, {'Area', ...
     'Centroid', 'BoundingBox','Orientation', 'MajorAxisLength',...
@@ -146,6 +149,7 @@ end
 
 
 function data = loaderInternal( filename )
+% loaderInternal : loads filename
 data = load( filename );
 end
 
