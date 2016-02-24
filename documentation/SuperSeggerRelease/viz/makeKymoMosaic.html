@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of makeKymoMosaic</title>
+  <meta name="keywords" content="makeKymoMosaic">
+  <meta name="description" content="makeKymoMosaic creates a mosaic kymograph of multiple cells.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">viz</a> &gt; makeKymoMosaic.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>makeKymoMosaic
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>makeKymoMosaic creates a mosaic kymograph of multiple cells.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function makeKymoMosaic (dirname, CONST) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> makeKymoMosaic creates a mosaic kymograph of multiple cells.
+ make kymo mosaic is only for fl1 in makeKymograph, which is currently 
+ set to gfp. A kymograph shows the fluorescence of the cell along the
+ long axis of the cell, with time.
+  
+ INPUT :
+       dirname : directory with cell data files
+       CONST : segmentation parameters
+   
+ Copyright (C) 2016 Wiggins Lab 
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	doColorMap : ?</li><li><a href="makeKymographC.html" class="code" title="function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );">makeKymographC</a>	makeKymographC creates a kymograph for given cell.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function makeKymoMosaic (dirname, CONST)</a>
+0002 <span class="comment">% makeKymoMosaic creates a mosaic kymograph of multiple cells.</span>
+0003 <span class="comment">% make kymo mosaic is only for fl1 in makeKymograph, which is currently</span>
+0004 <span class="comment">% set to gfp. A kymograph shows the fluorescence of the cell along the</span>
+0005 <span class="comment">% long axis of the cell, with time.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% INPUT :</span>
+0008 <span class="comment">%       dirname : directory with cell data files</span>
+0009 <span class="comment">%       CONST : segmentation parameters</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">% University of Washington, 2016</span>
+0013 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0014 
+0015 
+0016 
+0017 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'falseColorFlag'</span> )
+0018     CONST.view.falseColorFlag = false;
+0019 <span class="keyword">end</span>
+0020 
+0021 <span class="comment">%figure(1);</span>
+0022 <span class="keyword">persistent</span> colormap_;
+0023 <span class="keyword">if</span> isempty( colormap_ )
+0024     colormap_ = colormap( <span class="string">'jet'</span> );
+0025     <span class="comment">%colormap_ = colormap( 'hsv' );</span>
+0026 <span class="keyword">end</span>
+0027 
+0028 
+0029 <span class="comment">% NOTE: TIME IN HOURS FOR 1 MIN FREQUENCY</span>
+0030 TimeStep     = CONST.getLocusTracks.TimeStep/60;
+0031 PixelSize    = CONST.getLocusTracks.PixelSize;
+0032 
+0033 
+0034 tmp = [];
+0035 
+0036 
+0037 <span class="keyword">if</span> ~isfield( CONST, <span class="string">'view'</span>) || CONST.view.showFullCellCycleOnly
+0038     dir_list = dir([dirname,filesep,<span class="string">'Cell*.mat'</span>]);
+0039 <span class="keyword">else</span>
+0040     dir_list = dir([dirname,filesep,<span class="string">'*ell*.mat'</span>]);
+0041 <span class="keyword">end</span>
+0042 
+0043 
+0044 <span class="comment">%num_list_ = 36;</span>
+0045 num_list_ = numel( dir_list );
+0046 num_list = 0;
+0047 
+0048 <span class="keyword">for</span> ii = 1:num_list_
+0049     
+0050     <span class="keyword">if</span> (~isempty(dir_list(ii).name))
+0051         num_list = num_list + 1;
+0052     <span class="keyword">end</span>
+0053 <span class="keyword">end</span>
+0054 
+0055 numa = ceil(sqrt(num_list));
+0056 numb = ceil( num_list/numa);
+0057 
+0058 
+0059 clf;
+0060 
+0061 max_x = 0;
+0062 max_t = 0;
+0063 
+0064 data_A = cell(1,num_list);
+0065 
+0066 
+0067 del = .1;
+0068 ii = 0;
+0069 <span class="keyword">for</span> jj = 1:num_list_
+0070     
+0071     <span class="keyword">if</span> ~isempty(dir_list(jj).name)
+0072         ii = ii + 1;
+0073         
+0074         
+0075         filename = [dirname,filesep,dir_list(jj).name];
+0076         
+0077         data = load(filename);
+0078 
+0079         [kymo,ttmp,f1mm,f2mm] = <a href="makeKymographC.html" class="code" title="function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );">makeKymographC</a>(data,0,CONST);
+0080         name(jj) = data.ID;
+0081         
+0082         <span class="keyword">if</span> ~isfield(data.CellA{1},<span class="string">'pole'</span>)
+0083             pole(jj) = 1;
+0084         <span class="keyword">else</span>
+0085             pole(jj) = data.CellA{1}.pole.op_ori;
+0086         <span class="keyword">end</span>
+0087         
+0088         <span class="keyword">if</span> CONST.view.falseColorFlag
+0089             
+0090             backer3    = cat(3, kymo.b, kymo.b, kymo.b);
+0091             im         = <a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( ag(kymo.g,f1mm(1),f1mm(2)), colormap_ );
+0092             data_A{ii} = im.*backer3;
+0093             
+0094         <span class="keyword">else</span>
+0095             data_A{ii} = cat(3,del*autogain(1-kymo.b)+autogain(kymo.r),<span class="keyword">...</span>
+0096                 del*autogain(1-kymo.b)+ag(kymo.g,f1mm(1),f1mm(2)),del*autogain(1-kymo.b));
+0097         <span class="keyword">end</span>
+0098         
+0099         ss = size(data_A{ii});
+0100         
+0101         max_x = max([max_x,ss(1)]);
+0102         max_t = max([max_t,ss(2)]);
+0103         
+0104     <span class="keyword">end</span>
+0105     
+0106 <span class="keyword">end</span>
+0107 
+0108 max_x = max_x+1;
+0109 max_t = max_t+1;
+0110 
+0111 
+0112 imdim = [ max_x*numa + 1, max_t*numb + 1 ];
+0113 <span class="comment">%</span>
+0114 <span class="keyword">for</span> ii = 1:2
+0115     <span class="keyword">if</span> isnan(imdim(ii))
+0116         imdim (ii)= 0;
+0117     <span class="keyword">end</span>
+0118 <span class="keyword">end</span>
+0119 
+0120 
+0121 <span class="keyword">if</span> CONST.view.falseColorFlag
+0122     cc = <span class="string">'w'</span>;
+0123     im = (zeros(imdim(1), imdim(2), 3 ));
+0124     im(:,:,:) = del*0;
+0125     
+0126     <span class="keyword">for</span> ii = 1:num_list
+0127         yy = floor((ii-1)/numb);
+0128         xx = ii-yy*numb-1;
+0129         
+0130         ss = size(data_A{ii});
+0131         dx = floor((max_x-ss(1))/2);
+0132         
+0133         im(1+yy*max_x+(1:ss(1))+dx, 1+xx*max_t+(1:ss(2)),:) =  data_A{ii};
+0134     <span class="keyword">end</span>
+0135 <span class="keyword">else</span>
+0136     cc = <span class="string">'w'</span>;
+0137     im = uint8(zeros(imdim(1), imdim(2), 3 ));
+0138     im(:,:,:) = del*255;
+0139     
+0140     <span class="keyword">for</span> ii = 1:num_list
+0141         yy = floor((ii-1)/numb);
+0142         xx = ii-yy*numb-1;
+0143         
+0144         ss = size(data_A{ii});
+0145         dx = floor((max_x-ss(1))/2);
+0146         
+0147         im(1+yy*max_x+(1:ss(1))+dx, 1+xx*max_t+(1:ss(2)),:) =  data_A{ii};
+0148     <span class="keyword">end</span>
+0149 <span class="keyword">end</span>
+0150 
+0151 ss = size(im);
+0152 
+0153 T_ = (1:ss(2))*TimeStep;
+0154 X_ = (1:ss(1))*PixelSize;
+0155 
+0156 inv_flag = 0;
+0157 
+0158 <span class="keyword">if</span> inv_flag
+0159     imagesc(T_,X_, 255-im );
+0160 <span class="keyword">else</span>
+0161     imagesc(T_,X_,  im );
+0162 <span class="keyword">end</span>
+0163 hold on;
+0164 
+0165 nx = ceil( sqrt( num_list*max_x/max_t ) );
+0166 ny = ceil( num_list/nx );
+0167 
+0168 max_T = max(T_);
+0169 max_X = max(X_);
+0170 
+0171 <span class="keyword">for</span> ii = 1:num_list    
+0172     yy = floor((ii-1)/numb);
+0173     xx = ii-yy*numb-1;    
+0174     y = yy*(max_X/numa);
+0175     x = xx*(max_T/numb);
+0176     text( x+max_T/20/numb, y+max_X/20/numa, [num2str(name(ii))],<span class="string">'Color'</span>,cc,<span class="string">'FontSize'</span>,12,<span class="string">'VerticalAlignment'</span>,<span class="string">'Top'</span>,<span class="string">'HorizontalAlignment'</span>,<span class="string">'Left'</span>);
+0177 <span class="keyword">end</span>
+0178 
+0179 
+0180 dd = [1,numa*max_x+1];
+0181 <span class="keyword">for</span> xx = 1:(numb-1)
+0182     plot( (0*dd + 1+xx*max_t)*TimeStep, dd*PixelSize,[<span class="string">':'</span>,cc]);
+0183 <span class="keyword">end</span>
+0184 
+0185 dd = [1,numb*max_t+1];
+0186 <span class="keyword">for</span> yy = 1:(numa-1)
+0187     plot( (dd)*TimeStep, (0*dd + 1+yy*max_x)*PixelSize, [<span class="string">':'</span>,cc]);
+0188 <span class="keyword">end</span>
+0189 
+0190 xlabel( <span class="string">'Time (h)'</span> );
+0191 ylabel( <span class="string">'Long Axis Position (um)'</span> );
+0192 <span class="keyword">end</span>
+0193 
+0194</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

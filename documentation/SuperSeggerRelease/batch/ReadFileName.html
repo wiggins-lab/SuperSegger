@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of ReadFileName</title>
+  <meta name="keywords" content="ReadFileName">
+  <meta name="description" content="ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z*">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">batch</a> &gt; ReadFileName.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/batch&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>ReadFileName
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z*</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function nameInfo = ReadFileName( str ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z* 
+
+ INPUT :
+       str : String that contains any of the the strings in strD
+ OUTPUT :
+       nameInfo.
+           npos: [4x4 double]
+           strD: {'t'  'c'  'xy'  'z'}
+           basename: before first found strD, eg. 'tsyfp-p-'
+           suffix: after last found number of strD, eg. '.tif'
+ npos contains the information for each of the strings in strD
+ npos (i,1) is the number after strD(i) in the string
+ npos (i,2) is the position of strD(i) in the string
+ npos (i,3) is the position of the last number after strD(i) in the string
+ npos (i,4) is the length of the numbers after strD(i) in the string
+
+ Copyright (C) 2016 Wiggins Lab 
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="BatchSuperSeggerOpti.html" class="code" title="function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)">BatchSuperSeggerOpti</a>	BatchSuperSeggerOpti runs everything from start to finish,</li><li><a href="trackOptiAlignPad.html" class="code" title="function crop_box = trackOptiAlignPad(dirname_, CROP_FLAG, M, CONST)">trackOptiAlignPad</a>	trackOptiAlignPad : aligns images to correct for microscope drift</li><li><a href="trackOptiPD.html" class="code" title="function trackOptiPD(dirname, CONST)">trackOptiPD</a>	trackOptiPD Sets up directory structure for cell segmentation</li><li><a href="trackOptiSkipMerge.html" class="code" title="function trackOptiSkipMerge(dirname_xy,skip,CONST,header)">trackOptiSkipMerge</a>	trackOptiSkipMerge : adds skipped frames back into a time series.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function nn = intReadIt( str_search, str );</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function nameInfo = ReadFileName( str )</a>
+0002 <span class="comment">% ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z*</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       str : String that contains any of the the strings in strD</span>
+0006 <span class="comment">% OUTPUT :</span>
+0007 <span class="comment">%       nameInfo.</span>
+0008 <span class="comment">%           npos: [4x4 double]</span>
+0009 <span class="comment">%           strD: {'t'  'c'  'xy'  'z'}</span>
+0010 <span class="comment">%           basename: before first found strD, eg. 'tsyfp-p-'</span>
+0011 <span class="comment">%           suffix: after last found number of strD, eg. '.tif'</span>
+0012 <span class="comment">% npos contains the information for each of the strings in strD</span>
+0013 <span class="comment">% npos (i,1) is the number after strD(i) in the string</span>
+0014 <span class="comment">% npos (i,2) is the position of strD(i) in the string</span>
+0015 <span class="comment">% npos (i,3) is the position of the last number after strD(i) in the string</span>
+0016 <span class="comment">% npos (i,4) is the length of the numbers after strD(i) in the string</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0019 <span class="comment">% Unviersity of Washington, 2016</span>
+0020 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0021 
+0022 nameInfo = [];
+0023 strD = {<span class="string">'t'</span>,      <span class="string">'c'</span>,      <span class="string">'xy'</span>,      <span class="string">'z'</span>};
+0024 numD = numel(strD);
+0025 npos = zeros(numD,4);
+0026 
+0027 <span class="keyword">for</span> i = 1:numD
+0028     npos(i,:) = <a href="#_sub1" class="code" title="subfunction nn = intReadIt( str_search, str );">intReadIt</a>( strD{i}, str );
+0029 <span class="keyword">end</span>
+0030 
+0031 basename = str( 1:min(npos(logical(npos(:,2)),2))-1);
+0032 suffix_pos = max(npos(:,3))+1;
+0033 
+0034 <span class="keyword">if</span> ~isempty( suffix_pos )
+0035     suffix = str(suffix_pos:end);
+0036 <span class="keyword">else</span>
+0037     suffix = <span class="string">''</span>;
+0038 <span class="keyword">end</span>
+0039 
+0040 nameInfo.npos = npos;
+0041 nameInfo.strD = strD;
+0042 nameInfo.basename = basename;
+0043 nameInfo.suffix = suffix;
+0044 
+0045 <span class="keyword">end</span>
+0046 
+0047 
+0048 
+0049 
+0050 <a name="_sub1" href="#_subfunctions" class="code">function nn = intReadIt( str_search, str );</a>
+0051 
+0052 ns = numel(str_search);
+0053 is_num_mask = ismember( str,<span class="string">'01234567890'</span>); <span class="comment">% 1 where there are numbers</span>
+0054 pos = max(regexpi(str,[str_search,<span class="string">'[0123456789]'</span>])); <span class="comment">% finds position of str_search</span>
+0055 
+0056 <span class="keyword">if</span> ~isempty(pos)
+0057     pad = min(find( ~is_num_mask(pos+ns:end) ))-1; <span class="comment">% find length to next not number</span>
+0058     pos = [pos, pos+pad+ns-1, pad];
+0059     n = str2num(str(pos(1)+ns:pos(2)));
+0060 <span class="keyword">else</span>
+0061     pos = [0,0,0];
+0062     n = -1;
+0063 <span class="keyword">end</span>
+0064 
+0065 nn = [n,pos];
+0066 
+0067 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of towerMergeImages</title>
+  <meta name="keywords" content="towerMergeImages">
+  <meta name="description" content="towerMergeImages">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">viz</a> &gt; towerMergeImages.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>towerMergeImages
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>towerMergeImages</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] =towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> towerMergeImages
+
+ INPUT :
+       imCell
+       maskCell
+       ssCell
+       xdim : x dimensions for the towers
+       skip : skip frame
+       mag :
+       CONST : Constants file that was used.
+ OUTPUT :
+         mColor
+         imBW
+         towerIm
+         maskCons
+         nx
+         ny
+         max_x
+         max_y
+
+ Copyright (C) 2016 Wiggins Lab
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	doColorMap : ?</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="makeConsIm.html" class="code" title="function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix,AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag )">makeConsIm</a>	makeConsIm : Computes consensus fluorescence localization from cells in a cell files</li><li><a href="makeTowerCons.html" class="code" title="function  imData = makeTowerCons( data, CONST, xdim,disp_flag, skip, mag )">makeTowerCons</a>	makeTowerCons Makes Times-Lapse Tower with normalized time and cell shape</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = </a><span class="keyword">...</span>
+0002     towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )
+0003 <span class="comment">% towerMergeImages</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%       imCell</span>
+0007 <span class="comment">%       maskCell</span>
+0008 <span class="comment">%       ssCell</span>
+0009 <span class="comment">%       xdim : x dimensions for the towers</span>
+0010 <span class="comment">%       skip : skip frame</span>
+0011 <span class="comment">%       mag :</span>
+0012 <span class="comment">%       CONST : Constants file that was used.</span>
+0013 <span class="comment">% OUTPUT :</span>
+0014 <span class="comment">%         mColor</span>
+0015 <span class="comment">%         imBW</span>
+0016 <span class="comment">%         towerIm</span>
+0017 <span class="comment">%         maskCons</span>
+0018 <span class="comment">%         nx</span>
+0019 <span class="comment">%         ny</span>
+0020 <span class="comment">%         max_x</span>
+0021 <span class="comment">%         max_y</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0024 <span class="comment">% Unviersity of Washington, 2016</span>
+0025 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0026 
+0027 
+0028 
+0029 
+0030 skip = 1;
+0031 
+0032 
+0033 colormap_ = jet(256);
+0034 
+0035 max_x = 0;
+0036 max_y = 0;
+0037 
+0038 
+0039 <span class="comment">% get number of time slices.</span>
+0040 T0 = numel( ssCell );
+0041 
+0042 <span class="keyword">for</span> ii = 1:T0
+0043     max_x = max( [max_x, ssCell{ii}(2)] );
+0044     max_y = max( [max_y, ssCell{ii}(1)] );
+0045 <span class="keyword">end</span>
+0046 
+0047 
+0048 <span class="keyword">if</span> exist( <span class="string">'xdim'</span>, <span class="string">'var'</span>) &amp;&amp; ~isempty( xdim )
+0049     nx = xdim;
+0050     ny = ceil( T0/nx/skip );
+0051 <span class="keyword">else</span>
+0052     nx = ceil( sqrt( T0*max_y/max_x/skip ) );
+0053     ny = ceil( T0/nx/skip );
+0054 <span class="keyword">end</span>
+0055 
+0056 max_x = max_x+mag;
+0057 max_y = max_y+mag;
+0058 
+0059 imdim = [ max_y*ny + mag, max_x*nx + mag ];
+0060 
+0061 imColor   = uint8(zeros(imdim(1), imdim(2), 3 ));
+0062 imBW      = zeros(imdim(1), imdim(2));
+0063 maskCons  = zeros(imdim(1), imdim(2));
+0064 towerIm   = zeros(imdim(1), imdim(2));
+0065 
+0066 im_list = [];
+0067 
+0068 
+0069 <span class="comment">% make the composite image</span>
+0070 <span class="keyword">for</span> ii = 1:T0
+0071     
+0072     yy = floor((ii-1)/nx/skip);
+0073     xx = (ii-1)/skip-yy*nx;
+0074     
+0075     ss = ssCell{ii};
+0076     
+0077     dx = floor((max_x-ss(2))/2);
+0078     dy = floor((max_y-ss(1))/2);
+0079     
+0080     mask = maskCell{ii};
+0081     
+0082     <span class="keyword">try</span>
+0083         maskCons(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = mask;
+0084         towerIm(    1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = imCell{ii};
+0085     <span class="keyword">catch</span>
+0086         disp( <span class="string">'Error in makeTowerCons'</span> );
+0087     <span class="keyword">end</span>
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="comment">% rescale the dynamic range of the image.</span>
+0091 f1mm = [min( towerIm( maskCons(:)&gt;.5 )), max( towerIm( maskCons(:)&gt;.5 ))];
+0092 imBW = ag(towerIm.*maskCons,0,f1mm(2));
+0093 
+0094 
+0095 <span class="keyword">if</span> CONST.view.falseColorFlag
+0096     <span class="comment">% make the false color image</span>
+0097     imColor = ag(<a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( imBW, colormap_ ));
+0098     mask3   = cat( 3, maskCons, maskCons, maskCons );
+0099     imColor = uint8(uint8( double(imColor).*mask3));
+0100 <span class="keyword">else</span>
+0101     <span class="comment">% make normal image</span>
+0102     del = 0.15;
+0103     
+0104     disk1 = strel(<span class="string">'disk'</span>,1);
+0105     
+0106     imColor = cat( 3, <span class="keyword">...</span>
+0107         0*maskCons, <span class="keyword">...</span>
+0108         uint8(double(imBW).*maskCons), <span class="keyword">...</span>
+0109         del*ag(maskCons) );
+0110 <span class="keyword">end</span>
+0111 
+0112 <span class="keyword">end</span>
+0113 
+0114</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

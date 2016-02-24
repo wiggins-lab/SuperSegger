@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of segmentScoreFun</title>
+  <meta name="keywords" content="segmentScoreFun">
+  <meta name="description" content="segmentScoreFun calls a function to calculates the score of the segment.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">segmentation</a> &gt; segmentScoreFun.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/segmentation&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>segmentScoreFun
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>segmentScoreFun calls a function to calculates the score of the segment.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function score = segmentScoreFun(info, A ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> segmentScoreFun calls a function to calculates the score of the segment. 
+ to determine if the segment will be included.
+
+ INPUT : 
+       info : has information about the segment (look at superSeggerOpti for
+       more info)
+       A : scoring vector optimized for different cells and imaging conditions
+ OUTPUT :
+       score : segment score, a score below 0 is set off.
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="segmentScoreFunMatrix.html" class="code" title="function score = segmentScoreFun(info, A )">segmentScoreFunMatrix</a>	segmentScoreFun calculates the score of a segment.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="superSeggerOpti.html" class="code" title="function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box )">superSeggerOpti</a>	superSeggerOpti generates the initial segmentation of rod-shaped cells.</li><li><a href="superSeggerOptiP.html" class="code" title="function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, adapt_flag, header, crop_box )">superSeggerOptiP</a>	superSeggerOptiP generates the initial segmentation of rod-shaped cells.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function score = segmentScoreFun(info, A )</a>
+0002 <span class="comment">% segmentScoreFun calls a function to calculates the score of the segment.</span>
+0003 <span class="comment">% to determine if the segment will be included.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%       info : has information about the segment (look at superSeggerOpti for</span>
+0007 <span class="comment">%       more info)</span>
+0008 <span class="comment">%       A : scoring vector optimized for different cells and imaging conditions</span>
+0009 <span class="comment">% OUTPUT :</span>
+0010 <span class="comment">%       score : segment score, a score below 0 is set off.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0013 <span class="comment">% University of Washington, 2016</span>
+0014 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0015 
+0016 score = <a href="segmentScoreFunMatrix.html" class="code" title="function score = segmentScoreFun(info, A )">segmentScoreFunMatrix</a>(info,A);
+0017 
+0018 
+0019 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

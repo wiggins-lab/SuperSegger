@@ -1,0 +1,619 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiErRes</title>
+  <meta name="keywords" content="trackOptiErRes">
+  <meta name="description" content="trackOptiErRes : defines and resolves the errors produced during">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiErRes.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiErRes
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiErRes : defines and resolves the errors produced during</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiErRes : defines and resolves the errors produced during
+ linking. This function can do calculations on the segments and fix segments
+ by frame skipping, removing, and splitting segements, as well as call good
+ divisions, again based on the cell score function regionScoreFun
+
+ INPUT :
+       dirname_ : seg folder eg. maindirectory/xy1/seg
+       disp_flag : 1 to display images
+                   0 to not display images (default)
+       nc_flag : no change flag, passed the second time error resolution
+       runs
+       CONST : Constants file
+       header : information string.
+ OUTPUT :
+       list_touch :
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="addRegions.html" class="code" title="function [data_c] = addRegions( data_c, data2, list )">addRegions</a>	addRegions : adds regions from error resolution</li><li><a href="deleteRegions.html" class="code" title="function [data ] = deleteRegions( data, list_c )">deleteRegions</a>	deleteRegions : deletes regions from error resolution</li><li><a href="fix2to1.html" class="code" title="function [ data_new, ind ] = fix2to1( data_c, ii_c, data_r, list_r )">fix2to1</a>	fix2to1 : turns on some segments to divide a region that is in data_c</li><li><a href="intRepairErr.html" class="code" title="function  [data_c,data_r] = intRepairErr( data_c,data_r)">intRepairErr</a>	intRepairErr repairs the error between data_c and the reverse</li><li><a href="setFlagsErRes.html" class="code" title="">setFlagsErRes</a>	setFlagsErRes : sets the error resolution flags</li><li><a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>	trackOptiLink : computes the links (or overlaps) between subsequent frames</li><li><a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>	update_cell : updates the data structures</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOpti.html" class="code" title="function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)">trackOpti</a>	trackOpti : calls the rest of the functions for segmentation</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function data = loaderInternal( filename )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)</a>
+0002 <span class="comment">% trackOptiErRes : defines and resolves the errors produced during</span>
+0003 <span class="comment">% linking. This function can do calculations on the segments and fix segments</span>
+0004 <span class="comment">% by frame skipping, removing, and splitting segements, as well as call good</span>
+0005 <span class="comment">% divisions, again based on the cell score function regionScoreFun</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% INPUT :</span>
+0008 <span class="comment">%       dirname_ : seg folder eg. maindirectory/xy1/seg</span>
+0009 <span class="comment">%       disp_flag : 1 to display images</span>
+0010 <span class="comment">%                   0 to not display images (default)</span>
+0011 <span class="comment">%       nc_flag : no change flag, passed the second time error resolution</span>
+0012 <span class="comment">%       runs</span>
+0013 <span class="comment">%       CONST : Constants file</span>
+0014 <span class="comment">%       header : information string.</span>
+0015 <span class="comment">% OUTPUT :</span>
+0016 <span class="comment">%       list_touch :</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0019 <span class="comment">% University of Washington, 2016</span>
+0020 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0021 
+0022 
+0023 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
+0024 OVERLAP_LIMIT_MIN = CONST.trackOpti.OVERLAP_LIMIT_MIN;
+0025 SCORE_LIMIT_DAUGHTER = CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
+0026 SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
+0027 OVERLAP_LIMIT_MAX = CONST.trackOpti.OVERLAP_LIMIT_MAX;
+0028 AREA_CHANGE_LIMIT = CONST.trackOpti.AREA_CHANGE_LIMIT;
+0029 dA_LIMIT_ErRes = CONST.trackOpti.dA_LIMIT_ErRes;
+0030 dA_LIMIT = CONST.trackOpti.dA_LIMIT;
+0031 MAX_WIDTH = CONST.trackOpti.MAX_WIDTH;
+0032 
+0033 <span class="keyword">if</span> nargin &lt; 2 || isempty(disp_flag);
+0034     disp_flag = 0;
+0035 <span class="keyword">end</span>
+0036 
+0037 <span class="keyword">if</span> nargin &lt; 3 || isempty(nc_flag);
+0038     nc_flag = 0;
+0039 <span class="keyword">end</span>
+0040 
+0041 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0042     header = <span class="string">'ErRes no header'</span>;
+0043 <span class="keyword">end</span>
+0044 
+0045 list_touch = [];
+0046 
+0047 <span class="keyword">if</span>(nargin&lt;1 || isempty(dirname))
+0048     dirname=<span class="string">'.'</span>;
+0049     dirname=[dirname,filesep];
+0050 <span class="keyword">else</span>
+0051     <span class="keyword">if</span> dirname(length(dirname))~=filesep
+0052         dirname=[dirname,filesep];
+0053     <span class="keyword">end</span>
+0054 <span class="keyword">end</span>
+0055 
+0056 
+0057 contents=dir([dirname <span class="string">'*_trk.mat'</span>]);
+0058 <span class="keyword">if</span> isempty(contents)
+0059     contents=dir([dirname <span class="string">'*_err.mat'</span>]);
+0060 <span class="keyword">end</span>
+0061 
+0062 num_im = length(contents);
+0063 
+0064 <span class="keyword">if</span> CONST.show_status
+0065     h = waitbar( 0, <span class="string">'Error Resolution'</span>);
+0066 <span class="keyword">else</span>
+0067     h = [];
+0068 <span class="keyword">end</span>
+0069 
+0070 list_change_last = [];
+0071 
+0072 break_flag = 0;
+0073 i = 1;
+0074 
+0075 cell_count = 0;
+0076 
+0077 <span class="keyword">while</span> i &lt;= num_im
+0078     
+0079     <span class="keyword">if</span> CONST.show_status
+0080         waitbar((i-1)/num_im,h,[<span class="string">'Error Resolution--Frame: '</span>,<span class="keyword">...</span>
+0081             num2str(i),<span class="string">'/'</span>,num2str(num_im)])
+0082     <span class="keyword">end</span>
+0083     
+0084     <span class="keyword">if</span> (i ==1) &amp;&amp; (1 == num_im)
+0085         data_r = [];
+0086         data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i  ).name]);
+0087         data_f = [];
+0088     <span class="keyword">elseif</span> i == 1;
+0089         data_r = [];
+0090         data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i  ).name]);
+0091         data_f = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i+1).name]);
+0092     <span class="keyword">elseif</span> i == num_im
+0093         data_r = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i-1).name]);
+0094         data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i  ).name]);
+0095         data_f = [];
+0096     <span class="keyword">else</span>
+0097         data_r = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i-1).name]);
+0098         data_c = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i  ).name]);
+0099         data_f = <a href="#_sub1" class="code" title="subfunction data = loaderInternal( filename )">loaderInternal</a>([dirname,contents(i+1).name]);
+0100     <span class="keyword">end</span>
+0101     
+0102     
+0103     <span class="comment">% Calculate overlaps</span>
+0104     <span class="comment">% Loop through regions</span>
+0105     
+0106     list_c_del = [];
+0107     list_f_add = [];
+0108     list_r_add = [];
+0109     
+0110     <span class="keyword">for</span> ii = 1: data_c.regs.num_regs
+0111         
+0112         <span class="keyword">if</span> isfield( data_c.regs, <span class="string">'ignoreError'</span> );
+0113             ignoreError = data_c.regs.ignoreError(ii);
+0114         <span class="keyword">else</span>
+0115             ignoreError  = 0;
+0116         <span class="keyword">end</span>
+0117         
+0118         <span class="comment">% set stray flag for regions in the first frame that don't map to</span>
+0119         <span class="comment">% any regions in the next frame.</span>
+0120         <span class="keyword">if</span> (i == 1) &amp;&amp; isempty(data_c.regs.map.f{ii}) &amp;&amp; (num_im&gt;1)
+0121             <span class="keyword">if</span> ~ignoreError
+0122                 <span class="keyword">if</span> REMOVE_STRAY
+0123                     <span class="keyword">if</span> ~nc_flag
+0124                         disp([header, <span class="string">'ErRes: Frame: '</span>, num2str(i), <span class="string">', reg: '</span>,<span class="keyword">...</span>
+0125                             num2str(ii),<span class="string">'. removed stray region'</span> ]);
+0126                         
+0127                         <span class="comment">% is the regions are mapped to by nobody of map into</span>
+0128                         <span class="comment">% nobody, zero them out.</span>
+0129                         
+0130                         list_c_del = [list_c_del, ii];
+0131                         data_c.regs.stat0(ii) = 3;
+0132                         <span class="comment">% set the break flag to recalculate the regions</span>
+0133                         break_flag = 1;
+0134                         
+0135                     <span class="keyword">end</span>
+0136                 <span class="keyword">else</span>
+0137                     data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, <span class="keyword">...</span>
+0138                         num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0139                         <span class="string">'. is a stray region.'</span>];
+0140                     disp( [header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}] );
+0141                 <span class="keyword">end</span>
+0142             <span class="keyword">end</span>
+0143         <span class="keyword">end</span>
+0144         
+0145         <span class="comment">% list of the regs that the current regions maps to in last Frame</span>
+0146         list_r     = data_c.regs.map.r{ii};
+0147         list_f     = data_c.regs.map.f{ii};
+0148         
+0149         <span class="keyword">if</span> ~isempty(list_r) &amp;&amp; all(data_r.regs.stat0(list_r)==3)
+0150             stray_flag = 1;
+0151             data_c.regs.error.r(ii) = 1;
+0152         <span class="keyword">else</span>
+0153             stray_flag = 0;
+0154         <span class="keyword">end</span>
+0155         
+0156         
+0157         <span class="keyword">if</span> ~data_c.regs.error.r(ii) || ismember(ii,list_change_last) <span class="keyword">...</span>
+0158                 || ismember(ii,list_c_del)
+0159             <span class="keyword">if</span> (i&gt;1)
+0160                 <span class="keyword">if</span> (numel(list_r) &gt; 0)
+0161                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0162                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0163                 <span class="keyword">else</span>
+0164                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0165                         data_c, ii, data_r, list_r, i, 0, [], cell_count);
+0166                 <span class="keyword">end</span>
+0167             <span class="keyword">else</span>
+0168                 [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0169                     data_c, ii, data_r, list_r, i, 0, [], cell_count);
+0170             <span class="keyword">end</span>
+0171         <span class="keyword">else</span>
+0172             <a href="setFlagsErRes.html" class="code" title="">setFlagsErRes</a>;
+0173             <span class="keyword">if</span> stray_flag
+0174                 <span class="comment">% Stray Region : gets rid of regions that appear from nowhere.</span>
+0175                 <span class="keyword">if</span> ignoreError
+0176                     data_c.regs.error.r(ii) = 0;
+0177                     data_r.regs.error.f(list_r(1)) = 0;
+0178                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0179                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0180                 <span class="keyword">else</span>
+0181                     <span class="keyword">if</span> REMOVE_STRAY
+0182                         <span class="keyword">if</span> ~nc_flag
+0183                             disp([header, <span class="string">'ErRes: Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0184                                 <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. removed stray region'</span> ]);
+0185                             
+0186                             <span class="comment">% is the regions are mapped to by nobody of map into</span>
+0187                             <span class="comment">% nobody, zero them out.</span>
+0188                             list_c_del = [list_c_del, ii];
+0189                             data_c.regs.stat0(ii) = 3;
+0190                             
+0191                             <span class="comment">% set the break flag to recalculate the regions</span>
+0192                             break_flag = 1;
+0193                             
+0194                         <span class="keyword">end</span>
+0195                     <span class="keyword">else</span>
+0196                         data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, <span class="keyword">...</span>
+0197                             num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0198                             <span class="string">'. is a stray region.'</span>];
+0199                         disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}] );
+0200                     <span class="keyword">end</span>
+0201                 <span class="keyword">end</span>
+0202             <span class="keyword">elseif</span> cshift_flag
+0203                 <span class="comment">% Cell Shift :</span>
+0204                 <span class="comment">% Cell sometime shift rapidly. Clear the error if the cell</span>
+0205                 <span class="comment">% size doesn't change very much</span>
+0206                 <span class="keyword">if</span> ignoreError
+0207                     data_c.regs.error.r(ii) = 0;
+0208                     data_r.regs.error.f(list_r(1)) = 0;
+0209                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0210                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0211                 <span class="keyword">else</span>  
+0212                     <span class="keyword">if</span>  ~isempty( data_c.regs.dA.r(ii) ) &amp;&amp; (data_c.regs.dA.r(ii) &gt; dA_LIMIT_ErRes)
+0213                         
+0214                         data_c.regs.error.label{ii} = ([<span class="string">'Frame: '</span>, <span class="keyword">...</span>
+0215                             num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0216                             <span class="string">'. Cell shift.'</span>]);
+0217                         
+0218                         disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0219                         data_c.regs.error.r(ii) = 0;
+0220                         data_r.regs.error.f(list_r(1)) = 0;
+0221                         [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0222                             data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0223                     <span class="keyword">else</span>
+0224                         data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, <span class="keyword">...</span>
+0225                             num2str(ii),<span class="keyword">...</span>
+0226                             <span class="string">'. Cell shift failed due dA: '</span>,num2str(data_c.regs.dA.r(ii),3), <span class="string">' &lt; '</span>,<span class="keyword">...</span>
+0227                             num2str(dA_LIMIT_ErRes,3),<span class="string">'.'</span>];
+0228                         disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0229                         [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0230                             data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0231                     <span class="keyword">end</span>
+0232                 <span class="keyword">end</span>
+0233                 
+0234             <span class="keyword">elseif</span> localMapGoodFlag
+0235                 data_c.regs.error.label{ii} = ([<span class="string">'Frame: '</span>, num2str(i), <span class="keyword">...</span>
+0236                     <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. LocalMapGoodFlag.'</span>]);
+0237                 disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0238                 data_c.regs.error.r(ii) = 0;
+0239                 <span class="keyword">if</span> ~isempty(list_r)
+0240                     data_r.regs.error.f(list_r(1)) = 0;
+0241                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0242                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0243                 <span class="keyword">else</span>
+0244                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0245                         data_c, ii, data_r, [], i, 0, [], cell_count);
+0246                 <span class="keyword">end</span>
+0247                 
+0248             <span class="keyword">elseif</span> merged_flag
+0249                 <span class="comment">% One frame skip :</span>
+0250                 <span class="comment">% This method of error resolution attempts to resolve the</span>
+0251                 <span class="comment">% error by checking if there in no error in a map between the</span>
+0252                 <span class="comment">% overlapping regions in the previous and next frames. If this</span>
+0253                 <span class="comment">% is true, the regions from the next frame--that overlap the</span>
+0254                 <span class="comment">% error segment--are copied into the current frame.</span>
+0255                 <span class="keyword">if</span> ignoreError
+0256                     data_c.regs.error.r(ii) = 0;
+0257                     data_r.regs.error.f(list_r(1)) = 0;
+0258                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0259                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0260                 <span class="keyword">else</span>
+0261                     
+0262                     [data_new, ind_new] = <a href="fix2to1.html" class="code" title="function [ data_new, ind ] = fix2to1( data_c, ii_c, data_r, list_r )">fix2to1</a>( data_c, ii, data_r, data_c.regs.map.r{ii} );
+0263                     
+0264                     <span class="keyword">if</span> isempty( data_new ) || nc_flag
+0265                         
+0266                         data_c.regs.error.label{ii} = <span class="keyword">...</span>
+0267                             [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0268                             <span class="string">'. Merged fix fails'</span>];
+0269                         disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0270                         data_c.regs.error.r(ii) = 2;
+0271                         <span class="comment">%data_c = update_cell( data_c, ii, data_r, list_r(1), 1);</span>
+0272                         [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0273                             data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
+0274                     <span class="keyword">else</span>
+0275                         
+0276                         data_c = <a href="deleteRegions.html" class="code" title="function [data ] = deleteRegions( data, list_c )">deleteRegions</a>( data_c, ii);
+0277                         data_c = <a href="addRegions.html" class="code" title="function [data_c] = addRegions( data_c, data2, list )">addRegions</a>(    data_c, data_new, <span class="keyword">...</span>
+0278                             ind_new );     
+0279                         break_flag = 1;
+0280                         data_c.regs.error.label{ii} = <span class="keyword">...</span>
+0281                             [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0282                             <span class="string">'. Merged fixed.'</span>];
+0283                         disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0284                     <span class="keyword">end</span>
+0285                 <span class="keyword">end</span>
+0286             <span class="keyword">elseif</span> fskip_flag      
+0287                 <span class="keyword">if</span> ignoreError
+0288                     data_c.regs.error.r(ii) = 0;
+0289                     data_r.regs.error.f(list_r(1)) = 0;
+0290                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0291                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0292                 <span class="keyword">else</span>
+0293                     <span class="keyword">if</span> ~nc_flag
+0294                         <span class="comment">% project the overlapping regions in the previous frame to</span>
+0295                         <span class="comment">% the next frame</span>
+0296                         list_rcrf    = unique([data_c.regs.map.rf{list_rcr}]);
+0297                         list_rcrfc   = unique([data_f.regs.map.r{list_rcrf}]);
+0298                         list_rcrfcf  = unique([data_c.regs.map.f{list_rcrfc}]);
+0299                         list_rcrfcfc = unique([data_f.regs.map.r{list_rcrfcf}]);
+0300                         <span class="keyword">if</span> numel(list_rcrfcfc) &gt; numel(list_rcrfc)
+0301                             
+0302                             data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0303                                 <span class="string">', reg: '</span>, <span class="keyword">...</span>
+0304                                 num2str(ii),<span class="string">'. has mapping error. Cannot recovered.'</span>];
+0305                             disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0306                             [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0307                                 data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
+0308                         <span class="keyword">elseif</span> (numel(list_rcrfcfc) == 0) || (numel(list_rcrfc) == 0)
+0309                             data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0310                                 <span class="string">', reg: '</span>, <span class="keyword">...</span>
+0311                                 num2str(ii),<span class="string">'. has mapping error. Attempted frame'</span>, <span class="keyword">...</span>
+0312                                 <span class="string">'skip but no regions added/deled. Cannot recovered.'</span>];
+0313                             disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0314                             [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0315                                 data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
+0316                         <span class="keyword">else</span>
+0317                             data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0318                                 <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. fixed an error by frame skipping.'</span>];
+0319                             disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0320                             <span class="comment">% zero out connected segments in the current frame;</span>
+0321                             
+0322                             list_c_del = [list_c_del, list_rcrfc];
+0323                             list_f_add = [list_f_add, list_rcrfcf];
+0324 
+0325                             <span class="comment">% Set changes flag and break the segment loop.</span>
+0326                             break_flag = 1;
+0327                         <span class="keyword">end</span>
+0328                     <span class="keyword">end</span>
+0329                 <span class="keyword">end</span>
+0330             <span class="keyword">elseif</span> split_flag
+0331                 <span class="keyword">if</span> ignoreError
+0332                     data_c.regs.error.r(ii) = 0;
+0333                     data_r.regs.error.f(list_r(1)) = 0;
+0334                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0335                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0336                 <span class="keyword">else</span>
+0337                     <span class="keyword">if</span> ~nc_flag
+0338                         data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0339                             <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. Splitting'</span>];
+0340                         disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}]);
+0341                         
+0342                         [xx,yy] = getBB( data_c.regs.props(ii).BoundingBox);
+0343                         
+0344                         mask = (data_c.regs.regs_label(yy,xx)==ii);
+0345                         
+0346                         reseg = -double(mask);
+0347                         
+0348                         <span class="keyword">for</span> mm = list_r;
+0349                             reseg = reseg + -double(data_r.regs.regs_label(yy,xx)==mm);
+0350                         <span class="keyword">end</span>
+0351                         <span class="keyword">for</span> mm = list_f;
+0352                             reseg = reseg + -double(data_f.regs.regs_label(yy,xx)==mm);
+0353                         <span class="keyword">end</span>
+0354                         
+0355                         <span class="comment">%imshow(reseg,[])</span>
+0356                         <span class="keyword">try</span>
+0357                             ws = double(watershed(reseg)).*mask;
+0358                         <span class="keyword">catch</span>
+0359                             keyboard;
+0360                         <span class="keyword">end</span>
+0361                         data_c = <a href="deleteRegions.html" class="code" title="function [data ] = deleteRegions( data, list_c )">deleteRegions</a>( data_c, ii);
+0362                         data_c.regs.regs_label(yy,xx) = <span class="keyword">...</span>
+0363                             data_c.regs.regs_label(yy,xx)+ double(ws&gt;0)*ii;
+0364                         data_c.mask_cell(yy,xx) = data_c.mask_cell(yy,xx)+ double(ws&gt;0);
+0365                         break_flag = 1;
+0366                     <span class="keyword">end</span>
+0367                 <span class="keyword">end</span>
+0368             <span class="keyword">elseif</span> s21_flag
+0369                 <span class="comment">% 2 -&gt; 1 Stable</span>
+0370                 <span class="comment">% This error occurs when cells combine and cannot be</span>
+0371                 <span class="comment">% resolved by skipping. This error currently cannot be</span>
+0372                 <span class="comment">% resolved.</span>
+0373                 <span class="keyword">if</span> ignoreError
+0374                     data_c.regs.error.r(ii) = 0;
+0375                     data_r.regs.error.f(list_r(1)) = 0;
+0376                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0377                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0378                 <span class="keyword">else</span>   
+0379                     [data_new, ind_new] = <a href="fix2to1.html" class="code" title="function [ data_new, ind ] = fix2to1( data_c, ii_c, data_r, list_r )">fix2to1</a>( data_c, ii, data_r, data_c.regs.map.r{ii} );
+0380                     <span class="keyword">if</span> isempty( data_new ) || nc_flag                      
+0381                         data_c.regs.error.label{ii} = <span class="keyword">...</span>
+0382                             [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0383                             <span class="string">'. 2 -&gt; 1 stable'</span>];
+0384                         disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0385                         data_c.regs.error.r(ii) = 2;
+0386                         <span class="comment">%data_c = update_cell( data_c, ii, data_r, list_r(1), 1);</span>
+0387                         [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0388                             data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
+0389                     <span class="keyword">else</span>
+0390                         data_c = <a href="deleteRegions.html" class="code" title="function [data ] = deleteRegions( data, list_c )">deleteRegions</a>( data_c, ii);
+0391                         data_c = <a href="addRegions.html" class="code" title="function [data_c] = addRegions( data_c, data2, list )">addRegions</a>(    data_c, data_new, <span class="keyword">...</span>
+0392                             ind_new );                       
+0393                         break_flag = 1;
+0394                         data_c.regs.error.label{ii} = <span class="keyword">...</span>
+0395                             [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0396                             <span class="string">'. 2 -&gt; 1 fixed'</span>];
+0397                         disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0398                     <span class="keyword">end</span>    
+0399                 <span class="keyword">end</span> 
+0400             <span class="keyword">elseif</span> s12_flag
+0401                 <span class="comment">%% 1 -&gt; 2 Stable</span>
+0402                 <span class="comment">% This is an error compatible with cell division. If the</span>
+0403                 <span class="comment">% intial and final cells have a reasonable size, clear the</span>
+0404                 <span class="comment">% error and let this event be considered a cell division.</span>
+0405                 
+0406                 tmp_list = list_rc(1:2);
+0407                 
+0408                 <span class="comment">% check for the existence ignore error flag for back</span>
+0409                 <span class="comment">% compatibility</span>
+0410                 <span class="keyword">if</span> isfield( data_c.regs, <span class="string">'ignoreError'</span> );
+0411                     ignoreErrorM  = data_r.regs.ignoreError(list_r(1));
+0412                     ignoreErrorD1 = data_c.regs.ignoreError(tmp_list(1));
+0413                     ignoreErrorD2 = data_c.regs.ignoreError(tmp_list(2));
+0414                 <span class="keyword">else</span>
+0415                     ignoreErrorM  = 0;
+0416                     ignoreErrorD1 = 0;
+0417                     ignoreErrorD2 = 0;
+0418                 <span class="keyword">end</span>
+0419                 
+0420                 errorM  = ((data_r.regs.scoreRaw(list_r(1))   &lt; <span class="keyword">...</span>
+0421                     SCORE_LIMIT_MOTHER   ) &amp;&amp; ~ignoreErrorM  );
+0422                 errorD1 = ((data_c.regs.scoreRaw(tmp_list(1)) &lt; <span class="keyword">...</span>
+0423                     SCORE_LIMIT_DAUGHTER ) &amp;&amp; ~ignoreErrorD1 );
+0424                 errorD2 = ((data_c.regs.scoreRaw(tmp_list(2)) &lt; <span class="keyword">...</span>
+0425                     SCORE_LIMIT_DAUGHTER ) &amp;&amp; ~ignoreErrorD2 );
+0426                 
+0427                 <span class="keyword">if</span> ~(errorM || errorD1 || errorD2)
+0428                     data_c.regs.error.label{ii} = ([<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0429                         <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. good cell division. [L1,L2,Sc] = ['</span>,<span class="keyword">...</span>
+0430                         num2str(data_c.regs.L1(ii),2),<span class="string">', '</span>,num2str(data_c.regs.L2(ii),2),<span class="keyword">...</span>
+0431                         <span class="string">', '</span>,num2str(data_c.regs.scoreRaw(ii),2),<span class="string">'].'</span>]);
+0432                     disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0433                     data_c.regs.error.r(ii) = 0;
+0434                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0435                         data_c, ii, data_r, list_r(1), i, 0, tmp_list(ii~=tmp_list), cell_count);
+0436                 <span class="keyword">else</span>
+0437                     data_c.regs.error.label{ii} = [<span class="string">'Frame: '</span>, num2str(i),<span class="keyword">...</span>
+0438                         <span class="string">', reg: '</span>, num2str(ii),<span class="keyword">...</span>
+0439                         <span class="string">'. 1 -&gt; 2 stable, but not good cell [sm,sd1,sd2,slim] = ['</span><span class="keyword">...</span>
+0440                         num2str(data_r.regs.scoreRaw(list_r(1)),2),<span class="string">', '</span>,<span class="keyword">...</span>
+0441                         num2str(data_c.regs.scoreRaw(tmp_list(1)),2),<span class="string">', '</span>,<span class="keyword">...</span>
+0442                         num2str(data_c.regs.scoreRaw(tmp_list(2)),2),<span class="keyword">...</span>
+0443                         <span class="string">', '</span>,num2str(SCORE_LIMIT_MOTHER,2), <span class="string">', '</span>,<span class="keyword">...</span>
+0444                         num2str(SCORE_LIMIT_DAUGHTER,2),<span class="string">'].'</span>];
+0445                     disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0446                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0447                         data_c, ii, data_r, list_r(1), i, 1, tmp_list(ii~=tmp_list), cell_count);
+0448                 <span class="keyword">end</span>
+0449             <span class="keyword">elseif</span> localMapGoodFlagEnd
+0450                 <span class="comment">% unresolved error</span>
+0451                 <span class="comment">% none of the choices above were able to resolve it</span>
+0452                 data_c.regs.error.label{ii} = ([<span class="string">'Frame: '</span>, num2str(i), <span class="keyword">...</span>
+0453                     <span class="string">', reg: '</span>, num2str(ii),<span class="string">'. LocalMapGoodFlagEnd.'</span>]);
+0454                 
+0455                 disp([header, <span class="string">'ErRes: '</span>, data_c.regs.error.label{ii}] );
+0456                 data_c.regs.error.r(ii) = 0;
+0457                 <span class="keyword">if</span> ~isempty(list_r)
+0458                     data_r.regs.error.f(list_r(1)) = 0;
+0459                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0460                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0461                 <span class="keyword">else</span>
+0462                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0463                         data_c, ii, data_r, [], i, 0, [], cell_count);
+0464                 <span class="keyword">end</span>
+0465             <span class="keyword">else</span>
+0466                 <span class="keyword">if</span> ignoreError
+0467                     data_c.regs.error.r(ii) = 0;
+0468                     data_r.regs.error.f(list_r(1)) = 0;
+0469                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0470                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
+0471                 <span class="keyword">else</span>
+0472                     data_c.regs.error.label{ii} = <span class="keyword">...</span>
+0473                         [<span class="string">'Frame: '</span>, num2str(i), <span class="string">', reg: '</span>, <span class="keyword">...</span>
+0474                         num2str(ii),<span class="string">'. error NOT fixed'</span>];
+0475                     disp([header, <span class="string">'ErRes: '</span>,data_c.regs.error.label{ii}]);
+0476                 <span class="keyword">end</span>
+0477                 
+0478                 <span class="keyword">if</span> ~isempty(list_r )
+0479                     fix_flag = 0;
+0480                     [data_c, data_r, cell_count] = <a href="update_cell.html" class="code" title="function  [data_c, data_r, cell_count] = update_cell(data_c, ii, data_r, jj, time, errorStat, ii_sister, cell_count);">update_cell</a>( <span class="keyword">...</span>
+0481                         data_c, ii, data_r, list_r(1), i, ~fix_flag, [], cell_count);
+0482                 <span class="keyword">end</span>
+0483             <span class="keyword">end</span>
+0484         <span class="keyword">end</span>
+0485     <span class="keyword">end</span>
+0486     
+0487     
+0488     <span class="keyword">if</span> break_flag
+0489         <span class="keyword">if</span> ~isempty( list_c_del );
+0490             list_c_del = unique(list_c_del);
+0491             [data_c] = <a href="deleteRegions.html" class="code" title="function [data ] = deleteRegions( data, list_c )">deleteRegions</a>( data_c, list_c_del);
+0492         <span class="keyword">end</span>
+0493         
+0494         <span class="keyword">if</span> ~isempty( list_f_add );
+0495             list_f_add = unique(list_f_add);
+0496             [data_c] = <a href="addRegions.html" class="code" title="function [data_c] = addRegions( data_c, data2, list )">addRegions</a>(data_c,data_f,list_f_add);
+0497             
+0498         <span class="keyword">end</span>
+0499         
+0500         <span class="keyword">if</span> i == 1
+0501             list_touch = [list_touch,i,i+1];
+0502         <span class="keyword">elseif</span> i == num_im
+0503             list_touch = [list_touch,i-1,i];
+0504         <span class="keyword">else</span>
+0505             list_touch = [list_touch,i-1,i,i+1];
+0506         <span class="keyword">end</span>
+0507     <span class="keyword">end</span>
+0508     
+0509     list_change_last = list_f_add;
+0510     
+0511     <span class="keyword">if</span> (i&gt;1) &amp;&amp; nc_flag;
+0512         [data_c,data_r] = <a href="intRepairErr.html" class="code" title="function  [data_c,data_r] = intRepairErr( data_c,data_r)">intRepairErr</a>( data_c,data_r);
+0513     <span class="keyword">end</span>
+0514     
+0515     dataname=[dirname,contents(i).name(1:length(contents(i).name)-7),<span class="string">'err.mat'</span>];
+0516     save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data_c'</span>);
+0517     <span class="keyword">if</span> (i&gt;1) &amp;&amp; nc_flag;
+0518         dataname=[dirname,contents(i-1).name(1:length(contents(i).name)-7),<span class="string">'err.mat'</span>];
+0519         save(dataname,<span class="string">'-STRUCT'</span>,<span class="string">'data_r'</span>);
+0520     <span class="keyword">end</span>
+0521     
+0522     break_flag = 0;
+0523     i = i+1;
+0524     
+0525 <span class="keyword">end</span>
+0526 
+0527 <span class="keyword">if</span> CONST.show_status
+0528     close(h);
+0529 <span class="keyword">end</span>
+0530 
+0531 list_touch = sort(unique(list_touch));
+0532 
+0533 <span class="keyword">if</span> ~isempty( list_touch)
+0534     <a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>(dirname,[],sort(list_touch),1,CONST,header);
+0535 <span class="keyword">end</span>
+0536 <span class="keyword">end</span>
+0537 
+0538 
+0539 <a name="_sub1" href="#_subfunctions" class="code">function data = loaderInternal( filename )</a>
+0540 filename_mod = [filename(1:end-7),<span class="string">'err.mat'</span>];
+0541 fid = fopen(filename_mod);
+0542 
+0543 <span class="keyword">if</span>  fid == -1
+0544     data = load( filename );
+0545 <span class="keyword">else</span>
+0546     fclose(fid);
+0547     data =  load( filename_mod );
+0548 <span class="keyword">end</span>
+0549 
+0550 
+0551 <span class="keyword">end</span>
+0552</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

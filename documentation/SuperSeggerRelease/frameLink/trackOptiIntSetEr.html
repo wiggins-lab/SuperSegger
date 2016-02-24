@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiIntSetEr</title>
+  <meta name="keywords" content="trackOptiIntSetEr">
+  <meta name="description" content="trackOptiSetEr: Resets errors flags for the data at fname.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiIntSetEr.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiIntSetEr
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiSetEr: Resets errors flags for the data at fname.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function trackOptiIntSetEr(fname, CONST, i) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">  trackOptiSetEr: Resets errors flags for the data at fname.
+  Since errors are corrected twice, this resets all the error flags 
+  such that errors are not corrected twice.
+ 
+  INPUT :
+        fname : is the filename of the .err file
+        CONST : Constants file
+        i : is the frame
+ 
+  Copyright (C) 2016 Wiggins Lab 
+  University of Washington, 2016
+  This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>	genError : generates error for formed regions.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiSetEr.html" class="code" title="function trackOptiSetEr(dirname,CONST, header)">trackOptiSetEr</a>	trackOptiSetEr: Since errors are corrected twice, this resets all the error flags</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function trackOptiIntSetEr(fname, CONST, i)</a>
+0002 <span class="comment">%  trackOptiSetEr: Resets errors flags for the data at fname.</span>
+0003 <span class="comment">%  Since errors are corrected twice, this resets all the error flags</span>
+0004 <span class="comment">%  such that errors are not corrected twice.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%  INPUT :</span>
+0007 <span class="comment">%        fname : is the filename of the .err file</span>
+0008 <span class="comment">%        CONST : Constants file</span>
+0009 <span class="comment">%        i : is the frame</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%  Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">%  University of Washington, 2016</span>
+0013 <span class="comment">%  This file is part of SuperSeggerOpti.</span>
+0014  
+0015 data = load(fname);
+0016 [data.regs.error.f]  = <a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>( data.regs.map.f, data.regs.DA.f,  CONST);
+0017 [data.regs.error.r]  = <a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>( data.regs.map.r, data.regs.DA.r,  CONST);
+0018 [data.regs.error.rf] = <a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>( data.regs.map.rf, data.regs.DA.rf, CONST);
+0019 [data.regs.error.fr] = <a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>( data.regs.map.fr, data.regs.DA.fr, CONST);
+0020 
+0021 <span class="keyword">if</span> i == 1
+0022     data.regs.error.r = 0*data.regs.error.r;
+0023 <span class="keyword">end</span>
+0024     
+0025 data.regs.death          = zeros(1,data.regs.num_regs); <span class="comment">% Death/divide time</span>
+0026 data.regs.deathF         = zeros(1,data.regs.num_regs); <span class="comment">% Divides in this frame</span>
+0027 data.regs.birth          = zeros(1,data.regs.num_regs); <span class="comment">% Birth Time: either division or appearance</span>
+0028 data.regs.birthF         = zeros(1,data.regs.num_regs); <span class="comment">% Divide in this frame</span>
+0029 data.regs.age            = zeros(1,data.regs.num_regs); <span class="comment">% cell age. starts at 1.</span>
+0030 data.regs.divide         = zeros(1,data.regs.num_regs); <span class="comment">% succesful division in this frame.</span>
+0031 data.regs.ehist          = zeros(1,data.regs.num_regs); <span class="comment">% True if cell has unresolved</span>
+0032 <span class="comment">% error before this time.</span>
+0033 data.regs.stat0          = zeros(1,data.regs.num_regs); <span class="comment">% Results from a successful</span>
+0034 <span class="comment">% division.</span>
+0035 data.regs.sisterID       = zeros(1,data.regs.num_regs); <span class="comment">% sister cell ID</span>
+0036 data.regs.motherID       = zeros(1,data.regs.num_regs); <span class="comment">% mother cell ID</span>
+0037 data.regs.daughterID     = cell(1,data.regs.num_regs);  <span class="comment">% daughter cell ID</span>
+0038 data.regs.ID             = zeros(1,data.regs.num_regs); <span class="comment">% cell ID number</span>
+0039 save(fname,<span class="string">'-STRUCT'</span>,<span class="string">'data'</span>);
+0040 
+0041 <span class="keyword">end</span>
+0042</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

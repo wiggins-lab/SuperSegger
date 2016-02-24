@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of gateHist</title>
+  <meta name="keywords" content="gateHist">
+  <meta name="description" content="gateDot : used to make a histogram of the list of cells for the given indices.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">gate</a> &gt; gateHist.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/gate&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>gateHist
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>gateDot : used to make a histogram of the list of cells for the given indices.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [y,xx] = getHist(clist, ind, xx, cc) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> gateDot : used to make a histogram of the list of cells for the given indices.
+ it first gate the list if there is a gate field in clist. 
+
+ INPUT :
+   clist : list of cells with time-independent info
+   ind : indices of clist definition used for x and y label [x,y]
+   xx : number of bins for histogram or centroids
+   cc : color of plot
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="gate.html" class="code" title="function [clist0] = gate( clist )">gate</a>	gate : used to gate the list of cells.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="gateMake.html" class="code" title="function [clist] = gateMake( clist, ind, x0 )">gateMake</a>	gate : used to create a gate field in the clist (list of cells).</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [y,xx] = getHist(clist, ind, xx, cc)</a>
+0002 <span class="comment">% gateDot : used to make a histogram of the list of cells for the given indices.</span>
+0003 <span class="comment">% it first gate the list if there is a gate field in clist.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%   clist : list of cells with time-independent info</span>
+0007 <span class="comment">%   ind : indices of clist definition used for x and y label [x,y]</span>
+0008 <span class="comment">%   xx : number of bins for histogram or centroids</span>
+0009 <span class="comment">%   cc : color of plot</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0012 <span class="comment">% University of Washington, 2016</span>
+0013 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0014 
+0015 
+0016 clist = <a href="gate.html" class="code" title="function [clist0] = gate( clist )">gate</a>(clist);
+0017 
+0018 ss = size( clist.data );
+0019 
+0020 NUM_BINS = round((sqrt(ss(1))));
+0021 
+0022 <span class="keyword">if</span> ~exist( <span class="string">'xx'</span>, <span class="string">'var'</span> );
+0023     xx = [];
+0024 <span class="keyword">end</span>
+0025 <span class="keyword">if</span> ~exist( <span class="string">'cc'</span>, <span class="string">'var'</span> );
+0026     cc = <span class="string">'b'</span>;
+0027 <span class="keyword">end</span>
+0028 
+0029 nind = numel( ind );
+0030 
+0031 <span class="keyword">if</span> nind == 2
+0032     <span class="keyword">if</span> isempty( xx)
+0033     [y,xx] =hist3( [clist.data(:,ind(2)),clist.data(:,ind(1))], round(([ NUM_BINS, NUM_BINS])/2) );
+0034     <span class="keyword">else</span>
+0035         [y,xx] =hist3( [clist.data(:,ind(2)),clist.data(:,ind(1))], xx );    
+0036     <span class="keyword">end</span>
+0037     imagesc(xx{2},xx{1},y)
+0038     set( gca, <span class="string">'YDir'</span>, <span class="string">'normal'</span> );
+0039     
+0040     ylabel( clist.def{ind(2)} );
+0041     xlabel( clist.def{ind(1)} );
+0042     
+0043 <span class="keyword">elseif</span> nind == 1
+0044     <span class="keyword">if</span> isempty( xx )
+0045         [y,xx] = hist( clist.data(:,ind), NUM_BINS );
+0046     <span class="keyword">else</span>
+0047         [y,xx] = hist( clist.data(:,ind), xx );
+0048     <span class="keyword">end</span>
+0049     
+0050     semilogy( xx, y, <span class="string">'.-'</span>, <span class="string">'Color'</span>, cc );
+0051     
+0052     tmp = ishold;
+0053     hold on;
+0054     
+0055     semilogy( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y&gt;0))], <span class="string">':'</span>, <span class="string">'Color'</span>, cc );
+0056     <span class="keyword">if</span> ~tmp
+0057         hold off;
+0058     <span class="keyword">end</span>
+0059     
+0060     ylabel(<span class="string">'Number of Cells'</span>);
+0061     xlabel(clist.def{ind});
+0062 <span class="keyword">else</span>
+0063     disp(<span class="string">'Error in getHist: too many indices in ind'</span>);
+0064 <span class="keyword">end</span>
+0065 
+0066 
+0067 
+0068 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

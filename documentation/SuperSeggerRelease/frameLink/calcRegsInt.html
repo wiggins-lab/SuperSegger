@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of calcRegsInt</title>
+  <meta name="keywords" content="calcRegsInt">
+  <meta name="description" content="calcRegsInt : calculates the max overlap between data1 and data2 regions">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">frameLink</a> &gt; calcRegsInt.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>calcRegsInt
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>calcRegsInt : calculates the max overlap between data1 and data2 regions</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> calcRegsInt : calculates the max overlap between data1 and data2 regions
+
+ INPUT :
+       data_c: region (cell) data structure 1
+       data2 : region (cell) data structure 2
+       CONST :  segmentation constants
+ OUTPUT :
+       XX : areal overlap fraction for a region with all other regions
+       map : list of regions that overlap with the current region above the
+      cut off
+       error : is an error flag that is set if the area difference between the
+   primary overlap region is too big or there is not one region in map
+       dA : min(A1,A2)/max(A2,A1) between regions of overlap
+       DA : Change in area between regions of overlap
+       dF1 : Change in fluorescence between regions of overlap
+       dF2 : Change in fluorescence between regions of overlap
+       dF1b : Change in fluorescence between regions of overlap
+       dF2b : Change in fluorescence between regions of overlap
+       mapOld :
+       XXOld :
+       dAOld :
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>	genError : generates error for formed regions.</li><li><a href="intDoHardLinkDel.html" class="code" title="function [map, XX] = intDoHardLinkDel( map, XX, DA, CONST )">intDoHardLinkDel</a>	intDoHardLinkDel : hard links the regions that uniquely overlap.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiIntDiskNR.html" class="code" title="function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)">trackOptiIntDiskNR</a>	trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] </a><span class="keyword">...</span>
+0002     = calcRegsInt( data1, data2, CONST )
+0003 <span class="comment">% calcRegsInt : calculates the max overlap between data1 and data2 regions</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%       data_c: region (cell) data structure 1</span>
+0007 <span class="comment">%       data2 : region (cell) data structure 2</span>
+0008 <span class="comment">%       CONST :  segmentation constants</span>
+0009 <span class="comment">% OUTPUT :</span>
+0010 <span class="comment">%       XX : areal overlap fraction for a region with all other regions</span>
+0011 <span class="comment">%       map : list of regions that overlap with the current region above the</span>
+0012 <span class="comment">%      cut off</span>
+0013 <span class="comment">%       error : is an error flag that is set if the area difference between the</span>
+0014 <span class="comment">%   primary overlap region is too big or there is not one region in map</span>
+0015 <span class="comment">%       dA : min(A1,A2)/max(A2,A1) between regions of overlap</span>
+0016 <span class="comment">%       DA : Change in area between regions of overlap</span>
+0017 <span class="comment">%       dF1 : Change in fluorescence between regions of overlap</span>
+0018 <span class="comment">%       dF2 : Change in fluorescence between regions of overlap</span>
+0019 <span class="comment">%       dF1b : Change in fluorescence between regions of overlap</span>
+0020 <span class="comment">%       dF2b : Change in fluorescence between regions of overlap</span>
+0021 <span class="comment">%       mapOld :</span>
+0022 <span class="comment">%       XXOld :</span>
+0023 <span class="comment">%       dAOld :</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0026 <span class="comment">% University of Washington, 2016</span>
+0027 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0028 
+0029 
+0030 OVERLAP_LIMIT_MAX = CONST.trackOpti.OVERLAP_LIMIT_MAX;
+0031 OVERLAP_LIMIT_MIN = CONST.trackOpti.OVERLAP_LIMIT_MIN;
+0032 dA_LIMIT          = CONST.trackOpti.dA_LIMIT;
+0033 
+0034 <span class="keyword">if</span> ~isempty( data1 )
+0035     loop_ind    = 1:data1.regs.num_regs;
+0036     XX    = cell( 1, data1.regs.num_regs);
+0037     map   = cell( 1, data1.regs.num_regs);
+0038     error = zeros(1, data1.regs.num_regs);
+0039     dA    = zeros(1, data1.regs.num_regs);
+0040     DA    = zeros(1, data1.regs.num_regs);
+0041     nB    = zeros(1, data1.regs.num_regs);   
+0042     dF1   = 2*ones(1, data1.regs.num_regs);
+0043     dF2   = 2*ones(1, data1.regs.num_regs);
+0044     dF1b  = 2*ones(1, data1.regs.num_regs);
+0045     dF2b  = 2*ones(1, data1.regs.num_regs);
+0046     
+0047     <span class="keyword">if</span> ~isempty( data2 )
+0048         
+0049         <span class="keyword">for</span> ii = loop_ind
+0050             XX{ii} = zeros(2,5);
+0051             X     = zeros(1,data2.regs.num_regs);
+0052             
+0053             <span class="comment">% Get a list of region numbers that overlap with region ii in</span>
+0054             <span class="comment">% data 1</span>
+0055             <span class="keyword">try</span>
+0056                 [xx,yy] = getBB( data1.regs.props(ii).BoundingBox );
+0057                 mask1 = (data1.regs.regs_label(yy,xx)==ii);
+0058                 regs2 = data2.regs.regs_label(yy,xx);
+0059                 ind = unique(regs2(mask1));
+0060                 ind = ind(data2.regs.num_regs&gt;=ind);
+0061                 ind = ind(~~ind);
+0062                 ind = reshape( ind(:), 1, numel(ind(:)) );
+0063             <span class="keyword">catch</span>
+0064                 keyboard;
+0065             <span class="keyword">end</span>
+0066             
+0067             <span class="comment">% consider overlapping regions jj = ind.</span>
+0068             <span class="keyword">for</span> jj = ind
+0069                 <span class="keyword">try</span>
+0070                     <span class="comment">% tmp2 is a mask for the overlap region jj</span>
+0071                     tmp2 = double(regs2==jj);
+0072                 <span class="keyword">catch</span>
+0073                     keyboard
+0074                 <span class="keyword">end</span>
+0075                 <span class="keyword">try</span>
+0076                     
+0077                     <span class="comment">% area of overlap = sum(tmp2(mask1(:)))</span>
+0078                     <span class="comment">% X is area of overlap / max( area of two regions ii</span>
+0079                     <span class="comment">% and jj)</span>
+0080                     X(jj) = sum(tmp2(mask1(:)))/<span class="keyword">...</span>
+0081                         max([data1.regs.props(ii).Area,data2.regs.props(jj).Area]);
+0082                     
+0083                 <span class="keyword">catch</span> ME
+0084                     printError(ME);
+0085                 <span class="keyword">end</span>
+0086             <span class="keyword">end</span>
+0087             
+0088             <span class="comment">% find the biggest fraction</span>
+0089             <span class="comment">% ind is NOW the region with the biggest overlap</span>
+0090             [junk, ind] = max(X(:));
+0091             
+0092             <span class="keyword">if</span> junk == 0
+0093                 dA(ii) = 0;
+0094                 DA(ii) = 0;
+0095             <span class="keyword">else</span>
+0096                 dA(ii) =  min([data1.regs.props(ii).Area,data2.regs.props(ind).Area])/<span class="keyword">...</span>
+0097                     max([data1.regs.props(ii).Area,data2.regs.props(ind).Area]);
+0098                 DA(ii) =  (data2.regs.props(ind).Area-data1.regs.props(ii).Area)/<span class="keyword">...</span>
+0099                     data1.regs.props(ii).Area;
+0100             <span class="keyword">end</span>
+0101             
+0102             [overlap, B] = sort(X,<span class="string">'descend'</span>);
+0103             
+0104             nnn = min([5,data2.regs.num_regs]);
+0105             
+0106             XX{ii}(1,1:nnn) = overlap(1:nnn);
+0107             XX{ii}(2,1:nnn) = B(1:nnn);
+0108             
+0109             <span class="keyword">try</span>
+0110                 <span class="comment">%B = B(overlap &gt; max([0.5*overlap,OVERLAP_LIMIT_MIN]) );</span>
+0111                 B = B(overlap &gt; OVERLAP_LIMIT_MIN );
+0112             <span class="keyword">catch</span> ME
+0113                 printError(ME);
+0114             <span class="keyword">end</span>
+0115             map{ii} = B;
+0116             
+0117         <span class="keyword">end</span>
+0118         
+0119         mapOld = map;
+0120         XXOld  = XX;
+0121         dAOld  = dA;
+0122         
+0123         <span class="keyword">if</span> CONST.trackOpti.HARDLINK_FLAG
+0124             [map, XX] = <a href="intDoHardLinkDel.html" class="code" title="function [map, XX] = intDoHardLinkDel( map, XX, DA, CONST )">intDoHardLinkDel</a>( map, XX, DA, CONST );           
+0125             [dA, nB, dF1, dF2, dF1b, dF2b, DA] = <a href="#_sub1" class="code" title="subfunction [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST )">intDoInt</a>( data1, data2, map, CONST );           
+0126             [map, XX] = <a href="intDoHardLinkDel.html" class="code" title="function [map, XX] = intDoHardLinkDel( map, XX, DA, CONST )">intDoHardLinkDel</a>( map, XX, DA, CONST );
+0127         <span class="keyword">end</span>
+0128         [dA, nB, dF1, dF2, dF1b, dF2b, DA] = <a href="#_sub1" class="code" title="subfunction [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST )">intDoInt</a>( data1, data2, map, CONST );
+0129         
+0130         <span class="comment">%if(numel(B) ~= 1) || (dA(ii) &lt; dA_LIMIT)</span>
+0131         <span class="comment">%error = or(nB ~= 1, dA &lt; dA_LIMIT);</span>
+0132         error = <a href="genError.html" class="code" title="function error = genError(map,DA,CONST)">genError</a>( map, DA, CONST );
+0133         
+0134     <span class="keyword">end</span>
+0135     
+0136 <span class="keyword">else</span>
+0137     XX     = {};
+0138     map    = {};
+0139     error  = [];
+0140     dA     = [];
+0141     DA     = [];
+0142     dF1    = [];
+0143     dF2    = [];
+0144     dF1b   = [];
+0145     dF2b   = [];
+0146     mapOld = map;
+0147     XXOld  = XX;
+0148     dAOld  = dA;
+0149 <span class="keyword">end</span>
+0150 <span class="keyword">end</span>
+0151 
+0152 
+0153 <a name="_sub1" href="#_subfunctions" class="code">function [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST )</a>
+0154 dA    = zeros(1, data1.regs.num_regs);
+0155 DA    = zeros(1, data1.regs.num_regs);
+0156 
+0157 nB    = zeros(1, data1.regs.num_regs);
+0158 
+0159 loop_ind    = 1:data1.regs.num_regs;
+0160 
+0161 <span class="keyword">if</span> CONST.trackOpti.LYSE_FLAG
+0162     dF1   = 2*ones(1, data1.regs.num_regs);
+0163     dF2   = 2*ones(1, data1.regs.num_regs);
+0164     dF1b  = 2*ones(1, data1.regs.num_regs);
+0165     dF2b  = 2*ones(1, data1.regs.num_regs);
+0166 <span class="keyword">else</span>
+0167     dF1 = [];
+0168     dF2 = [];
+0169     dF1b = [];
+0170     dF2b = [];
+0171 <span class="keyword">end</span>
+0172 
+0173 <span class="comment">% calculate background levels for the fluor fields.</span>
+0174 <span class="keyword">if</span> CONST.trackOpti.LYSE_FLAG
+0175     <span class="keyword">if</span> isfield( data1,<span class="string">'fluor1'</span>);
+0176         m1back =max([mean( data1.fluor1(:)), mean( data2.fluor1(:))]);
+0177         s1back =max([std( double(data1.fluor1(:))), std( double(data2.fluor1(:)))]);
+0178     <span class="keyword">end</span>
+0179 
+0180     <span class="keyword">if</span> isfield( data1,<span class="string">'fluor2'</span>);
+0181         m2back =max([mean( data1.fluor2(:)), mean( data2.fluor2(:))]);
+0182         s2back =max([std( double(data1.fluor2(:))), std( double(data2.fluor2(:)))]);
+0183     <span class="keyword">end</span>
+0184 <span class="keyword">end</span>
+0185 
+0186 <span class="keyword">for</span> ii = loop_ind
+0187     <span class="comment">% Get a list of region numbers that overlap with region ii in</span>
+0188     <span class="comment">% data 1</span>
+0189     <span class="keyword">try</span>
+0190         [xx,yy] = getBB( data1.regs.props(ii).BoundingBox );
+0191         mask1 = (data1.regs.regs_label(yy,xx)==ii);
+0192         regs2 = data2.regs.regs_label(yy,xx);
+0193     <span class="keyword">catch</span>
+0194         keyboard;
+0195     <span class="keyword">end</span>
+0196     
+0197     
+0198     <span class="keyword">if</span> ~isempty( map{ii} )
+0199         ind = map{ii}(1);
+0200         dA(ii) =  min([data1.regs.props(ii).Area,data2.regs.props(ind).Area])/<span class="keyword">...</span>
+0201             max([data1.regs.props(ii).Area,data2.regs.props(ind).Area]);
+0202         DA(ii) = (data2.regs.props(ind).Area-data1.regs.props(ii).Area)/<span class="keyword">...</span>
+0203             data1.regs.props(ii).Area;
+0204         nB(ii) = numel( map{ii} );
+0205         
+0206         <span class="keyword">if</span> CONST.trackOpti.LYSE_FLAG
+0207             <span class="comment">% Calculate the change in mean fluor level in each channel</span>
+0208             <span class="comment">% between the regions of max overlap.</span>
+0209             [xx2,yy2] = getBB( data2.regs.props(ind).BoundingBox );
+0210             mask2 = (data2.regs.regs_label(yy2,xx2)==ind);
+0211 
+0212             <span class="keyword">if</span> isfield( data1, <span class="string">'fluor1'</span> )
+0213                 fluor_d1 = data1.fluor1(yy,xx);
+0214                 fluor_d2 = data2.fluor1(yy2,xx2);
+0215                 
+0216                 mf1 = mean( fluor_d1(mask1) )-m1back;
+0217                 mf2 = mean( fluor_d2(mask2) )-m1back;
+0218                 
+0219                 mmax = max([mf1,mf2]);
+0220                 
+0221                 <span class="keyword">if</span> mmax &gt; s1back
+0222                     dF1(ii) =  min([mf1,mf2])/max([mf1,mf2]);
+0223                 <span class="keyword">else</span>
+0224                     dF1(ii) = 1;
+0225                 <span class="keyword">end</span>
+0226                 
+0227                 <span class="comment">%blind</span>
+0228                 fluor_d1 = data1.fluor1(yy,xx);
+0229                 fluor_d2 = data2.fluor1(yy,xx);
+0230                 
+0231                 mf1 = mean( fluor_d1(mask1) )-m1back;
+0232                 mf2 = mean( fluor_d2(mask1) )-m1back;
+0233                 
+0234                 mmax = max([mf1,mf2]);
+0235                 
+0236                 <span class="keyword">if</span> mmax &gt; s1back
+0237                     dF1b(ii) =  min([mf1,mf2])/max([mf1,mf2]);
+0238                 <span class="keyword">else</span>
+0239                     dF1b(ii) = 1;
+0240                 <span class="keyword">end</span>
+0241             <span class="keyword">end</span>
+0242             
+0243             <span class="keyword">if</span> isfield( data1, <span class="string">'fluor2'</span> )
+0244                 fluor_d1 = data1.fluor2(yy,xx);
+0245                 fluor_d2 = data2.fluor2(yy2,xx2);
+0246                 
+0247                 mf1 = mean( fluor_d1(mask1) )-m2back;
+0248                 mf2 = mean( fluor_d2(mask2) )-m2back;
+0249                 
+0250                 mmax = max([mf1,mf2]);
+0251                 
+0252                 <span class="keyword">if</span> mmax &gt; s2back
+0253                     dF2(ii) =  min([mf1,mf2])/max([mf1,mf2]);
+0254                 <span class="keyword">else</span>
+0255                     dF2(ii) = 1;
+0256                 <span class="keyword">end</span>              
+0257                 
+0258                 <span class="comment">%blind</span>
+0259                 fluor_d1 = data1.fluor2(yy,xx);
+0260                 fluor_d2 = data2.fluor2(yy,xx);
+0261                 
+0262                 mf1 = mean( fluor_d1(mask1) )-m2back;
+0263                 mf2 = mean( fluor_d2(mask1) )-m2back;
+0264                 
+0265                 mmax = max([mf1,mf2]);
+0266                 
+0267                 <span class="keyword">if</span> mmax &gt; s2back
+0268                     dF2b(ii) =  min([mf1,mf2])/max([mf1,mf2]);
+0269                 <span class="keyword">else</span>
+0270                     dF2b(ii) = 1;
+0271                 <span class="keyword">end</span>
+0272             <span class="keyword">end</span>
+0273             
+0274         <span class="keyword">end</span>
+0275     <span class="keyword">end</span>
+0276 <span class="keyword">end</span>
+0277 <span class="keyword">end</span>
+0278 
+0279</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of showDA4new</title>
+  <meta name="keywords" content="showDA4new">
+  <meta name="description" content="showDA4new : produces the trackOptiView image according to clist and">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">viz</a> &gt; showDA4new.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>showDA4new
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>showDA4new : produces the trackOptiView image according to clist and</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> showDA4new : produces the trackOptiView image according to clist and
+ flags. If the clist has a gate it outlines cells passing the gate.
+
+ INPUT : 
+         data :
+         data_r : 
+         data_f :
+         FLAGS : see below
+         clist : list of cell files, could have a gate field.
+         CONST : segmentation constants
+   
+   FLAGS : 
+         P_Flag : shows regions
+         t_flag : shows the cell numbers
+         lyse_flag : outlines cell that lysed
+         m_flag : shows mask
+         c_flag : ? does absolutely nothing
+         v_flag : shows cells outlines
+         f_flag : shows flurescence image
+         s_flag : shows the foci and their score
+         T_flag : ? something related to regions
+         p_flag : shows pole positions and connects daughter cells to each other
+
+ OUTPUT :
+         im : trackOptiView outlined image
+
+ Copyright (C) 2016 Wiggins Lab
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	doColorMap : ?</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function doAnnotation( data_, x_, y_ )</a></li><li><a href="#_sub2" class="code">function doFrameMerge( x_, y_ )</a></li><li><a href="#_sub3" class="code">function im = makeImD( data, FLAGS )</a></li><li><a href="#_sub4" class="code">function im = makeIm( data, FLAGS, ID_LIST, CONST )</a></li><li><a href="#_sub5" class="code">function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )</a></li><li><a href="#_sub6" class="code">function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )</a></li><li><a href="#_sub7" class="code">function intPlotLink( data, x_, y_ )</a></li><li><a href="#_sub8" class="code">function [xx,yy] = intGetImSize( data, FLAGS )</a></li><li><a href="#_sub9" class="code">function FLAGS = intFixFlags( FLAGS )</a></li><li><a href="#_sub10" class="code">function outline = intDoOutline( map )</a></li><li><a href="#_sub11" class="code">function outline = intDoOutline2( map )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST)</a>
+0002 <span class="comment">% showDA4new : produces the trackOptiView image according to clist and</span>
+0003 <span class="comment">% flags. If the clist has a gate it outlines cells passing the gate.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% INPUT :</span>
+0006 <span class="comment">%         data :</span>
+0007 <span class="comment">%         data_r :</span>
+0008 <span class="comment">%         data_f :</span>
+0009 <span class="comment">%         FLAGS : see below</span>
+0010 <span class="comment">%         clist : list of cell files, could have a gate field.</span>
+0011 <span class="comment">%         CONST : segmentation constants</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   FLAGS :</span>
+0014 <span class="comment">%         P_Flag : shows regions</span>
+0015 <span class="comment">%         t_flag : shows the cell numbers</span>
+0016 <span class="comment">%         lyse_flag : outlines cell that lysed</span>
+0017 <span class="comment">%         m_flag : shows mask</span>
+0018 <span class="comment">%         c_flag : ? does absolutely nothing</span>
+0019 <span class="comment">%         v_flag : shows cells outlines</span>
+0020 <span class="comment">%         f_flag : shows flurescence image</span>
+0021 <span class="comment">%         s_flag : shows the foci and their score</span>
+0022 <span class="comment">%         T_flag : ? something related to regions</span>
+0023 <span class="comment">%         p_flag : shows pole positions and connects daughter cells to each other</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% OUTPUT :</span>
+0026 <span class="comment">%         im : trackOptiView outlined image</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0029 <span class="comment">% Unviersity of Washington, 2016</span>
+0030 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0031 
+0032 iptsetpref(<span class="string">'imshowborder'</span>,<span class="string">'tight'</span>);
+0033 iptsetpref(<span class="string">'ImshowInitialMagnification'</span>,<span class="string">'fit'</span>);
+0034 
+0035 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'falseColorFlag'</span> )
+0036     CONST.view.falseColorFlag = false;
+0037 <span class="keyword">end</span>
+0038 
+0039 
+0040 <span class="keyword">if</span> nargin&lt;4
+0041     FLAGS = [];
+0042 <span class="keyword">end</span>
+0043 
+0044 
+0045 <span class="comment">% check to see if there are any missing flags in the structure and fix it</span>
+0046 <span class="comment">% if there are.</span>
+0047 FLAGS = <a href="#_sub9" class="code" title="subfunction FLAGS = intFixFlags( FLAGS )">intFixFlags</a>( FLAGS );
+0048 
+0049 <span class="comment">% having a clist enables you to only look at the cells included in the</span>
+0050 <span class="comment">% clist.</span>
+0051 <span class="keyword">if</span> ~isempty( clist );
+0052     clist = gate( clist );
+0053     ID_LIST = clist.data(:,1);
+0054     ID_LIST = ID_LIST(logical(ID_LIST));
+0055 <span class="keyword">else</span>
+0056     
+0057     <span class="keyword">if</span> isfield(data, <span class="string">'regs'</span>) &amp;&amp; isfield( data.regs, <span class="string">'ID'</span> );
+0058         ID_LIST = data.regs.ID;
+0059     <span class="keyword">else</span>
+0060         ID_LIST = [];
+0061     <span class="keyword">end</span>
+0062 <span class="keyword">end</span>
+0063 
+0064 [xx,yy] = <a href="#_sub8" class="code" title="subfunction [xx,yy] = intGetImSize( data, FLAGS )">intGetImSize</a>( data, FLAGS );
+0065 
+0066 
+0067 <span class="comment">% Not sure what the hell this first thing does anymore.</span>
+0068 <span class="keyword">if</span> FLAGS.D_flag == 2
+0069     im = <a href="#_sub3" class="code" title="subfunction im = makeImD( data, FLAGS )">makeImD</a>( data, FLAGS );
+0070 <span class="keyword">else</span>
+0071     mask_full = data.mask_cell;
+0072     im = <a href="#_sub4" class="code" title="subfunction im = makeIm( data, FLAGS, ID_LIST, CONST )">makeIm</a>( data, FLAGS, ID_LIST, CONST );
+0073     
+0074     <span class="keyword">if</span> FLAGS.m_flag
+0075         <span class="keyword">if</span> isempty(data_r)
+0076             mask_full_r = 0*mask_full;
+0077             im_r = cat(3,mask_full_r,mask_full_r,mask_full_r);
+0078         <span class="keyword">else</span>
+0079             mask_full_r = data_r.mask_cell;
+0080             im_r = <a href="#_sub4" class="code" title="subfunction im = makeIm( data, FLAGS, ID_LIST, CONST )">makeIm</a>( data_r, FLAGS );
+0081         <span class="keyword">end</span>
+0082         
+0083         <span class="keyword">if</span> isempty(data_f)
+0084             mask_full_f = 0*mask_full;
+0085             im_f = cat(3,mask_full_f,mask_full_f,mask_full_f);
+0086         <span class="keyword">else</span>
+0087             mask_full_f = data_f.mask_cell;
+0088             im_f = <a href="#_sub4" class="code" title="subfunction im = makeIm( data, FLAGS, ID_LIST, CONST )">makeIm</a>( data_f, FLAGS );
+0089         <span class="keyword">end</span>
+0090         
+0091         im =  [im_r(yy,xx,:),im(yy,xx,:); im_f(yy,xx,:), <span class="keyword">...</span>
+0092             cat(3, <span class="keyword">...</span>
+0093             0.5*autogain(mask_full_r(yy,xx)&gt;0),<span class="keyword">...</span>
+0094             0.5*autogain(mask_full(yy,xx)&gt;0),<span class="keyword">...</span>
+0095             0.5*autogain(mask_full_f(yy,xx)&gt;0))<span class="keyword">...</span>
+0096             ];
+0097     <span class="keyword">end</span>
+0098 <span class="keyword">end</span>
+0099 
+0100 imshow(im);
+0101 
+0102 
+0103 <span class="keyword">if</span> FLAGS.D_flag ~= 2
+0104     hold on;
+0105     
+0106     <span class="keyword">if</span> ~FLAGS.m_flag
+0107         <a href="#_sub1" class="code" title="subfunction doAnnotation( data_, x_, y_ )">doAnnotation</a>( data, -xx(1)+1, -yy(1)+1 );
+0108     <span class="keyword">else</span>
+0109         <a href="#_sub1" class="code" title="subfunction doAnnotation( data_, x_, y_ )">doAnnotation</a>( data, -xx(1)+xx(end)-xx(1)+1, -yy(1)+1 );
+0110         <a href="#_sub1" class="code" title="subfunction doAnnotation( data_, x_, y_ )">doAnnotation</a>( data_r , -xx(1)+1, -yy(1)+1);
+0111         <a href="#_sub1" class="code" title="subfunction doAnnotation( data_, x_, y_ )">doAnnotation</a>( data_f , -xx(1)+1, -yy(1)+yy(end)-yy(1)+1 );
+0112         <a href="#_sub2" class="code" title="subfunction doFrameMerge( x_, y_ )">doFrameMerge</a>( -xx(1)+xx(end)-xx(1)+1+1, -yy(1)+yy(end)-yy(1)+1+1);
+0113     <span class="keyword">end</span>
+0114 <span class="keyword">end</span>
+0115 
+0116     <a name="_sub1" href="#_subfunctions" class="code">function doAnnotation( data_, x_, y_ )</a>
+0117         <span class="keyword">if</span> ~isempty(data_)
+0118             <span class="keyword">if</span> FLAGS.t_flag
+0119                 <a href="#_sub5" class="code" title="subfunction intPlotNum( data, x_, y_ , FLAGS, ID_LIST )">intPlotNum</a>( data_ , x_, y_, FLAGS, ID_LIST );
+0120             <span class="keyword">end</span>
+0121             
+0122             <span class="keyword">if</span> FLAGS.s_flag &amp;&amp; isfield(data_,<span class="string">'CellA'</span>)
+0123                 <a href="#_sub6" class="code" title="subfunction intPlotSpot( data, x_, y_, FLAGS, clist, CONST )">intPlotSpot</a>( data_, x_, y_, FLAGS, clist, CONST );
+0124             <span class="keyword">end</span>
+0125             <span class="keyword">if</span> FLAGS.p_flag
+0126                 <a href="#_sub7" class="code" title="subfunction intPlotLink( data, x_, y_ )">intPlotLink</a>( data_, x_, y_ );
+0127             <span class="keyword">end</span>
+0128         <span class="keyword">end</span>
+0129         
+0130     <span class="keyword">end</span>
+0131 
+0132 
+0133     <a name="_sub2" href="#_subfunctions" class="code">function doFrameMerge( x_, y_ )</a>
+0134         
+0135         <span class="keyword">if</span> ~isempty( data )
+0136             <span class="keyword">for</span> kk = 1:data.regs.num_regs
+0137                 rr3 = [x_,y_ ];
+0138                 rr_c = data.regs.props(kk).Centroid;
+0139                 <span class="keyword">try</span>
+0140                     <span class="keyword">if</span> isfield(data.regs,<span class="string">'ID'</span>)
+0141                         ID  = data.regs.ID(kk);
+0142                         <span class="keyword">if</span> ID
+0143                             <span class="keyword">if</span> ~isempty(data_r) &amp;&amp; isfield(data_r.regs,<span class="string">'ID'</span>)
+0144                                 ind_r = find(ID == data_r.ID);
+0145                                 <span class="keyword">if</span> ~isempty( ind_r );
+0146                                     rr_r = data_r.props(ind_r).Centroid ;
+0147                                     plot( [rr_c(1),rr_r(1)]+rr3(1), [rr_c(2),rr_r(2)]+rr3(2), <span class="string">'r'</span>);
+0148                                 <span class="keyword">end</span>
+0149                             <span class="keyword">end</span>
+0150                             
+0151                             <span class="keyword">if</span> ~isempty(data_f) &amp;&amp; isfield(data_f.regs,<span class="string">'ID'</span>)
+0152                                 ind_f = find(ID == data_f.ID);
+0153                                 <span class="keyword">if</span> ~isempty( ind_f );
+0154                                     rr_f = data_f.props(ind_f).Centroid ;
+0155                                     plot( [rr_c(1),rr_f(1)]+rr3(1), [rr_c(2),rr_f(2)]+rr3(2), <span class="string">'b'</span>);
+0156                                 <span class="keyword">end</span>
+0157                             <span class="keyword">end</span>
+0158                         <span class="keyword">end</span>
+0159                     <span class="keyword">end</span>
+0160                 <span class="keyword">end</span>
+0161             <span class="keyword">end</span>
+0162         <span class="keyword">end</span>
+0163     <span class="keyword">end</span>
+0164 
+0165 
+0166 <span class="keyword">end</span>
+0167 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0168 <a name="_sub3" href="#_subfunctions" class="code">function im = makeImD( data, FLAGS )</a>
+0169 
+0170 back = ag(data.phase);
+0171 
+0172 <span class="keyword">if</span> isfield( data, <span class="string">'fluor1'</span> )
+0173     fluor1 = ag(data.fluor1);
+0174 <span class="keyword">else</span>
+0175     fluor1 = 0*back;
+0176 <span class="keyword">end</span>
+0177 
+0178 <span class="keyword">if</span> isfield( data, <span class="string">'fluor2'</span> )
+0179     fluor2 = ag(data.fluor2);
+0180 <span class="keyword">else</span>
+0181     fluor2 = 0*back;
+0182 <span class="keyword">end</span>
+0183 
+0184 im = cat(3, fluor2 + 0.5*back, fluor1 + 0.5*back, 0.5*back );
+0185 <span class="keyword">end</span>
+0186 
+0187 
+0188 <a name="_sub4" href="#_subfunctions" class="code">function im = makeIm( data, FLAGS, ID_LIST, CONST )</a>
+0189 <span class="comment">% makeIm puts together the image if data is segmented</span>
+0190 <span class="comment">% but not the text/pole/other labels.</span>
+0191 
+0192 <span class="keyword">persistent</span> colormap_;
+0193 <span class="keyword">if</span> isempty( colormap_ )
+0194     colormap_ = colormap( <span class="string">'jet'</span> );
+0195 <span class="keyword">end</span>
+0196 
+0197 <span class="comment">% get the image size</span>
+0198 ss = size(data.phase);
+0199 
+0200 
+0201 <span class="comment">% if the phase image exists use this as the back ground, else use the cell</span>
+0202 <span class="comment">% masks</span>
+0203 <span class="keyword">if</span> isfield(data,<span class="string">'phase'</span>);
+0204     back = autogain(data.phase);
+0205     
+0206     im = cat(3, <span class="keyword">...</span>
+0207         back,<span class="keyword">...</span>
+0208         back,<span class="keyword">...</span>
+0209         back);
+0210 <span class="keyword">else</span>
+0211     im = 0*cat(3, <span class="keyword">...</span>
+0212         autogain(data.mask_cell),<span class="keyword">...</span>
+0213         autogain(data.mask_cell),<span class="keyword">...</span>
+0214         autogain(data.mask_cell));
+0215 <span class="keyword">end</span>
+0216 
+0217 
+0218 
+0219 <span class="comment">% this code highlights the lysed cells</span>
+0220 <span class="keyword">if</span> isfield( data.regs, <span class="string">'lyse'</span> ) &amp;&amp; FLAGS.lyse_flag
+0221     <span class="comment">%is_lyse    = or( data.regs.lyse.errorColor1Cum, ...</span>
+0222     <span class="comment">%or(data.regs.lyse.errorColor2Cum, data.regs.lyse.errorShapeCum));</span>
+0223     is_lyse    = and( or( data.regs.lyse.errorColor1bCum, <span class="keyword">...</span>
+0224         data.regs.lyse.errorColor2bCum), data.regs.lyse.errorShapeCum);
+0225     lyse_im = <a href="#_sub11" class="code" title="subfunction outline = intDoOutline2( map )">intDoOutline2</a>(ismember( <span class="keyword">...</span>
+0226         data.regs.regs_label,find(is_lyse)));
+0227 <span class="keyword">else</span>
+0228     lyse_im = zeros( ss );
+0229 <span class="keyword">end</span>
+0230 
+0231 
+0232 <span class="comment">% if you are in fluorescence mode (f_flag ==true) then just draw the fluor</span>
+0233 <span class="comment">% channels but not the regions.</span>
+0234 <span class="keyword">if</span> FLAGS.f_flag
+0235     im = 0.3*im;
+0236     <span class="keyword">if</span> FLAGS.P_flag
+0237         <span class="keyword">if</span> FLAGS.v_flag
+0238             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+0239         <span class="keyword">else</span>
+0240             im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+0241         <span class="keyword">end</span>
+0242     <span class="keyword">end</span>
+0243     
+0244     
+0245     <span class="comment">% make the background subtracted fluor</span>
+0246     <span class="keyword">if</span> isfield( data, <span class="string">'fluor1'</span> )
+0247         fluor1 = data.fluor1;
+0248         <span class="keyword">if</span> isfield( data, <span class="string">'fl1bg'</span> )
+0249             fluor1 = fluor1 - data.fl1bg;
+0250             fluor1( fluor1&lt; 0 ) = 0;
+0251         <span class="keyword">else</span>
+0252             fluor1 = fluor1-mean(fluor1(:));
+0253             fluor1( fluor1&lt; 0 ) = 0;
+0254         <span class="keyword">end</span>
+0255     <span class="keyword">else</span>
+0256         fluor1 = 0*data.phase;
+0257     <span class="keyword">end</span>
+0258     
+0259     <span class="keyword">if</span> isfield( data, <span class="string">'fluor2'</span> )
+0260         fluor2 = data.fluor2;
+0261         <span class="keyword">if</span> isfield( data, <span class="string">'fl2bg'</span> )
+0262             fluor2 = fluor2 - data.fl2bg;
+0263             fluor2( fluor2&lt; 0 ) = 0;
+0264         <span class="keyword">else</span>
+0265             fluor2 = fluor2-mean(fluor2(:));
+0266             fluor2( fluor2&lt; 0 ) = 0;
+0267         <span class="keyword">end</span>
+0268     <span class="keyword">else</span>
+0269         fluor2 = 0*data.phase;
+0270     <span class="keyword">end</span>
+0271       
+0272     <span class="comment">%</span>
+0273     <span class="keyword">if</span> isfield( data, <span class="string">'fluor1'</span>)
+0274         <span class="keyword">if</span> CONST.view.falseColorFlag
+0275             im = ag(<a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( ag(data.fluor1), colormap_ ));
+0276             <span class="keyword">if</span> FLAGS.P_flag
+0277                 <span class="keyword">if</span> FLAGS.v_flag
+0278                     im = im + 0.2*cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
+0279                 <span class="keyword">else</span>
+0280                     im = im + 0.2*cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
+0281                 <span class="keyword">end</span>
+0282             <span class="keyword">end</span>
+0283             
+0284         <span class="keyword">else</span>
+0285             <span class="keyword">if</span> isfield( CONST.view, <span class="string">'LogView'</span> ) &amp;&amp; CONST.view.LogView
+0286                 im(:,:,2) = im(:,:,2) + 0.8*ag( log(double(fluor1)+500));
+0287             <span class="keyword">else</span>
+0288                 im(:,:,2) = im(:,:,2) + 0.8*ag( fluor1 );
+0289             <span class="keyword">end</span>
+0290             
+0291         <span class="keyword">end</span>
+0292     <span class="keyword">end</span>
+0293     <span class="keyword">if</span> isfield( data, <span class="string">'fluor2'</span> )
+0294         <span class="keyword">if</span> isfield( CONST.view, <span class="string">'LogView'</span> ) &amp;&amp; CONST.view.LogView
+0295             im(:,:,1) = im(:,:,1) + 0.8*ag( log(double(fluor2)+100)+1);
+0296         <span class="keyword">else</span>
+0297             im(:,:,1) = ag( fluor2 );
+0298         <span class="keyword">end</span>
+0299         
+0300     <span class="keyword">end</span>
+0301     
+0302     <span class="comment">% add the lysis outline to the fluor image.</span>
+0303     im(:,:,1) = 255*uint8(lyse_im) + im(:,:,1);
+0304     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
+0305     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
+0306     
+0307     
+0308     <span class="comment">% if P_flag is true, it shows the regions.</span>
+0309 <span class="keyword">elseif</span> FLAGS.P_flag
+0310     
+0311     
+0312     <span class="keyword">if</span> isfield( data.regs, <span class="string">'ignoreError'</span> )
+0313         ignoreErrorV = data.regs.ignoreError;
+0314     <span class="keyword">else</span>
+0315         ignoreErrorV = 0*data.reg.divide;
+0316     <span class="keyword">end</span>
+0317     
+0318     is_cell_V   = or(ismember( data.regs.ID, ID_LIST),~FLAGS.v_flag);
+0319     is_div_V    = or(and(data.regs.birthF,data.regs.stat0),<span class="keyword">...</span>
+0320         data.regs.divide);
+0321         
+0322     map_err_fr_ind = find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,<span class="keyword">...</span>
+0323         data.regs.error.r),~ignoreErrorV))));
+0324     map_err_fr  = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0325         map_err_fr_ind ));
+0326     
+0327     map_err_frO_ind = find(and(is_cell_V,and( is_div_V,and(and(data.regs.ehist,<span class="keyword">...</span>
+0328         data.regs.error.r),~ignoreErrorV))));
+0329     map_err_frO = <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0330         map_err_frO_ind ));
+0331     
+0332     map_err_nf_ind =  find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,<span class="keyword">...</span>
+0333         ~data.regs.error.r),~ignoreErrorV))));
+0334     map_err_nf  = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0335         map_err_nf_ind ));
+0336     
+0337     map_err_nfO_ind =  find(and(is_cell_V,and( is_div_V,and(and(data.regs.ehist,<span class="keyword">...</span>
+0338         ~data.regs.error.r),~ignoreErrorV))));
+0339     map_err_nfO = <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0340         map_err_nfO_ind ));
+0341     
+0342     map_no_err_ind =  find(and(is_cell_V,and(~is_div_V,or(~data.regs.ehist,<span class="keyword">...</span>
+0343         ignoreErrorV))));
+0344     map_no_err  = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0345         map_no_err_ind));
+0346     
+0347     map_no_errO_ind = find(and(is_cell_V,and( is_div_V,or(~data.regs.ehist,<span class="keyword">...</span>
+0348         ignoreErrorV))));
+0349     map_no_errO = <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0350         map_no_errO_ind));
+0351     
+0352     map_stat0_2_ind = find(and(is_cell_V,and(~is_div_V,<span class="keyword">...</span>
+0353         data.regs.stat0==2)));
+0354     map_stat0_2 = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0355         map_stat0_2_ind ));
+0356     
+0357     map_stat0_2O_ind =  find(and(is_cell_V,and( is_div_V,<span class="keyword">...</span>
+0358         data.regs.stat0==2)));
+0359     map_stat0_2O= <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0360         map_stat0_2O_ind ));
+0361     
+0362     map_stat0_1_ind  = find(and(is_cell_V,and(~is_div_V,<span class="keyword">...</span>
+0363         data.regs.stat0==1)));
+0364     map_stat0_1  = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0365         map_stat0_1_ind ));
+0366     
+0367     map_stat0_1O_ind = find(and(is_cell_V,and( is_div_V,<span class="keyword">...</span>
+0368         data.regs.stat0==1)));
+0369     map_stat0_1O = <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0370         map_stat0_1O_ind ));
+0371     
+0372     map_stat0_0_ind = find(and(is_cell_V,and(~is_div_V,<span class="keyword">...</span>
+0373         data.regs.stat0==0)));
+0374     map_stat0_0 = double(      ismember( data.regs.regs_label, <span class="keyword">...</span>
+0375         map_stat0_0_ind ));
+0376     
+0377     map_stat0_0O_ind =  find(and(is_cell_V,and( is_div_V,<span class="keyword">...</span>
+0378         data.regs.stat0==0)));
+0379     map_stat0_0O= <a href="#_sub10" class="code" title="subfunction outline = intDoOutline( map )">intDoOutline</a>(ismember( data.regs.regs_label, <span class="keyword">...</span>
+0380         map_stat0_0O_ind ));    
+0381     
+0382     reg_color = uint8( 255*cat( 3, <span class="keyword">...</span>
+0383         double(lyse_im)+0.15*(2*(map_err_fr+map_err_frO)+(map_err_nf+map_err_nf)),<span class="keyword">...</span>
+0384         0.30*(map_no_err+map_no_errO),<span class="keyword">...</span>
+0385         0.30*(3*(map_stat0_2+map_stat0_2O)+<span class="keyword">...</span>
+0386         1.5*(map_stat0_1+map_stat0_1O)+<span class="keyword">...</span>
+0387         0.5*(map_stat0_0+map_stat0_0O)))); 
+0388     
+0389     im = reg_color + im;
+0390     
+0391     
+0392 <span class="keyword">end</span>
+0393 
+0394 
+0395 im = uint8(im);
+0396 
+0397 <span class="keyword">end</span>
+0398 
+0399 <a name="_sub5" href="#_subfunctions" class="code">function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )</a>
+0400 <span class="comment">% intPlotNum : Plots cell number or region numbers</span>
+0401 <span class="keyword">for</span> kk = 1:data.regs.num_regs
+0402     rr = data.regs.props(kk).Centroid;
+0403     
+0404     <span class="keyword">if</span> isfield( data.regs, <span class="string">'ignoreError'</span> )
+0405         ignoreError = data.regs.ignoreError(kk);
+0406     <span class="keyword">else</span>
+0407         ignoreError = 0;
+0408     <span class="keyword">end</span>
+0409     
+0410     
+0411     <span class="keyword">if</span> ignoreError
+0412         cc = <span class="string">'g'</span>;
+0413     <span class="keyword">elseif</span> data.regs.error.r(kk)
+0414         cc = <span class="string">'r'</span>;
+0415     <span class="keyword">else</span>
+0416         cc = <span class="string">'w'</span>;
+0417     <span class="keyword">end</span>
+0418     
+0419     <span class="keyword">if</span> FLAGS.v_flag == 1
+0420         <span class="keyword">if</span> isfield( data.regs, <span class="string">'ID'</span> ) &amp;&amp; ismember( data.regs.ID(kk), ID_LIST )
+0421             text( rr(1)+x_, rr(2)+y_, [<span class="string">'\fontsize{11}'</span>,num2str(data.regs.ID(kk))],<span class="keyword">...</span>
+0422                 <span class="string">'Color'</span>, cc,<span class="keyword">...</span>
+0423                 <span class="string">'FontWeight'</span>, <span class="string">'Bold'</span>,<span class="keyword">...</span>
+0424                 <span class="string">'HorizontalAlignment'</span>,<span class="string">'Center'</span>,<span class="keyword">...</span>
+0425                 <span class="string">'VerticalAlignment'</span>,<span class="string">'Middle'</span>);
+0426             title(<span class="string">'Cell ID'</span>);
+0427         <span class="keyword">end</span>
+0428         
+0429         
+0430     <span class="keyword">elseif</span> FLAGS.v_flag == 0
+0431         text( rr(1)+x_, rr(2)+y_, [<span class="string">'\fontsize{11}'</span>,num2str(kk)],<span class="keyword">...</span>
+0432             <span class="string">'Color'</span>, cc,<span class="keyword">...</span>
+0433             <span class="string">'Color'</span>, cc,<span class="keyword">...</span>
+0434             <span class="string">'FontWeight'</span>, <span class="string">'normal'</span>,<span class="keyword">...</span>
+0435             <span class="string">'HorizontalAlignment'</span>,<span class="string">'Center'</span>,<span class="keyword">...</span>
+0436             <span class="string">'VerticalAlignment'</span>,<span class="string">'Middle'</span>);
+0437         title(<span class="string">'Region Number'</span>);
+0438         
+0439     <span class="keyword">else</span>
+0440         text( rr(1)+x_, rr(2)+y_, [<span class="string">'\fontsize{11}'</span>,num2str(data.regs.age(kk))],<span class="keyword">...</span>
+0441             <span class="string">'Color'</span>, cc,<span class="keyword">...</span>
+0442             <span class="string">'Color'</span>, cc,<span class="keyword">...</span>
+0443             <span class="string">'FontWeight'</span>, <span class="string">'normal'</span>,<span class="keyword">...</span>
+0444             <span class="string">'HorizontalAlignment'</span>,<span class="string">'Center'</span>,<span class="keyword">...</span>
+0445             <span class="string">'VerticalAlignment'</span>,<span class="string">'Middle'</span>);
+0446         title(<span class="string">'Region Number'</span>);
+0447         
+0448     <span class="keyword">end</span>
+0449     
+0450 <span class="keyword">end</span>
+0451 <span class="keyword">end</span>
+0452 
+0453 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0454 <span class="comment">%</span>
+0455 <span class="comment">% intPlotSpot</span>
+0456 <span class="comment">%</span>
+0457 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0458 <a name="_sub6" href="#_subfunctions" class="code">function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )</a>
+0459 
+0460 <span class="keyword">if</span> isfield( data, <span class="string">'CellA'</span> ) &amp;&amp; ~isempty( data.CellA ) &amp;&amp; <span class="keyword">...</span>
+0461         (isfield( data.CellA{1}, <span class="string">'locus1'</span>) || (isfield( data.CellA{1}, <span class="string">'locus2'</span>)))
+0462     <span class="keyword">for</span> kk = 1:data.regs.num_regs
+0463         
+0464         <span class="comment">% only plot spots in the cell that are gated.</span>
+0465         <span class="keyword">if</span> ~FLAGS.v_flag || ismember(data.regs.ID(kk), clist.data(:,1))
+0466             
+0467             <span class="keyword">if</span> isfield( data.CellA{kk}, <span class="string">'locus1'</span>)
+0468                 num_spot = numel( data.CellA{kk}.locus1);
+0469                 <span class="keyword">for</span> mm = 1:num_spot
+0470                     r = data.CellA{kk}.locus1(mm).r;
+0471                     
+0472                     <span class="keyword">if</span> data.CellA{kk}.locus1(mm).score &gt; CONST.getLocusTracks.FLUOR1_MIN_SCORE
+0473                         <span class="comment">%plot( r(1)+x_, r(2)+y_, num2str(data.CellA{kk}.locus1(mm).score, '%0.0f'), 'Color', 'k');</span>
+0474                         plot( r(1)+x_, r(2)+y_, <span class="string">'g.'</span> );
+0475                         
+0476                     <span class="keyword">else</span>
+0477                         <span class="comment">%text( r(1)+x_, r(2)+y_, num2str(data.CellA{kk}.locus1(mm).score, '%0.0f'), 'Color','k' );</span>
+0478                         <span class="comment">%plot( r(1)+x_, r(2)+y_, 'go');</span>
+0479                     <span class="keyword">end</span>
+0480                 <span class="keyword">end</span>
+0481                 
+0482             <span class="keyword">end</span>
+0483             <span class="keyword">if</span> isfield( data.CellA{kk}, <span class="string">'locus2'</span>)
+0484                 num_spot = numel( data.CellA{kk}.locus2);
+0485                 <span class="keyword">for</span> mm = 1:num_spot
+0486                     r = data.CellA{kk}.locus2(mm).r;
+0487                     
+0488                     <span class="keyword">if</span> data.CellA{kk}.locus2(mm).score &gt; CONST.getLocusTracks.FLUOR2_MIN_SCORE
+0489                         plot( r(1)+x_, r(2)+y_, <span class="string">'r.'</span> );
+0490                         <span class="comment">%text( r(1)+x_+2, r(2)+y_+2, ...</span>
+0491                         <span class="comment">%    num2str(data.CellA{kk}.locus2(mm).score,'%2.1g'), ...</span>
+0492                         <span class="comment">%    'Color',  'r' );</span>
+0493                         
+0494                     <span class="keyword">else</span>
+0495                         plot( r(1)+x_, r(2)+y_, <span class="string">'ro'</span>,<span class="string">'MarkerSize'</span>,3,<span class="string">'Color'</span>,[0.3,0.0,0]  );
+0496                         <span class="comment">%text( r(1)+x_+2, r(2)+y_+2,...</span>
+0497                         <span class="comment">%    num2str(data.CellA{kk}.locus2(mm).score,'%2.1g'), ...</span>
+0498                         <span class="comment">%    'Color', [0.6,0.0,0]  );</span>
+0499                     <span class="keyword">end</span>
+0500                     
+0501                     
+0502                 <span class="keyword">end</span>
+0503                 
+0504             <span class="keyword">end</span>
+0505         <span class="keyword">end</span>
+0506     <span class="keyword">end</span>
+0507 <span class="keyword">end</span>
+0508 <span class="keyword">end</span>
+0509 
+0510 <a name="_sub7" href="#_subfunctions" class="code">function intPlotLink( data, x_, y_ )</a>
+0511 <span class="comment">% intPlotLink shows pole positions and connects daughter cells to each other</span>
+0512 <span class="keyword">for</span> kk = 1:data.regs.num_regs
+0513     rr1 = data.regs.props(kk).Centroid;
+0514     
+0515     ID       = data.regs.ID(kk);
+0516     sisterID = data.regs.sisterID(kk);
+0517     
+0518     <span class="keyword">if</span> sisterID
+0519         ind = find( data.regs.ID == sisterID );
+0520         <span class="keyword">if</span> numel(ind)&gt;1
+0521             ind = ind(1)
+0522         <span class="keyword">end</span>
+0523     <span class="keyword">else</span>
+0524         ind = [];
+0525     <span class="keyword">end</span>
+0526     
+0527     
+0528     
+0529     <span class="keyword">if</span> isfield( data, <span class="string">'CellA'</span> )
+0530         
+0531         <span class="keyword">try</span>
+0532             tmp = data.CellA{kk};
+0533             r = tmp.coord.r_center;
+0534             xaxisx = r(1) + [0,tmp.length(1)*tmp.coord.e1(1)]/2;
+0535             xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
+0536             yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
+0537             yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
+0538             old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+0539             new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+0540             un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
+0541             un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
+0542         <span class="keyword">catch</span>
+0543             <span class="string">'hi'</span>;
+0544         <span class="keyword">end</span>
+0545         
+0546         
+0547         <span class="comment">% plot( [r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );</span>
+0548         
+0549         <span class="keyword">if</span> tmp.pole.op_ori
+0550             plot( old_pole(1)+x_, old_pole(2)+y_, <span class="string">'ro'</span>,<span class="string">'MarkerSize'</span>,6);
+0551             plot( new_pole(1)+x_, new_pole(2)+y_, <span class="string">'bo'</span>,<span class="string">'MarkerSize'</span>,6);
+0552         <span class="keyword">else</span>
+0553             plot( un1_pole(1)+x_, un1_pole(2)+y_, <span class="string">'wo'</span>,<span class="string">'MarkerSize'</span>,4);
+0554             plot( un2_pole(1)+x_, un2_pole(2)+y_, <span class="string">'wo'</span>,<span class="string">'MarkerSize'</span>,4);
+0555         <span class="keyword">end</span>
+0556         
+0557         <span class="keyword">if</span> ~isempty(ind) &amp;&amp; ID &amp;&amp; tmp.pole.op_ori
+0558             <span class="keyword">if</span> ID &lt; sisterID
+0559                 tmps = data.CellA{ind};
+0560                 
+0561                 rs = tmps.coord.r_center;
+0562                 
+0563                 new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
+0564                 
+0565                 plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, <span class="string">'w-'</span>);
+0566             <span class="keyword">end</span>
+0567         <span class="keyword">end</span>
+0568         
+0569         
+0570     <span class="keyword">else</span>
+0571         
+0572     <span class="keyword">end</span>
+0573     
+0574 <span class="keyword">end</span>
+0575 <span class="keyword">end</span>
+0576 
+0577 
+0578 <a name="_sub8" href="#_subfunctions" class="code">function [xx,yy] = intGetImSize( data, FLAGS )</a>
+0579 
+0580 <span class="keyword">if</span> isfield( data, <span class="string">'regs'</span> )
+0581     ss = size(data.regs.regs_label);
+0582     
+0583     <span class="keyword">if</span> FLAGS.T_flag
+0584         tmp_props = regionprops( data.regs.regs_label, <span class="string">'BoundingBox'</span> );
+0585         pad = 10;       
+0586         yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
+0587         yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
+0588         xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
+0589         xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;     
+0590         num_segs = max(data.regs.regs_label(:));
+0591                
+0592         
+0593         <span class="keyword">for</span> ii = 2:num_segs
+0594             
+0595             yymin = ceil(tmp_props(ii).BoundingBox(2))-pad;
+0596             yymax = yymin + ceil(tmp_props(ii).BoundingBox(4))-1+2*pad;
+0597             xxmin = ceil(tmp_props(ii).BoundingBox(1))-pad;
+0598             xxmax = xxmin + ceil(tmp_props(ii).BoundingBox(3))-1+2*pad;
+0599             
+0600             yymin_ = min( [yymin_, yymin] );
+0601             yymax_ = max( [yymax_, yymax] );
+0602             xxmin_ = min( [xxmin_, xxmin] );
+0603             xxmax_ = max( [xxmax_, xxmax] );
+0604             
+0605             
+0606         <span class="keyword">end</span>  
+0607         
+0608         
+0609         yy = max([1,yymin_]):min([ss(1),yymax_]);
+0610         xx = max([1,xxmin_]):min([ss(2),xxmax_]);
+0611     <span class="keyword">else</span>
+0612         xx = 1:ss(2);
+0613         yy = 1:ss(1);
+0614     <span class="keyword">end</span>
+0615 <span class="keyword">else</span>
+0616     ss = size(data.phase);
+0617     xx = 1:ss(2);
+0618     yy = 1:ss(1);
+0619 <span class="keyword">end</span>
+0620 <span class="keyword">end</span>
+0621 
+0622 <a name="_sub9" href="#_subfunctions" class="code">function FLAGS = intFixFlags( FLAGS )</a>
+0623 <span class="comment">% intFixFlags :  sets default flag values.</span>
+0624 
+0625 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'t_flag'</span>);
+0626     <span class="string">'there is no filed t_flag'</span>
+0627     FLAGS.t_flag = 0;
+0628 <span class="keyword">end</span>
+0629 
+0630 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'lyse_flag'</span>);
+0631     <span class="string">'there is no filed lyse_flag'</span>
+0632     FLAGS.lyse_flag = 0;
+0633 <span class="keyword">end</span>
+0634 
+0635 <span class="keyword">if</span> ~isfield(FLAGS,<span class="string">'m_flag'</span>);
+0636     <span class="string">'there is no filed m_flag'</span>
+0637     FLAGS.m_flag = 0;
+0638 <span class="keyword">end</span>
+0639 
+0640 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'c_flag'</span>);
+0641     <span class="string">'there is no filed c_flag'</span>
+0642     FLAGS.c_flag = 0;
+0643 <span class="keyword">end</span>
+0644 
+0645 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'P_flag'</span>);
+0646     <span class="string">'there is no filed P_flag'</span>
+0647     FLAGS.P_flag = 0;
+0648 <span class="keyword">end</span>
+0649 
+0650 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'v_flag'</span> );
+0651     <span class="string">'there is no filed v_flag'</span>
+0652     FLAGS.v_flag = 0;
+0653 <span class="keyword">end</span>
+0654 
+0655 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'f_flag'</span>);
+0656     <span class="string">'there is no filed f_flag'</span>
+0657     FLAGS.f_flag = 0;
+0658 <span class="keyword">end</span>
+0659 
+0660 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'s_flag'</span>);
+0661     <span class="string">'there is no filed s_flag'</span>
+0662     FLAGS.s_flag = 0;
+0663 <span class="keyword">end</span>
+0664 
+0665 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'T_flag'</span>);
+0666     <span class="string">'there is no filed T_flag'</span>
+0667     FLAGS.T_flag = 0;
+0668 <span class="keyword">end</span>
+0669 
+0670 <span class="keyword">if</span> ~isfield(FLAGS, <span class="string">'p_flag'</span>);
+0671     <span class="string">'there is not file p_flag'</span>
+0672     FLAGS.p_flag = 0;
+0673 <span class="keyword">end</span>
+0674 FLAGS.link_flag = FLAGS.s_flag || FLAGS.t_flag;
+0675 
+0676 <span class="keyword">end</span>
+0677 
+0678 <a name="_sub10" href="#_subfunctions" class="code">function outline = intDoOutline( map )</a>
+0679 
+0680 <span class="keyword">persistent</span> sqrStrel;
+0681 
+0682 <span class="keyword">if</span> isempty( sqrStrel );
+0683     sqrStrel = strel(<span class="string">'square'</span>,3);
+0684 <span class="keyword">end</span>
+0685 
+0686 outline = 2*double(imdilate( map, sqrStrel ))-double(map);
+0687 <span class="keyword">end</span>
+0688 
+0689 
+0690 <a name="_sub11" href="#_subfunctions" class="code">function outline = intDoOutline2( map )</a>
+0691 
+0692 <span class="keyword">persistent</span> sqrStrel;
+0693 
+0694 <span class="keyword">if</span> isempty( sqrStrel );
+0695     sqrStrel = strel(<span class="string">'square'</span>,3);
+0696 <span class="keyword">end</span>
+0697 
+0698 outline = double(imdilate( map, sqrStrel ))-double(map);
+0699 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

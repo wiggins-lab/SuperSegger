@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOptiIntDiskNR</title>
+  <meta name="keywords" content="trackOptiIntDiskNR">
+  <meta name="description" content="trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">frameLink</a> &gt; trackOptiIntDiskNR.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOptiIntDiskNR
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames
+
+ INPUT :
+       data    : region (cell) data structure
+       data_r  : linked reverse region (cell) data structure
+       data_f  : linked forward region (cell) data structure
+       CONST      : SuperSeggerOpti set parameters
+
+
+ OUTPUT :
+       data : updated region (cell) data structure.
+
+           It contains the following updated fields :
+           regs.ol.{r,f,rf,fr}: these are the numerical values for the
+           area overlap between f (forward) and r (reverse) frames. Also
+           makes from f to r and r to f.
+
+           regs.map.{r,f,rf,fr}: these are connections between regions.
+           For instance map.r{i} = [....] is a list of regions that
+           &quot;overlap&quot; over the threshold (OVERLAP_LIMIT_MIN)
+
+           regs.error.{r,f,rf,fr}: these are the error flags that
+           are set if the area change between the largest overlap region
+           is below a cut off (dA_LIMIT) OR that there is more than one
+           linked region that overlaps above cut off... see map. Note
+           that this happens in a successful cell division.
+
+           regs.dA.{r,f,rf,fr}: these area ratios between the largest
+           overlap regions. This is defined as min(A1,A2)/max(A2,A1).
+           We set an error if this gets too large.
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="calcRegsInt.html" class="code" title="function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST )">calcRegsInt</a>	calcRegsInt : calculates the max overlap between data1 and data2 regions</li><li><a href="trackOptiNeighbors.html" class="code" title="function ind  = trackOptiNeighbors(data,ii)">trackOptiNeighbors</a>	trackOptiNeighbors : finds the neighbors for region ii</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>	trackOptiLink : computes the links (or overlaps) between subsequent frames</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)</a>
+0002 <span class="comment">% trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       data    : region (cell) data structure</span>
+0006 <span class="comment">%       data_r  : linked reverse region (cell) data structure</span>
+0007 <span class="comment">%       data_f  : linked forward region (cell) data structure</span>
+0008 <span class="comment">%       CONST      : SuperSeggerOpti set parameters</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% OUTPUT :</span>
+0012 <span class="comment">%       data : updated region (cell) data structure.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">%           It contains the following updated fields :</span>
+0015 <span class="comment">%           regs.ol.{r,f,rf,fr}: these are the numerical values for the</span>
+0016 <span class="comment">%           area overlap between f (forward) and r (reverse) frames. Also</span>
+0017 <span class="comment">%           makes from f to r and r to f.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">%           regs.map.{r,f,rf,fr}: these are connections between regions.</span>
+0020 <span class="comment">%           For instance map.r{i} = [....] is a list of regions that</span>
+0021 <span class="comment">%           &quot;overlap&quot; over the threshold (OVERLAP_LIMIT_MIN)</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">%           regs.error.{r,f,rf,fr}: these are the error flags that</span>
+0024 <span class="comment">%           are set if the area change between the largest overlap region</span>
+0025 <span class="comment">%           is below a cut off (dA_LIMIT) OR that there is more than one</span>
+0026 <span class="comment">%           linked region that overlaps above cut off... see map. Note</span>
+0027 <span class="comment">%           that this happens in a successful cell division.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">%           regs.dA.{r,f,rf,fr}: these area ratios between the largest</span>
+0030 <span class="comment">%           overlap regions. This is defined as min(A1,A2)/max(A2,A1).</span>
+0031 <span class="comment">%           We set an error if this gets too large.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0034 <span class="comment">% University of Washington, 2016</span>
+0035 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0036 
+0037 [data.regs.ol.f,  data.regs.map.f,  data.regs.error.f,  data.regs.dA.f, <span class="keyword">...</span>
+0038     data.regs.DA.f, dF1_f, dF2_f,dF1b_f,dF2b_f]   <span class="keyword">...</span>
+0039     = <a href="calcRegsInt.html" class="code" title="function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST )">calcRegsInt</a>( data,   data_f, CONST);
+0040 [data.regs.ol.r,  data.regs.map.r,  data.regs.error.r,  data.regs.dA.r, <span class="keyword">...</span>
+0041     data.regs.DA.r,dF1_r, dF2_r,dF1b_r,dF2b_r] <span class="keyword">...</span>
+0042     = <a href="calcRegsInt.html" class="code" title="function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST )">calcRegsInt</a>( data,   data_r, CONST);
+0043 [data.regs.ol.rf, data.regs.map.rf, data.regs.error.rf, data.regs.dA.rf,<span class="keyword">...</span>
+0044     data.regs.DA.rf]  <span class="keyword">...</span>
+0045     = <a href="calcRegsInt.html" class="code" title="function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST )">calcRegsInt</a>( data_r, data_f, CONST);
+0046 [data.regs.ol.fr, data.regs.map.fr, data.regs.error.fr, data.regs.dA.fr,<span class="keyword">...</span>
+0047     data.regs.DA.fr]  <span class="keyword">...</span>
+0048     = <a href="calcRegsInt.html" class="code" title="function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld]= calcRegsInt( data1, data2, CONST )">calcRegsInt</a>( data_f, data_r, CONST);
+0049 
+0050 <span class="comment">% keep the forward mapping....</span>
+0051 data.regs.dF1  = dF1_f;
+0052 data.regs.dF2  = dF2_f;
+0053 data.regs.dF1b = dF1b_f;
+0054 data.regs.dF2b = dF2b_f;
+0055 
+0056 data.regs.eccentricity = zeros(1,data.regs.num_regs);
+0057 
+0058 data.regs.L1           = zeros(1,data.regs.num_regs);
+0059 data.regs.L2           = zeros(1,data.regs.num_regs);
+0060 
+0061 data.regs.contact     = zeros(1,data.regs.num_regs);
+0062 data.regs.neighbors   = cell(1,data.regs.num_regs);
+0063 data.regs.contactHist = zeros(1,data.regs.num_regs);
+0064 
+0065 data.regs.info      = zeros(data.regs.num_regs,CONST.regionScoreFun.NUM_INFO);
+0066 data.regs.scoreRaw  = zeros(1,data.regs.num_regs);
+0067 
+0068 
+0069 data.regs.death          = zeros(1,data.regs.num_regs); <span class="comment">% Death/divide time</span>
+0070 data.regs.deathF         = zeros(1,data.regs.num_regs);    <span class="comment">% Divides in this frame</span>
+0071 
+0072 data.regs.birth          = zeros(1,data.regs.num_regs); <span class="comment">% Birth Time: either</span>
+0073 <span class="comment">% Division or appearance</span>
+0074 data.regs.birthF         = zeros(1,data.regs.num_regs);    <span class="comment">% Divide in this frame</span>
+0075 
+0076 data.regs.age            = zeros(1,data.regs.num_regs);    <span class="comment">% cell age. starts at 1.</span>
+0077 data.regs.divide         = zeros(1,data.regs.num_regs);    <span class="comment">% succesful divide in this</span>
+0078 <span class="comment">% this frame.</span>
+0079 
+0080 data.regs.ehist          = zeros(1,data.regs.num_regs);    <span class="comment">% True if cell has an unresolved</span>
+0081 <span class="comment">% error before this time.</span>
+0082 
+0083 <span class="comment">% add lysis detection if lysis flag is set</span>
+0084 <span class="keyword">if</span> CONST.trackOpti.LYSE_FLAG
+0085     data.regs.lyse.errorColor1         = zeros(1,data.regs.num_regs); <span class="comment">% Fluor1 intensity change error in this frame</span>
+0086     data.regs.lyse.errorColor1Cum      = zeros(1,data.regs.num_regs); <span class="comment">% Cum fluor1 intensity change error</span>
+0087     data.regs.lyse.errorColor2         = zeros(1,data.regs.num_regs); <span class="comment">% Fluor2 intensity change error in this frame</span>
+0088     data.regs.lyse.errorColor2Cum      = zeros(1,data.regs.num_regs); <span class="comment">% Cum fluor2 intensity change error</span>
+0089     
+0090     data.regs.lyse.errorColor1b         = zeros(1,data.regs.num_regs); <span class="comment">% Fluor1 intensity change error in this frame</span>
+0091     data.regs.lyse.errorColor1bCum      = zeros(1,data.regs.num_regs); <span class="comment">% Cum fluor1 intensity change error</span>
+0092     data.regs.lyse.errorColor2b         = zeros(1,data.regs.num_regs); <span class="comment">% Fluor2 intensity change error in this frame</span>
+0093     data.regs.lyse.errorColor2bCum      = zeros(1,data.regs.num_regs); <span class="comment">% Cum fluor2 intensity change error</span>
+0094     
+0095     data.regs.lyse.errorShape          = zeros(1,data.regs.num_regs); <span class="comment">% Fluor intensity change error in this frame</span>
+0096     data.regs.lyse.errorShapeCum       = zeros(1,data.regs.num_regs); <span class="comment">% Cum intensity change error</span>
+0097 <span class="keyword">end</span>
+0098 
+0099 data.regs.stat0          = zeros(1,data.regs.num_regs);    <span class="comment">% Results from a successful</span>
+0100 <span class="comment">% division.</span>
+0101 
+0102 data.regs.sisterID       = zeros(1,data.regs.num_regs);   <span class="comment">% sister cell ID</span>
+0103 data.regs.motherID       = zeros(1,data.regs.num_regs);   <span class="comment">% mother cell ID</span>
+0104 data.regs.daughterID     = cell(1,data.regs.num_regs);   <span class="comment">% daughter cell ID</span>
+0105 data.regs.ID             = zeros(1,data.regs.num_regs); <span class="comment">% cell ID number</span>
+0106 
+0107 
+0108 data.regs.error.label    = cell(1,data.regs.num_regs);   <span class="comment">% err</span>
+0109 data.regs.ignoreError    = zeros(1,data.regs.num_regs); <span class="comment">% a flag for ignoring the error in a region.</span>
+0110 <span class="comment">%data.regs.neighbors       = cell(1,data.regs.num_regs);   % err</span>
+0111 
+0112 loop_ind       = 1:data.regs.num_regs;
+0113 
+0114 
+0115 <span class="keyword">for</span> ii = loop_ind
+0116     [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
+0117     data.regs.info(ii,:) = CONST.regionScoreFun.props( (data.regs.regs_label(yy,xx)==ii),data.regs.props(ii) );
+0118     data.regs.L1(ii)       = data.regs.info(ii,1);
+0119     data.regs.L2(ii)       = data.regs.info(ii,2);
+0120     data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:),CONST.regionScoreFun.E);
+0121     
+0122     <span class="keyword">if</span> CONST.trackOpti.NEIGHBOR_FLAG
+0123         <span class="keyword">try</span>
+0124             data.regs.neighbors{ii} = <a href="trackOptiNeighbors.html" class="code" title="function ind  = trackOptiNeighbors(data,ii)">trackOptiNeighbors</a>(data,ii);
+0125             data.regs.contact(ii)  = numel(data.regs.neighbors{ii});
+0126         <span class="keyword">catch</span>
+0127             disp(<span class="string">'Error in neighbor calculation in trackOptiIntDiskNR.m'</span>);
+0128         <span class="keyword">end</span>
+0129     <span class="keyword">end</span>
+0130 <span class="keyword">end</span>
+0131 
+0132 
+0133 data.regs.eccentricity = drill(data.regs.props,<span class="string">'.MinorAxisLength'</span>)'<span class="keyword">...</span>
+0134     ./drill(data.regs.props,<span class="string">'.MajorAxisLength'</span>)';
+0135 
+0136 <span class="keyword">if</span> CONST.trackOpti.LYSE_FLAG
+0137 
+0138     <span class="comment">% Fluor Ratio error is set if Fluor Ratio is less than</span>
+0139     <span class="comment">% CONST.trackOpti.FLUOR1_CHANGE_MIN</span>
+0140     data.regs.lyse.errorColor1 = <span class="keyword">...</span>
+0141         ( data.regs.dF1 &lt; CONST.trackOpti.FLUOR1_CHANGE_MIN );
+0142     data.regs.lyse.errorColor2 = <span class="keyword">...</span>
+0143         ( data.regs.dF2 &lt; CONST.trackOpti.FLUOR2_CHANGE_MIN );
+0144     data.regs.lyse.errorColor1b = <span class="keyword">...</span>
+0145         ( data.regs.dF1b &lt; CONST.trackOpti.FLUOR1_CHANGE_MIN );
+0146     data.regs.lyse.errorColor2b = <span class="keyword">...</span>
+0147         ( data.regs.dF2b &lt; CONST.trackOpti.FLUOR2_CHANGE_MIN );
+0148     
+0149     <span class="comment">% Shape error is defined by having both a eccentricity lower than the</span>
+0150     <span class="comment">% limit CONST.trackOpti.ECCENTRICITY and a minor axis length greater</span>
+0151     <span class="comment">% than CONST.trackOpti.LSPHEREMIN and smaller than</span>
+0152     <span class="comment">% CONST.trackOpti.LSPHEREMAX</span>
+0153     data.regs.lyse.errorShape = <span class="keyword">...</span>
+0154         and( (data.regs.eccentricity &gt; CONST.trackOpti.ECCENTRICITY), and(<span class="keyword">...</span>
+0155         ( drill(data.regs.props,<span class="string">'.MinorAxisLength'</span>)' &gt; CONST.trackOpti.LSPHEREMIN ),<span class="keyword">...</span>
+0156         ( drill(data.regs.props,<span class="string">'.MajorAxisLength'</span>)' &lt; CONST.trackOpti.LSPHEREMAX )));
+0157     
+0158 <span class="keyword">end</span>
+0159 
+0160 
+0161 <span class="comment">%toc</span>
+0162 <span class="keyword">end</span>
+0163 
+0164 
+0165 
+0166 
+0167 
+0168</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

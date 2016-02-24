@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of toMakeCellFast</title>
+  <meta name="keywords" content="toMakeCellFast">
+  <meta name="description" content="toMakeCellFast : calculates all the properties of the cell.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">cell</a> &gt; toMakeCellFast.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/cell&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>toMakeCellFast
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>toMakeCellFast : calculates all the properties of the cell.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function celld = toMakeCellFast(celld, e1_old, props) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> toMakeCellFast : calculates all the properties of the cell.
+ This includes center (center of mass) as well as the principle axes which
+ are assumed to be the axis that diagonize the moment of inertia tensor.
+ This gives the axis up to a sign, which is determined by aligning the
+ current axis with the last axis... ie e1_old.
+
+ INPUT :
+       celld : Cell file
+       props : contains information about the cell such as bounding box, area,
+       and centroid
+       e1_old : is the last axis of the cell
+ OUTPUT : 
+       celld : new cell file with calculated properties
+ Copyright (C) 2016 Wiggins Lab
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="toMakeCell.html" class="code" title="function celld = toMakeCell(celld, e1_old, props)">toMakeCell</a>	toMakeCell calls toMakeCellFast to calculates the properties of the cell.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function celld = toMakeCellFast(celld, e1_old, props)</a>
+0002 <span class="comment">% toMakeCellFast : calculates all the properties of the cell.</span>
+0003 <span class="comment">% This includes center (center of mass) as well as the principle axes which</span>
+0004 <span class="comment">% are assumed to be the axis that diagonize the moment of inertia tensor.</span>
+0005 <span class="comment">% This gives the axis up to a sign, which is determined by aligning the</span>
+0006 <span class="comment">% current axis with the last axis... ie e1_old.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% INPUT :</span>
+0009 <span class="comment">%       celld : Cell file</span>
+0010 <span class="comment">%       props : contains information about the cell such as bounding box, area,</span>
+0011 <span class="comment">%       and centroid</span>
+0012 <span class="comment">%       e1_old : is the last axis of the cell</span>
+0013 <span class="comment">% OUTPUT :</span>
+0014 <span class="comment">%       celld : new cell file with calculated properties</span>
+0015 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0016 <span class="comment">% Unviersity of Washington, 2016</span>
+0017 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0018 
+0019 theta = (-props.Orientation)*pi/180;
+0020 A     = props.Area;
+0021 mask  = logical(celld.mask);
+0022 
+0023 imRot   = (fast_rotate_loose_double( uint8(mask), -props.Orientation ));
+0024 ss      = size(imRot);
+0025 ss_mask = size(mask);
+0026 
+0027 xind = any(imRot);
+0028 yind = any(imRot');
+0029 
+0030 len = [sum(double(xind)),sum(double(yind))];
+0031 
+0032 xxx = (1:ss(2));
+0033 yyy = (1:ss(1));
+0034 
+0035 e1   = [ cos(theta); sin(theta)];
+0036 e2   = [-sin(theta); cos(theta)];
+0037 Mrot = [e1,e2];
+0038 
+0039 r_center = Mrot*([mean(xxx(xind)),mean(yyy(yind))]'-(ss(2:-1:1))'/2)+(ss_mask(2:-1:1)/2+celld.r_offset-[0.5,0.5])';
+0040 
+0041 Xcm      = props.Centroid(1);
+0042 Ycm      = props.Centroid(2);
+0043 rcm      = [Xcm,Ycm];
+0044 
+0045 <span class="keyword">if</span> ~isempty( e1_old );
+0046     <span class="keyword">if</span> sum(e1.*e1_old) &lt; 0
+0047         e1 = -e1;
+0048     <span class="keyword">end</span>
+0049 <span class="keyword">end</span>
+0050 
+0051 <span class="keyword">if</span> sum(e1(1)*e2(2)-e1(2)*e2(1)) &lt; 0
+0052     e2 = -e2;
+0053 <span class="keyword">end</span>
+0054 
+0055 XPmax = r_center(1) + len(1);
+0056 YPmax = r_center(2) + len(2);
+0057 XPmin = r_center(1) - len(1);
+0058 YPmin = r_center(2) - len(2);
+0059 
+0060 <span class="comment">% draws a box around the cell...</span>
+0061 xbox = <span class="keyword">...</span>
+0062     [ e1(1)*len(1)+e2(1)*len(2),<span class="keyword">...</span>
+0063     -e1(1)*len(1)+e2(1)*len(2),<span class="keyword">...</span>
+0064     -e1(1)*len(1)-e2(1)*len(2),<span class="keyword">...</span>
+0065     e1(1)*len(1)-e2(1)*len(2),<span class="keyword">...</span>
+0066     e1(1)*len(1)+e2(1)*len(2)]/2 + r_center(1);
+0067 
+0068 ybox = <span class="keyword">...</span>
+0069     [ e1(2)*len(1)+e2(2)*len(2),<span class="keyword">...</span>
+0070     -e1(2)*len(1)+e2(2)*len(2),<span class="keyword">...</span>
+0071     -e1(2)*len(1)-e2(2)*len(2),<span class="keyword">...</span>
+0072     e1(2)*len(1)-e2(2)*len(2),<span class="keyword">...</span>
+0073     e1(2)*len(1)+e2(2)*len(2)]/2 + r_center(2);
+0074 
+0075 <span class="comment">% as well as axes inside the cell... which are really useful for debugging</span>
+0076 <span class="comment">% the code.</span>
+0077 xaxisx = <span class="keyword">...</span>
+0078     [ e1(1)*len(1),<span class="keyword">...</span>
+0079     -e1(1)*len(1)]/2 + r_center(1);
+0080 xaxisy = <span class="keyword">...</span>
+0081     [ e1(2)*len(1),<span class="keyword">...</span>
+0082     -e1(2)*len(1)]/2 + r_center(2);
+0083 yaxisx = <span class="keyword">...</span>
+0084     [ e2(1)*len(2),<span class="keyword">...</span>
+0085     -e2(1)*len(2)]/2 + r_center(1);
+0086 yaxisy = <span class="keyword">...</span>
+0087     [ e2(2)*len(2),<span class="keyword">...</span>
+0088     -e2(2)*len(2)]/2 + r_center(2);
+0089 
+0090 xaxisxp = <span class="keyword">...</span>
+0091     [ e1(1)*len(1),<span class="keyword">...</span>
+0092     0]/2 + r_center(1);
+0093 xaxisyp = <span class="keyword">...</span>
+0094     [ e1(2)*len(1),<span class="keyword">...</span>
+0095     0]/2 + r_center(2);
+0096 yaxisxp = <span class="keyword">...</span>
+0097     [ e2(1)*len(2),<span class="keyword">...</span>
+0098     0]/2 + r_center(1);
+0099 yaxisyp = <span class="keyword">...</span>
+0100     [ e2(2)*len(2),<span class="keyword">...</span>
+0101     0]/2 + r_center(2);
+0102 
+0103 
+0104 <span class="comment">% copy all the info into the cell structure.</span>
+0105 
+0106 celld.coord.A        = A;
+0107 celld.length         = len;
+0108 celld.coord.r_center = r_center;
+0109 celld.coord.box     = [xbox',ybox'];
+0110 celld.coord.xaxis   = [xaxisx',xaxisy'];
+0111 
+0112 celld.coord.yaxis   = [yaxisx',yaxisy'];
+0113 
+0114 celld.coord.e1       = e1;
+0115 celld.coord.e2       = e2;
+0116 celld.coord.rcm      = rcm;
+0117 
+0118 celld.pole.e1        = e1;
+0119 celld.pole.op_ori    = 0;
+0120 celld.pole.op_age    = NaN;
+0121 celld.pole.np_age    = NaN;
+0122 
+0123 <span class="comment">% Debugging info.</span>
+0124 debug_flag = 0;
+0125 
+0126 <span class="keyword">if</span> debug_flag;
+0127     
+0128     im_size   = size(mask);
+0129     im_size_x = im_size(2);
+0130     im_size_y = im_size(1);
+0131     
+0132     xx = 1:im_size_x;
+0133     yy = 1:im_size_y;
+0134     
+0135     
+0136     xxx = xx + celld.r_offset(1)-1;
+0137     yyy = yy + celld.r_offset(2)-1;
+0138     
+0139     clf;
+0140     imagesc( xxx,yyy,ag(mask));
+0141     axis equal
+0142     
+0143     colormap gray
+0144     hold on;
+0145     <span class="comment">%    plot( r(1), r(2), 'bo');</span>
+0146     plot( celld.coord.rcm(1), celld.coord.rcm(2), <span class="string">'c.'</span>);
+0147     plot( celld.coord.r_center(1), celld.coord.r_center(2), <span class="string">'c*'</span>);
+0148     plot( celld.coord.xaxis(:,1),celld.coord.xaxis(:,2),<span class="string">'c:'</span>)
+0149     plot( celld.coord.yaxis(:,1),celld.coord.yaxis(:,2),<span class="string">'c:'</span>)
+0150     plot( xaxisxp, xaxisyp,<span class="string">'c-'</span>)
+0151     plot( yaxisxp, yaxisyp,<span class="string">'c-'</span>)
+0152     plot( celld.r_offset(1), celld.r_offset(2),<span class="string">'co'</span>)
+0153     plot( celld.coord.box(:,1), celld.coord.box(:,2),<span class="string">'c-'</span>)
+0154 <span class="keyword">end</span>
+0155 
+0156 
+0157 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

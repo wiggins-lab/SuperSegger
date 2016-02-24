@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of trackOpti</title>
+  <meta name="keywords" content="trackOpti">
+  <meta name="description" content="trackOpti : calls the rest of the functions for segmentation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">frameLink</a> &gt; trackOpti.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/frameLink&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>trackOpti
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>trackOpti : calls the rest of the functions for segmentation</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> trackOpti : calls the rest of the functions for segmentation 
+ After each sub-function is called, is creates a file in the seg directory
+ that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?
+ to see these)  and then the function name, e.g. .trackOptiSetEr.mat. 
+ This is designed in case the segmentation dies somewhere in middle and you
+ want to restart without having to recalculate everything;
+ if these files exist, it won't rerun that particular function again. 
+ If you DO need to rerun one of these functions, you'll 
+ have to delete the respective .trackOpti file for it to work.
+
+ INPUT :
+       dirname: xy folder
+       skip : frames to be skipped in segmentation, default is 1.
+       CONST : Constants file
+       CLEAN_FLAG : 0 (default) continue from previous stop point 
+                    1 clean everything and restart segmentation
+       header : information string
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiCellMarker.html" class="code" title="function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)">trackOptiCellMarker</a>	trackOptiCellMarker : puts together a list of complete cell cycles.</li><li><a href="trackOptiErRes.html" class="code" title="function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)">trackOptiErRes</a>	trackOptiErRes : defines and resolves the errors produced during</li><li><a href="trackOptiFluor.html" class="code" title="function trackOptiFluor(dirname,CONST,header)">trackOptiFluor</a>	trackOptiFluor calculates the basic fluorescence information</li><li><a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>	trackOptiLink : computes the links (or overlaps) between subsequent frames</li><li><a href="trackOptiSetEr.html" class="code" title="function trackOptiSetEr(dirname,CONST, header)">trackOptiSetEr</a>	trackOptiSetEr: Since errors are corrected twice, this resets all the error flags</li><li><a href="trackOptiStripMig.html" class="code" title="function trackOptiStripMig(dirname,CONST)">trackOptiStripMig</a>	trackOptiStripMig : removes small regions that</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)</a>
+0002 <span class="comment">% trackOpti : calls the rest of the functions for segmentation</span>
+0003 <span class="comment">% After each sub-function is called, is creates a file in the seg directory</span>
+0004 <span class="comment">% that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?</span>
+0005 <span class="comment">% to see these)  and then the function name, e.g. .trackOptiSetEr.mat.</span>
+0006 <span class="comment">% This is designed in case the segmentation dies somewhere in middle and you</span>
+0007 <span class="comment">% want to restart without having to recalculate everything;</span>
+0008 <span class="comment">% if these files exist, it won't rerun that particular function again.</span>
+0009 <span class="comment">% If you DO need to rerun one of these functions, you'll</span>
+0010 <span class="comment">% have to delete the respective .trackOpti file for it to work.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% INPUT :</span>
+0013 <span class="comment">%       dirname: xy folder</span>
+0014 <span class="comment">%       skip : frames to be skipped in segmentation, default is 1.</span>
+0015 <span class="comment">%       CONST : Constants file</span>
+0016 <span class="comment">%       CLEAN_FLAG : 0 (default) continue from previous stop point</span>
+0017 <span class="comment">%                    1 clean everything and restart segmentation</span>
+0018 <span class="comment">%       header : information string</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0021 <span class="comment">% University of Washington, 2016</span>
+0022 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0023 
+0024 <span class="comment">% init</span>
+0025 <span class="comment">% if the CLEAN_FLAG does not exist, set it to true and remove all existing</span>
+0026 <span class="comment">% files. This is the safer option.</span>
+0027 <span class="keyword">if</span> ~exist(<span class="string">'CLEAN_FLAG'</span>) || isempty( CLEAN_FLAG )
+0028     CLEAN_FLAG = true;
+0029 <span class="keyword">end</span>
+0030 
+0031 <span class="keyword">if</span> ~exist(<span class="string">'header'</span>)
+0032     header = [];
+0033     header = <span class="string">'trackOpti no header: '</span>;
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">% turn skip off if skip isn't set.</span>
+0037 <span class="keyword">if</span> isempty( skip )
+0038     skip = 1;
+0039 <span class="keyword">end</span>
+0040 
+0041 
+0042 <span class="keyword">if</span> nargin &lt; 1 || isempty( dirname );
+0043     dirname = <span class="string">'.'</span>;
+0044 <span class="keyword">end</span>
+0045 
+0046 <span class="comment">% fix the dirname if it doesn't end in a slash.</span>
+0047 dirname = fixDir( dirname )
+0048 dirname_seg  = [dirname,<span class="string">'seg'</span>,filesep];
+0049 
+0050 dirname_cell = [dirname,<span class="string">'cell'</span>,filesep];
+0051 <span class="keyword">if</span> ~exist( dirname_cell, <span class="string">'dir'</span> )
+0052    mkdir(  dirname_cell );
+0053 <span class="keyword">end</span>
+0054 
+0055 dirname_full = [dirname,<span class="string">'seg_full'</span>,filesep];
+0056 
+0057 
+0058 <span class="comment">%% Clean directories</span>
+0059 <span class="keyword">if</span> CLEAN_FLAG
+0060             delete ([dirname,<span class="string">'clist.mat'</span>]);        
+0061         delete ([dirname_seg,<span class="string">'*trk.mat'</span>]);
+0062         delete ([dirname_seg,<span class="string">'*err.mat'</span>]);
+0063         delete ([dirname_cell,<span class="string">'*.mat'</span>]);
+0064         delete ([dirname_cell,<span class="string">'.trackOpti*'</span>]);
+0065         delete ([dirname_seg,<span class="string">'.trackOpti*'</span>]);
+0066         <span class="keyword">if</span> skip &gt; 1
+0067             delete ([dirname_full,<span class="string">'*.mat'</span>]);
+0068             delete ([dirname_full,<span class="string">'.trackOpti*'</span>]);
+0069         <span class="keyword">end</span>
+0070 <span class="comment">%     if ispc % widnows system</span>
+0071 <span class="comment">%         eval(['!del ',dirname,'clist.mat']);</span>
+0072 <span class="comment">%         eval(['!del ',dirname_seg,'*trk.mat']);</span>
+0073 <span class="comment">%         eval(['!del ',dirname_seg,'*err.mat']);</span>
+0074 <span class="comment">%         eval(['!del ',dirname_cell,'*.mat']);</span>
+0075 <span class="comment">%         eval(['!del ',dirname_cell,'.trackOpti*']);</span>
+0076 <span class="comment">%         eval(['!del ',dirname_seg,'.trackOpti*']);</span>
+0077 <span class="comment">%         if skip &gt; 1</span>
+0078 <span class="comment">%             eval(['!del ',dirname_full,'*.mat']);</span>
+0079 <span class="comment">%             eval(['!del ',dirname_full,'.trackOpti*']);</span>
+0080 <span class="comment">%         end</span>
+0081 <span class="comment">%     else</span>
+0082 <span class="comment">%         eval(['!\rm ',dirname,'clist.mat']);</span>
+0083 <span class="comment">%         eval(['!\rm ',dirname_seg,'*trk.mat']);</span>
+0084 <span class="comment">%         eval(['!\rm ',dirname_seg,'*err.mat']);</span>
+0085 <span class="comment">%         eval(['!\rm ',dirname_cell,'*.mat']);</span>
+0086 <span class="comment">%         eval(['!\rm ',dirname_cell,'.trackOpti*']);</span>
+0087 <span class="comment">%         eval(['!\rm ',dirname_seg,'.trackOpti*']);</span>
+0088 <span class="comment">%         if skip &gt; 1</span>
+0089 <span class="comment">%             eval(['!\rm ',dirname_full,'*.mat']);</span>
+0090 <span class="comment">%             eval(['!\rm ',dirname_full,'.trackOpti*']);</span>
+0091 <span class="comment">%         end</span>
+0092 <span class="comment">%     end</span>
+0093 <span class="keyword">else</span>
+0094     <span class="comment">% if ErRes2 has not been cleared, wipe out err.mat files</span>
+0095     <span class="keyword">if</span> skip &gt; 1
+0096         stamp_name1 = [dirname_seg,<span class="string">'.trackOptiLink.mat'</span>];
+0097         stamp_name2 = [dirname_full,<span class="string">'.trackOptiErRes2.mat'</span>];
+0098         <span class="keyword">if</span> exist( stamp_name1, <span class="string">'file'</span> ) &amp;&amp; ~exist( stamp_name2, <span class="string">'file'</span> )
+0099             delete ([dirname_seg,<span class="string">'*err.mat'</span>]);
+0100             delete ([dirname_full,<span class="string">'*err.mat'</span>]);
+0101             
+0102 <span class="comment">%</span>
+0103 <span class="comment">%             if ispc</span>
+0104 <span class="comment">%</span>
+0105 <span class="comment">%                 eval(['!del ',dirname_seg,'*err.mat']);</span>
+0106 <span class="comment">%                 eval(['!del ',dirname_full,'*err.mat']);</span>
+0107 <span class="comment">%             else</span>
+0108 <span class="comment">%                 eval(['!\rm ',dirname_seg,'*err.mat']);</span>
+0109 <span class="comment">%                 eval(['!\rm ',dirname_full,'*err.mat']);</span>
+0110 <span class="comment">%             end</span>
+0111         <span class="keyword">end</span>
+0112     <span class="keyword">else</span>
+0113         stamp_name1 = [dirname_seg,<span class="string">'.trackOptiLink.mat'</span>];
+0114         stamp_name2 = [dirname_seg,<span class="string">'.trackOptiErRes2.mat'</span>];
+0115         <span class="keyword">if</span> exist( stamp_name1, <span class="string">'file'</span> ) &amp;&amp; ~exist( stamp_name2, <span class="string">'file'</span> )
+0116             delete ([dirname_seg,<span class="string">'*err.mat'</span>]);
+0117 <span class="comment">%             if ispc</span>
+0118 <span class="comment">%                 eval(['!del ',dirname_seg,'*err.mat']);</span>
+0119 <span class="comment">%             else</span>
+0120 <span class="comment">%                 eval(['!\rm ',dirname_seg,'*err.mat']);</span>
+0121 <span class="comment">%             end</span>
+0122         <span class="keyword">end</span>
+0123     <span class="keyword">end</span>
+0124 <span class="keyword">end</span>
+0125 
+0126 
+0127 <span class="comment">%% trackOptiStripMig</span>
+0128 <span class="comment">% removes small regions that are probably not real (bubbles, dust, or minicells)</span>
+0129 stamp_name = [dirname_seg,<span class="string">'.trackOptiStripMig.mat'</span>];
+0130 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0131     <a href="trackOptiStripMig.html" class="code" title="function trackOptiStripMig(dirname,CONST)">trackOptiStripMig</a>(dirname_seg, CONST);
+0132     time_stamp = clock;
+0133     save( stamp_name, <span class="string">'time_stamp'</span>);
+0134 <span class="keyword">else</span>
+0135     disp([header, <span class="string">'trackOpti: trackOptiStripMig already run.'</span>] );
+0136 <span class="keyword">end</span>
+0137 
+0138 <span class="comment">%% Link frames</span>
+0139 <span class="comment">% Calculate the overlap between cells between subsequent frames.</span>
+0140 stamp_name = [dirname_seg,<span class="string">'.trackOptiLink.mat'</span>];
+0141 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0142     <a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>(dirname_seg, [], [], 0, CONST, header);
+0143     time_stamp = clock;
+0144     save( stamp_name, <span class="string">'time_stamp'</span>);
+0145 <span class="keyword">else</span>
+0146     disp([header, <span class="string">'trackOpti: trackOptiLink already run.'</span>] );
+0147 <span class="keyword">end</span>
+0148 
+0149 <span class="comment">%% Er Res (1)</span>
+0150 <span class="comment">% Define and resolve errors and relink if regions have changed</span>
+0151 stamp_name = [dirname_seg,<span class="string">'.trackOptiErRes1.mat'</span>];
+0152 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0153     list_touch = <a href="trackOptiErRes.html" class="code" title="function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)">trackOptiErRes</a>(dirname_seg, [], [], CONST, header);
+0154     disp([header, <span class="string">'trackOpti: ErRes modified '</span>, num2str(numel(list_touch)),<span class="string">' frames.'</span>]);
+0155     time_stamp = clock;
+0156     save( stamp_name, <span class="string">'time_stamp'</span>);
+0157 <span class="keyword">else</span>
+0158     disp([header,<span class="string">'trackOpti: trackOptiErRes (1) already run.'</span>]);
+0159 <span class="keyword">end</span>
+0160 
+0161 
+0162 
+0163 <span class="comment">%% Set Er</span>
+0164 <span class="comment">% reset errors before resolving errors for a second time</span>
+0165 stamp_name = [dirname_seg,<span class="string">'.trackOptiSetEr.mat'</span>];
+0166 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0167     <a href="trackOptiSetEr.html" class="code" title="function trackOptiSetEr(dirname,CONST, header)">trackOptiSetEr</a>(dirname_seg, CONST, header);
+0168     time_stamp = clock;
+0169     save( stamp_name, <span class="string">'time_stamp'</span>);
+0170 <span class="keyword">else</span>
+0171     disp([header,<span class="string">'trackOpti: trackOptiSetEr already run.'</span>]);
+0172 <span class="keyword">end</span>
+0173 
+0174 
+0175 
+0176 <span class="comment">%% Skip Merge</span>
+0177 <span class="comment">% cflag is the ~ skip flag. If true the skipping is taken care of later.</span>
+0178 <span class="keyword">if</span> skip&gt;1
+0179     <span class="comment">% merges skipped frames into the seg_full dir</span>
+0180     dirname_seg  = dirname_full;
+0181     stamp_name = [dirname_seg,<span class="string">'.trackOptiSkipMerge.mat'</span>];
+0182     <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0183         trackOptiSkipMerge(dirname,skip,CONST, header);
+0184         time_stamp = clock;
+0185         save( stamp_name, <span class="string">'time_stamp'</span>);
+0186     <span class="keyword">else</span>
+0187         disp([header,<span class="string">'trackOpti: trackOptiSkipMerge already run.'</span>]);
+0188     <span class="keyword">end</span>
+0189     
+0190     <span class="comment">% Relinks the new skipMerge files</span>
+0191     stamp_name = [dirname_seg,<span class="string">'.trackOptiLink.mat'</span>];
+0192     <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0193         <a href="trackOptiLink.html" class="code" title="function trackOptiLink(dirname,disp_flag,iii,err_flag,CONST,header)">trackOptiLink</a>(dirname_seg, [], [], 1, CONST, header);
+0194         time_stamp = clock;
+0195         save( stamp_name, <span class="string">'time_stamp'</span>);
+0196     <span class="keyword">else</span>
+0197         disp([header,<span class="string">'trackOpti: trackOptiLink already run.'</span>]);
+0198     <span class="keyword">end</span>
+0199     
+0200 <span class="keyword">end</span>
+0201 
+0202 <span class="comment">%% ErRes (2)</span>
+0203 <span class="comment">% Resolve Errors passing the no change flag as the last argument</span>
+0204 stamp_name = [dirname_seg,<span class="string">'.trackOptiErRes2.mat'</span>];
+0205 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0206     list_touch = <a href="trackOptiErRes.html" class="code" title="function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)">trackOptiErRes</a>(dirname_seg,[],1, CONST, header);
+0207     disp([header,<span class="string">'trackOpti: ErRes: modified '</span>, num2str(numel(list_touch)),<span class="string">' frames.'</span>]);
+0208     time_stamp = clock;
+0209     save( stamp_name, <span class="string">'time_stamp'</span>);
+0210 <span class="keyword">else</span>
+0211     disp([header,<span class="string">'trackOpti: trackOptiErRes(2) already run.'</span>]);
+0212 <span class="keyword">end</span>
+0213 
+0214 
+0215 <span class="comment">%% Cell Marker</span>
+0216 <span class="comment">% trackOptiCellMarker marks complete cells cycles. clist contains a</span>
+0217 <span class="comment">% list of cell statistics etc.</span>
+0218 stamp_name = [dirname_seg,<span class="string">'.trackOptiCellMarker.mat'</span>];
+0219 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0220     <a href="trackOptiCellMarker.html" class="code" title="function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)">trackOptiCellMarker</a>(dirname_seg, CONST, header);
+0221     time_stamp = clock;
+0222     save( stamp_name, <span class="string">'time_stamp'</span>);
+0223 <span class="keyword">else</span>
+0224     disp([header,<span class="string">'trackOpti: trackOptiCellMarker already run.'</span>]);
+0225 <span class="keyword">end</span>
+0226 
+0227 <span class="comment">%% Fluor</span>
+0228 <span class="comment">% Calculates Fluorescence Background</span>
+0229 stamp_name = [dirname_seg,<span class="string">'.trackOptiFluor.mat'</span>];
+0230 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );  
+0231     <a href="trackOptiFluor.html" class="code" title="function trackOptiFluor(dirname,CONST,header)">trackOptiFluor</a>(dirname_seg,CONST, header);
+0232     time_stamp = clock;
+0233     save( stamp_name, <span class="string">'time_stamp'</span>);
+0234 <span class="keyword">else</span>
+0235     disp([header,<span class="string">'trackOpti: trackOptiFluor already run.'</span>]);
+0236 <span class="keyword">end</span>
+0237 
+0238 
+0239 <span class="comment">%% Make Cell</span>
+0240 <span class="comment">% Computes cell characteristics in make cells</span>
+0241 stamp_name = [dirname_seg,<span class="string">'.trackOptiMakeCell.mat'</span>];
+0242 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0243     trackOptiMakeCell(dirname_seg, CONST, header);
+0244     time_stamp = clock;
+0245     save( stamp_name, <span class="string">'time_stamp'</span>);
+0246 <span class="keyword">else</span>
+0247     disp([header,<span class="string">'trackOpti: trackOptiMakeCell already run.'</span>]);
+0248 <span class="keyword">end</span>
+0249 
+0250 
+0251 <span class="comment">%% Find loci in each fluorescent channel</span>
+0252 <span class="keyword">if</span> sum(CONST.trackLoci.numSpots(:))
+0253     stamp_name = [dirname_seg,<span class="string">'.trackOptiFindLoci.mat'</span>];
+0254     <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0255         trackOptiFindLoci(dirname_seg, CONST, header);
+0256         time_stamp = clock;
+0257         save( stamp_name, <span class="string">'time_stamp'</span>);
+0258     <span class="keyword">else</span>
+0259         disp([header,<span class="string">'trackOpti: trackOptiFindLoci already run.'</span>]);
+0260     <span class="keyword">end</span>
+0261 <span class="keyword">end</span>
+0262 
+0263 <span class="comment">%% Compute cell characteristics in make cells</span>
+0264 stamp_name = [dirname_seg,<span class="string">'.trackOptiClist.mat'</span>];
+0265 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0266     [clist] = trackOptiClist(dirname_seg, CONST, header);
+0267     
+0268     <span class="keyword">if</span> isfield( CONST, <span class="string">'gate'</span> )
+0269         clist.gate = CONST.gate;    
+0270     <span class="keyword">end</span>
+0271     
+0272     <span class="keyword">try</span>
+0273         save( [dirname,<span class="string">'clist.mat'</span>],<span class="string">'-STRUCT'</span>,<span class="string">'clist'</span>);
+0274     <span class="keyword">catch</span>
+0275         disp([header,<span class="string">'trackOpti: Cell list error being saved.'</span>]);
+0276     <span class="keyword">end</span>
+0277     time_stamp = clock;
+0278     save( stamp_name, <span class="string">'time_stamp'</span>);
+0279 <span class="keyword">else</span>
+0280     disp([header,<span class="string">'trackOpti: trackOptiClist already run.'</span>]);
+0281 <span class="keyword">end</span>
+0282 
+0283 <span class="comment">%% cell files</span>
+0284 <span class="comment">% Organize data into cell files that contain all the time lapse data</span>
+0285 <span class="comment">% for a single cell.</span>
+0286 stamp_name = [dirname_seg,<span class="string">'.trackOptiCellFiles.mat'</span>];
+0287 
+0288 <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+0289     clist = load([dirname,<span class="string">'clist.mat'</span>]);
+0290     <span class="keyword">if</span> isfield( CONST, <span class="string">'gate'</span> )
+0291         clist.gate = CONST.gate;    
+0292     <span class="keyword">end</span>
+0293     <span class="comment">% wipe old cell files</span>
+0294     <span class="keyword">if</span> ispc
+0295         eval([<span class="string">'!del '</span>,dirname_cell,<span class="string">'cell*.mat'</span>]);
+0296         eval([<span class="string">'!del '</span>,dirname_cell,<span class="string">'cell*.mat'</span>]);
+0297     <span class="keyword">else</span>
+0298         eval([<span class="string">'!\rm '</span>,dirname_cell,<span class="string">'cell*.mat'</span>]);
+0299         eval([<span class="string">'!\rm '</span>,dirname_cell,<span class="string">'Cell*.mat'</span>]);
+0300 
+0301     <span class="keyword">end</span>
+0302 
+0303     trackOptiCellFiles(dirname_seg,dirname_cell,CONST, header, clist);        
+0304     time_stamp = clock;
+0305     save( stamp_name, <span class="string">'time_stamp'</span>);
+0306 <span class="keyword">else</span>
+0307     disp([header,<span class="string">'trackOpti: trackOptiCellFiles already run.'</span>]);
+0308 <span class="keyword">end</span>
+0309 
+0310 
+0311 
+0312 <span class="keyword">end</span>
+0313 
+0314</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -258,7 +258,7 @@ for it = nt;
             im( (1-miny):(ss(1)-miny), (1-minx):(ss(2)-minx) ) = im_;
             
             
-            out = [0,0,OutArray(countt,:)]
+            out = [0,0,OutArray(countt,:)];
             im = intShiftIm(im, out + CONST.imAlign.out{ic} - ...
                 CONST.imAlign.out{1});
             
@@ -286,8 +286,7 @@ for it = nt;
                         imshow( cat( 3, backer+fluor, backer0, backer0));
                     end
                 end
-                drawnow;
-                
+                drawnow;               
                 hold on;
                 xxxx = [crop_box(countt,2),...
                     crop_box(countt,2),...

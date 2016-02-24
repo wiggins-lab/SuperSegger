@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of MakeFileName</title>
+  <meta name="keywords" content="MakeFileName">
+  <meta name="description" content="MakeFileName converts from nameInfo to original file name">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">batch</a> &gt; MakeFileName.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/batch&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>MakeFileName
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>MakeFileName converts from nameInfo to original file name</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function name = MakeFileName( nameInfo ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> MakeFileName converts from nameInfo to original file name
+
+   INPUT : 
+       nameInfo : contains information about where numbers are found
+ after strings in strD, for more info look at ReadFileName
+           npos: [4x4 double]
+           strD: {'t'  'c'  'xy'  'z'}
+           basename: before first found strD, eg. 'tsyfp-p-'
+           suffix: after last found number of strD, eg. '.tif'
+   OUTPUT : 
+       name : string of format *t*c*xy*z*
+
+ Copyright (C) 2016 Wiggins Lab 
+ Unviersity of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="BatchSuperSeggerOpti.html" class="code" title="function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)">BatchSuperSeggerOpti</a>	BatchSuperSeggerOpti runs everything from start to finish,</li><li><a href="trackOptiAlignPad.html" class="code" title="function crop_box = trackOptiAlignPad(dirname_, CROP_FLAG, M, CONST)">trackOptiAlignPad</a>	trackOptiAlignPad : aligns images to correct for microscope drift</li><li><a href="trackOptiSkipMerge.html" class="code" title="function trackOptiSkipMerge(dirname_xy,skip,CONST,header)">trackOptiSkipMerge</a>	trackOptiSkipMerge : adds skipped frames back into a time series.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function name = MakeFileName( nameInfo )</a>
+0002 <span class="comment">% MakeFileName converts from nameInfo to original file name</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">%   INPUT :</span>
+0005 <span class="comment">%       nameInfo : contains information about where numbers are found</span>
+0006 <span class="comment">% after strings in strD, for more info look at ReadFileName</span>
+0007 <span class="comment">%           npos: [4x4 double]</span>
+0008 <span class="comment">%           strD: {'t'  'c'  'xy'  'z'}</span>
+0009 <span class="comment">%           basename: before first found strD, eg. 'tsyfp-p-'</span>
+0010 <span class="comment">%           suffix: after last found number of strD, eg. '.tif'</span>
+0011 <span class="comment">%   OUTPUT :</span>
+0012 <span class="comment">%       name : string of format *t*c*xy*z*</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0015 <span class="comment">% Unviersity of Washington, 2016</span>
+0016 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0017 
+0018 
+0019 npos = nameInfo.npos;
+0020 strD = nameInfo.strD;
+0021 basename = nameInfo.basename;
+0022 suffix = nameInfo.suffix;
+0023 numD = numel(strD);
+0024 [tmp,ord] = sort(npos(:,2));
+0025 npos_sort = npos( ord, :);
+0026 strD_sort = strD(ord);
+0027 
+0028 name = basename;
+0029     <span class="keyword">for</span> i = 1:numD        
+0030         <span class="keyword">if</span> npos_sort(i,2)
+0031             str_tmp = [<span class="string">'%0'</span>,num2str(npos_sort(i,4)),<span class="string">'d'</span>];
+0032             name = [name, strD_sort{i}, sprintf( str_tmp, npos_sort(i,1))];            
+0033         <span class="keyword">end</span>
+0034     <span class="keyword">end</span>    
+0035     name = [name,suffix];
+0036 <span class="keyword">end</span>
+0037</pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

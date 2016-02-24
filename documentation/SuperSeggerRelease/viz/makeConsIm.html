@@ -1,0 +1,641 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of makeConsIm</title>
+  <meta name="keywords" content="makeConsIm">
+  <meta name="description" content="makeConsIm : Computes consensus fluorescence localization from cells in a cell files">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">viz</a> &gt; makeConsIm.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/viz&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>makeConsIm
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>makeConsIm : Computes consensus fluorescence localization from cells in a cell files</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix,AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag ) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> makeConsIm : Computes consensus fluorescence localization from cells in a cell files
+
+ INPUT:
+   dirName : (string) directory to load cell files from
+     CONST : (struct) Constants to use in calculation
+      skip : (integer) Use every skip images to make cons image
+       mag : (double) resize images by factor mag to generate cons image
+ disp_flag : (flag) flag to show cells while they are processed
+
+ OUPUT:
+  imMosaic : Image mosaic of cells that make up the consensus image
+   imColor : Color cons image (w/ black background)
+      imBW : Grayscale cons image
+     imInv : Color cons image (w/ white background)
+      kymo : Consensus Kymograph
+  kymoMask : Consensus Kymograph Cell mask
+         I : Fit of intensities to a model for polar localization
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="colorize.html" class="code" title="function  imColorized = colorize( im, mask, colormap_, background )">colorize</a>	colorize : creates an image, with defined mask, colormap, and background</li><li><a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>	doColorMap : ?</li><li><a href="fitKymo4.html" class="code" title="function [ I ] = fitKymo4( kymo, kymoMask, disp_flag )">fitKymo4</a>	fitKymo4 : fits the intesnities to a model of polar localization</li><li><a href="makeTowerCons.html" class="code" title="function  imData = makeTowerCons( data, CONST, xdim,disp_flag, skip, mag )">makeTowerCons</a>	makeTowerCons Makes Times-Lapse Tower with normalized time and cell shape</li><li><a href="pcanal4.html" class="code" title="function [A,B,imArray] = pcanal4(dataCellArray,disp_flag)">pcanal4</a>	Copyright (C) 2016 Wiggins Lab</li><li><a href="towerMergeImages.html" class="code" title="function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] =towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )">towerMergeImages</a>	towerMergeImages</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="trackOptiView.html" class="code" title="function trackOptiView(dirname,file_filter,err_flag)">trackOptiView</a>	trackOptiView provides visulization of the segmented data.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function [ imMosaic, imColor, imBW, imInv, imMosaic10] =</a></li><li><a href="#_sub2" class="code">function [ kymo,kymoMask,kymoMax, kymoMaskMax ] =</a></li><li><a href="#_sub3" class="code">function dataArray = intUpdate( dataArray, data, jj )</a></li><li><a href="#_sub4" class="code">function dataArray = intNormalize( dataArray, numCells )</a></li><li><a href="#_sub5" class="code">function data = intInit( numCells )</a></li><li><a href="#_sub6" class="code">function [ data, num_filename ] = intLoader( dirName, filename )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,</a><span class="keyword">...</span>
+0002     kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix, <span class="keyword">...</span>
+0003     AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag )
+0004 <span class="comment">% makeConsIm : Computes consensus fluorescence localization from cells in a cell files</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% INPUT:</span>
+0007 <span class="comment">%   dirName : (string) directory to load cell files from</span>
+0008 <span class="comment">%     CONST : (struct) Constants to use in calculation</span>
+0009 <span class="comment">%      skip : (integer) Use every skip images to make cons image</span>
+0010 <span class="comment">%       mag : (double) resize images by factor mag to generate cons image</span>
+0011 <span class="comment">% disp_flag : (flag) flag to show cells while they are processed</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% OUPUT:</span>
+0014 <span class="comment">%  imMosaic : Image mosaic of cells that make up the consensus image</span>
+0015 <span class="comment">%   imColor : Color cons image (w/ black background)</span>
+0016 <span class="comment">%      imBW : Grayscale cons image</span>
+0017 <span class="comment">%     imInv : Color cons image (w/ white background)</span>
+0018 <span class="comment">%      kymo : Consensus Kymograph</span>
+0019 <span class="comment">%  kymoMask : Consensus Kymograph Cell mask</span>
+0020 <span class="comment">%         I : Fit of intensities to a model for polar localization</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0023 <span class="comment">% University of Washington, 2016</span>
+0024 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0025 
+0026 
+0027 del = 0.0;
+0028 imMosaic10 = [];
+0029 
+0030 <span class="keyword">if</span> ~exist( <span class="string">'skip'</span>, <span class="string">'var'</span> ) || isempty( skip )
+0031     skip = 1;
+0032 <span class="keyword">end</span>
+0033 
+0034 <span class="keyword">if</span> ~exist( <span class="string">'mag'</span>, <span class="string">'var'</span> ) || isempty( mag )
+0035     mag = 4;
+0036 <span class="keyword">end</span>
+0037 
+0038 <span class="comment">% show images in false color</span>
+0039 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'falseColorFlag'</span> )
+0040     CONST.view.falseColorFlag = false;
+0041 <span class="keyword">end</span>
+0042 
+0043 
+0044 <span class="comment">% Get the number of cells in the cell directory</span>
+0045 <span class="keyword">if</span> ~isfield( CONST, <span class="string">'view'</span>) || CONST.view.showFullCellCycleOnly
+0046     contents = dir([dirName,filesep,<span class="string">'Cell*.mat'</span>]);
+0047 <span class="keyword">else</span>
+0048     contents = dir([dirName,filesep,<span class="string">'*ell*.mat'</span>]);
+0049 <span class="keyword">end</span>
+0050 numCells = numel(contents);
+0051 
+0052 
+0053 <span class="comment">% put in a max cell number to stop the code stalling</span>
+0054 <span class="keyword">if</span> ~isfield(CONST.view, <span class="string">'maxNumCell'</span> )
+0055     CONST.view.maxNumCell = [];
+0056 <span class="keyword">end</span>
+0057 
+0058 <span class="comment">% force to do only first 1000</span>
+0059 CONST.view.maxNumCell = 1000;
+0060 
+0061 
+0062 <span class="keyword">if</span> ~isempty( CONST.view.maxNumCell )
+0063     numCells = min( [numCells, CONST.view.maxNumCell] );
+0064 <span class="keyword">end</span>
+0065 <span class="comment">% debug</span>
+0066 <span class="comment">% numCells = min([numCells,5]);</span>
+0067 disp( [<span class="string">'Running consensus (max cell number '</span>,<span class="keyword">...</span>
+0068     num2str(numCells),<span class="string">')'</span>] );
+0069 
+0070 <span class="comment">%        ssTot : Keep track of the total size of the tower mosaic.</span>
+0071 ssTot = [0,0];
+0072 
+0073 
+0074 <span class="comment">% Manage the waitbar</span>
+0075 <span class="comment">%if disp_flag</span>
+0076 h = waitbar(0, <span class="string">'Computation'</span> );
+0077 <span class="comment">%end</span>
+0078 
+0079 <span class="comment">% initialize the sum variables</span>
+0080 dataImArray = <a href="#_sub5" class="code" title="subfunction data = intInit( numCells )">intInit</a>( numCells );
+0081 
+0082 
+0083 
+0084 imArray = cell(1,numCells);
+0085 ii_ = 0;
+0086 
+0087 <span class="comment">% loop through the cells to make the consensus image and the mosaic</span>
+0088 <span class="keyword">for</span> ii = 1:numCells
+0089     
+0090     <span class="comment">% update status bar</span>
+0091     <span class="comment">%if disp_flag</span>
+0092     waitbar(ii/numCells,h);
+0093     <span class="comment">%end</span>
+0094     
+0095     
+0096     <span class="comment">% load data and get file number</span>
+0097     [data, dataImArray.cellArrayNum{ii}] = <a href="#_sub6" class="code" title="subfunction [ data, num_filename ] = intLoader( dirName, filename )">intLoader</a>( dirName, contents(ii).name );
+0098     data.CellA = data.CellA(1:skip:end);
+0099     
+0100     <span class="comment">% mag is magnification : resizes the images of the cells to make them</span>
+0101     <span class="comment">% larger the image will be mag X larger in each dimension</span>
+0102     mag = 4;
+0103     
+0104     <span class="comment">% Compute consensus images for cell in data</span>
+0105     <span class="keyword">if</span> numel(data.CellA) &gt; 4
+0106         
+0107         ii_ = ii_ + 1;
+0108         
+0109         dataIm = <a href="makeTowerCons.html" class="code" title="function  imData = makeTowerCons( data, CONST, xdim,disp_flag, skip, mag )">makeTowerCons</a>(data,CONST,1,false, skip, mag );
+0110         
+0111         <span class="comment">% Scale images down to the original size</span>
+0112         imArray{ii_} = imresize( dataIm.tower, 1/mag);
+0113         
+0114         <span class="comment">% update the sums</span>
+0115         dataImArray = <a href="#_sub3" class="code" title="subfunction dataArray = intUpdate( dataArray, data, jj )">intUpdate</a>( dataImArray, dataIm, ii_  );
+0116         
+0117     <span class="keyword">end</span>
+0118 <span class="keyword">end</span>
+0119 
+0120 numCells = ii_;
+0121 imArray = imArray(1:numCells);
+0122 
+0123 <span class="comment">% close the status bar</span>
+0124 <span class="keyword">if</span> disp_flag
+0125     close(h);
+0126 <span class="keyword">end</span>
+0127 
+0128 <span class="comment">% Principal Component Analysis of Grayscale cell tower images</span>
+0129 <span class="keyword">if</span> numel( imArray ) &gt; 0
+0130     [AA,BB] = <a href="pcanal4.html" class="code" title="function [A,B,imArray] = pcanal4(dataCellArray,disp_flag)">pcanal4</a>( imArray, disp_flag );
+0131 <span class="keyword">end</span>
+0132 
+0133 <span class="comment">%% normalize sums to convert sums to means.</span>
+0134 dataImArray = <a href="#_sub4" class="code" title="subfunction dataArray = intNormalize( dataArray, numCells )">intNormalize</a>( dataImArray, numCells );
+0135 
+0136 <span class="comment">%% reform tower images here</span>
+0137 <span class="comment">% tmp = towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, xdim, skip, mag, CONST );</span>
+0138 <span class="comment">% Merge the images from the arrays into a single image</span>
+0139 T0 = numel( dataImArray.imCell );
+0140 
+0141 <span class="keyword">if</span>  ~T0
+0142     I = [];
+0143     kymo = [];
+0144     kymoMask = [];
+0145     kymoMax = [];
+0146     kymoMaskMax = [];
+0147     imMosaic = [];
+0148     imColor = [];
+0149     imBW = [];
+0150     imInv = []
+0151     imBWunmasked = [];
+0152     imBWmask = [];
+0153     imMosaic10 = [];
+0154     hotPix = [];
+0155 <span class="keyword">else</span>
+0156     
+0157     <span class="keyword">for</span> jj = 1:T0
+0158         ssCell{jj} = size(  dataImArray.imCell{jj} );
+0159     <span class="keyword">end</span>
+0160     
+0161     [ bs_, bs_, dataImArray.tower, dataImArray.towerMask ] = <span class="keyword">...</span>
+0162         <a href="towerMergeImages.html" class="code" title="function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] =towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )">towerMergeImages</a>( dataImArray.imCell, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+0163     <span class="comment">%dataImArray.tower = dataImArray.tower.*dataImArray.towerMask;</span>
+0164     
+0165     <span class="comment">% Merge the images from the arrays into a single image</span>
+0166     [ bs_, bs_, dataImArray.towerNorm, dataImArray.towerMask ] = <span class="keyword">...</span>
+0167         <a href="towerMergeImages.html" class="code" title="function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] =towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )">towerMergeImages</a>( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+0168     <span class="comment">%dataImArray.towerNorm = dataImArray.towerNorm.*dataImArray.towerMask;</span>
+0169     
+0170     numIm = numel( dataImArray.tower );
+0171     
+0172     <span class="keyword">if</span> numIm  &gt; 0
+0173         <span class="comment">% make the color map for the color image</span>
+0174         [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, <span class="keyword">...</span>
+0175             dataImArray.towerMask, dataImArray.towerCArray, <span class="keyword">...</span>
+0176             dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );
+0177         imBWunmasked = dataImArray.towerNorm;
+0178         imBWmask     = dataImArray.towerMask;
+0179         
+0180         
+0181         <span class="comment">% make the consensus kymograph</span>
+0182         [ kymo, kymoMask, kymoMax, kymoMaskMax ] = <span class="keyword">...</span>
+0183             intMakeKymo( dataImArray.imCellNorm, dataImArray.maskCell, <span class="keyword">...</span>
+0184             disp_flag );
+0185         
+0186         <span class="comment">% do the kymo fit, I is fit of intensities to a model for polar localization</span>
+0187         [I] = <a href="fitKymo4.html" class="code" title="function [ I ] = fitKymo4( kymo, kymoMask, disp_flag )">fitKymo4</a>( kymo, kymoMask, disp_flag );
+0188         
+0189         <span class="comment">% Make hot pixel</span>
+0190         <span class="comment">%hotPix = getHotPixelsCons( dataImArray.imCell, dataImArray.maskCell  );</span>
+0191         hotPix = [] ;      
+0192         
+0193     <span class="keyword">else</span>
+0194         I = [];
+0195         kymo = [];
+0196         kymoMask = [];
+0197         kymoMax = [];
+0198         kymoMaskMax = [];
+0199         imMosaic = [];
+0200         imColor = [];
+0201         imBW = [];
+0202         imInv = []
+0203     <span class="keyword">end</span>
+0204 <span class="keyword">end</span>
+0205 
+0206 <span class="keyword">end</span>
+0207 
+0208 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0209 <span class="comment">%</span>
+0210 <span class="comment">% intDoMakeImage</span>
+0211 <span class="comment">%</span>
+0212 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0213 <a name="_sub1" href="#_subfunctions" class="code">function [ imMosaic, imColor, imBW, imInv, imMosaic10] = </a><span class="keyword">...</span>
+0214     intDoMakeImage( imSum, maskSum, cellArray, ssTot, cellArrayNum, <span class="keyword">...</span>
+0215     CONST, disp_flag )
+0216 <span class="comment">%</span>
+0217 <span class="comment">% INPUT :</span>
+0218 <span class="comment">%         imSum : Summed up imBW</span>
+0219 <span class="comment">%         maskSum : Summed up maskCons</span>
+0220 <span class="comment">%         imCellSum : Summed up imCell</span>
+0221 <span class="comment">%         maskCellSum : Summed up maskCell</span>
+0222 <span class="comment">%         imCellSSum : Summed up imCellS</span>
+0223 <span class="comment">%         maskCellSSum : Summed up maskCellS</span>
+0224 <span class="comment">%         imNormSum : Summed up Normed Fluor (imBW)</span>
+0225 <span class="comment">%         imCellNormSum : Summed up Normed Fluor (imCell)</span>
+0226 <span class="comment">%         ssTot : Im size of tower mosaic of cell contributing to cons</span>
+0227 <span class="comment">% OUTPUT :</span>
+0228 <span class="comment">%         intDoMakeImage : makes the color map for the color image</span>
+0229 <span class="comment">%         imMosaic : Mosaic of towers of cells that make up the consensus image</span>
+0230 <span class="comment">%         imColor : Color cons image (w/ black background)</span>
+0231 <span class="comment">%          imBW : Grayscale cons image</span>
+0232 <span class="comment">%         imInv : Color cons image (w/ white background)</span>
+0233 
+0234 numCells = numel( cellArray );
+0235 
+0236 
+0237 <span class="comment">% cellArrayPos: location in the image of each panel of the mosaic.</span>
+0238 cellArrayPos = cell(1,numCells);
+0239 
+0240 <span class="comment">% make the color map for the color image</span>
+0241 <span class="comment">%persistent colormap_;</span>
+0242 <span class="comment">%if isempty( colormap_ )</span>
+0243 colormap_ = jet(256);
+0244 <span class="comment">%end</span>
+0245 
+0246 
+0247 imTmp = 255*<a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( ag(imSum, min(imSum( maskSum&gt;.95 )), max(imSum( maskSum&gt;.95 )) ), colormap_ );
+0248 mask3 = cat( 3, maskSum, maskSum, maskSum );
+0249 imColor = uint8(uint8( double(imTmp).*mask3));
+0250 imBW  = uint8( double(ag(imSum, min(imSum( maskSum&gt;.95 )), max(imSum( maskSum&gt;.95 )) )) .* maskSum );
+0251 
+0252 imTmp = 255*<a href="doColorMap.html" class="code" title="function im_ = doColorMap( im, colormap_ )">doColorMap</a>( ag(imSum, min(imSum( maskSum&gt;.95 )), max(imSum( maskSum&gt;.95 )) ), 1-colormap_ );
+0253 mask3 = cat( 3, maskSum, maskSum, maskSum );
+0254 imInv = 255-uint8(uint8( double(imTmp).*mask3));
+0255 
+0256 <span class="keyword">if</span> disp_flag
+0257     figure(5)
+0258     clf;
+0259     imshow( imColor);
+0260     drawnow;
+0261 <span class="keyword">end</span>
+0262 
+0263 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0264 <span class="keyword">if</span> disp_flag
+0265     figure(1);
+0266 <span class="keyword">end</span>
+0267 
+0268 del = 1;
+0269 
+0270 <span class="keyword">if</span> CONST.view.falseColorFlag
+0271     imMosaic = uint8(zeros( [ssTot(1), ssTot(2), 3] )) + del*255;
+0272 <span class="keyword">else</span>
+0273     imMosaic = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
+0274 <span class="keyword">end</span>
+0275 
+0276 
+0277 colPos = 1;
+0278 
+0279 width10 = 0;
+0280 time10  = 0;
+0281 
+0282 <span class="keyword">for</span> ii = 1:numCells
+0283     ss = size(cellArray{ii});
+0284     
+0285     <span class="keyword">if</span> ii &lt;= 10
+0286         width10 = width10 + ss(2);
+0287         time10  = max([ss(1),time10]);
+0288     <span class="keyword">end</span>
+0289     
+0290     imMosaic(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
+0291     cellArrayPos{ii} = colPos + ss(2)/2;
+0292     colPos = colPos + ss(2);
+0293     
+0294 <span class="keyword">end</span>
+0295 
+0296 imMosaic10 = imMosaic( 1:time10, 1:width10, : );
+0297 
+0298 <span class="keyword">if</span> disp_flag
+0299     clf;
+0300     imshow( imMosaic );
+0301     
+0302     <span class="keyword">if</span> CONST.view.falseColorFlag
+0303         cc = <span class="string">'w'</span>;
+0304     <span class="keyword">else</span>
+0305         cc = <span class="string">'b'</span>;
+0306     <span class="keyword">end</span>
+0307     
+0308     <span class="keyword">for</span> ii = 1:numCells
+0309         text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), <span class="string">'Color'</span>, cc, <span class="keyword">...</span>
+0310             <span class="string">'HorizontalAlignment'</span>,<span class="string">'center'</span> );
+0311     <span class="keyword">end</span>
+0312 <span class="keyword">end</span>
+0313 
+0314 <span class="keyword">end</span>
+0315 
+0316 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0317 <span class="comment">%</span>
+0318 <span class="comment">% intMakeKymo</span>
+0319 <span class="comment">%</span>
+0320 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0321 <a name="_sub2" href="#_subfunctions" class="code">function [ kymo,kymoMask,kymoMax, kymoMaskMax ] = </a><span class="keyword">...</span>
+0322     intMakeKymo( imCellS, maskCellS, disp_flag )
+0323 <span class="comment">%  intMakeKymo : creates a consensus kymograph</span>
+0324 <span class="comment">%</span>
+0325 <span class="comment">% INPUT :</span>
+0326 <span class="comment">%       imCellS :</span>
+0327 <span class="comment">%       maskCellS :</span>
+0328 <span class="comment">%       disp_flag : 1 to display the image</span>
+0329 <span class="comment">% OUTPUT:</span>
+0330 <span class="comment">%      kymo : Consensus Kymograph</span>
+0331 <span class="comment">%      kymoMask : Consensus Kymograph Cell mask</span>
+0332 <span class="comment">%      kymoMax :</span>
+0333 <span class="comment">%      kymoMaskMax :</span>
+0334 
+0335 
+0336 T0 = numel( imCellS );
+0337 mag = 4;
+0338 
+0339 <span class="keyword">if</span> T0 &gt; 0
+0340     
+0341     ss    = size( imCellS{1} );
+0342     ssMax = size( imresize(imCellS{1}, 1/mag) );
+0343     
+0344     kymo    = zeros( [ss(2), T0] );
+0345     kymoMax = zeros( [ssMax(2), T0] );
+0346     
+0347     kymoMask    = kymo;
+0348     kymoMaskMax = kymoMax;
+0349     
+0350     <span class="keyword">for</span> ii = 1:T0
+0351         maskCellS{ii}( isnan( maskCellS{ii} ) ) = 0;
+0352         imCellS{ii}( isnan( imCellS{ii} ) )     = 0;
+0353         kymo(:,ii) = sum(maskCellS{ii}.*imCellS{ii},1);
+0354         kymoMask(:,ii) = sum(maskCellS{ii},1);
+0355         
+0356         kymoMax(:,ii)       = max(imresize( maskCellS{ii}.*imCellS{ii},<span class="keyword">...</span>
+0357             1/mag ), [], 1);
+0358         kymoMaskMax(:,ii)   = max(imresize( maskCellS{ii}, 1/mag ),<span class="keyword">...</span>
+0359             [], 1);
+0360         
+0361     <span class="keyword">end</span>
+0362 <span class="keyword">end</span>
+0363 
+0364 <span class="keyword">if</span> disp_flag
+0365     figure(7);
+0366     clf;
+0367     
+0368     ss = size( kymo );
+0369     tt = (0:(ss(2)-1))/(ss(2)-1);
+0370     xx = (0:(ss(1)-1))/(ss(1)-1);
+0371     
+0372     imagesc( tt,xx, <a href="colorize.html" class="code" title="function  imColorized = colorize( im, mask, colormap_, background )">colorize</a>(kymo,kymoMask,[],[0.33,0.33,0.33]) );
+0373     set(gca, <span class="string">'YDir'</span>, <span class="string">'normal'</span> );
+0374     xlabel( <span class="string">'Time (Cell Cycle)'</span>);
+0375     ylabel( <span class="string">'Relative Long Axis Position'</span>);
+0376 <span class="keyword">end</span>
+0377 
+0378 <span class="keyword">end</span>
+0379 
+0380 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0381 <span class="comment">%</span>
+0382 <span class="comment">% intUpdate</span>
+0383 <span class="comment">%</span>
+0384 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0385 <a name="_sub3" href="#_subfunctions" class="code">function dataArray = intUpdate( dataArray, data, jj )</a>
+0386 
+0387 
+0388 T0 = numel( data.imCell );
+0389 
+0390 <span class="keyword">if</span> isempty( dataArray.sumWeight );
+0391     dataArray.sumWeight    = zeros(1,T0);
+0392     dataArray.sumWeightMin = 0;
+0393     
+0394     dataArray.sumWeightS    = zeros(1,T0);
+0395     dataArray.sumWeightSMin = 0;
+0396 <span class="keyword">end</span>
+0397 
+0398 
+0399 <span class="comment">% update im and mask sum</span>
+0400 <span class="keyword">if</span> isempty( dataArray.tower )
+0401     dataArray.tower        = double( data.towerRaw );
+0402     dataArray.sumWeightMin = min(data.intWeight);
+0403     
+0404     dataArray.towerNorm    = dataArray.sumWeightMin *<span class="keyword">...</span>
+0405         double( data.towerNormRaw );
+0406     
+0407     dataArray.towerMask    = double( data.towerMask );
+0408 <span class="keyword">else</span>
+0409     dSumWeightMin = min(data.intWeight);
+0410     
+0411     dataArray.tower        = dataArray.tower     + double( data.towerRaw );
+0412     dataArray.towerNorm    = dataArray.towerNorm + <span class="keyword">...</span>
+0413         dSumWeightMin * double( data.towerNormRaw );
+0414     
+0415     dataArray.towerMask    = dataArray.towerMask + double( data.towerMask );
+0416     
+0417     dataArray.sumWeightMin = dataArray.sumWeightMin + dSumWeightMin;
+0418 <span class="keyword">end</span>
+0419 
+0420 ss = size(data.imCell{1});
+0421 
+0422 dataArray.ssTot = [ max([dataArray.ssTot(1),ss(1)]),<span class="keyword">...</span>
+0423     dataArray.ssTot(2)+ss(2) ];
+0424 
+0425 <span class="keyword">if</span> isempty( dataArray.imCell )
+0426     dataArray.imCell         = data.imCell;
+0427     dataArray.imCellNorm     = data.imCellNorm;
+0428     dataArray.maskCell       = data.maskCell;
+0429     dataArray.imCellScale    = data.imCellScale;
+0430     dataArray.maskCellScale  = data.maskCellScale;
+0431     
+0432     <span class="keyword">for</span> ii = 1:T0
+0433         dataArray.imCellNorm{ii} = data.imCellNorm{ii} <span class="keyword">...</span>
+0434             * data.intWeight(ii);
+0435         dataArray.imCellNormScale{ii} = data.imCellNormScale{ii} <span class="keyword">...</span>
+0436             * data.intWeightS(ii);
+0437     <span class="keyword">end</span>
+0438     
+0439     dataArray.sumWeight = data.intWeight;
+0440     dataArray.sumWeightS = data.intWeightS;
+0441     
+0442 <span class="keyword">else</span>
+0443     <span class="keyword">for</span> ii = 1:T0
+0444         dataArray.imCell{        ii}  = dataArray.imCell{        ii} <span class="keyword">...</span>
+0445             + data.imCell{    ii};
+0446         dataArray.maskCell{      ii}  = dataArray.maskCell{      ii} <span class="keyword">...</span>
+0447             + data.maskCell{  ii};
+0448         dataArray.imCellScale{   ii}  = dataArray.imCellScale{   ii} <span class="keyword">...</span>
+0449             + data.imCellScale{   ii};
+0450         dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ ii} <span class="keyword">...</span>
+0451             + data.maskCellScale{ ii};
+0452         dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{    ii} <span class="keyword">...</span>
+0453             + data.imCellNorm{ii} * data.intWeight(ii);
+0454         dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{    ii} <span class="keyword">...</span>
+0455             + data.imCellNormScale{ii} * data.intWeightS(ii);
+0456     <span class="keyword">end</span>
+0457     
+0458     dataArray.sumWeight = dataArray.sumWeight + data.intWeight;
+0459     dataArray.sumWeightS = dataArray.sumWeightS + data.intWeightS;
+0460     
+0461 <span class="keyword">end</span>
+0462 
+0463 dataArray.towerCArray{   jj} = data.towerC;
+0464 dataArray.towerArray{    jj} = data.tower;
+0465 dataArray.towerNormArray{jj} = data.towerNorm;
+0466 
+0467 dataArray.intWeightMinArray(jj) = min(data.intWeight);
+0468 
+0469 <span class="keyword">end</span>
+0470 
+0471 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0472 <span class="comment">%</span>
+0473 <span class="comment">% intNormalize</span>
+0474 <span class="comment">%</span>
+0475 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0476 <a name="_sub4" href="#_subfunctions" class="code">function dataArray = intNormalize( dataArray, numCells )</a>
+0477 
+0478 dataArray.numCells = numCells;
+0479 dataArray.towerCArray       = dataArray.towerCArray(1:numCells);
+0480 dataArray.towerArray        = dataArray.towerArray(1:numCells);
+0481 dataArray.towerNormArray    = dataArray.towerNormArray(1:numCells);
+0482 dataArray.intWeightMinArray = dataArray.intWeightMinArray(1:numCells);
+0483 dataArray.cellArrayNum      = dataArray.cellArrayNum(1:numCells);
+0484 
+0485 
+0486 T0 = numel( dataArray.imCell );
+0487 
+0488 dataArray.tower     = dataArray.tower    /dataArray.numCells;
+0489 dataArray.towerMask = dataArray.towerMask/dataArray.numCells;
+0490 dataArray.towerNorm = dataArray.towerNorm/dataArray.sumWeightMin;
+0491 
+0492 <span class="keyword">for</span> ii = 1:T0
+0493     dataArray.imCellSum{    ii}  = dataArray.imCell{        ii}<span class="keyword">...</span>
+0494         /dataArray.numCells;
+0495     dataArray.maskCell{      ii}  = dataArray.maskCell{     ii}<span class="keyword">...</span>
+0496         /dataArray.numCells;
+0497     dataArray.imCellScale{   ii}  = dataArray.imCellScale{  ii}<span class="keyword">...</span>
+0498         /dataArray.numCells;
+0499     dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ii}<span class="keyword">...</span>
+0500         /dataArray.numCells;
+0501     dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{   ii}<span class="keyword">...</span>
+0502         /dataArray.sumWeight(ii);
+0503     dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{   ii}<span class="keyword">...</span>
+0504         /dataArray.sumWeightS(ii);
+0505 <span class="keyword">end</span>
+0506 <span class="keyword">end</span>
+0507 
+0508 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0509 <span class="comment">%</span>
+0510 <span class="comment">% intInit</span>
+0511 <span class="comment">%</span>
+0512 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0513 <a name="_sub5" href="#_subfunctions" class="code">function data = intInit( numCells )</a>
+0514 
+0515 data = [];
+0516 <span class="comment">% Initialize the arrays for the images.</span>
+0517 <span class="comment">% imColorArray : (im tower) Colorized cropped cons image of a single cell</span>
+0518 data.towerCArray = cell(1,numCells); <span class="comment">%</span>
+0519 
+0520 <span class="comment">%      imArray : Cell Array stack of Grayscale tower images that are mag = 1.</span>
+0521 data.towerArray      = cell(1,numCells);
+0522 data.towerNormArray      = cell(1,numCells);
+0523 data.intWeightMinArray      = zeros( 1,numCells);
+0524 
+0525 <span class="comment">% cellArrayNum : Cell file number cell array</span>
+0526 data.cellArrayNum = cell(1,numCells);
+0527 
+0528 
+0529 data.tower           = [];
+0530 data.towerNorm       = [];
+0531 data.towerMask       = [];
+0532 
+0533 data.imCell          = [];
+0534 data.imCellNorm      = [];
+0535 data.maskCell        = [];
+0536 
+0537 data.imCellScale     = [];
+0538 data.imCellNormScale = [];
+0539 data.maskCellScale   = [];
+0540 
+0541 data.sumWeight       = [];
+0542 data.sumWeightMin    = [];
+0543 
+0544 data.sumWeightS      = [];
+0545 data.sumWeightSMin   = [];
+0546 
+0547 data.numCells        = numCells;
+0548 
+0549 data.ssTot           = [0, 0];
+0550 
+0551 <span class="keyword">end</span>
+0552 
+0553 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0554 <span class="comment">%</span>
+0555 <span class="comment">% intLoader</span>
+0556 <span class="comment">%</span>
+0557 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0558 <a name="_sub6" href="#_subfunctions" class="code">function [ data, num_filename ] = intLoader( dirName, filename )</a>
+0559 
+0560 data = load( [dirName, filename] );
+0561 
+0562 lpos =  max(find(filename == <span class="string">'l'</span>));
+0563 ppos =  min(find(filename == <span class="string">'.'</span>));
+0564 
+0565 <span class="keyword">if</span> isempty( lpos ) || isempty( ppos )
+0566     disp(<span class="string">'Error in makeFrameStripeMosaic'</span> );
+0567     <span class="keyword">return</span>;
+0568 <span class="keyword">else</span>
+0569     num_filename = floor(str2num(filename(lpos+1:ppos-1)));
+0570 <span class="keyword">end</span>
+0571 
+0572 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

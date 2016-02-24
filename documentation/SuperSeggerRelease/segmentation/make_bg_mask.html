@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of make_bg_mask</title>
+  <meta name="keywords" content="make_bg_mask">
+  <meta name="description" content="make_bg_mask : makes a background mask for the phase image">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="#">SuperSeggerRelease</a> &gt; <a href="index.html">segmentation</a> &gt; make_bg_mask.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for SuperSeggerRelease/segmentation&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>make_bg_mask
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>make_bg_mask : makes a background mask for the phase image</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> make_bg_mask : makes a background mask for the phase image
+
+ INPUT :
+       phase : phase image
+       filt_3 : 
+       filt_4 : 
+       AREA : 
+       CONST : segmentation constants
+       crop_box :
+
+ OUTPUT :
+       mask : output cell mask
+
+ Copyright (C) 2016 Wiggins Lab
+ University of Washington, 2016
+ This file is part of SuperSeggerOpti.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="superSeggerOpti.html" class="code" title="function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box )">superSeggerOpti</a>	superSeggerOpti generates the initial segmentation of rod-shaped cells.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function mask_fill = fill_max_area( mask, maxA )</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)</a>
+0002 <span class="comment">% make_bg_mask : makes a background mask for the phase image</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% INPUT :</span>
+0005 <span class="comment">%       phase : phase image</span>
+0006 <span class="comment">%       filt_3 :</span>
+0007 <span class="comment">%       filt_4 :</span>
+0008 <span class="comment">%       AREA :</span>
+0009 <span class="comment">%       CONST : segmentation constants</span>
+0010 <span class="comment">%       crop_box :</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% OUTPUT :</span>
+0013 <span class="comment">%       mask : output cell mask</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+0016 <span class="comment">% University of Washington, 2016</span>
+0017 <span class="comment">% This file is part of SuperSeggerOpti.</span>
+0018 
+0019 
+0020 
+0021 crop_box = round( crop_box );
+0022 
+0023 
+0024 crop_rad = CONST.superSeggerOpti.crop_rad;
+0025 THRESH1  = CONST.superSeggerOpti.THRESH1;
+0026 THRESH2  = CONST.superSeggerOpti.THRESH2;
+0027 Amax     = CONST.superSeggerOpti.Amax;
+0028 
+0029 im_filt3 = imfilter(double(phase),filt_3,<span class="string">'replicate'</span>);
+0030 im_filt4 = imfilter(double(phase),filt_4,<span class="string">'replicate'</span>);
+0031 
+0032 tmp      = uint16(-(im_filt4-im_filt3));
+0033 nnn      = autogain( tmp );
+0034 
+0035 fmask    = imdilate(nnn&gt;THRESH1,strel(<span class="string">'disk'</span>,5));
+0036 fmask    = <a href="#_sub1" class="code" title="subfunction mask_fill = fill_max_area( mask, maxA )">fill_max_area</a>( fmask, Amax );
+0037 
+0038 mask     = imdilate(nnn&gt;THRESH2,strel(<span class="string">'disk'</span>,1));
+0039 mask     = and(mask,fmask);
+0040 
+0041 mask     = imdilate( mask, strel(<span class="string">'disk'</span>,2));
+0042 
+0043 mask     = <a href="#_sub1" class="code" title="subfunction mask_fill = fill_max_area( mask, maxA )">fill_max_area</a>( mask, Amax );
+0044 mask     = imerode( mask, strel(<span class="string">'disk'</span>,crop_rad));
+0045 
+0046 cc       = bwconncomp(mask);
+0047 stats    = regionprops(cc, <span class="string">'Area'</span>);
+0048 idx      = find([stats.Area] &gt; AREA);
+0049 mask     = ismember(labelmatrix(cc), idx);
+0050 
+0051 
+0052 <span class="keyword">if</span> ~isempty( crop_box );
+0053     mask(:,1:crop_box(2))   = false;
+0054     mask(:,crop_box(4):end) = false;
+0055     mask(1:crop_box(1),:)   = false;
+0056     mask(crop_box(3):<span class="keyword">end</span>,:) = false;
+0057     
+0058     mask(:,1:crop_box(2))   = false;
+0059     mask(:,crop_box(4):end) = false;
+0060     mask(1:crop_box(1),:)   = false;
+0061     mask(crop_box(3):<span class="keyword">end</span>,:) = false;
+0062 <span class="keyword">end</span>
+0063 
+0064 <span class="keyword">end</span>
+0065 
+0066 <a name="_sub1" href="#_subfunctions" class="code">function mask_fill = fill_max_area( mask, maxA )</a>
+0067 
+0068 fmask     = imfill( mask, <span class="string">'holes'</span> );
+0069 filled    = fmask.*~mask;
+0070 
+0071 cc = bwconncomp(filled);
+0072 stats = regionprops(cc, <span class="string">'Area'</span>);
+0073 idx = find([stats.Area] &lt; maxA);
+0074 added = ismember(labelmatrix(cc), idx);
+0075 
+0076 mask_fill = or(mask,added);
+0077 
+0078 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 23-Feb-2016 16:32:17 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
