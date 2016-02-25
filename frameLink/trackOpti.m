@@ -214,19 +214,20 @@ else
 end
 
 
-%% Find loci in each fluorescent channel
+%% Finds loci in each fluorescent channel
 if sum(CONST.trackLoci.numSpots(:))
-    stamp_name = [dirname_seg,'.trackOptiFindLoci.mat'];
+    stamp_name = [dirname_seg,'.trackOptiFindFociCyto.mat'];
     if ~exist( stamp_name, 'file' );
-        trackOptiFindLoci(dirname_seg, CONST, header);
+        trackOptiFindFociCyto(dirname_seg, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
     else
-        disp([header,'trackOpti: trackOptiFindLoci already run.']);
+        disp([header,'trackOpti: trackOptiFindFociCyto already run.']);
     end
 end
 
-%% Compute cell characteristics in make cells
+
+%% Computes cell characteristics in make cells
 stamp_name = [dirname_seg,'.trackOptiClist.mat'];
 if ~exist( stamp_name, 'file' );
     [clist] = trackOptiClist(dirname_seg, CONST, header);

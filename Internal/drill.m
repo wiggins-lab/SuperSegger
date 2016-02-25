@@ -2,8 +2,10 @@ function out = drill( dataA, str )
 % drill : outputs an array of objects from an array of
 % structures or cell array of structures of structures.
 %
-% for example dril (cellA.coord, A) should output an array of A from
-% A = CellA{:}.coord.A
+% For example for superSegger's cell files, if structure is CellA{:}.coord.A
+% calling A = drill ( CellA{:}, '.coord.A'), outputs A.
+% (note : don't forget the dot at the beginning of str!)
+%
 % INPUT :
 %       dataA: array of structures
 %       str : name of field to be extracted
