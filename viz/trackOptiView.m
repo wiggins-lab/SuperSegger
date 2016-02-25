@@ -450,8 +450,7 @@ while runFlag
         resetFlag = true;
         clf;
         axis( tmp_axis );
-        
-        
+               
     elseif c(1) == 'K' % Make Kymograph Mosaic for All Cells
         if D_FLAG == AD_FLAG
             tmp_axis = axis;
@@ -484,8 +483,7 @@ while runFlag
         else
             disp( 'Not supported in this mode.' );
         end
-        
-        
+                
     elseif c(1) == 'o' % Show existant consensus for this XY or calculate new one        
         intCons(dirname0, contents_xy(ixy), dircons, setHeader, CONST)%
                 

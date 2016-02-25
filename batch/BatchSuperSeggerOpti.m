@@ -63,7 +63,7 @@ dirname_ = fixDir(dirname_);
 if isstruct(res)
     CONST = res;
 else
-    disp (['BSSO : Loading constants file ', res]);
+    disp (['BatchSuperSeggerOpti : Loading constants file ', res]);
     if exist('loadConstantsMine','file');
         CONST = loadConstantsMine(res);
     else
@@ -84,7 +84,7 @@ end
 %% align frames
 if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
-        disp('BSSO: aligned images exist');
+        disp('BatchSuperSeggerOpti : aligned images exist');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
             crop_box_array = tmp.crop_box_array;
@@ -105,7 +105,7 @@ if exist( dirname_, 'dir' )
         end
     end
 else
-    disp( ['BSSO: Can''t find directory ''',dirname_,'''. Exiting.'] );
+    disp( ['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );
     return
 end
 
@@ -135,18 +135,18 @@ else
             dirname_list{i} = [dirname_,contents(i).name,filesep];
         end
     end
-    %nxy
+
     
-    % reset values for nc
+    % reset values for nc : array of channels (phase and fluorescent)
     contents = dir([dirname_list{1},'fluor*']);
     num_dir_tmp = numel(contents);
-    nc = 1;
+    nc = 1; 
     num_c = 1;
     
     for i = 1:num_dir_tmp
         if (contents(i).isdir) && (numel(contents(i).name) > numel('fluor'))
             num_c = num_c+1;
-            nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1];
+            nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1]; 
         end
     end
     %nc
@@ -176,7 +176,7 @@ else
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box_array{j} )
         
         if MM
-            disp( ['BSSO: No status bar. xy ',num2str(j), ...
+            disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
                 ' of ', num2str(num_xy),'.']);
         else
             waitbar( j/num_xy,h,...
@@ -234,7 +234,8 @@ end
 % intProcessXY
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box )
+function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
+    CONST, SEGMENT_FLAG, crop_box )
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
@@ -255,8 +256,8 @@ end
 contents=dir([dirname_xy,'phase',filesep,file_filter]);
 num_im = numel(contents);
 
-nz = [];
-nt = [];
+nz = []; % array of numbers of z frames
+nt = []; % array of frame numbers 
 
 for i = 1:num_im;
     nameInfo = ReadFileName( contents(i).name );   
@@ -270,14 +271,14 @@ nz = sort(unique(nz));
 num_t = numel(nt);
 num_z = numel(nz);
 
-if  isempty(nz) || nz(1)==-1
+if  isempty(nz) || nz(1)==-1 % no z frames
     nz = 1;
 end
 
 
 
 %% Do segmentation
-disp([header 'BSSO: Segmentation starts...']);
+disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
 
 if (CONST.parallel_pool_num>0)
     MM = CONST.parallel_pool_num; % number of workers
@@ -290,7 +291,7 @@ end
 if ~CONST.show_status
     h = [];
 else
-    h = waitbar( 0, ['BSSO: Frame 0/',num2str(num_t)] );
+    h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSeg.mat'];
@@ -311,7 +312,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
             clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp );
         
         if ~CONST.show_status
-            disp( [header, 'BSSO: Segment. Frame ',num2str(i), ...
+            disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
                 ' of ', num2str(num_t),'.']);
         else
             waitbar( i/num_t, h,...
@@ -341,26 +342,26 @@ function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
 % If the seg files are already found it does not repeat the segmentation.
 % It calls the segmentation function found in CONST.seg.segFun to achieve
-% this. 
-% Note that these images are not ideally segmented because they do not use
-% any temporal information, i.e. what came before or after, to optimize the 
-% segment choices; this comes next
-
-% It uses a local minimum filter (similar to a median filter) to enhance 
-% contrast and then uses Matlab's WATERSHED command to generate cell
-% boundaries. The spurious boundaries (e.g. those that lie in the cell 
-% interiors) are removed by an intensity thresholding routine on each 
-% boundary. Any real boundaries incorrectly removed by this thresholding 
-% are added back by an iterative algorithm that uses knowledge of 
-% cell shape (set by the RES value passed in the Constants file) to 
-% determine which regions are missing boundaries. There is a lot of stuff
-% going on under the hood here, but you?ll rarely have to adjust anything 
-% in this code. 
-
+% this. The images are not ideally segmented at this stage because they do
+% not use temporal information, i.e. what came before or after, to optimize 
+% the segment choices; this comes at the linking stage.
 % After it segments the data it copies the fluor fields into the data 
-% structure and save this structure in the seg directory.
-
-
+% structure and saves this structure in the seg directory.
+%
+% INPUT :
+%         i : frame number
+%         nameInfo :
+%         nc : array of channel numbers
+%         nz : array of z values
+%         nt : array of time frames 
+%         num_z : number of z's
+%         num_c : number of channels
+%         dirname_xy : xy directory
+%         clean_flag : redo segmentation if set to true
+%         skip : how many frames to skip
+%         CONST : segmentation constants
+%         header : information string
+%         crop_box : alignment information
 
 
 % Init
@@ -368,6 +369,12 @@ data = [];
 
 % make the segment file name and check if it already exists
 nameInfo_tmp = nameInfo;
+
+% i think i can just replace all this with : 
+% name = MakeFileName(nameInfo)
+% name = name(1:nameInfo.npos(1,3)) % and then i get  imagename-tXX
+
+
 nameInfo_tmp.npos([2,4],:) = 0;
 nameInfo_tmp.npos(1,1) = nt(i);
 name = MakeFileName( nameInfo_tmp );
@@ -380,12 +387,12 @@ dataname=[dirname_xy,'seg',filesep,name,'_seg.mat'];
 if ~exist(dataname,'file') || clean_flag 
     nameInfo_tmp = nameInfo;
     nameInfo_tmp.npos(1,1) = nt(i);
-    nameInfo_tmp.npos(4,1) = 1;
+    nameInfo_tmp.npos(4,1) = 1; % z value
     name = MakeFileName(nameInfo_tmp);
     namePhase = [dirname_xy,'phase',filesep,name];    
     phase = imread( namePhase );
     
-    if num_z > 1
+    if num_z > 1 % if there are z frames
         phaseCat = zeros( [size(phase), num_z], 'uint16' );
         phaseCat(:,:,1) = phase;
         
@@ -393,14 +400,11 @@ if ~exist(dataname,'file') || clean_flag
             nameInfo_tmp.npos(4,1) = iz;
             name  = MakeFileName(nameInfo_tmp);
             phaseCat(:,:,iz) =  imread( [dirname_xy,'phase',filesep,name] );
-        end
-        
-        phase = mean( phaseCat, 3);
-        
+        end        
+        phase = mean( phaseCat, 3);      
     end
     
     if ~mod(i-1,skip)
-        
         % do the segmentation here
         [data, err_flag] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box );
         if ~isempty( crop_box )

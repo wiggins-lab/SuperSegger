@@ -328,7 +328,7 @@ ss = size(im);
 
 if CROP_FLAG
     cropper = [ceil(1+maxs(1)),ceil(1+maxs(2)),...
-        floor(ss(1)+mins(1)),floor(ss(2)+mins(2))]
+        floor(ss(1)+mins(1)),floor(ss(2)+mins(2))];
 else
     cropper = [1,1,ss(1),ss(2)];
 end

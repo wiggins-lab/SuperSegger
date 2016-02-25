@@ -13,11 +13,6 @@ function trackOptiPD(dirname, CONST)
 
 file_filter = '*.tif';
 
-
-
-dirseperator = filesep;
-
-
 if(nargin<1 || isempty(dirname))    
     dirname=uigetdir()
 end
@@ -77,13 +72,13 @@ if ~isempty(contents);
     for i = 1:num_xy 
         % creates the needed xy directories with phase, fluor, seg and cell
         % sub-directories
-        dirname_list{i} = [dirname,'xy',num2str(nxy(i), padString),dirseperator];
+        dirname_list{i} = [dirname,'xy',num2str(nxy(i), padString),filesep];
         mkdir( dirname_list{i} );
-        mkdir( [dirname_list{i},'phase', dirseperator] );
-        mkdir( [dirname_list{i},'seg',   dirseperator] );
-        mkdir( [dirname_list{i},'cell',  dirseperator] );
+        mkdir( [dirname_list{i},'phase', filesep] );
+        mkdir( [dirname_list{i},'seg',   filesep] );
+        mkdir( [dirname_list{i},'cell',  filesep] );
         for j = 2:num_c
-            mkdir( [dirname_list{i},'fluor',num2str(j-1),dirseperator] );
+            mkdir( [dirname_list{i},'fluor',num2str(j-1),filesep] );
         end
     end
     
@@ -92,35 +87,37 @@ if ~isempty(contents);
     else
         h = [];
     end
-    for i = 1:num_im;
+    
+    for i = 1:num_im; % goes through all the images
         if CONST.show_status
             waitbar(i/num_im,h);
         end
+        
         nameInfo = ReadFileName( contents(i).name );
         
-        it  = nameInfo.npos(1,1);
-        ic  = nameInfo.npos(2,1);
-        ixy = nameInfo.npos(3,1);
-        iz  = nameInfo.npos(4,1);
+        it  = nameInfo.npos(1,1); % time
+        ic  = nameInfo.npos(2,1); % channel
+        ixy = nameInfo.npos(3,1); % xy position
+        iz  = nameInfo.npos(4,1); % z position
                
-        if ixy==-1
+        if ixy == -1
             ii = 1;
         else
             ii = find(ixy==nxy);
         end
         
-        if ic ==-1
+        if ic == -1
             ic  = 1;
         end
         
         
         if ic == 1
-            tmp_target =  [dirname_list{ii},'phase', dirseperator];
+            tmp_target =  [dirname_list{ii},'phase', filesep];
         else
-            tmp_target =  [dirname_list{ii},'fluor',num2str(ic-1),dirseperator];
+            tmp_target =  [dirname_list{ii},'fluor',num2str(ic-1),filesep];
         end
         
-        tmp_source =   [dirname,contents(i).name];
+        tmp_source = [dirname,contents(i).name];
         movefile( tmp_source, tmp_target ,'f');
                 
     end
