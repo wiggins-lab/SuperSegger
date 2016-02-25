@@ -203,8 +203,8 @@ for ii = 1:data.regs.num_regs
     focus = focus0;
 
     for jj = 1:nfocus
-        Iten = max_disk_ii__(jj);%-A*Imean;
-        %score = Iten/(Istd);
+        Iten = max_disk_ii__(jj);
+
         score = Iten/(Istd_B);
         
         
@@ -215,7 +215,6 @@ for ii = 1:data.regs.num_regs
         focus(jj).b               = 1;
         focus(jj).error           = nan;
         
-        %focus(jj).r = focus(jj).r + data.CellA{ii}.r_offset-[1,1];
         focus(jj).shortaxis = ...
             (focus(jj).r-data.CellA{ii}.coord.rcm)*data.CellA{ii}.coord.e2;
         focus(jj).longaxis = ...
@@ -236,121 +235,3 @@ end
 
 
 end
-% 
-% function junk
-% %% Add the focus to the right cell
-% if ~isempty( cell_num )
-%     if isfield( data.CellA{cell_num}, fieldname )
-%         focus_old = [getfield( data.CellA{cell_num}, fieldname ),...
-%             focus];
-%     else
-%         focus_old = [focus];
-%     end
-%     
-%     data.CellA{cell_num} = setfield( data.CellA{cell_num}, fieldname, focus_old );
-% end
-% 
-% 
-% %%
-% 
-% if disp_flag2
-%     figure(1);
-%     if cell_num
-%    plot( x,y, '.b' ) 
-%     else
-%            plot( x,y, '.r' ) 
-% 
-%     end
-%     
-% end
-% 
-% end
-% 
-% function tmp
-% %% Renormaze scores by cell
-% % Use the std of the model that include subtracking foci
-% for ii = 1:data.regs.num_regs
-%     if ii == 207;
-%        'hi'; 
-%     end
-%     if isfield( data.CellA{ii}, fieldname )
-%         
-%         xx = data.CellA{ii}.xx+crop;
-%         yy = data.CellA{ii}.yy+crop;
-%         
-%         im_ii = model_(yy,xx);
-%         
-%         mask_ii = data.CellA{ii}.mask;
-%         
-%         dI_ii = std( double(im_ii(mask_ii)));
-%         
-%         focus = getfield( data.CellA{ii}, fieldname  );
-%         num_loc = numel(focus);
-%         
-%         score_vec = [focus(:).score];
-%         [~,ord_sort] = sort( score_vec, 'descend' );
-%         focus = focus( ord_sort );
-%         
-%          for jj = 1:num_loc
-%              focus(jj).intensity_score = focus(jj).intensity_score*dI0/dI_ii;
-%              focus(jj).score           = focus(jj).score*dI0/dI_ii;
-%              
-%              focus(jj).shortaxis = ...
-%                (focus(jj).r-data.CellA{ii}.coord.rcm)*data.CellA{ii}.coord.e2;
-%              focus(jj).longaxis = ...
-%                (focus(jj).r-data.CellA{ii}.coord.rcm)*data.CellA{ii}.coord.e1;
-%          end
-%         
-%         
-%     else
-%         focus = focus0([]);
-%     end
-%     
-%     data.CellA{ii} = setfield( data.CellA{ii}, fieldname, focus );
-% end
-% 
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     function C = do_the_fit( ddd )
-%         
-%         gg = g_fit_fun(xx2,yy2,ddd(1),ddd(2),ddd(3),I0,ddd(4));
-%         
-%         %tmp = (im(iy2,ix2)-gg).*mask_crop(iy2,ix2);
-%         %tmp = (double(imm)-gg).*mask_crop(iy2,ix2);
-%         %tmp = (double(imm)-gg).*mask_crop(iy2,ix2);
-%         
-%         tmp = (double(imm)-gg);%.*mask_crop_for_fit(iy2,ix2);
-%         C = sum(tmp(logical(mkk)).^2);
-%         
-%         if disp_flag
-%             ddd(4);
-%             
-%             figure(3);
-%             clf;
-%             imshow( cat(3,ag([gg,imm]),ag([~mkk,~mkk]),0*[mkk,mkk]));
-%             '';
-%         end
-%     end
-% 
-% end
-% 
-% 
-% 
-% 
-% 
-% 
-% %%%%%%%%%%%%%%%%%%
-% %
-% % Gaussian Fit function
-% %
-% %%%%%%%%%%%%%%%%%%
-% 
-% function C = g_fit_fun(X,Y,x0,y0,IG,I0,b1)
-% 
-% C = I0 + IG*exp( -((X-x0).^2+(Y-y0).^2)/(2*b1^2) );
-% 
-% end
-% 
-
-
-

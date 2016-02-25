@@ -123,7 +123,7 @@ for i = 1:num_im;
         tmp_fn = fieldnames( data_c );
         nf = numel( tmp_fn );
         for j = 1:nf;
-            if(strfind(tmp_fn{j},'fluor')==1)
+            if numel(strfind(tmp_fn{j},'fluor')==1)&& ~numel((strfind(tmp_fn{j},'fluor0')))
                 nc = nc+1;
             end
         end
@@ -147,6 +147,8 @@ for i = 1:num_im;
         ss = size(data_c.phase);
         
         [xx,yy]        = getBBpad( data_c.regs.props(ii).BoundingBox, ss, PAD_SIZE);
+        celld.xx = xx;
+        celld.yy = yy;
         celld.mask     = logical(data_c.regs.regs_label(yy,xx)==ii);
         celld.r_offset = [xx(1),yy(1)];
         celld.BB       = [xx(1),yy(1),xx(end)-xx(1),yy(end)-yy(1)];

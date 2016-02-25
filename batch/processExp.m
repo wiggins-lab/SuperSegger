@@ -49,7 +49,7 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % Using correct resolution ensures correct pixel size and segmentation constants
 % '60XEc' : loadConstants 60X Ecoli
 % '100XEc': loadConstants 100X Ecoli
-res = '100XEc';
+res = '60XEc';
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
