@@ -1,27 +1,42 @@
-function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST );
+function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel, filt_channel );
 % makeKymographC creates a kymograph for given cell.
-% A kymograph shows the fluorescence of the cell along the long axis 
+% A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
-%  
+%
 % INPUT :
 %       data : cell data file
 %       disp_flag : 1 to display image, 0 to not display image
 %       CONST : segmentation parameters
+%       which_channel :
+%       filt_channel :
 % OUTPUT :
 %       Kymo: Kymo has images at .r .g and .b fields. The combination of
 %       which produces the kymgraph.
 %       ll1:  ? does not seem to be set anywhere
 %       f1mm: is the green channel kymogrpah
 %       f2mm: is the red channel kymograph
-%   
-% Copyright (C) 2016 Wiggins Lab 
+%
+% Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
+
 
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end
+
+
+
+if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
+    which_channel = [1,1,1];
+end
+
+if ~exist( 'filt_channel', 'var' ) || isempty(filt_channel)
+    filt_channel = [0,0,0];
+end
+
+
 
 %figure(1);
 persistent colormap_;
@@ -71,36 +86,49 @@ kymoB = zeros(nn,num_im);
 e1old = [];
 
 for ii = 1:num_im
+    
     mask  = data.CellA{ii}.mask;
     
-    back  = autogain(data.CellA{ii}.phase);
-    
-    if isfield( data.CellA{ii}, 'fluor1')
-        fluor1  = data.CellA{ii}.fluor1;
+    if isfield( data.CellA{ii}, 'fluor1') && which_channel(1)
         
-        if isfield( data.CellA{ii}, 'fl1' ) && ...
-                isfield( data.CellA{ii}.fl1, 'bg' )
-            fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
-            fluor1(fluor1<0) = 0;
+        if filt_channel(1) && ...
+                isfield( data.CellA{ii}, 'fluor1_filtered' )
+            
+            fluor1 =data.CellA{ii}.fluor1_filtered;
         else
-            fluor1 = fluor1 - mean( fluor1(mask));
-            fluor1(fluor1<0) = 0;
+            fluor1  = data.CellA{ii}.fluor1;
+            
+            if isfield( data.CellA{ii}, 'fl1' ) && ...
+                    isfield( data.CellA{ii}.fl1, 'bg' )
+                fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
+                fluor1(fluor1<0) = 0;
+            else
+                fluor1 = fluor1 - mean( fluor1(mask));
+                fluor1(fluor1<0) = 0;
+            end
         end
+        
+        
     else
-        fluor1 = 0*data.CellA{ii}.mask;
+        fluor1 = 0*mask;
     end
     
-    if isfield( data.CellA{ii}, 'fluor2')
-        fluor2 = data.CellA{ii}.fluor2;
-        
-        if isfield( data.CellA{ii}, 'fl12' ) && ...
-                isfield( data.CellA{ii}.fl2, 'bg' )
-            fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
-            fluor2(fluor1<0) = 0;
-        else
-            fluor2 = fluor2 - mean( fluor2(mask));
-            fluor2(fluor2<0) = 0;
+    if isfield( data.CellA{ii}, 'fluor2') && which_channel(2)
+        if filt_channel(2) && ...
+                isfield( data.CellA{ii}, 'fluor2_filtered' )
             
+            fluor2 = data.CellA{ii}.fluor2_filtered;
+        else
+            fluor2 = data.CellA{ii}.fluor2;
+            if isfield( data.CellA{ii}, 'fl12' ) && ...
+                    isfield( data.CellA{ii}.fl2, 'bg' )
+                fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
+                fluor2(fluor1<0) = 0;
+            else
+                fluor2 = fluor2 - mean( fluor2(mask));
+                fluor2(fluor2<0) = 0;
+                
+            end
         end
     else
         fluor2 = 0*data.CellA{ii}.mask;
@@ -111,7 +139,7 @@ for ii = 1:num_im
     mask  = data.CellA{ii}.mask;
     outline= mask_-mask;
     
-    maski = autogain(outline);
+    %maski = autogain(outline);
     
     % Make all the images the same sizes
     [rChan,roffset] = (fixIm(double(fluor2).*double(mask),ss));
@@ -160,39 +188,20 @@ else
     
 end
 
-f1mm(1) = min( Kymo.g(logical(Kymo.b)));
-f1mm(2) = max( Kymo.g(logical(Kymo.b)));
-
-f2mm(1) = min( Kymo.r(logical(Kymo.b)));
-f2mm(2) = max( Kymo.r(logical(Kymo.b)));
 
 if disp_flag
     
     if CONST.view.falseColorFlag
         clf;
-        
         backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)>1);
         f1mm(1) = min( Kymo.g(logical(Kymo.b)));
         f1mm(2) = max( Kymo.g(logical(Kymo.b)));
-        
-        f2mm(1) = min( Kymo.r(logical(Kymo.b)));
-        f2mm(2) = max( Kymo.r(logical(Kymo.b)));
-               
         im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
-        
         imagesc( im.*backer3+.6*(1-backer3) );
-        
     else
-        
-        clf;      
+        clf;
         backer = autogain(Kymo.b);
         backer = 0.3*(max(backer(:))-backer);
-        f1mm(1) = min( Kymo.g(logical(Kymo.b)));
-        f1mm(2) = max( Kymo.g(logical(Kymo.b)));
-        
-        f2mm(1) = min( Kymo.r(logical(Kymo.b)));
-        f2mm(2) = max( Kymo.r(logical(Kymo.b)));
-        
         imagesc( cat(3, autogain(Kymo.r )+backer, ...
             autogain(Kymo.g)+backer,...
             backer ));
@@ -216,8 +225,8 @@ end
 
 try
     imFix(offset(1)+(1:ssOld(1)),offset(2)+(1:ssOld(2))) = im;
-catch
-    '';
+catch ME
+    printError(ME);
 end
 roffset = offset(2:-1:1);
 imFix = imFix;
