@@ -2,14 +2,16 @@ function fl = trackOptiCellFluor( fluor, mask, r_offset )
 % trackOptiCellFluor : Computes fluorescence statistics
 %
 % INPUT :
-%       fluor: fluor image
+%       fluor: fluorescence image
 %       mask : cell mask
 %       r_offset : offset in global coordinates
 % OUTPUT :
-%       fl.r :
-%       fl.Ixx :
-%       fl.Iyy :
-%       fl.Ixy :
+%       fl.r : the coordinates of the center of mass of the fluorescence
+%       fl.Ixx : normalized sum of the square of background fluorescence 
+%       along the X direction of the cell
+%       fl.Iyy : normalized sum of the square of background fluorescence 
+%       along the Y direction of the cell
+%       fl.Ixy : normalized sum of fluorescence along the Y * X direction
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016

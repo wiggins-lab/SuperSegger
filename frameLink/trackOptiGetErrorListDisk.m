@@ -42,6 +42,6 @@ end
 error_list = error_list';
 end
 
-function data = loaderInternal( filename );
+function data = loaderInternal( filename )
 data = load( filename );
 end

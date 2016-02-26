@@ -26,6 +26,20 @@ function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,...
 
 del = 0.0;
 imMosaic10 = [];
+imMosaic=[];
+imColor=[];
+imBW=[];
+imInv=[];
+kymo=[];
+kymoMask=[];
+kymoMaskMax =[];
+I=[];
+kymoMax=[];
+imBWunmasked=[];
+imBWmask=[] ;
+hotPix=[];
+AA=[];
+BB=[];
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
@@ -78,19 +92,20 @@ h = waitbar(0, 'Computation' );
 
 % initialize the sum variables
 dataImArray = intInit( numCells );
-
-
-
+minimumLifetime = 4;
 imArray = cell(1,numCells);
 ii_ = 0;
+
+if ~isfield(load([dirName,contents(1).name]),'fluor1')
+    disp ('no fluorescence found - exiting')
+    return;
+end
 
 % loop through the cells to make the consensus image and the mosaic
 for ii = 1:numCells
     
     % update status bar
-    %if disp_flag
     waitbar(ii/numCells,h);
-    %end
     
     
     % load data and get file number
@@ -102,10 +117,8 @@ for ii = 1:numCells
     mag = 4;
     
     % Compute consensus images for cell in data
-    if numel(data.CellA) > 4
-        
-        ii_ = ii_ + 1;
-        
+    if numel(data.CellA) > minimumLifetime       
+        ii_ = ii_ + 1;        
         dataIm = makeTowerCons(data,CONST,1,false, skip, mag );
         
         % Scale images down to the original size
@@ -113,7 +126,6 @@ for ii = 1:numCells
         
         % update the sums
         dataImArray = intUpdate( dataImArray, dataIm, ii_  );
-        
     end
 end
 

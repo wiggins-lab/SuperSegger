@@ -1,6 +1,7 @@
 function mask4 = make_bg_mask_Pa_(phase_, filt_3, filt_4, AREA, CONST, crop_box)
 % make_bg_mask_Pa : makes a background mask for the phase image
 % used for Pseudomonas cells.
+% To find cells in the middle of a colony
 %
 % INPUT :
 %       phase : phase image
@@ -23,8 +24,6 @@ debug_flag = false;
 crop_box = round( crop_box );
 f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phase = imfilter(phase_, f,'replicate');
-
-
 crop_rad = CONST.superSeggerOpti.crop_rad;
 THRESH1 = 50;
 THRESH2  = CONST.superSeggerOpti.THRESH2;

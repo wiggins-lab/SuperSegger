@@ -1,6 +1,24 @@
 function [data] = regionOpti( data, dispp, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
-%  Paul Wiggins, 07/24/2010
+% It turns off on and off segments using a systematic method, or simulated
+% anneal, according to the number of segments to be considered.
+% if the number of segments are more than MAX_NUM_RESOLVE
+% it uses the rawScore
+% if the number of segments are more than MAX_NUM_SYSTEMATIC
+% it runs simulated anneal
+% and if it is below that it uses a systematic function.
+%
+% INPUT :
+%       data : data with segs field (.err data or .trk data)
+%       dissp : display flag
+%       CONST : segmentation constants
+%       header : information string
+% OUTPUT :
+%       data : data structure with modified segments
+%
+% Copyright (C) 2016 Wiggins Lab
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
 MAX_WIDTH          = CONST.regionOpti.MAX_WIDTH;
 MAX_LENGTH         = CONST.regionOpti.MAX_LENGTH;
@@ -8,19 +26,15 @@ CutOffScoreHi      = CONST.regionOpti.CutOffScoreHi;
 CutOffScoreLo      = CONST.regionOpti.CutOffScoreLo;
 MAX_NUM_RESOLVE    = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
-
-DE_norm          = CONST.regionOpti.DE_norm;
+DE_norm            = CONST.regionOpti.DE_norm;
 
 if ~exist('header')
     header = [];
 end
 
 if nargin < 2 || isempty('dispp');
-    
     dispp = 1;
-    
 end
-
 
 
 % Turn on and off segs outside the cutoff.
@@ -29,65 +43,27 @@ segs_3n    = data.segs.segs_3n;
 segs_bad   = 0*data.segs.segs_3n;
 segs_good  = segs_bad;
 segs_good_off  = segs_bad;
-
 ss = size(segs_3n);
-
 num_segs_ = numel(data.segs.score);
-
-% tic
-% for ii = 1:num_segs_
-%     [xx,yy] = getBB(data.segs.props(ii).BoundingBox);
-%
-%     if data.segs.scoreRaw(ii) > CutOffScoreHi
-%         segs_3n(yy,xx)    = segs_3n(yy,xx) + (segs_label(yy,xx)==ii);
-%         segs_label(yy,xx) = segs_label(yy,xx) - ii*(segs_label(yy,xx)==ii);
-%
-%     elseif data.segs.scoreRaw(ii) < CutOffScoreLo
-%         segs_bad(yy,xx)    = segs_bad(yy,xx) + (segs_label(yy,xx)==ii);
-%         segs_label(yy,xx) = segs_label(yy,xx) - ii*(segs_label(yy,xx)==ii);
-%     end
-% end
-% toc
-%
-% tic
 above_Hi_ind = find(data.segs.scoreRaw > CutOffScoreHi);
 below_Lo_ind = find(data.segs.scoreRaw < CutOffScoreLo);
 segs_3n = segs_3n + double(ismember(segs_label, above_Hi_ind));
 segs_bad = double(ismember(segs_label, below_Lo_ind));
 segs_label(logical(segs_3n+segs_bad)) = 0;
-% toc
 
-
-%segs_bad = double(segs_bad>0);
-%toc
-
-%disp('find shorties');
-%tic
-%----------------------------------------------------------------------
-%
 % Find short regions and add surrounding segments to the stack
-%
-%----------------------------------------------------------------------
-
 mask_regs = double((data.mask_bg-segs_3n)>0);
 regs_label =  (bwlabel( mask_regs, 4 ));
 regs_props = regionprops( regs_label, 'BoundingBox','Orientation' );
 num_regs   = max( regs_label(:));
 segs_added = [];
-
 disp([header, 'rO: Got ',num2str(num_regs),' regions.']);
-
 
 for ii = 1:num_regs
     
     [xx,yy] = getBBpad(regs_props(ii).BoundingBox,ss,2);
-    
     tmp_mask = (regs_label(yy,xx)==ii);
-    
     [L1,L2] = makeRegionSizeProjectionBBint2( tmp_mask, regs_props(ii) );
-    
-    
-    
     debug_flag = 0;
     
     if debug_flag
@@ -99,9 +75,7 @@ for ii = 1:num_regs
     
     
     if L1 < MAX_LENGTH;
-        
         tmp_mask = imdilate(tmp_mask, strel('square',3));
-        
         tmp_added = unique( tmp_mask.*data.segs.segs_label(yy,xx).*segs_3n(yy,xx));
         tmp_added = tmp_added(logical(tmp_added));
         tmp_added = reshape(tmp_added,1,numel(tmp_added));
@@ -112,72 +86,30 @@ end
 
 
 
-
+% all segments above the high cutoff are added to segs_3n
+% (which are the hard segments, ie always on) and the segmentss below the
+% low cutoff were added to segs_bad, and removed from the local copy of
+% segs_label.
 segs_added = unique(segs_added);
-
-% segs_3n_old    = segs_3n;
-% segs_label_old = segs_label;
-% if ~isempty( segs_added)
-%     for ii = segs_added
-%
-%         [xx,yy] = getBB(data.segs.props(ii).BoundingBox);
-%
-%         segs_3n(yy,xx) = segs_3n(yy,xx) - double(ii==data.segs.segs_label(yy,xx));
-%         segs_label(yy,xx) = segs_label(yy,xx) + ii*(data.segs.segs_label(yy,xx)==ii);
-%     end
-% end
-% segs_3n_1    = segs_3n;
-% segs_label_1 = segs_label;
-%
-% segs_3n    = segs_3n_old;
-% segs_label = segs_label_old;
-%
-
 segs_added_ = ismember( data.segs.segs_label, segs_added);
 segs_3n(segs_added_) = 0;
 segs_label(segs_added_) = data.segs.segs_label(segs_added_);
 
 
-
-%toc
-%---------------------------------------------------------------------
-% as a result of that code, we now have added all the segments above the
-% high cutoff to segs_3n, which is always on and added the segs below the
-% low cutoff to segs_bad, and have removed them from the local copy of
-% segs_label.
-
-
+% mask_regs is the super mask of all boundaries + segments that are
+% permanently on
 mask_regs = double((data.mask_bg-segs_3n)>0);
-regs_label = (bwlabel( mask_regs, 4 ));
+regs_label = (bwlabel( mask_regs, 4 )); % labels these regions.
 regs_props = regionprops( regs_label, 'BoundingBox','Orientation'  );
 num_regs   = max( regs_label(:));
 
-% mask_regs is the super mask of all boundaries + stuff that has to be on.
-% regs_label labels these regions.
 rs_list = cell(1,num_regs);
-
-%disp('main loop')
-%tic
 
 ss = size(data.phase);
 
 for ii = 1:num_regs
-    
-    % if dispp
-    %  ii/num_regs
-    %end
-    %   if ii == 25
-    
-    %      'hi'
-    %    end
-    
     [xx,yy] = getBBpad(regs_props(ii).BoundingBox,ss,2);
-    
     cell_mask = (regs_label(yy,xx) == ii);
-    
-    
-    %imshow( cat(3,autogain(cell_mask), autogain(regs_label(yy,xx)>0),autogain(cell_mask)*0));
-    
     
     % get the names of the remaining segments that are in this region.
     segs_list = unique( cell_mask.*segs_label(yy,xx));
@@ -188,29 +120,19 @@ for ii = 1:num_regs
     
     rs_list{ii} = segs_list;
     
-    %if ~isempty( segs_list )
     
-    % If there are too many regions to resolve, turn the highest abs
+    % If there are too many regions to resolve, turn the highest as
     % scores on as predicted by seg scores
     
     
     
-    % -----------------------------------------------------------------
-    %
-    % Turn on guys who would help resolve cells that are too wide
-    %
-    % -----------------------------------------------------------------
-    
+    % Turn on segments who would help resolve cells that are too wide
     % First turn everything on in the seg_list and check to make sure that
     % the regions are small enough.
     tmp_segs = cell_mask;
     
-    %for ff = segs_list;
-    %    tmp_segs = tmp_segs-(ff==segs_label(yy,xx));
-    %end
     
     tmp_segs = cell_mask-ismember( segs_label(yy,xx),segs_list );
-    
     tmp_segs = double(tmp_segs>0);
     tmp_label = (bwlabel( tmp_segs, 4 ));
     tmp_props = regionprops( tmp_label, 'BoundingBox','Orientation'  );
@@ -224,7 +146,6 @@ for ii = 1:num_regs
         [L1,L2] = makeRegSize( tmp_mask, tmp_props(ff) );
         
         if L2 > MAX_WIDTH;
-            
             tmp_added = unique( tmp_mask.*data.segs.segs_label(yy,xx));
             tmp_added = tmp_added(logical(tmp_added));
             tmp_added = reshape(tmp_added,1,numel(tmp_added));
@@ -232,36 +153,15 @@ for ii = 1:num_regs
         end
     end
     
-    
-    %tmp_segs2 = cell_mask*0;
-    %
-    %         for ff = segs_added;
-    %             tmp_segs2 = tmp_segs2+(ff==data.segs.segs_label(yy,xx));
-    %         end
-    %
-    %         imshow( cat(3,autogain(tmp_segs),autogain(0<data.segs.segs_label(yy,xx)),autogain(tmp_segs2)));
-    %         ''
-    
     segs_list = unique([segs_list,segs_added]);
     
-    
-    
-    
-    
     if isempty(segs_list)
-        
         [vect] = [];
-        
-    elseif numel(segs_list) > MAX_NUM_RESOLVE
-        
+    elseif numel(segs_list) > MAX_NUM_RESOLVE % use raw score
         disp([header, 'rO: Too many regions to analyze (',num2str(numel(segs_list)),').']);
-        
         [vect] = data.segs.scoreRaw(segs_list)>0;
-        
-    elseif numel(segs_list) > MAX_NUM_SYSTEMATIC
-        
+    elseif numel(segs_list) > MAX_NUM_SYSTEMATIC % use simulated anneal
         disp([header, 'rO: Simulated Anneal (',num2str(numel(segs_list)),').']);
-        
         debug_flag = 0;
         
         if debug_flag
@@ -285,114 +185,65 @@ for ii = 1:num_regs
             
             pause;
         else
-            
             [vect] = simAnnealFast( segs_list, data, ...
                 cell_mask, xx, yy, CONST, debug_flag);
-            
-            %            [vect] = simAnneal( segs_list, data, ...
-            %                cell_mask, xx, yy, CONST, debug_flag);
-            %
         end
-        %disp('Done');
-    else
-        
+    else % use systematic
         [vect] = systematic( segs_list, data, cell_mask, xx, yy, CONST);
-        
     end
     
     num_segs = numel(segs_list);
     
-    %size(vect)
-    %     for kk = 1:num_segs
-    %         segs_good(yy,xx)     = segs_good(yy,xx)+vect(kk)*(segs_list(kk)==data.segs.segs_label(yy,xx));
-    %         segs_good_off(yy,xx) = segs_good_off(yy,xx)+double(~vect(kk))*(segs_list(kk)==data.segs.segs_label(yy,xx));
-    %     end
-    %
     try
         segs_good(yy,xx)     = segs_good(yy,xx)     + ismember( data.segs.segs_label(yy,xx), segs_list(logical(vect)));
         segs_good_off(yy,xx) = segs_good_off(yy,xx) + ismember( data.segs.segs_label(yy,xx), segs_list(~vect));
-    catch
-        'hi'
+    catch ME
+        printError(ME);
     end
     
-    %end
 end
 
 data.mask_cell = double((data.mask_bg-segs_3n-segs_good)>0);
-%toc
 
-%disp('Cleanup');
-%tic
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % reset the seg scores incase you want to use this with segsManage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 segs_on_ind = unique((~data.mask_cell).*data.segs.segs_label);
 segs_on_ind = segs_on_ind(logical(segs_on_ind));
 data.segs.score(segs_on_ind) = 1;
-
 segs_off_ind = unique((data.mask_cell).*data.segs.segs_label);
 segs_off_ind = segs_off_ind(logical(segs_off_ind));
 data.segs.score(segs_off_ind) = 0;
-
-
 cell_mask = data.mask_cell;
-
 data.segs.segs_good   = double(data.segs.segs_label>0).*double(~data.mask_cell);
 data.segs.segs_bad   = double(data.segs.segs_label>0).*data.mask_cell;
 
-%toc
+
 
 if dispp
     back = double(0.7*ag( data.phase ));
-    
     outline = imdilate( cell_mask, strel( 'square',3) );
     outline = ag(outline-cell_mask);
-    
-    %     imshow(cat(3,0.5*autogain(cell_mask)+0.5*autogain(segs_good),...
-    %         0.5*autogain(cell_mask)+0.25*autogain(segs_good_off>0),...
-    %         0.5*autogain(cell_mask)+.5+autogain((segs_bad-segs_good_off-segs_good)>0)),'InitialMagnification','fit');
-    %     drawnow;
-    
     segs_never = ((segs_bad-segs_good_off-segs_good)>0);
     segs_tried = ((segs_good_off + segs_good)>0);
     
-    %     imshow(uint8(cat(3,back + 1.00*double(outline),...
-    %         back + 0.3*double(ag(segs_tried)),...
-    %         back + 0.2*double(ag(~cell_mask)-outline) + 0.7*double(ag(segs_never)))),'InitialMagnification','fit');
-    %
     try
         clf
         imshow(uint8(cat(3,back + 1.00*double(outline),...
             back + 0.3*double(ag(segs_tried)),...
             back + 0.3*double(ag(segs_tried)).*double(segs_good_off) + 0.2*double(ag(~cell_mask)-outline) + 0.5*double(ag(segs_never)))));
-    catch
-        '';
+    catch ME
+        printError(ME);
     end
     drawnow;
     
 end
 end
 
-% function nn = makeAddress( vect )
-%
-% nn = 0;
-% n = numel(vect);
-%
-% for i=n-1:-1:0;
-%     nn = nn + vect(i+1)*2^i;
-% end
-%
-% end
 
 function vect = makeVector( nn, n )
-
 vect = zeros(1,n);
 for i=n-1:-1:0;
-    
-    
-    
     vect(i+1) = floor(nn/2^i);
-    
     nn = nn - vect(i+1)*2^i;
 end
 
@@ -432,27 +283,26 @@ for jj = 1:num_comb;
     info = zeros(num_regs_mod, CONST.regionScoreFun.NUM_INFO);
     
     ss_regs_label_mod = size( regs_label_mod );
-    %disp(['num regs: ', num2str(num_regs_mod)] );
+    
     for mm = 1:num_regs_mod;
-        
         
         [xx_,yy_] = getBBpad( tmp2_props(mm).BoundingBox, ss_regs_label_mod, 1);
         
         try
             mask = regs_label_mod(yy_,xx_)==mm;
-        catch
-            '';
+        catch ME
+            printError(ME);
         end
         
         try
             info(mm,:) = CONST.regionScoreFun.props( mask, tmp2_props(mm)  );
-        catch
+        catch ME
             disp('Big error!');
+            printError(ME);
         end
         
         if debug_flag
             disp(['reg ', num2str(mm), ' sc ', num2str(CONST.regionScoreFun.fun(info(mm,:),CONST.regionScoreFun.E))]);
-            % [info,CONST.regionScoreFun.fun(info)]
         end
     end
     
@@ -460,23 +310,19 @@ for jj = 1:num_comb;
     regionScore(jj) = sum(-CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E))+...
         sum((1-2*vect).*FixE(data.segs.scoreRaw(segs_list)'))*CONST.regionOpti.DE_norm;
     
-    
     if debug_flag
         clf;
         imshow( cat(3,autogain(cell_mask)*.25+autogain(cell_mask_mod)*.25,...
             autogain(cell_mask)*.25+autogain(cell_mask_mod)*.25,...
             autogain(cell_mask)*.25+autogain(cell_mask_mod)*.25),'InitialMagnification','fit');
         
-        
         regionScore(jj)
-        
         
     end
     
 end
 
 [min_score, jj_min] = min(regionScore);
-%min_score
 vect = makeVector(jj_min-1,num_segs);
 
 %         if dispp
@@ -485,20 +331,13 @@ vect = makeVector(jj_min-1,num_segs);
 %             autogain(mask_regs)*.25+autogain(mask_regs==ii)*.25,...
 %             autogain(mask_regs)*.25+autogain(mask_regs==ii)*.25));
 %
-% %        'hi'
 %         end
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-%% simAnneal: Find the minimum energy configuration by a simulated
-%%            anneal procedure.
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vect = simAnnealFast( segs_list, data, cell_mask, xx, yy, CONST, debug_flag)
+% simAnneal: Find the minimum energy configuration by a simulated
+% anneal procedure.
 
 if ~exist('debug_flag', 'var') || isempty( debug_flag )
     debug_flag = 0;
@@ -514,17 +353,15 @@ else
     Nt = CONST.regionOpti.Nt;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % state vector contains all the info about the current state
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 state = [];
 
 % turn on the segs that are predicted to be on based on the seg scores
 % computed by superSeggerOpti.
+
 vect = data.segs.scoreRaw(segs_list)>0;
-
 E = initState( vect );
-
 recMap = containers.Map( makeKey( vect ), E );
 
 if debug_flag
@@ -534,8 +371,7 @@ if debug_flag
 end
 
 %debugFig
-%'hi'
-%tic
+
 for t = 1:Nt;
     
     T = tempSchedule(t,CONST,num_segs);
@@ -574,11 +410,11 @@ for t = 1:Nt;
         EHist(t) = E;
         stateMat(:,t) = state.seg_vect0;
     end
+    
     %     %%%%%%%%%%% debug %%%%%%%%%%%%%%
     % clf;
     % plot(accept_vect,'.-');
     %
-    % 'hi';
     %
     %
     %         cell_mask_mod = 0*cell_mask;
@@ -592,13 +428,12 @@ for t = 1:Nt;
     %              autogain(cell_mask)*.25+autogain(cell_mask_mod)*0),'InitialMagnification','fit');
     %
     %
-    %          'hi'
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 end
-%toc
+
+
 %debugFig
-%'hi'
 
 vect = double(state.seg_vect0');
 
@@ -675,7 +510,6 @@ end
         
         
         %debugFig;
-        %'hi'
     end
 
     function E = perturbState( nn )
@@ -696,8 +530,8 @@ end
             state.reg_vect1(ind1) =  true;
             try
                 state.reg_mask{ind1} = state.seg_mask{nn};
-            catch
-                'hi'
+            catch ME
+                printError(ME);
             end
             for kk = ind0
                 state.reg_mask{ind1} = ...
@@ -719,12 +553,12 @@ end
             %ind1
             
             
-            % if the boundary is off, pick out the region that will
-            % be split
+            
             
         else
-            %disp( ['Turn on seg ',num2str(nn)] );
+            % if the boundary is off, pick out the region to be split
             
+            %disp( ['Turn on seg ',num2str(nn)] );
             state.seg_vect1(nn) = true;
             ind0 = unique(state.reg_label(state.seg_mask{nn}));
             
@@ -745,9 +579,7 @@ end
                 state.reg_mask{ind1(end)} = (reg_label_tmp==kk);
                 state.reg_vect1(ind1(end)) = true;
                 state.reg_props(ind1(end)) = reg_props_tmp(kk);
-                
                 [xx_,yy_] = getBBpad( reg_props_tmp(kk).BoundingBox, state.ss, 0);
-                
                 info = CONST.regionScoreFun.props( state.reg_mask{ind1(end)}(yy_,xx_), reg_props_tmp(kk)  );
                 state.reg_E(ind1(end)) = ...
                     CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
@@ -761,8 +593,6 @@ end
         E = calcE(state.reg_vect1, state.seg_vect1, state);
         
         %debugFig;
-        %'hi'
-        
     end
 
     function debugFig
@@ -892,10 +722,12 @@ end
 
 
     function str = makeKey( vect )
+        % HashMap function
         str = char(double(vect)'+'a');
     end
-% this function fixes the perturbed state as the current state.
-    function fixState( )
+
+    function fixState ( )
+        % fixState function fixes the perturbed state as the current state.
         %disp( 'Fix Region' );
         
         %disp( 'Deleting: ');
@@ -916,7 +748,6 @@ end
         state.seg_vect0 = state.seg_vect1;
         
         %debugFig();
-        %'hi'
     end
 end
 
@@ -933,9 +764,6 @@ end
 
 
 function    T = tempSchedule(t, CONST, num_segs)
-
-%Emax = 1e3;
-%dt = 10;
 
 if isfield( CONST.regionOpti, 'ADJUST_FLAG' ) && CONST.regionOpti.ADJUST_FLAG
     dt   = CONST.regionOpti.dt*10/num_segs;
@@ -960,166 +788,3 @@ function ee = FixE( ee )
 
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Old sim anneal function
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function vect = simAnneal( segs_list, data, cell_mask, xx, yy, CONST, debug_flag)
-
-if ~exist('debug_flag', 'var') || isempty( debug_flag )
-    debug_flag = 0;
-end
-
-
-ss = size(data.phase);
-
-num_segs = numel(segs_list);
-
-
-Nt = CONST.regionOpti.Nt;
-
-
-
-vect = double(data.segs.scoreRaw(segs_list)>0);
-E  = doE(1,CONST);
-
-try
-    recMap = containers.Map( char(vect'+'a'), E );
-catch
-    'hi'
-end
-
-
-% %%%%%%%%%%% debug %%%%%%%%%%%%%%
-%         cell_mask_mod_ = 0*cell_mask;
-%         for kk = 1:num_segs
-%             cell_mask_mod_ = cell_mask_mod_ + (segs_list(kk)==data.segs.segs_label(yy,xx));
-%         end
-%
-%          clf;
-%          imshow( cat(3,autogain(cell_mask)*.25+autogain(cell_mask_mod_)*0.25,...
-%              autogain(cell_mask)*.25+autogain(data.segs.segs_label(yy,xx)>0)*0.25,...
-%              autogain(cell_mask)*.25+autogain(cell_mask_mod_)*0),'InitialMagnification','fit');
-%
-%          'hi'
-%
-%          accept_vect = zeros(1,Nt);
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if debug_flag
-    EEEE = zeros(1,Nt);
-    tttt = 1:Nt;
-    stateMat = zeros(num_segs,Nt);
-    
-end
-
-for t = 1:Nt;
-    
-    T = tempSchedule(t,CONST);
-    
-    % copy in old configuration
-    vect0 = vect;
-    E0    = E;
-    % perturb configuration
-    nn = floor(rand*num_segs)+1;
-    vect(nn) = ~vect(nn);
-    E = doE(0,CONST);
-    
-    
-    DE = E0-E;
-    
-    if rand > exp( DE/T )
-        vect = vect0;
-        E = E0;
-        %accept_vect(t) = 0;
-    else
-        %accept_vect(t) = 1;
-    end
-    
-    if debug_flag
-        EEEE(t) = E;
-        stateMat(:,t) = vect;
-    end
-    %     %%%%%%%%%%% debug %%%%%%%%%%%%%%
-    % clf;
-    % plot(accept_vect,'.-');
-    %
-    % 'hi';
-    %
-    %
-    %         cell_mask_mod = 0*cell_mask;
-    %         for kk = 1:num_segs
-    %             cell_mask_mod = cell_mask_mod + vect(kk)*(segs_list(kk)==data.segs.segs_label(yy,xx));
-    %         end
-    %
-    %          clf;
-    %          imshow( cat(3,autogain(cell_mask)*.25+autogain(cell_mask_mod)*0.25,...
-    %              autogain(cell_mask)*.25+autogain(cell_mask_mod_)*0.25,...
-    %              autogain(cell_mask)*.25+autogain(cell_mask_mod)*0),'InitialMagnification','fit');
-    %
-    %
-    %          'hi'
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-end
-
-if debug_flag
-    [minEEEE,ppp] = min(EEEE(end:-1:1));
-    ppp = numel(EEEE)-ppp+1;
-    minEEEE
-    
-    figure(CONST.regionOpti.fignum);
-    clf;
-    subplot(2,1,1);
-    imagesc( stateMat );
-    
-    subplot(2,1,2);
-    semilogy(tttt,EEEE-minEEEE+1,'r.-');
-    hold on;
-    semilogy(tttt(ppp),1,'go');
-end
-
-
-    function E = doE(justDoIt, CONST)
-        
-        if ~justDoIt && isKey( recMap, char(vect'+'a') )
-            
-            E = recMap( char(vect'+'a') );
-        else
-            DE_norm = CONST.regionOpti.DE_norm;
-            
-            
-            cell_mask_mod = cell_mask;
-            
-            for kk = 1:num_segs
-                cell_mask_mod = cell_mask_mod - vect(kk)*(segs_list(kk)==data.segs.segs_label(yy,xx));
-            end
-            
-            regs_label_mod = (bwlabel( cell_mask_mod, 8 ));
-            props_tmp = regionprops( regs_label_mod, 'BoundingBox','Orientation','Area');
-            num_regs_mod = max(regs_label_mod(:));
-            
-            info = zeros(num_regs_mod, CONST.regionScoreFun.NUM_INFO);
-            
-            
-            ss_regs_label_mod = size(regs_label_mod);
-            
-            for mm = 1:num_regs_mod;
-                
-                [xx_,yy_] = getBBpad( props_tmp(mm).BoundingBox, ss_regs_label_mod, 1);
-                mask = regs_label_mod(yy_,xx_)==mm;
-                
-                
-                info(mm,:) = CONST.regionScoreFun.props( mask, props_tmp(mm)  );
-            end
-            
-            E = sum(-CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E))+sum((1-2*vect).*FixE(data.segs.scoreRaw(segs_list)))*DE_norm;
-            
-            if ~justDoIt
-                recMap(char(vect'+'a')) = E;
-            end
-        end
-    end
-end

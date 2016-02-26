@@ -45,8 +45,7 @@ function  imData = makeTowerCons( data, CONST, xdim, ...
 % This file is part of SuperSeggerOpti.
 
 del = 0.0;
-
-
+imData = []
 % set the color map here to generate the color images
 persistent colormap_;
 if isempty( colormap_ )
@@ -54,6 +53,10 @@ if isempty( colormap_ )
     %colormap_ = colormap( 'hsv' );
 end
 
+if  ~isfield(data,'fluor1')
+    disp ('no fluorescence field found');
+    return;
+end
 
 % fill unset input arguments
 if ~exist('skip','var') || isempty( skip )
@@ -74,7 +77,6 @@ else
     orientFlag = true;
 end
 
-
 % get the TimeStep variable for plotting
 TimeStep     = CONST.getLocusTracks.TimeStep;
 
@@ -88,10 +90,7 @@ ssCell = imCell;
 xxCell = imCell;
 yyCell = imCell;
 
-
 % set the consensus lengths
-
-
 % L0 is the length of the cell in the first frame
 L0 = 26*mag;
 
@@ -191,16 +190,11 @@ end
 hold on;
 
 for ii = 1:T0
-    
     yy = floor((ii-1)/nx);
     xx = ii-yy*nx-1;
-    
     y = 1+yy*max_y;
-    x = 1+xx*max_x;
-    
-    
-    text( x+2, y+2, num2str((ii-1)*TimeStep),'Color',cc,'FontSize',12,'VerticalAlignment','Top');
-    
+    x = 1+xx*max_x;       
+    text( x+2, y+2, num2str((ii-1)*TimeStep),'Color',cc,'FontSize',12,'VerticalAlignment','Top');   
 end
 
 
@@ -234,7 +228,6 @@ else
     ssign = 1;
 end
 
-%ssign
 
 e1 = celld.coord.e1;
 alpha = 90-180/pi*atan2(e1(1),e1(2)) + 180*double(ssign==1);
@@ -251,13 +244,8 @@ else
 end
 
 fluor1   = imrotate( double(celld.fluor1)-bg_fluor, alpha, 'bilinear');
-
 mask_rot = imresize( mask,   mag );
-
-
-
 fluor1   = imresize( fluor1, mag );
-
 sstmp = size( mask_rot );
 
 x = 1:sstmp(2);
@@ -271,18 +259,11 @@ y2 = 0.5*(y(1)+y(end));
 xsum  = sum(mask_rot);
 xsumy = sum(mask_rot.*Y)./xsum;
 
-%yshift = xsumy - y2;
-%yshift(isnan(yshift)) = 0;
-
 ind = isnan(xsumy);
 xsumy(ind) = y2;
 
 mask_rot_ = mask_rot;
 fluor1_   = fluor1;
-%for ii = x
-%    mask_rot_(:,ii) = interp1( y, mask_rot(:,ii), yshift(ii) + y,'linear','extrap' );
-%    fluor1_(:,ii)   = interp1( y, fluor1(:,ii),   yshift(ii) + y,'linear','extrap' );
-%end
 
 XXX = intDoFit( x, xsum );
 

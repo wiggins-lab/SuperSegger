@@ -3,9 +3,9 @@ function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST)
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
 % INPUT : 
-%         data :
-%         data_r : 
-%         data_f :
+%         data : current frame data (*err usually data)
+%         data_r : reverse frame data
+%         data_f : forward frame data
 %         FLAGS : see below
 %         clist : list of cell files, could have a gate field.
 %         CONST : segmentation constants

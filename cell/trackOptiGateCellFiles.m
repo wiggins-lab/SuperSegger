@@ -1,5 +1,6 @@
-function trackOptiGateCellFiles( dirname, dirname_cell, CONST, header, clist )
-% trackOptiGateCellFiles : moves gated cell to different directory
+function trackOptiGateCellFiles(dirname_cell, clist )
+% trackOptiGateCellFiles : moves cells not passing the gate to separate directory
+% the cells that pass the gate remain in the dirname_cell directory.
 % For the clist passed, create a gate for the cells that you would like to move
 % the notGated directory.
 %
@@ -24,32 +25,32 @@ end
 
 notGateddirname = [dirname_cell,'notGated',filesep];
 
-if ~exist( notGateddirname, 'dir' )
+if ~exist( notGateddirname, 'dir' ) % create notGated directory
     mkdir(notGateddirname(1:end-1));
 end
 
 contents = dir( [dirname_cell,'*ell*.mat'] );
 
-if ~isempty( contents )
-    movefile( [dirname_cell,'*ell*.mat'], notGateddirname )
+if ~isempty( contents ) % move all cell files to notGated directory
+    movefile( [dirname_cell,'*ell*.mat'], notGateddirname ) 
 end
 
-if isempty( contents )
+if isempty( contents ) % check gated directory - maybe it was gated already in the past
     contents = dir( [notGateddirname,'*ell*.mat'] );
 end
 
 
 if ~isempty( contents )
-    numPad = sum( ismember(contents(1).name,'0123456789'));
+    numPad = sum( ismember(contents(1).name,'0123456789')); % how many numbers in cell id's name
     nCells = numel( ID_LIST );
-    for ii = 1:nCells
+    for ii = 1:nCells % go through every cell
         numStr = num2str(  ID_LIST(ii), ['%0',num2str(numPad),'d'] );     
-        name1 = [notGateddirname,'Cell',numStr,'.mat'];
-        name2 = [notGateddirname,'cell',numStr,'.mat'];
-        if exist( name1, 'file' )
-            movefile( name1, dirname_cell );
-        elseif exist( name2, 'file' )
-            movefile( name2, dirname_cell );
+        nameC = [notGateddirname,'Cell',numStr,'.mat'];
+        namec = [notGateddirname,'cell',numStr,'.mat'];
+        if exist( nameC, 'file' )
+            movefile( nameC, dirname_cell );
+        elseif exist( namec, 'file' )
+            movefile( namec, dirname_cell );
         end
 
     end

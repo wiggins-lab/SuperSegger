@@ -182,7 +182,7 @@ for ii = 1:skip:numframe
           
         FLAG1 = true;
     else
-        im1_ = 0*mask_;
+        im1_ = 0*mask_d;
         FLAG1 = false;
         f1mm = [0,1];
     end
@@ -208,12 +208,11 @@ for ii = 1:skip:numframe
         im2_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor2;
         FLAG2 = true;
     else
-        im2_ = uint8(0*mask_d);
+        im2_ = 0*mask_d;
         FLAG2 = false;
         f2mm = [0,1];
     end
-    
-    
+        
     if FLAG2
         im_list = [im_list, data.CellA{ii}.fluor1(:)', data.CellA{ii}.fluor2(:)'];
     elseif FLAG1
@@ -225,10 +224,8 @@ for ii = 1:skip:numframe
 end
 
 
-% do ag
-%im1_ = ag(log(double(im1_)),log(double(f1mm(1))),log(double(f1mm(2))));
+% do autogain the images
 im1_ = ag(im1_);
-
 im2_ = ag(im2_);
 
 
