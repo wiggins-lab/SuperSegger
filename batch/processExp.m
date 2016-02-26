@@ -55,7 +55,7 @@ res = '60XEc';
 % to run code in parallel mode must have the parallel processing toolbox,
 % for convenience default is false (non-parallel)
 
-parallel_flag = false;
+parallel_flag = true;
 
 %% Load Constants
 CONST = loadConstants(res,parallel_flag) ;
