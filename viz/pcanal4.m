@@ -1,4 +1,10 @@
 function [A,B,imArray] = pcanal4(dataCellArray,disp_flag)
+% pcanal4 : Principal Component Analysis of Grayscale cell tower images
+% from makeConstIm.
+%
+% INPUT :
+
+% OUTPUT :
 % Copyright (C) 2016 Wiggins Lab 
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.
@@ -27,10 +33,6 @@ for ii = 1:numCell
   tmp = tmp/sqrt( sum(tmp(:).^2));
   tmp_mean(:) = tmp_mean(:) + tmp(:)/numCell;
   
-  %tmp2 = double( im2(:) );
-  
-  %CC = CC + tmp*tmp' + tmp2*tmp2';  
-  %CC = CC + tmp*tmp';  
     
 end
 

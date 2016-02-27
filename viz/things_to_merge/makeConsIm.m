@@ -1,6 +1,8 @@
 function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,...
     kymoMax, kymoMaskMax, imMosaic10, imBWunmasked, imBWmask, hotPix, ...
-    AA, BB ] = makeConsIm( dirName, CONST, skip, mag, disp_flag , fnum, clist )
+    AA, BB ] ...
+    = makeConsIm( dirName, CONST, skip, mag, disp_flag, fnum, clist )
+
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
@@ -24,21 +26,9 @@ function [ imMosaic, imColor, imBW, imInv, kymo, kymoMask, I,...
 % This file is part of SuperSeggerOpti.
 
 
+del = 0.0;
 imMosaic10 = [];
-imMosaic=[];
-imColor=[];
-imBW=[];
-imInv=[];
-kymo=[];
-kymoMask=[];
-kymoMaskMax =[];
-I=[];
-kymoMax=[];
-imBWunmasked=[];
-imBWmask=[] ;
-hotPix=[];
-AA=[];
-BB=[];
+%disp_flag = 1;
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
@@ -47,21 +37,6 @@ end
 if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
-
-% show images in false color
-if ~isfield(CONST.view, 'falseColorFlag' )
-    CONST.view.falseColorFlag = false;
-end
-
-
-% Get the number of cells in the cell directory
-if ~isfield( CONST, 'view') || CONST.view.showFullCellCycleOnly
-    contents = dir([dirName,filesep,'Cell*.mat']);
-else
-    contents = dir([dirName,filesep,'*ell*.mat']);
-end
-numCells = numel(contents);
-
 
 
 if ~exist( 'fnum', 'var' ) || isempty( fnum )
@@ -74,40 +49,65 @@ else
     clist = [];
 end
 
+% show images in false color
+if ~isfield(CONST.view, 'falseColorFlag' )
+    CONST.view.falseColorFlag = false;
+end
+
+
+
+
+% Get the number of cells in the cell directory
+if ~isfield( CONST, 'view') || CONST.view.showFullCellCycleOnly
+    contents = dir([dirName,filesep,'Cell*.mat']);
+else
+    contents = dir([dirName,filesep,'*ell*.mat']);
+end
+numCells = numel(contents);
+
 
 % put in a max cell number to stop the code stalling
 if ~isfield(CONST.view, 'maxNumCell' )
-    CONST.view.maxNumCell = 1000;
-elseif CONST.view.maxNumCell >1000
-    CONST.view.maxNumCell = 1000; 
-% force to do only first 1000
+    CONST.view.maxNumCell = [];
 end
 
+
+% force to do only first 1000
+CONST.view.maxNumCell = 1000;
+%CONST.view.maxNumCell = 10;
 
 
 if ~isempty( CONST.view.maxNumCell )
     numCells = min( [numCells, CONST.view.maxNumCell] );
-    
 end
 
+disp( ['Computing cons image for ',num2str(numCells),' cells.'] );
 
+% debug
+% numCells = min([numCells,5]);
 disp( ['Running consensus (max cell number ',...
     num2str(numCells),')'] );
 
-%  ssTot : Keep track of the total size of the tower mosaic.
+%        ssTot : Keep track of the total size of the tower mosaic.
 ssTot = [0,0];
 
 
 % Manage the waitbar
 if disp_flag
-h = waitbar(0, 'Computation' );
+    h = waitbar(0, 'Computation' );
 end
 
 % initialize the sum variables
 dataImArray = intInit( numCells );
-minimumLifetime = 4;
-imArray = cell(1,numCells);
-ii_ = 0;
+%         imSum : Summed up imBW
+%       maskSum : Summed up maskCons
+%     imCellSum : Summed up imCell
+%   maskCellSum : Summed up maskCell
+%    imCellSSum : Summed up imCellS
+%  maskCellSSum : Summed up maskCellS
+%     imNormSum : Summed up Normed Fluor (imBW)
+% imCellNormSum : Summed up Normed Fluor (imCell)
+%         ssTot : Im size of tower mosaic of cell contributing to cons
 
 if ~isfield(load([dirName,contents(1).name]),'fluor1')
     disp ('no fluorescence found - exiting')
@@ -115,6 +115,13 @@ if ~isfield(load([dirName,contents(1).name]),'fluor1')
 end
 
 % loop through the cells to make the consensus image and the mosaic
+
+
+
+imArray = cell(1,numCells);
+
+ii_ = 0;
+
 for ii = 1:numCells
     
     % update status bar
@@ -122,16 +129,11 @@ for ii = 1:numCells
         waitbar(ii/numCells,h);
     end
     
+    
     % load data and get file number
     [data, dataImArray.cellArrayNum{ii}] = intLoader( dirName, contents(ii).name );
-    data.CellA = data.CellA(1:skip:end);
     
-    % mag is magnification : resizes the images of the cells to make them
-    % larger the image will be mag X larger in each dimension
-    mag = 4;
-    
-    % Compute consensus images for cell in data
-     name_tmp = contents(ii).name;
+    name_tmp = contents(ii).name;
     cell_num = str2num( name_tmp( isnumstr( name_tmp ) ) );
     
     data.CellA = data.CellA(1:skip:end);
@@ -148,19 +150,32 @@ for ii = 1:numCells
         disp( 'Shorty' );
       
     elseif ~isempty( clist ) && ~ismember( cell_num, row(clist.data(:,1)))
-        disp( [num2str(cell_num),' did not make it through clist.'] );
+        disp( [num2str(cell_num),' not in the hotty club.'] );
         
-    elseif numel(data.CellA) > minimumLifetime       
-        ii_ = ii_ + 1;        
-        dataIm = makeTowerCons(data,CONST,1,false, skip, mag );
+    else
+        ii_ = ii_ + 1;
         
+        
+        dataIm = makeTowerCons2(data,CONST,1,false, skip, mag, fnum );
+        
+        
+        %     imshow([dataIm.towerNorm],[]);
+        %     min(dataIm.intWeight)
+        %     pause(.2)
+        %
+        %     if min(dataIm.intWeight) < 0
+        %         keyboard;
+        %     end
+        %
         % Scale images down to the original size
         imArray{ii_} = imresize( dataIm.tower, 1/mag);
-        %imshow(imArray{ii_});
         
-        % update the sums
+        %% update the sums
         dataImArray = intUpdate( dataImArray, dataIm, ii_  );
         
+        %imshow(imArray{ii});
+        %'hi'
+
     end
 end
 
@@ -185,7 +200,22 @@ dataImArray = intNormalize( dataImArray, numCells );
 % Merge the images from the arrays into a single image
 T0 = numel( dataImArray.imCell );
 
-if  T0
+if  ~T0
+    I = [];
+    kymo = [];
+    kymoMask = [];
+    kymoMax = [];
+    kymoMaskMax = [];
+    imMosaic = [];
+    imColor = [];
+    imBW = [];
+    imInv = []
+    imBWunmasked = [];
+    imBWmask = [];
+    imMosaic10 = [];
+    hotPix = [];
+else
+    
     for jj = 1:T0
         ssCell{jj} = size(  dataImArray.imCell{jj} );
     end
@@ -199,31 +229,67 @@ if  T0
         towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
     %dataImArray.towerNorm = dataImArray.towerNorm.*dataImArray.towerMask;
     
+        % Merge the images from the arrays into a single image
+    [ bs_, bs_, dataImArray.towerNormW, dataImArray.towerMask ] = ...
+        towerMergeImages( dataImArray.imCellNormW, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+    %dataImArray.towerNorm = dataImArray.towerNorm.*dataImArray.towerMask;
+    
+    %%
     numIm = numel( dataImArray.tower );
     
+     I = [];
+        kymo = [];
+        kymoMask = [];
+        kymoMax = [];
+        kymoMaskMax = [];
+        imMosaic = [];
+        imColor = [];
+        imBW = [];
+        imInv = [];
+        
     if numIm  > 0
-        % make the color map for the color image
+        %% make the color map for the color image
         [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, ...
             dataImArray.towerMask, dataImArray.towerCArray, ...
             dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );
+        %  imMosaic : Mosaic of towers of cells that make up the consensus image
+        %   imColor : Color cons image (w/ black background)
+        %      imBW : Grayscale cons image
+        %     imInv : Color cons image (w/ white background)
         imBWunmasked = dataImArray.towerNorm;
         imBWmask     = dataImArray.towerMask;
         
+        %% make the kymo
+        % [ kymo, kymoMask, kymoMax, kymoMaskMax ] = ...
+        %     intMakeKymo( dataImArray.imCellNormScale, dataImArray.maskCellScale, ...
+        %     disp_flag );
+        %      kymo : Consensus Kymograph
+        %  kymoMask : Consensus Kymograph Cell mask
         
-        % make the consensus kymograph
-        [ kymo, kymoMask, kymoMax, kymoMaskMax ] = ...
-            intMakeKymo( dataImArray.imCellNorm, dataImArray.maskCell, ...
-            disp_flag );
-        
-        % do the kymo fit, I is fit of intensities to a model for polar localization
-        [I] = fitKymo4( kymo, kymoMask, disp_flag );
-        
-        % Make hot pixel
-        %hotPix = getHotPixelsCons( dataImArray.imCell, dataImArray.maskCell  );
-        % hotPix = [] ;      
-        
+        %% make the kymo
+%         [ kymo, kymoMask, kymoMax, kymoMaskMax ] = ...
+%             intMakeKymo( dataImArray.imCellNorm, dataImArray.maskCell, ...
+%             disp_flag );
+%         %      kymo : Consensus Kymograph
+%         %  kymoMask : Consensus Kymograph Cell mask
+%         %% do the kymo fit
+%         [I] = fitKymo4( kymo, kymoMask, disp_flag );
+%         %         I : Fit of intensities to a model for polar localization
+%         
+%         hotPix = getHotPixelsCons( dataImArray.imCell, dataImArray.maskCell  );
+
+
+
     end
 end
+
+        %% Make hot pixel
+      hotPix=[]; ...
+        AA = [];
+        BB = [];
+
+        
+%pause;
 
 end
 
@@ -266,9 +332,9 @@ colormap_ = jet(256);
 %end
 
 
-imTmp = 255*doColorMap( ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) ), colormap_ );
+imTmp = doColorMap( ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) ), colormap_ );
 mask3 = cat( 3, maskSum, maskSum, maskSum );
-imColor = uint8(uint8( double(imTmp).*mask3));
+imColor = double(imTmp).*mask3;
 imBW  = uint8( double(ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) )) .* maskSum );
 
 imTmp = 255*doColorMap( ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) ), 1-colormap_ );
@@ -413,26 +479,36 @@ if isempty( dataArray.sumWeight );
     dataArray.sumWeight    = zeros(1,T0);
     dataArray.sumWeightMin = 0;
     
-    dataArray.sumWeightS    = zeros(1,T0);
-    dataArray.sumWeightSMin = 0;
+    %dataArray.sumWeightS    = zeros(1,T0);
+    %dataArray.sumWeightSMin = 0;
 end
 
 
 % update im and mask sum
 if isempty( dataArray.tower )
     dataArray.tower        = double( data.towerRaw );
-    dataArray.sumWeightMin = min(data.intWeight);
     
-    dataArray.towerNorm    = dataArray.sumWeightMin *...
+    dSumWeightMin          = min(data.intWeight);
+    dataArray.sumWeightMin = dSumWeightMin;
+    
+    dataArray.towerNormW    = dataArray.sumWeightMin *...
         double( data.towerNormRaw );
+    
+    dataArray.towerNorm    = double( data.towerNormRaw );
+
     
     dataArray.towerMask    = double( data.towerMask );
 else
     dSumWeightMin = min(data.intWeight);
     
     dataArray.tower        = dataArray.tower     + double( data.towerRaw );
-    dataArray.towerNorm    = dataArray.towerNorm + ...
+    
+    dataArray.towerNormW    = dataArray.towerNorm + ...
         dSumWeightMin * double( data.towerNormRaw );
+    
+    dataArray.towerNorm    = dataArray.towerNorm + ...
+            double( data.towerNormRaw );
+
     
     dataArray.towerMask    = dataArray.towerMask + double( data.towerMask );
     
@@ -448,18 +524,19 @@ if isempty( dataArray.imCell )
     dataArray.imCell         = data.imCell;
     dataArray.imCellNorm     = data.imCellNorm;
     dataArray.maskCell       = data.maskCell;
-    dataArray.imCellScale    = data.imCellScale;
-    dataArray.maskCellScale  = data.maskCellScale;
+%    dataArray.imCellScale    = data.imCellScale;
+%    dataArray.maskCellScale  = data.maskCellScale;
     
     for ii = 1:T0
-        dataArray.imCellNorm{ii} = data.imCellNorm{ii} ...
+        dataArray.imCellNorm{ii}  = data.imCellNorm{ii};
+        dataArray.imCellNormW{ii} = data.imCellNorm{ii} ...
             * data.intWeight(ii);
-        dataArray.imCellNormScale{ii} = data.imCellNormScale{ii} ...
-            * data.intWeightS(ii);
+ %       dataArray.imCellNormScale{ii} = data.imCellNormScale{ii} ...
+ %           * data.intWeightS(ii);
     end
     
     dataArray.sumWeight = data.intWeight;
-    dataArray.sumWeightS = data.intWeightS;
+ %   dataArray.sumWeightS = data.intWeightS;
     
 else
     for ii = 1:T0
@@ -467,18 +544,22 @@ else
             + data.imCell{    ii};
         dataArray.maskCell{      ii}  = dataArray.maskCell{      ii} ...
             + data.maskCell{  ii};
-        dataArray.imCellScale{   ii}  = dataArray.imCellScale{   ii} ...
-            + data.imCellScale{   ii};
-        dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ ii} ...
-            + data.maskCellScale{ ii};
-        dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{    ii} ...
+  %      dataArray.imCellScale{   ii}  = dataArray.imCellScale{   ii} ...
+  %          + data.imCellScale{   ii};
+  %      dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ ii} ...
+  %          + data.maskCellScale{ ii};
+        dataArray.imCellNormW{    ii}  = dataArray.imCellNormW{    ii} ...
             + data.imCellNorm{ii} * data.intWeight(ii);
-        dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{    ii} ...
-            + data.imCellNormScale{ii} * data.intWeightS(ii);
+        
+        dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{    ii} ...
+            + data.imCellNorm{ii};
+        
+   %     dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{    ii} ...
+   %         + data.imCellNormScale{ii} * data.intWeightS(ii);
     end
     
     dataArray.sumWeight = dataArray.sumWeight + data.intWeight;
-    dataArray.sumWeightS = dataArray.sumWeightS + data.intWeightS;
+   % dataArray.sumWeightS = dataArray.sumWeightS + data.intWeightS;
     
 end
 
@@ -498,32 +579,45 @@ end
 function dataArray = intNormalize( dataArray, numCells )
 
 dataArray.numCells = numCells;
+
+
 dataArray.towerCArray       = dataArray.towerCArray(1:numCells);
 dataArray.towerArray        = dataArray.towerArray(1:numCells);
 dataArray.towerNormArray    = dataArray.towerNormArray(1:numCells);
+
 dataArray.intWeightMinArray = dataArray.intWeightMinArray(1:numCells);
 dataArray.cellArrayNum      = dataArray.cellArrayNum(1:numCells);
+
+
+
+
 
 
 T0 = numel( dataArray.imCell );
 
 dataArray.tower     = dataArray.tower    /dataArray.numCells;
 dataArray.towerMask = dataArray.towerMask/dataArray.numCells;
-dataArray.towerNorm = dataArray.towerNorm/dataArray.sumWeightMin;
+dataArray.towerNorm = dataArray.towerNorm/dataArray.numCells;
+dataArray.towerNormW = dataArray.towerNormW/dataArray.sumWeightMin;
 
 for ii = 1:T0
     dataArray.imCellSum{    ii}  = dataArray.imCell{        ii}...
         /dataArray.numCells;
     dataArray.maskCell{      ii}  = dataArray.maskCell{     ii}...
         /dataArray.numCells;
-    dataArray.imCellScale{   ii}  = dataArray.imCellScale{  ii}...
-        /dataArray.numCells;
-    dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ii}...
-        /dataArray.numCells;
-    dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{   ii}...
-        /dataArray.sumWeight(ii);
-    dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{   ii}...
-        /dataArray.sumWeightS(ii);
+%    dataArray.imCellScale{   ii}  = dataArray.imCellScale{  ii}...
+%        /dataArray.numCells;
+%    dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ii}...
+%        /dataArray.numCells;
+    dataArray.imCellNormW{    ii}  = dataArray.imCellNormW{   ii}...
+        /sum( dataArray.imCellNormW{ii}(:).*dataArray.maskCell{ii}(:)/...
+        sum(dataArray.maskCell{ii}(:)));
+     dataArray.imCellNorm{    ii}  = dataArray.imCellNorm{   ii}...
+        /sum( dataArray.imCellNorm{ii}(:).*dataArray.maskCell{ii}(:)/...
+        sum(dataArray.maskCell{ii}(:)));
+    
+ %   dataArray.imCellNormScale{    ii}  = dataArray.imCellNormScale{   ii}...
+ %       /dataArray.sumWeightS(ii);
 end
 end
 
@@ -550,10 +644,12 @@ data.cellArrayNum = cell(1,numCells);
 
 data.tower           = [];
 data.towerNorm       = [];
+data.towerNormW      = [];
 data.towerMask       = [];
 
 data.imCell          = [];
 data.imCellNorm      = [];
+data.imCellNormW      = [];
 data.maskCell        = [];
 
 data.imCellScale     = [];

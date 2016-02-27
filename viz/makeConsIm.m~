@@ -220,7 +220,7 @@ if  T0
         
         % Make hot pixel
         %hotPix = getHotPixelsCons( dataImArray.imCell, dataImArray.maskCell  );
-        % hotPix = [] ;      
+        hotPix = [] ;      
         
     end
 end
