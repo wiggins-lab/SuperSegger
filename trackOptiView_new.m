@@ -23,10 +23,10 @@ function trackOptiView(dirname,file_filter,err_flag)
 % Movie : Export Movie Frames
 %
 % important notes :
-% - it saves a file in the directory named .trackOptiView.mat where it 
+% - it saves a file in the directory named .trackOptiView.mat where it
 % saves the flags from the previous launch
 %
-%   FLAGS : 
+%   FLAGS :
 %         P_Flag : shows regions
 %         t_flag : shows the cell numbers
 %         lyse_flag : outlines cell that lysed
@@ -60,7 +60,7 @@ CONST = [];
 touch_list = [];
 
 
-if(nargin<1 || isempty(dirname))    
+if(nargin<1 || isempty(dirname))
     dirname=uigetdir()
 end
 dirname = fixDir(dirname);
@@ -111,7 +111,7 @@ filename_flags = [dirname0,'.trackOptiView.mat'];
 if  (D_FLAG == AD_FLAG) && exist( filename_flags, 'file' )
     load(filename_flags);
 else
-    FLAGS = intSetDefaultFlags();   
+    FLAGS = intSetDefaultFlags();
     error_list = [];
     nn = 1;
     dirnum = 1;
@@ -230,9 +230,9 @@ while runFlag
         end
         
     end
-
+    
     showDA4new( data_c, data_r, data_f, FLAGS, clist, CONST);
-
+    
     
     if FLAGS.c_flag && ~first_flag
         axis( tmp_axis );
@@ -256,7 +256,7 @@ while runFlag
     disp('w: edit segs/regs             c: lock in current axis  ');
     disp('d: duplicate gate             g: set gate to default   ');
     disp('G: Gate cell files            Y: Comp consensus(all xy)');
-    disp('G: Gate cell files            o: Comp consensus(this xy)');    
+    disp('G: Gate cell files            o: Comp consensus(this xy)');
     disp('u: makeFrameMosaicCenter      U: The Matrix Center     ');
     disp('i: makeFrameMosaicCenter      I: The Matrix Center     ');
     disp('x: switch xy dir              K: kymograph mosaic      ');
@@ -301,7 +301,7 @@ while runFlag
             CONST.view.falseColorFlag = ~CONST.view.falseColorFlag;
         end
         
-     elseif c(1) == 'J'
+    elseif c(1) == 'J'
         if ~isfield( CONST, 'view' ) || ...
                 ~isfield( CONST.view, 'LogView' ) || ...
                 isempty( CONST.view.LogView )
@@ -327,7 +327,7 @@ while runFlag
         % toggle between cell view and region view
         FLAGS.v_flag = ~FLAGS.v_flag;
     elseif c(1) == 'F'
-        
+        % Find Single Cells as F(number)
         if numel(c) > 1
             find_num = floor(str2num(c(2:end)));
             if FLAGS.v_flag
@@ -354,7 +354,7 @@ while runFlag
             input('Press any key','s');
             
         end
-                
+        
     elseif c(1) == 'x' % Change xy positions
         if D_FLAG ~= SD_FLAG
             
@@ -427,11 +427,11 @@ while runFlag
         FLAGS.err_flag = ~FLAGS.err_flag;
     elseif c(1) == 'P'
         
-         if numel(c) > 1 && any(isnum( c(2:end)))
+        if numel(c) > 1 && any(isnum( c(2:end)))
             FLAGS.P_val = str2num( c(2:end) );
-         else
-             FLAGS.P_flag = ~FLAGS.P_flag;
-         end
+        else
+            FLAGS.P_flag = ~FLAGS.P_flag;
+        end
         
     elseif c(1) == 'c'
         %FLAGS.c_flag = ~FLAGS.c_flag;
@@ -448,29 +448,29 @@ while runFlag
                 read_num = str2num( c(2) );
                 FLAGS.f_flag = read_num;
                 
-                 if numel(c) > 2
-                     if ~isfield( FLAGS, 'filt' ) || (numel( FLAGS.filt )~= 10)
+                if numel(c) > 2
+                    if ~isfield( FLAGS, 'filt' ) || (numel( FLAGS.filt )~= 10)
                         FLAGS.filt(10) = false;
                         FLAGS.filt(read_num) = true;
                     else
                         FLAGS.filt(read_num) = ~ FLAGS.filt(read_num);
                     end
-                 end
+                end
                 
             end
         end
-    
-%                 if numel(c) > 2
-%                     if ~isfield( FLAGS, 'filt' ) || numel( FLAGS.filt )~= 10
-%                         FLAGS.filt(10) = false;
-%                         FLAGS.filt(read_num) = true;
-%                     else
-%                         FLAGS.filt(read_num) = ~ FLAGS.filt(read_num);
-%                     end
-%                 end
-%             end
-%         end
-    
+        
+        %                 if numel(c) > 2
+        %                     if ~isfield( FLAGS, 'filt' ) || numel( FLAGS.filt )~= 10
+        %                         FLAGS.filt(10) = false;
+        %                         FLAGS.filt(read_num) = true;
+        %                     else
+        %                         FLAGS.filt(read_num) = ~ FLAGS.filt(read_num);
+        %                     end
+        %                 end
+        %             end
+        %         end
+        
         
     elseif c(1) == 'g'
         if D_FLAG == AD_FLAG
@@ -575,10 +575,10 @@ while runFlag
         FLAGS.T_flag = ~FLAGS.T_flag;
     elseif c(1) == 's'
         FLAGS.s_flag = ~FLAGS.s_flag;
-               
+        
     elseif c(1) == 'p'  % Show Cell Poles
         FLAGS.p_flag = ~FLAGS.p_flag;
-                
+        
     elseif c(1) == 'k' % Enter Debugging Mode
         tmp_axis = axis;
         disp('Type "return" to exit debugging mode')
@@ -586,12 +586,12 @@ while runFlag
         resetFlag = true;
         clf;
         axis( tmp_axis );
-               
+        
     elseif c(1) == 'K' % Make Kymograph Mosaic for All Cells
         if D_FLAG == AD_FLAG
             tmp_axis = axis;
             clf;
-            makeKymoMosaic( dirname_cell, CONST );           
+            makeKymoMosaic( dirname_cell, CONST );
             disp('press enter to continue.');
             pause;
             axis(tmp_axis);
@@ -603,7 +603,7 @@ while runFlag
         if D_FLAG == AD_FLAG
             tmp_axis = axis;
             clf;
-                       
+            
             if numel(c) > 1
                 ll_ = floor(str2num(c(2:end)));
             else
@@ -619,16 +619,16 @@ while runFlag
         else
             disp( 'Not supported in this mode.' );
         end
-                
-    elseif c(1) == 'o' % Show existant consensus for this XY or calculate new one        
+        
+    elseif c(1) == 'o' % Show existant consensus for this XY or calculate new one
         intCons(dirname0, contents_xy(ixy), dircons, setHeader, CONST)%
-                
+        
     elseif c(1) == 'Y' % Calculate Consensus for all XY
         
         tmp_axis = axis;
-        clf;     
+        clf;
         
-        parfor iii = 1:num_xy                       
+        parfor iii = 1:num_xy
             try
                 intCons(dirname0, contents_xy(iii), dircons, setHeader, CONST)
             catch
@@ -679,7 +679,7 @@ while runFlag
                 
                 [data_r__, data_c__, data_f__] = intLoadData( dirname__, ...
                     D_FLAG, contents__, nn__, num_im, nameInfo__, clist__, iii);
-                            
+                
                 im_tmp = showDA4new( data_c__, data_r__, data_f__, FLAGS__, clist__, CONST);
                 imwrite( im_tmp, [dircons, 'field_', setHeader, '_', num2str(ixy__,'%02d'), '.tif'], 'tif' );
             catch ME
@@ -688,9 +688,9 @@ while runFlag
             end
         end
         
-        figure(1);       
+        figure(1);
         axis equal
-               
+        
         figure(1);
         axis(tmp_axis);
         
@@ -824,25 +824,25 @@ while runFlag
                             %im_tmp = makeFrameMosaic(data_cell, CONST, xdim__);
                             
                             figure(2)
-                            clf;                           
+                            clf;
                             CONST.count.score_cur = 1;
                             CONST.view.filtered = true;
                             CONST.view.tracker  = true;
-                            CONST.view.score    = 2;                         
+                            CONST.view.score    = 2;
                             im_tmp = makeFrameMosaicLocus(data_cell, CONST, 1,1,1, which_channel);
                             
                             figure(5);
                             scorer = [drill( data_cell.CellA, '.locus1(1).score' )',...
-                                      drill( data_cell.CellA, '.locus1(2).score' )',...
-                                      drill( data_cell.CellA, '.locus1(3).score' )',...
-                                      drill( data_cell.CellA, '.locus1(4).score' )',...
-                                      drill( data_cell.CellA, '.locus1(5).score' )',...
-                                      drill( data_cell.CellA, '.locus1(6).score' )',...
-                                      drill( data_cell.CellA, '.locus1(7).score' )'];
-                             plot(    sum(scorer'>CONST.getLocusTracks.FLUOR1_MIN_SCORE),'.-' );
-                             ylabel( 'Number of loci');
-                             xlabel( 'Cell Age (Frames)' );
-                                  
+                                drill( data_cell.CellA, '.locus1(2).score' )',...
+                                drill( data_cell.CellA, '.locus1(3).score' )',...
+                                drill( data_cell.CellA, '.locus1(4).score' )',...
+                                drill( data_cell.CellA, '.locus1(5).score' )',...
+                                drill( data_cell.CellA, '.locus1(6).score' )',...
+                                drill( data_cell.CellA, '.locus1(7).score' )'];
+                            plot(    sum(scorer'>CONST.getLocusTracks.FLUOR1_MIN_SCORE),'.-' );
+                            ylabel( 'Number of loci');
+                            xlabel( 'Cell Age (Frames)' );
+                            
                             
                             disp('Press enter to continue');
                             pause;
@@ -1015,17 +1015,17 @@ while runFlag
                         
                         if ~isempty( data_cell )
                             
-                                
-                        if FLAGS.f_flag < 0
-                            which_channel = [1,1];
-                        else
-                            which_channel = [FLAGS.f_flag==1,FLAGS.f_flag==2];
-                        end
-                        
-                         if ~isfield( FLAGS, 'filt' )
-                              FLAGS.filt = [0,0,0];
-                         end
-                        
+                            
+                            if FLAGS.f_flag < 0
+                                which_channel = [1,1];
+                            else
+                                which_channel = [FLAGS.f_flag==1,FLAGS.f_flag==2];
+                            end
+                            
+                            if ~isfield( FLAGS, 'filt' )
+                                FLAGS.filt = [0,0,0];
+                            end
+                            
                             tmp_axis = axis;
                             figure(2);
                             clf;
@@ -1048,9 +1048,9 @@ while runFlag
         
     elseif c(1) == 'M'
         setAxis = axis;
-        nn_old = nn;       
+        nn_old = nn;
         z_pad = ceil(log(num_im)/log(10));
-
+        
         movdir = 'mov';
         if ~exist( movdir, 'dir' )
             mkdir( movdir );
@@ -1114,28 +1114,28 @@ while runFlag
         skip = 1;
         CLEAN_FLAG = false;
         header = 'trackOptiView: ';
-        trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);   
-    
-    elseif c(1) == 'n'; % pick region and ignore error      
+        trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
+        
+    elseif c(1) == 'n'; % pick region and ignore error
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
-        else           
+        else
             x = floor(ginput(1));
             
             if ~isempty(x)
                 ii = data_c.regs.regs_label(x(2),x(1));
                 tmp_axis = axis();
-                               
+                
                 if ~ii
                     disp('missed region');
                 else
                     
                     if isfield( data_c.regs, 'ignoreError' )
-                        disp(['Picked region ',num2str(ii)]);                                             
-                        data_c.regs.ignoreError(ii) = 1;                        
+                        disp(['Picked region ',num2str(ii)]);
+                        data_c.regs.ignoreError(ii) = 1;
                         save([dirname,contents(nn  ).name],'-STRUCT','data_c');
-                    else                        
-                        disp( 'Ignore error not implemented for your version of trackOpti.');                        
+                    else
+                        disp( 'Ignore error not implemented for your version of trackOpti.');
                     end
                 end
             end
@@ -1146,8 +1146,8 @@ while runFlag
         
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
-        else                      
-            disp('pick region to reset linking in the current frame');            
+        else
+            disp('pick region to reset linking in the current frame');
             x = floor(ginput(1));
             
             if ~isempty(x)
@@ -1179,7 +1179,7 @@ while runFlag
                     
                     if ~isempty(list_of_regs)
                         
-                        %list_of_regs                       
+                        %list_of_regs
                         data_c.regs.ol.f{ii}    = zeros(2, 5);
                         
                         nnn = min([5,numel(list_of_regs)]);
@@ -1221,7 +1221,7 @@ while runFlag
             contents_stamp = dir( [dirname,filesep,'.trackOpti*'] );
             num_stamp = numel( contents_stamp );
             
-            for iii = 1:num_stamp               
+            for iii = 1:num_stamp
                 if isempty( strfind( contents_stamp(iii).name,...
                         '.trackOptiLink.mat'  ) ) && ...
                         isempty( strfind( contents_stamp(iii).name,...
@@ -1265,7 +1265,7 @@ while runFlag
             elseif nn< 1
                 nn = 1;
             end
-        else 
+        else
             disp ('Command not found');
         end
         resetFlag = true;
@@ -1473,11 +1473,11 @@ else
     nameInfo.npos(1,1) = nameInfo.nt(nn);
     nameInfo.npos(3,1) = nameInfo.nxy(ixy);
     nameInfo.npos(2,1) = 1;
-    nameInfo.npos(4,1) = 1;    
+    nameInfo.npos(4,1) = 1;
     name = [dirname,MakeFileName(nameInfo)];
-        
+    
     data_c.phase = imread(name);
-    for ic = nameInfo.nc(2:end)        
+    for ic = nameInfo.nc(2:end)
         nameInfo.npos(2,1) = nameInfo.nc(ic);
         name = [dirname,MakeFileName(nameInfo)];
         tmp = imread(name);

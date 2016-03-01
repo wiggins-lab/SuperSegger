@@ -1,5 +1,5 @@
 function cm = makehotcold( p_flag,maxis )
-
+% makehotcold : used to create a hotplot
 
 if ~exist( 'p_flag' ) || isempty( p_flag )
     p_flag = false;
@@ -14,6 +14,7 @@ else
 end
 
 
+% creates axis for the colormap
 if ~exist( 'maxis','var' ) || isempty( maxis )
     cc = caxis;
     caxis( max(abs(cc))*[-1,1] );
@@ -25,3 +26,5 @@ end
 colormap(cm);
 
 end
+
+

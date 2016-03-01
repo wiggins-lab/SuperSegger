@@ -1,6 +1,6 @@
 function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
     towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )
-% towerMergeImages
+% towerMergeImages : merges the towers of several cells
 %
 % INPUT :
 %       imCell
@@ -81,9 +81,10 @@ for ii = 1:T0
     
     try
         maskCons(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = mask;
-        towerIm(    1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = imCell{ii};
-    catch
-        disp( 'Error in makeTowerCons' );
+        towerIm(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = imCell{ii};
+    catch ME
+        printError(ME);
+        disp( 'Error in towerMergeImages' );
     end
 end
 
@@ -99,10 +100,8 @@ if CONST.view.falseColorFlag
     imColor = uint8(uint8( double(imColor).*mask3));
 else
     % make normal image
-    del = 0.15;
-    
-    disk1 = strel('disk',1);
-    
+    del = 0.15;    
+    disk1 = strel('disk',1);    
     imColor = cat( 3, ...
         0*maskCons, ...
         uint8(double(imBW).*maskCons), ...

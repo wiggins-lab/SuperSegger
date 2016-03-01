@@ -15,9 +15,7 @@ function [touch_list] = segsTLEdit( dirname, frame_num )
 
 
 tmpdir = pwd;
-
 cd(dirname);
-
 dirname = '.';
 
 if ~exist('disp_flag');

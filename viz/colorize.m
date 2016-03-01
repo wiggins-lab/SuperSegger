@@ -30,7 +30,6 @@ if ~exist( 'background', 'var' ) || isempty( background )
     background = [0.5,0.5,0.5];
 end
 
-
 imTmp = double(255*doColorMap( ag(im, 0, max(im( mask>.95 )) ), colormap_ ));
 mask3 = cat( 3, mask, mask, mask );
 onez = ones(size(im));
