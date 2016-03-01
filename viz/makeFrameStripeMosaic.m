@@ -1,11 +1,10 @@
-function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag )
-% makeFrameStripeMosaic :  Creates a cell tower for all the cells in
-% dirName
+function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag, clist )
+% makeFrameStripeMosaic :  Creates a long stripe with all the cell towers.
 %
 % INPUT :
 %       dirName : directory with cell files
 %       CONST : segmentation parameters
-%       skip :
+%       skip : frames to be skipped
 %       disp_flag : 1 to display image, 0 to not display iamge
 % OUTPUT :
 %       imTot : final image
@@ -38,9 +37,7 @@ else
     contents = dir([dirName,filesep,'*ell*.mat']);
 end
 
-
 numCells = numel(contents);
-
 
 if ~isempty( CONST.view.maxNumCell )
     numCells = min( [numCells, CONST.view.maxNumCell] );
@@ -52,8 +49,6 @@ disp( ['Numer of files: ', num2str( numCells ), '.'] );
 cellArray = cell(1,numCells);
 cellArrayPos = cell(1,numCells);
 cellArrayNum = cell(1,numCells);
-
-
 ssTot = [0,0];
 
 if disp_flag
@@ -70,8 +65,8 @@ for ii = 1:numCells
     
     data = load( loadname );
     
-    lpos =  max(find(contents(ii).name == 'l'));
-    ppos =  min(find(contents(ii).name == '.'));
+    lpos =  find(contents(ii).name == 'l', 1, 'last' );
+    ppos =  find(contents(ii).name == '.', 1 );
     
     if isempty( lpos ) || isempty( ppos )
         disp('Error in makeFrameStripeMosaic' );
@@ -83,15 +78,13 @@ for ii = 1:numCells
     tmp_im = makeFrameMosaic(data,CONST,1,false, skip );
     
     if isfield( CONST.view, 'saveFiles' ) && CONST.view.saveFiles
-        loadname(end-2:end)='png';
-        
+        loadname(end-2:end)='png'; 
         imwrite( tmp_im, loadname, 'png' );
     else
         cellArray{ii} = tmp_im;
     end
     
-    ss = size(cellArray{ii});
-    
+    ss = size(cellArray{ii});    
     ssTot = [ max([ssTot(1),ss(1)]), ssTot(2)+ss(2) ];
 end
 
@@ -107,15 +100,13 @@ if ~CONST.view.saveFiles
             CONST.view.background = [0,0,0];
         end
         
-        tmptmp = zeros( [ssTot(1), ssTot(2)] );
-        
+        tmptmp = zeros( [ssTot(1), ssTot(2)] );       
         imTot = uint8( cat( 3, tmptmp + CONST.view.background(1),...
             tmptmp + CONST.view.background(2),...
             tmptmp + CONST.view.background(3)));
         
     else
-        del = 0.0;
-        
+        del = 0.0;        
         imTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
     end
     
@@ -125,12 +116,8 @@ if ~CONST.view.saveFiles
     for ii = 1:numCells
         
         ss = size(cellArray{ii});
-        
-        imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
-        
+        imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};        
         cellArrayPos{ii} = colPos + ss(2)/2;
-        
-        
         colPos = colPos + ss(2);
         
     end
@@ -146,8 +133,7 @@ if ~CONST.view.saveFiles
     
     
     for ii = 1:numCells
-        text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, 'HorizontalAlignment','center' );
-        
+        text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, 'HorizontalAlignment','center' );        
     end
 end
 

@@ -2,17 +2,17 @@ function im = showDA4new( data, data_r, data_f, FLAGS, clist, CONST)
 % showDA4new : produces the trackOptiView image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
-% INPUT : 
+% INPUT :
 %         data : current frame data (*err usually data)
 %         data_r : reverse frame data
 %         data_f : forward frame data
 %         FLAGS : see below
 %         clist : list of cell files, could have a gate field.
 %         CONST : segmentation constants
-%   
-%   FLAGS : 
+%
+%   FLAGS :
 %         P_Flag : shows regions
-%         t_flag : shows the cell numbers
+%         ID_flag : shows the cell numbers
 %         lyse_flag : outlines cell that lysed
 %         m_flag : shows mask
 %         c_flag : ? does absolutely nothing
@@ -41,7 +41,8 @@ if nargin<4
     FLAGS = [];
 end
 
-
+FLAGS.axis = axis;
+clf;
 % check to see if there are any missing flags in the structure and fix it
 % if there are.
 FLAGS = intFixFlags( FLAGS );
@@ -64,58 +65,54 @@ end
 [xx,yy] = intGetImSize( data, FLAGS );
 
 
-% Not sure what the hell this first thing does anymore.
-if FLAGS.D_flag == 2
-    im = makeImD( data, FLAGS );
-else
-    mask_full = data.mask_cell;
-    im = makeIm( data, FLAGS, ID_LIST, CONST );
-    
-    if FLAGS.m_flag
-        if isempty(data_r)
-            mask_full_r = 0*mask_full;
-            im_r = cat(3,mask_full_r,mask_full_r,mask_full_r);
-        else
-            mask_full_r = data_r.mask_cell;
-            im_r = makeIm( data_r, FLAGS );
-        end
-        
-        if isempty(data_f)
-            mask_full_f = 0*mask_full;
-            im_f = cat(3,mask_full_f,mask_full_f,mask_full_f);
-        else
-            mask_full_f = data_f.mask_cell;
-            im_f = makeIm( data_f, FLAGS );
-        end
-        
-        im =  [im_r(yy,xx,:),im(yy,xx,:); im_f(yy,xx,:), ...
-            cat(3, ...
-            0.5*autogain(mask_full_r(yy,xx)>0),...
-            0.5*autogain(mask_full(yy,xx)>0),...
-            0.5*autogain(mask_full_f(yy,xx)>0))...
-            ];
+
+mask_full = data.mask_cell;
+im = makeIm( data, FLAGS, ID_LIST, CONST );
+
+if FLAGS.m_flag
+    if isempty(data_r)
+        mask_full_r = 0*mask_full;
+        im_r = cat(3,mask_full_r,mask_full_r,mask_full_r);
+    else
+        mask_full_r = data_r.mask_cell;
+        im_r = makeIm( data_r, FLAGS );
     end
+    
+    if isempty(data_f)
+        mask_full_f = 0*mask_full;
+        im_f = cat(3,mask_full_f,mask_full_f,mask_full_f);
+    else
+        mask_full_f = data_f.mask_cell;
+        im_f = makeIm( data_f, FLAGS );
+    end
+    
+    im =  [im_r(yy,xx,:),im(yy,xx,:); im_f(yy,xx,:), ...
+        cat(3, ...
+        0.5*autogain(mask_full_r(yy,xx)>0),...
+        0.5*autogain(mask_full(yy,xx)>0),...
+        0.5*autogain(mask_full_f(yy,xx)>0))...
+        ];
 end
 
 imshow(im);
 
 
-if FLAGS.D_flag ~= 2
-    hold on;
-    
-    if ~FLAGS.m_flag
-        doAnnotation( data, -xx(1)+1, -yy(1)+1 );
-    else
-        doAnnotation( data, -xx(1)+xx(end)-xx(1)+1, -yy(1)+1 );
-        doAnnotation( data_r , -xx(1)+1, -yy(1)+1);
-        doAnnotation( data_f , -xx(1)+1, -yy(1)+yy(end)-yy(1)+1 );
-        doFrameMerge( -xx(1)+xx(end)-xx(1)+1+1, -yy(1)+yy(end)-yy(1)+1+1);
-    end
+
+hold on;
+
+if ~FLAGS.m_flag
+    doAnnotation( data, -xx(1)+1, -yy(1)+1 );
+else
+    doAnnotation( data, -xx(1)+xx(end)-xx(1)+1, -yy(1)+1 );
+    doAnnotation( data_r , -xx(1)+1, -yy(1)+1);
+    doAnnotation( data_f , -xx(1)+1, -yy(1)+yy(end)-yy(1)+1 );
+    doFrameMerge( -xx(1)+xx(end)-xx(1)+1+1, -yy(1)+yy(end)-yy(1)+1+1);
 end
+
 
     function doAnnotation( data_, x_, y_ )
         if ~isempty(data_)
-            if FLAGS.t_flag
+            if FLAGS.ID_flag
                 intPlotNum( data_ , x_, y_, FLAGS, ID_LIST );
             end
             
@@ -268,7 +265,7 @@ if FLAGS.f_flag
     else
         fluor2 = 0*data.phase;
     end
-      
+    
     %
     if isfield( data, 'fluor1')
         if CONST.view.falseColorFlag
@@ -318,7 +315,7 @@ elseif FLAGS.P_flag
     is_cell_V   = or(ismember( data.regs.ID, ID_LIST),~FLAGS.v_flag);
     is_div_V    = or(and(data.regs.birthF,data.regs.stat0),...
         data.regs.divide);
-        
+    
     map_err_fr_ind = find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,...
         data.regs.error.r),~ignoreErrorV))));
     map_err_fr  = double(      ismember( data.regs.regs_label, ...
@@ -377,14 +374,14 @@ elseif FLAGS.P_flag
     map_stat0_0O_ind =  find(and(is_cell_V,and( is_div_V,...
         data.regs.stat0==0)));
     map_stat0_0O= intDoOutline(ismember( data.regs.regs_label, ...
-        map_stat0_0O_ind ));    
+        map_stat0_0O_ind ));
     
     reg_color = uint8( 255*cat( 3, ...
         double(lyse_im)+0.15*(2*(map_err_fr+map_err_frO)+(map_err_nf+map_err_nf)),...
         0.30*(map_no_err+map_no_errO),...
         0.30*(3*(map_stat0_2+map_stat0_2O)+...
         1.5*(map_stat0_1+map_stat0_1O)+...
-        0.5*(map_stat0_0+map_stat0_0O)))); 
+        0.5*(map_stat0_0+map_stat0_0O))));
     
     im = reg_color + im;
     
@@ -397,8 +394,11 @@ im = uint8(im);
 end
 
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
-% intPlotNum : Plots cell number or region numbers
-for kk = 1:data.regs.num_regs
+% intPlotNum : Plot cell number or region numbers
+counter = 40;
+kk = 1;
+while (counter > 0 && kk < data.regs.num_regs)
+
     rr = data.regs.props(kk).Centroid;
     
     if isfield( data.regs, 'ignoreError' )
@@ -416,46 +416,51 @@ for kk = 1:data.regs.num_regs
         cc = 'w';
     end
     
-    if FLAGS.v_flag == 1
-        if isfield( data.regs, 'ID' ) && ismember( data.regs.ID(kk), ID_LIST )
-            text( rr(1)+x_, rr(2)+y_, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
+    xpos = rr(1)+x_;
+    ypos = rr(2)+y_;
+    
+    if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
+            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
+     
+        counter = counter - 1;
+        if FLAGS.v_flag == 1 % cell view
+            if isfield( data.regs, 'ID' ) && ismember( data.regs.ID(kk), ID_LIST )
+                text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
+                    'Color', cc,...
+                    'FontWeight', 'Bold',...
+                    'HorizontalAlignment','Center',...
+                    'VerticalAlignment','Middle');
+                title('Cell ID');
+            end
+            
+            
+        elseif FLAGS.v_flag == 0 % region view
+            text( xpos, ypos, ['\fontsize{11}',num2str(kk)],...
                 'Color', cc,...
-                'FontWeight', 'Bold',...
+                'Color', cc,...
+                'FontWeight', 'normal',...
                 'HorizontalAlignment','Center',...
                 'VerticalAlignment','Middle');
-            title('Cell ID');
+            title('Region Number');
+            
+        else
+            text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.age(kk))],...
+                'Color', cc,...
+                'Color', cc,...
+                'FontWeight', 'normal',...
+                'HorizontalAlignment','Center',...
+                'VerticalAlignment','Middle');
+            title('Region Number');
+            
         end
-        
-        
-    elseif FLAGS.v_flag == 0
-        text( rr(1)+x_, rr(2)+y_, ['\fontsize{11}',num2str(kk)],...
-            'Color', cc,...
-            'Color', cc,...
-            'FontWeight', 'normal',...
-            'HorizontalAlignment','Center',...
-            'VerticalAlignment','Middle');
-        title('Region Number');
-        
-    else
-        text( rr(1)+x_, rr(2)+y_, ['\fontsize{11}',num2str(data.regs.age(kk))],...
-            'Color', cc,...
-            'Color', cc,...
-            'FontWeight', 'normal',...
-            'HorizontalAlignment','Center',...
-            'VerticalAlignment','Middle');
-        title('Region Number');
-        
+        kk = kk + 1;
     end
     
 end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% intPlotSpot
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )
+% intPlotSpot
 
 if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
         (isfield( data.CellA{1}, 'locus1') || (isfield( data.CellA{1}, 'locus2')))
@@ -582,13 +587,13 @@ if isfield( data, 'regs' )
     
     if FLAGS.T_flag
         tmp_props = regionprops( data.regs.regs_label, 'BoundingBox' );
-        pad = 10;       
+        pad = 10;
         yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
         yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
         xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
-        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;     
+        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
         num_segs = max(data.regs.regs_label(:));
-               
+        
         
         for ii = 2:num_segs
             
@@ -603,7 +608,7 @@ if isfield( data, 'regs' )
             xxmax_ = max( [xxmax_, xxmax] );
             
             
-        end  
+        end
         
         
         yy = max([1,yymin_]):min([ss(1),yymax_]);
@@ -622,9 +627,9 @@ end
 function FLAGS = intFixFlags( FLAGS )
 % intFixFlags :  sets default flag values.
 
-if ~isfield(FLAGS, 't_flag');
-    'there is no filed t_flag'
-    FLAGS.t_flag = 0;
+if ~isfield(FLAGS, 'ID_flag');
+    'there is no filed ID_flag'
+    FLAGS.ID_flag = 0;
 end
 
 if ~isfield(FLAGS, 'lyse_flag');
@@ -668,10 +673,10 @@ if ~isfield(FLAGS, 'T_flag');
 end
 
 if ~isfield(FLAGS, 'p_flag');
-    'there is not file p_flag'
+    'there is not filed p_flag'
     FLAGS.p_flag = 0;
 end
-FLAGS.link_flag = FLAGS.s_flag || FLAGS.t_flag;
+FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
 
 end
 

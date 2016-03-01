@@ -66,7 +66,6 @@ function [data,A]  = superSeggerOptiP(phase_, mask, dispp, CONST, ...
 % mask_cell = mask_bg .* (~segs_good) .* (~segs_3n);
 %
 %
-%
 % Written by Paul Wiggins and Keith Cheveralls
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
@@ -91,12 +90,8 @@ if ~exist('crop_box')
     crop_box = [];
 end
 
-% ------------------------------------------------------------------
-%
-% Initial image smoothing
-%
-% ------------------------------------------------------------------
 
+% Initial image smoothing
 %this step is necessary to reduce the camera and read noise in the raw
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
@@ -127,12 +122,8 @@ f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phase = imfilter(phase, f,'replicate');
 
 
-% ------------------------------------------------------------------
-%
-% Create a Background mask
-%
-% ------------------------------------------------------------------
 
+% Create a Background mask
 % we create the background mask MASK_BG by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
 % We use one threshold to remove the background, and another to remove
@@ -240,7 +231,6 @@ end
 
 % Determine the "good" and "bad" segments
 [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A);
-
 data.mask_cell   = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
 data.phase       = phase_;
 
@@ -249,7 +239,7 @@ data.phase       = phase_;
 if dispp
     figure(1)
     clf;
-    showSegDataPhase( data );
+    showSegDataPhase(data);
     drawnow;
 end
 
@@ -268,7 +258,7 @@ function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD,
 % than under-segments the image. That is, the set of all real segments is
 % contained with the set of all segments produced by the watershed algorithm.
 
-sim = size( phase );
+sim = size(phase);
 
 
 % Create labeled image of the segments

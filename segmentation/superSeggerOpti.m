@@ -232,7 +232,7 @@ data.phase       = phase_;
 if disp_flag
     figure(1)
     clf;
-    showSegDataPhase( data );
+    showSegDataPhase(data);
     drawnow;
 end
 
