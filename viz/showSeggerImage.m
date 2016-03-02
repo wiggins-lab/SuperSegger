@@ -2,6 +2,10 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
 % showSeggerImage : produces the trackOptiView image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
+% Colors : green are cells without errors, red are cells with error flags
+% reverse or forward, or lysed cells, blue are cells that came from a good
+% division, if error or not observed (?), or had a succesfful divison. 
+%
 % INPUT :
 %         data : current frame data (*err usually data)
 %         data_r : reverse frame data
@@ -40,7 +44,6 @@ if nargin<4
     FLAGS = [];
 end
 
-
 FLAGS.axis = axis;
 clf;
 
@@ -50,7 +53,7 @@ FLAGS = intFixFlags( FLAGS );
 
 % if there is a clist enables look only cells included in the clist
 if ~isempty( clist );
-    %clist = gate( clist );
+    clist = gate( clist );
     ID_LIST = clist.data(:,1);
     ID_LIST = ID_LIST(logical(ID_LIST));
 else
@@ -66,7 +69,7 @@ end
 mask_full = data.mask_cell;
 im = makeIm( data, FLAGS, ID_LIST, CONST );
 
-if FLAGS.m_flag % mask flag
+if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image view
     if isempty(data_r)
         mask_full_r = 0*mask_full;
         im_r = cat(3,mask_full_r,mask_full_r,mask_full_r);
@@ -92,6 +95,7 @@ end
 imshow(im);
 hold on;
 
+% annotates spots, cell numbers and poles
 if ~FLAGS.m_flag
     doAnnotation( data, -xx(1)+1, -yy(1)+1 );
 else
@@ -102,14 +106,21 @@ else
 end
 
     function doAnnotation( data_, x_, y_ )
+    % doAnnotation : annotates spots, cell numbers and poles
         if ~isempty(data_)
+            
+            % plots cell numbers
             if FLAGS.ID_flag
                 intPlotNum( data_ , x_, y_, FLAGS, ID_LIST );
             end
             
-            if FLAGS.s_flag && isfield(data_,'CellA')
+            
+            % plots spots, only if we are at fluorescence view
+            if FLAGS.f_flag && FLAGS.s_flag && isfield(data_,'CellA')
                 intPlotSpot( data_, x_, y_, FLAGS, clist, CONST );
             end
+            
+            % plots poles
             if FLAGS.p_flag
                 intPlotLink( data_, x_, y_ );
             end
@@ -155,29 +166,15 @@ end
 
 end
 
-function im = makeImD( data, FLAGS )
-
-back = ag(data.phase);
-
-if isfield( data, 'fluor1' )
-    fluor1 = ag(data.fluor1);
-else
-    fluor1 = 0*back;
-end
-
-if isfield( data, 'fluor2' )
-    fluor2 = ag(data.fluor2);
-else
-    fluor2 = 0*back;
-end
-
-im = cat(3, fluor2 + 0.5*back, fluor1 + 0.5*back, 0.5*back );
-end
-
 
 function im = makeIm( data, FLAGS, ID_LIST, CONST )
 % makeIm puts together the image if data is segmented
 % but not the text/pole/other labels.
+% INPUT :
+% data : is a loaded seg or trk file with region info
+% FLAGS : are the flags used for image plotting
+% ID_LIST : are the ids of cells selected through a clist
+% CONST : are the segmentation constants
 
 persistent colormap_;
 if isempty( colormap_ )
@@ -203,7 +200,7 @@ end
 
 % this code highlights the lysed cells
 if isfield( data.regs, 'lyse' ) && FLAGS.lyse_flag
-    is_lyse    = and( or( data.regs.lyse.errorColor1bCum, ...
+    is_lyse = and( or( data.regs.lyse.errorColor1bCum, ...
         data.regs.lyse.errorColor2bCum), data.regs.lyse.errorShapeCum);
     lyse_im = intDoOutline2(ismember( ...
         data.regs.regs_label,find(is_lyse)));
@@ -218,7 +215,7 @@ if FLAGS.f_flag > 0
     im = 0.3*im;
     im = FLAGS.P_val*im;
     
-    if FLAGS.P_flag
+    if FLAGS.P_flag  % if P_flag is true, it outlines the cells
         if FLAGS.v_flag
             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
         else
@@ -228,7 +225,6 @@ if FLAGS.f_flag > 0
     
     % make the background subtracted fluor
     if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
-        
         if FLAGS.filt && isfield( data, 'flour1_filtered' )
             fluor1 =  data.flour1_filtered;
         else
@@ -239,14 +235,13 @@ if FLAGS.f_flag > 0
             else
                 fluor1 = fluor1-mean(fluor1(:));
                 fluor1( fluor1< 0 ) = 0;
-            end
-            
+            end            
         end
     else
         fluor1 = 0*data.phase;
     end
     
-    if isfield( data, 'fluor2' )  && ( FLAGS.f_flag == 2 );        
+    if isfield( data, 'fluor2' )  && ( FLAGS.f_flag == 2 );
         if FLAGS.filt && isfield( data, 'flour2_filtered' )
             fluor2 =  data.flour2_filtered;
         else
@@ -267,8 +262,7 @@ if FLAGS.f_flag > 0
         fluor1 =   ag( double(fluor1).^.6 );
         fluor2 =   ag( double(fluor2).^.6 );
     end
-    
-    
+        
     if isfield( data, 'fluor1')
         minner = medfilt2( fluor1, [2,2], 'symmetric' );
         maxxer = max( minner(:));
@@ -286,7 +280,7 @@ if FLAGS.f_flag > 0
             im(:,:,2) = 0.8*ag(fluor1,minner,maxxer) + im(:,:,2);
         end
     end
-        
+    
     if isfield( data, 'fluor2' )
         if FLAGS.filt && isfield( data, 'flour2_filtered' )
             fluor2 =  data.flour2_filtered;
@@ -298,10 +292,15 @@ if FLAGS.f_flag > 0
     im(:,:,1) = 255*uint8(lyse_im) + im(:,:,1);
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
+            
+elseif FLAGS.Outline_flag  % it just outlines the cells
+        if FLAGS.v_flag
+            im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+        else
+            im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+        end
     
-    
-    % if P_flag is true, it shows the regions.
-elseif FLAGS.P_flag
+elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
     if isfield( data.regs, 'ignoreError' )
         ignoreErrorV = data.regs.ignoreError;
@@ -309,91 +308,58 @@ elseif FLAGS.P_flag
         ignoreErrorV = 0*data.reg.divide;
     end
     
-    is_cell_V   = or(ismember( data.regs.ID, ID_LIST),~FLAGS.v_flag);
-    is_div_V    = or(and(data.regs.birthF,data.regs.stat0),...
-        data.regs.divide);
+    % cells in the ID list and in this region
+    % if v_flag is off, all cells are in is_in_cell_V
+    cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
+       
+    % cells with errors current->reverse or ignoreError
+    map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+        data.regs.error.r),ignoreErrorV)));
+    map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
     
-    map_err_fr_ind = find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,...
-        data.regs.error.r),~ignoreErrorV))));
-    map_err_fr  = double(      ismember( data.regs.regs_label, ...
-        map_err_fr_ind ));
+   % cells with errors current->reverse or ignoreError
+    map_err_fw_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+        ~data.regs.error.r),ignoreErrorV)));
+    map_err_fw  = double(ismember( data.regs.regs_label, map_err_fw_ind ));
     
-    map_err_frO_ind = find(and(is_cell_V,and( is_div_V,and(and(data.regs.ehist,...
-        data.regs.error.r),~ignoreErrorV))));
-    map_err_frO = intDoOutline(ismember( data.regs.regs_label, ...
-        map_err_frO_ind ));
+    % cells iwithout errors
+    map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
+    map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
     
-    map_err_nf_ind =  find(and(is_cell_V,and(~is_div_V,and(and(data.regs.ehist,...
-        ~data.regs.error.r),~ignoreErrorV))));
-    map_err_nf  = double(      ismember( data.regs.regs_label, ...
-        map_err_nf_ind ));
+    % in list, cell was not born in this frame with good division or divided
+    % but stat0==2 : succesfful division was observed
+    map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
+    map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));   
     
-    map_err_nfO_ind =  find(and(is_cell_V,and( is_div_V,and(and(data.regs.ehist,...
-        ~data.regs.error.r),~ignoreErrorV))));
-    map_err_nfO = intDoOutline(ismember( data.regs.regs_label, ...
-        map_err_nfO_ind ));
+    % in list, cell was not born in this frame with good division or divided
+    % stat0==1 : cell was result of succesfful division
+    map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
+    map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
     
-    map_no_err_ind =  find(and(is_cell_V,and(~is_div_V,or(~data.regs.ehist,...
-        ignoreErrorV))));
-    map_no_err  = double(      ismember( data.regs.regs_label, ...
-        map_no_err_ind));
+    % in list, cell was not born in this frame with good division or divided
+    % stat0 == 0  : cell has errors, or division not observed
+    map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
+    map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
     
-    map_no_errO_ind = find(and(is_cell_V,and( is_div_V,or(~data.regs.ehist,...
-        ignoreErrorV))));
-    map_no_errO = intDoOutline(ismember( data.regs.regs_label, ...
-        map_no_errO_ind));
     
-    map_stat0_2_ind = find(and(is_cell_V,and(~is_div_V,...
-        data.regs.stat0==2)));
-    map_stat0_2 = double(      ismember( data.regs.regs_label, ...
-        map_stat0_2_ind ));
-    
-    map_stat0_2O_ind =  find(and(is_cell_V,and( is_div_V,...
-        data.regs.stat0==2)));
-    map_stat0_2O= intDoOutline(ismember( data.regs.regs_label, ...
-        map_stat0_2O_ind ));
-    
-    map_stat0_1_ind  = find(and(is_cell_V,and(~is_div_V,...
-        data.regs.stat0==1)));
-    map_stat0_1  = double(      ismember( data.regs.regs_label, ...
-        map_stat0_1_ind ));
-    
-    map_stat0_1O_ind = find(and(is_cell_V,and( is_div_V,...
-        data.regs.stat0==1)));
-    map_stat0_1O = intDoOutline(ismember( data.regs.regs_label, ...
-        map_stat0_1O_ind ));
-    
-    map_stat0_0_ind = find(and(is_cell_V,and(~is_div_V,...
-        data.regs.stat0==0)));
-    map_stat0_0 = double(      ismember( data.regs.regs_label, ...
-        map_stat0_0_ind ));
-    
-    map_stat0_0O_ind =  find(and(is_cell_V,and( is_div_V,...
-        data.regs.stat0==0)));
-    map_stat0_0O= intDoOutline(ismember( data.regs.regs_label, ...
-        map_stat0_0O_ind ));
-     
     reg_color = uint8( 255*cat( 3, ...
-        double(lyse_im)+0.15*(2*(map_err_fr+map_err_frO)+(map_err_nf+map_err_nf)),...
-        0.30*(map_no_err+map_no_errO),...
-        0.30*(3*(map_stat0_2+map_stat0_2O)+...
-        1.5*(map_stat0_1+map_stat0_1O)+...
-        0.5*(map_stat0_0+map_stat0_0O))));
-
+        double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)),...
+        0.30*(map_no_err),...
+        0.30*(3*(map_stat0_2)+1.5*(map_stat0_1)+0.5*(map_stat0_0))));
+    
     im = reg_color + im;
 end
-
-im = uint8(im);
-
+   
 end
 
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
 % intPlotNum : Plot cell number or region numbers
 
 counter = 200; % max amount of cell numbers to be plotted
-kk = 1; % counter for regions
+kk = 0; % counter for regions
 while (counter > 0 && kk < data.regs.num_regs)
-    
+   % disp(counter)
+    kk = kk + 1;
     rr = data.regs.props(kk).Centroid;
     
     if isfield( data.regs, 'ignoreError' )
@@ -447,19 +413,14 @@ while (counter > 0 && kk < data.regs.num_regs)
                 'VerticalAlignment','Middle');
             title('Region Number');
             
-        end
-        kk = kk + 1;
+        end     
     end
     
 end
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )
 % intPlotSpot : plots each foci in the cells
 
@@ -522,177 +483,185 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
         end
     end
 end
+end
 
-    function intPlotLink( data, x_, y_ )
-        % intPlotLink shows pole positions and connects daughter cells to each other
-        for kk = 1:data.regs.num_regs
-            rr1 = data.regs.props(kk).Centroid;
-            ID       = data.regs.ID(kk);
-            sisterID = data.regs.sisterID(kk);
-            
-            if sisterID
-                ind = find( data.regs.ID == sisterID );
-                if numel(ind)>1
-                    ind = ind(1)
-                end
-            else
-                ind = [];
-            end
-            
-            if isfield( data, 'CellA' )
-                try
-                    tmp = data.CellA{kk};
-                    r = tmp.coord.r_center;
-                    xaxisx = r(1) + [0,tmp.length(1)*tmp.coord.e1(1)]/2;
-                    xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
-                    yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
-                    yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
-                    old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                    new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                    un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
-                    un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
-                catch ME
-                    printError(ME);
-                end
-                
-                plot( [r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
-                
-                if tmp.pole.op_ori
-                    plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
-                    plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
-                else
-                    plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
-                    plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
-                end
-                
-                if ~isempty(ind) && ID && tmp.pole.op_ori
-                    if ID < sisterID
-                        tmps = data.CellA{ind};
-                        rs = tmps.coord.r_center;
-                        new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
-                        plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
-                    end
-                end
-            end
-            
+function intPlotLink( data, x_, y_ )
+% intPlotLink shows pole positions and connects daughter cells to each other
+for kk = 1:data.regs.num_regs
+    rr1 = data.regs.props(kk).Centroid;
+    ID       = data.regs.ID(kk);
+    sisterID = data.regs.sisterID(kk);
+    
+    if sisterID
+        ind = find( data.regs.ID == sisterID );
+        if numel(ind)>1
+            ind = ind(1)
         end
+    else
+        ind = [];
     end
-
-
-    function [xx,yy] = intGetImSize( data, FLAGS )
+    
+    if isfield( data, 'CellA' )
+        try
+            tmp = data.CellA{kk};
+            r = tmp.coord.r_center;
+            xaxisx = r(1) + [0,tmp.length(1)*tmp.coord.e1(1)]/2;
+            xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
+            yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
+            yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
+            old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+            new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+            un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
+            un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
+        catch ME
+            printError(ME);
+        end
         
-        if isfield( data, 'regs' )
-            ss = size(data.regs.regs_label);
-            
-            if FLAGS.T_flag
-                tmp_props = regionprops( data.regs.regs_label, 'BoundingBox' );
-                pad = 10;
-                
-                yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
-                yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
-                xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
-                xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
-                
-                num_segs = max(data.regs.regs_label(:));
-                
-                for ii = 2:num_segs
-                    yymin = ceil(tmp_props(ii).BoundingBox(2))-pad;
-                    yymax = yymin + ceil(tmp_props(ii).BoundingBox(4))-1+2*pad;
-                    xxmin = ceil(tmp_props(ii).BoundingBox(1))-pad;
-                    xxmax = xxmin + ceil(tmp_props(ii).BoundingBox(3))-1+2*pad;
-                    
-                    yymin_ = min( [yymin_, yymin] );
-                    yymax_ = max( [yymax_, yymax] );
-                    xxmin_ = min( [xxmin_, xxmin] );
-                    xxmax_ = max( [xxmax_, xxmax] );
-                end
-                yy = max([1,yymin_]):min([ss(1),yymax_]);
-                xx = max([1,xxmin_]):min([ss(2),xxmax_]);
-            else
-                xx = 1:ss(2);
-                yy = 1:ss(1);
-            end
+        plot( [r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
+        
+        if tmp.pole.op_ori
+            plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
+            plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
         else
-            ss = size(data.phase);
-            xx = 1:ss(2);
-            yy = 1:ss(1);
+            plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
+            plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
+        end
+        
+        if ~isempty(ind) && ID && tmp.pole.op_ori
+            if ID < sisterID
+                tmps = data.CellA{ind};
+                rs = tmps.coord.r_center;
+                new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
+                plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
+            end
         end
     end
+    
+end
+end
 
-    function FLAGS = intFixFlags( FLAGS )
-        % intFixFlags :  sets default flag values if the value is missing.
+
+function [xx,yy] = intGetImSize( data, FLAGS )
+% intGetImSize : gets size of regions labels  and fills up xx and yy
+% from 1 to the size of the image.
+
+
+if isfield( data, 'regs' )
+    ss = size(data.regs.regs_label);
+    
+    if FLAGS.T_flag % tight flag
+        tmp_props = regionprops( data.regs.regs_label, 'BoundingBox' );
+        pad = 10;
         
-        if ~isfield(FLAGS, 'ID_flag');
-            disp('there is no filed ID_flag');
-            FLAGS.ID_flag = 0;
+        yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
+        yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
+        xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
+        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
+        
+        num_segs = max(data.regs.regs_label(:));
+        
+        for ii = 2:num_segs
+            yymin = ceil(tmp_props(ii).BoundingBox(2))-pad;
+            yymax = yymin + ceil(tmp_props(ii).BoundingBox(4))-1+2*pad;
+            xxmin = ceil(tmp_props(ii).BoundingBox(1))-pad;
+            xxmax = xxmin + ceil(tmp_props(ii).BoundingBox(3))-1+2*pad;
+            
+            yymin_ = min( [yymin_, yymin] );
+            yymax_ = max( [yymax_, yymax] );
+            xxmin_ = min( [xxmin_, xxmin] );
+            xxmax_ = max( [xxmax_, xxmax] );
         end
-        
-        if ~isfield(FLAGS, 'lyse_flag');
-            disp('there is no filed lyse_flag')
-            FLAGS.lyse_flag = 0;
-        end
-        
-        if ~isfield(FLAGS,'m_flag');
-            disp('there is no filed m_flag')
-            FLAGS.m_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'c_flag');
-            disp('there is no filed c_flag')
-            FLAGS.c_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'P_flag');
-            disp('there is no filed P_flag')
-            FLAGS.P_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'v_flag' );
-            disp('there is no filed v_flag')
-            FLAGS.v_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'f_flag');
-            disp('there is no filed f_flag')
-            FLAGS.f_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 's_flag');
-            disp('there is no filed s_flag')
-            FLAGS.s_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'T_flag');
-            disp('there is no filed T_flag')
-            FLAGS.T_flag = 0;
-        end
-        
-        if ~isfield(FLAGS, 'filt')
-            disp('there is not filed filt_flag')
-            FLAGS.filt = [0,0,0];
-        end
-        
-        if ~isfield(FLAGS, 'p_flag');
-            disp('there is not file p_flag')
-            FLAGS.p_flag = 0;
-        end
-        FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
-        
+        yy = max([1,yymin_]):min([ss(1),yymax_]);
+        xx = max([1,xxmin_]):min([ss(2),xxmax_]);
+    else
+        xx = 1:ss(2);
+        yy = 1:ss(1);
     end
+else
+    ss = size(data.phase);
+    xx = 1:ss(2);
+    yy = 1:ss(1);
+end
+end
 
-    function outline = intDoOutline( map )
-        persistent sqrStrel;
-        if isempty( sqrStrel );
-            sqrStrel = strel('square',3);
-        end
-        outline = 2*double(imdilate( map, sqrStrel ))-double(map);
-    end
+function FLAGS = intFixFlags( FLAGS )
+% intFixFlags :  sets default flag values if the value is missing.
+
+if ~isfield(FLAGS, 'Outline_flag');
+    disp('there is no filed Outline_flag');
+    FLAGS.Outline_flag = 0;
+end
+if ~isfield(FLAGS, 'ID_flag');
+    disp('there is no filed ID_flag');
+    FLAGS.ID_flag = 0;
+end
+
+if ~isfield(FLAGS, 'lyse_flag');
+    disp('there is no filed lyse_flag')
+    FLAGS.lyse_flag = 0;
+end
+
+if ~isfield(FLAGS,'m_flag');
+    disp('there is no filed m_flag')
+    FLAGS.m_flag = 0;
+end
+
+if ~isfield(FLAGS, 'c_flag');
+    disp('there is no filed c_flag')
+    FLAGS.c_flag = 0;
+end
+
+if ~isfield(FLAGS, 'P_flag');
+    disp('there is no filed P_flag')
+    FLAGS.P_flag = 0;
+end
+
+if ~isfield(FLAGS, 'v_flag' );
+    disp('there is no filed v_flag')
+    FLAGS.v_flag = 0;
+end
+
+if ~isfield(FLAGS, 'f_flag');
+    disp('there is no filed f_flag')
+    FLAGS.f_flag = 0;
+end
+
+if ~isfield(FLAGS, 's_flag');
+    disp('there is no filed s_flag')
+    FLAGS.s_flag = 0;
+end
+
+if ~isfield(FLAGS, 'T_flag');
+    disp('there is no filed T_flag')
+    FLAGS.T_flag = 0;
+end
+
+if ~isfield(FLAGS, 'filt')
+    disp('there is not filed filt_flag')
+    FLAGS.filt = [0,0,0];
+end
+
+if ~isfield(FLAGS, 'p_flag');
+    disp('there is not file p_flag')
+    FLAGS.p_flag = 0;
+end
+FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
+
+end
+
+function outline = intDoOutline( map )
+persistent sqrStrel;
+if isempty( sqrStrel );
+    sqrStrel = strel('square',3);
+end
+outline = 2*double(imdilate( map, sqrStrel ))-double(map);
+end
 
 
-    function outline = intDoOutline2( map )
-        persistent sqrStrel;
-        if isempty( sqrStrel );
-            sqrStrel = strel('square',3);
-        end
-        outline = double(imdilate( map, sqrStrel ))-double(map);
-    end
+function outline = intDoOutline2( map )
+persistent sqrStrel;
+if isempty( sqrStrel );
+    sqrStrel = strel('square',3);
+end
+outline = double(imdilate( map, sqrStrel ))-double(map);
+end

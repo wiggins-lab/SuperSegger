@@ -21,6 +21,7 @@ ss = size(clist.data);
 inflag = true(ss(1),1);
 
 if isfield( clist, 'gate' )
+    disp ('gating clist');
     for ii = 1:numel(clist.gate)
         
         if numel(clist.gate(ii).ind) == 2

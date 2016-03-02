@@ -125,7 +125,7 @@ else
     num_dir_tmp = numel(contents);
     nxy = [];
     num_xy = 0;
-    
+
     for i = 1:num_dir_tmp
         if (contents(i).isdir) && (numel(contents(i).name) > 2)
             num_xy = num_xy+1;
@@ -133,7 +133,6 @@ else
             dirname_list{i} = [dirname_,contents(i).name,filesep];
         end
     end
-
     
     % set values for nc (array of channels (phase and fluorescent))
     contents = dir([dirname_list{1},'fluor*']);
@@ -187,7 +186,8 @@ else
         close(h);
     end
     
-    % Compute Consensus Images    
+
+    % Compute Consensus Images   
     if CONST.consensus
         h =  waitbar(0,['Computing Consensus Images']);        
         dircons = [dirname_,'consensus',filesep];
@@ -353,12 +353,6 @@ data = [];
 
 % make the segment file name and check if it already exists
 nameInfo_tmp = nameInfo;
-
-% i think i can just replace all this with : 
-% name = MakeFileName(nameInfo)
-% name = name(1:nameInfo.npos(1,3)) % and then i get  imagename-tXX
-
-
 nameInfo_tmp.npos([2,4],:) = 0;
 nameInfo_tmp.npos(1,1) = nt(i);
 name = MakeFileName( nameInfo_tmp );

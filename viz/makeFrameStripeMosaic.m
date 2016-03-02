@@ -23,7 +23,7 @@ if ~isfield(CONST.view, 'falseColorFlag' )
 end
 
 if ~isfield(CONST.view, 'maxNumCell' )
-    CONST.view.maxNumCell = [];
+    CONST.view.maxNumCell = 100;
 end
 
 if ~exist( 'skip', 'var' )
@@ -38,13 +38,8 @@ else
 end
 
 numCells = numel(contents);
-
-if ~isempty( CONST.view.maxNumCell )
-    numCells = min( [numCells, CONST.view.maxNumCell] );
-end
-
+numCells = min( [numCells, CONST.view.maxNumCell] );
 disp( ['Numer of files: ', num2str( numCells ), '.'] );
-
 
 cellArray = cell(1,numCells);
 cellArrayPos = cell(1,numCells);
@@ -107,7 +102,7 @@ if ~CONST.view.saveFiles
         
     else
         del = 0.0;        
-        imTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
+        limTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
     end
     
     

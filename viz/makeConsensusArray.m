@@ -92,8 +92,8 @@ if ~isfield(CONST.view, 'maxNumCell' ) || isempty(CONST.view.maxNumCell)
     CONST.view.maxNumCell = 100;
 end
 
-% force to do only first 1000
-CONST.view.maxNumCell = min (CONST.view.maxNumCell ,10);
+
+CONST.view.maxNumCell = min (CONST.view.maxNumCell ,numCells);
 
 
 if ~isempty( CONST.view.maxNumCell )
