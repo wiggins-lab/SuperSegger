@@ -148,7 +148,7 @@ end
 %each pixel the minimum intensity in its neighborhood. It
 %forces the interior of the cells closer to zero intensity.
 phase = ag(phase);
-phase__ = magicContrastFast2(phase, mask_bg_, MAGIC_RADIUS);
+phase__ = magicContrastFast2(phase, MAGIC_RADIUS);
 phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
 

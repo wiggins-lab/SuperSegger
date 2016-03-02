@@ -175,9 +175,9 @@ for ii = 1:data.regs.num_regs
     mask_ii = and(mask,~mask_mod);
     im_ii = image_(yy,xx);
     
-    Imean   = mean(im_ii(mask_ii));
-    Istd    = std(im_ii(mask_ii));
-    Istd_B  = std(im_ii(mask));
+    Imean   = mean( im_ii(mask_ii));
+    Istd    = std(  im_ii(mask_ii));
+    Istd_B  = std(  im_ii(mask));
    
     focus = focus0;
 

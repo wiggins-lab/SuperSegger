@@ -116,15 +116,13 @@ end
 % Define and resolve errors and relink if regions have changed
 stamp_name = [dirname_seg,'.trackOptiErRes1.mat'];
 if ~exist( stamp_name, 'file' );
-    list_touch = trackOptiErRes(dirname_seg, [], [], CONST, header);
+    list_touch = trackOptiErRes(dirname_seg, 0, CONST, header);
     disp([header, 'trackOpti: ErRes modified ', num2str(numel(list_touch)),' frames.']);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
     disp([header,'trackOpti: trackOptiErRes (1) already run.']);
 end
-
-
 
 %% Set Er
 % reset errors before resolving errors for a second time
@@ -137,12 +135,10 @@ else
     disp([header,'trackOpti: trackOptiSetEr already run.']);
 end
 
-
-
 %% Skip Merge
-% cflag is the ~ skip flag. If true the skipping is taken care of later.
+% If skip is bigger than 1, it takes care of merging all the frames skipped.
+% the merged skipped frames are placed in the seg_full dir
 if skip>1
-    % merges skipped frames into the seg_full dir
     dirname_seg  = dirname_full;
     stamp_name = [dirname_seg,'.trackOptiSkipMerge.mat'];
     if ~exist( stamp_name, 'file' );
@@ -169,7 +165,7 @@ end
 % Resolve Errors for a second time passing the no change flag as 1
 stamp_name = [dirname_seg,'.trackOptiErRes2.mat'];
 if ~exist( stamp_name, 'file' );
-    list_touch = trackOptiErRes(dirname_seg,[],1, CONST, header);
+    list_touch = trackOptiErRes(dirname_seg,1, CONST, header);
     disp([header,'trackOpti: ErRes: modified ', num2str(numel(list_touch)),' frames.']);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');

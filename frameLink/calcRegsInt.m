@@ -5,7 +5,7 @@ function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] ...
 % regions (order does not matter).
 %
 % INPUT :
-%       data_c: region (cell) data structure 1
+%       data1: region (cell) data structure 1
 %       data2 : region (cell) data structure 2
 %       CONST :  segmentation constants
 % OUTPUT :
@@ -29,9 +29,21 @@ function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] ...
 % This file is part of SuperSeggerOpti.
 
 
-OVERLAP_LIMIT_MAX = CONST.trackOpti.OVERLAP_LIMIT_MAX;
 OVERLAP_LIMIT_MIN = CONST.trackOpti.OVERLAP_LIMIT_MIN;
-dA_LIMIT          = CONST.trackOpti.dA_LIMIT;
+
+% initialize
+XX     = {};
+map    = {};
+error  = [];
+dA     = [];
+DA     = [];
+dF1    = [];
+dF2    = [];
+dF1b   = [];
+dF2b   = [];
+mapOld = {};
+XXOld  = {};
+dAOld  = [];
 
 if ~isempty( data1 )
     loop_ind    = 1:data1.regs.num_regs;
@@ -47,68 +59,63 @@ if ~isempty( data1 )
     dF2b  = 2*ones(1, data1.regs.num_regs);
     
     if ~isempty( data2 )        
-        for ii = loop_ind
+        for ii = loop_ind % loop through the regions
             XX{ii} = zeros(2,5);
             X     = zeros(1,data2.regs.num_regs);
             
-            % Get a list of region numbers that overlap with region ii in
-            % data 1
+            % ind : list of regions that overlap with region ii in data 1
             try
-                [xx,yy] = getBB( data1.regs.props(ii).BoundingBox );
+                [xx,yy] = getBB(data1.regs.props(ii).BoundingBox);
                 mask1 = (data1.regs.regs_label(yy,xx)==ii);
                 regs2 = data2.regs.regs_label(yy,xx);
                 ind = unique(regs2(mask1));
                 ind = ind(data2.regs.num_regs>=ind);
                 ind = ind(~~ind);
                 ind = reshape( ind(:), 1, numel(ind(:)) );
-            catch
-                keyboard;
+            catch ME
+                printError(ME);
             end
             
             % consider overlapping regions jj = ind.
             for jj = ind
                 try
-                    % tmp2 is a mask for the overlap region jj
-                    tmp2 = double(regs2==jj);
-                catch
-                    keyboard
-                end
-                try
-                    
-                    % area of overlap = sum(tmp2(mask1(:)))
-                    % X is area of overlap / max( area of two regions ii
-                    % and jj)
-                    X(jj) = sum(tmp2(mask1(:)))/...
-                        max([data1.regs.props(ii).Area,data2.regs.props(jj).Area]);
+                    % mask for the overlap region jj
+                    overlaMaskjj = double(regs2==jj);
+                    % area of overlap between jj and ii
+                    areaOverlapjj = sum(overlaMaskjj(mask1(:)))
+                    % X is area of overlap / max ( area of ii, area of jj)
+                    X(jj) = areaOverlapjj/...
+                        max([data1.regs.props(ii).Area,data2.regs.props(jj).Area]);   
                     
                 catch ME
-                    printError(ME);
+                    printError(ME)
                 end
             end
             
-            % find the biggest fraction
-            % ind is NOW the region with the biggest overlap
-            [junk, ind] = max(X(:));
+            % ind : region with biggest fraction of overlap
+            [max_X, ind] = max(X(:));
             
-            if junk == 0
+            if max_X == 0 % no overlap found
                 dA(ii) = 0;
                 DA(ii) = 0;
             else
+                % min area over max area of the two regions
                 dA(ii) =  min([data1.regs.props(ii).Area,data2.regs.props(ind).Area])/...
                     max([data1.regs.props(ii).Area,data2.regs.props(ind).Area]);
+                
+                % difference in areas over area of region ii
                 DA(ii) =  (data2.regs.props(ind).Area-data1.regs.props(ii).Area)/...
                     data1.regs.props(ii).Area;
             end
             
+            % put the first 5 regions in order of maximum overalp in the
+            % map (if overlap > overlap_limit_min)
             [overlap, B] = sort(X,'descend');
-            
-            nnn = min([5,data2.regs.num_regs]);
-            
+            nnn = min([5,data2.regs.num_regs]);           
             XX{ii}(1,1:nnn) = overlap(1:nnn);
             XX{ii}(2,1:nnn) = B(1:nnn);
             
             try
-                %B = B(overlap > max([0.5*overlap,OVERLAP_LIMIT_MIN]) );
                 B = B(overlap > OVERLAP_LIMIT_MIN );
             catch ME
                 printError(ME);
@@ -122,42 +129,31 @@ if ~isempty( data1 )
         dAOld  = dA;
         
         if CONST.trackOpti.HARDLINK_FLAG
-            [map, XX] = intDoHardLinkDel( map, XX, DA, CONST );           
-            [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST );           
+            % hard links uniquely overlap regions
+            [map, XX] = intDoHardLinkDel( map, XX, DA, CONST );
+            % recalculates dA and DA
+            [~, ~, ~, ~, ~, ~, DA] = intDoInt( data1, data2, map, CONST );           
+            % re-hardlinks using updated DA
             [map, XX] = intDoHardLinkDel( map, XX, DA, CONST );
         end
-        [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST );
         
-        %if(numel(B) ~= 1) || (dA(ii) < dA_LIMIT)
-        %error = or(nB ~= 1, dA < dA_LIMIT);
+        [dA, ~, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST );       
         error = genError( map, DA, CONST );
-        
     end
-    
-else
-    XX     = {};
-    map    = {};
-    error  = [];
-    dA     = [];
-    DA     = [];
-    dF1    = [];
-    dF2    = [];
-    dF1b   = [];
-    dF2b   = [];
-    mapOld = map;
-    XXOld  = XX;
-    dAOld  = dA;
+  
 end
 end
 
 
 function [dA, nB, dF1, dF2, dF1b, dF2b, DA] = intDoInt( data1, data2, map, CONST )
-dA    = zeros(1, data1.regs.num_regs);
-DA    = zeros(1, data1.regs.num_regs);
+% intDoInt : calculates differences in areas of overalp and change in
+% fluorescence between two regions for two data (eg. current and reverse
+% frame), using a map of overlapped regions.
 
-nB    = zeros(1, data1.regs.num_regs);
-
-loop_ind    = 1:data1.regs.num_regs;
+dA  = zeros(1, data1.regs.num_regs);
+DA  = zeros(1, data1.regs.num_regs);
+nB  = zeros(1, data1.regs.num_regs);
+loop_ind  = 1:data1.regs.num_regs;
 
 if CONST.trackOpti.LYSE_FLAG
     dF1   = 2*ones(1, data1.regs.num_regs);
@@ -191,13 +187,13 @@ for ii = loop_ind
         [xx,yy] = getBB( data1.regs.props(ii).BoundingBox );
         mask1 = (data1.regs.regs_label(yy,xx)==ii);
         regs2 = data2.regs.regs_label(yy,xx);
-    catch
-        keyboard;
+    catch ME
+        printError(ME);
     end
     
     
     if ~isempty( map{ii} )
-        ind = map{ii}(1);
+        ind = map{ii}(1); % region with maximum overlap
         dA(ii) =  min([data1.regs.props(ii).Area,data2.regs.props(ind).Area])/...
             max([data1.regs.props(ii).Area,data2.regs.props(ind).Area]);
         DA(ii) = (data2.regs.props(ind).Area-data1.regs.props(ii).Area)/...
@@ -256,7 +252,6 @@ for ii = loop_ind
                     dF2(ii) = 1;
                 end              
                 
-                %blind
                 fluor_d1 = data1.fluor2(yy,xx);
                 fluor_d2 = data2.fluor2(yy,xx);
                 

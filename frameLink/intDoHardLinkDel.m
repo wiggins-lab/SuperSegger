@@ -5,22 +5,23 @@ function [map, XX] = intDoHardLinkDel( map, XX, DA, CONST )
 %
 % INPUT :
 %       map: contains region numbers for mapping in the order of amount of overlap 
-%       XX :
-%       DA :
+%       XX : is a map of overlap scores and indices of overlap 
+%           XX{ii}(1,:) overlap score calculated as area of overlap / the max
+%           of the areas of the two regions
+%           XX{ii}(2,:) incides of regions overlaping with ii 
+%       DA : difference in the areas / max of the two areas
 %       CONST :  Segmentation Constants
 % OUTPUT :
 %       map : new region mappings
-%       XX :
+%       XX : map of scores and regions
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-DA_MIN            = CONST.trackOpti.DA_MIN;
-DA_MAX            = CONST.trackOpti.DA_MAX;
-
+DA_MIN = CONST.trackOpti.DA_MIN;
+DA_MAX = CONST.trackOpti.DA_MAX;
 area_logic = and(DA > DA_MIN, DA < DA_MAX );
-
 ind_c      = find( area_logic );
 ind_r      = drill( map(ind_c), '(1)' );
 
@@ -43,6 +44,7 @@ for ii = 1:nMap
        ind_c_pro(npro) = ii;
     end
 end
+
 ind_r_pro = ind_r_pro(1:npro);
 ind_c_pro = ind_c_pro(1:npro);
 
@@ -65,7 +67,7 @@ repeated_ind_r   = ind_r_unique(ind_ind_r_first~=ind_ind_r_last);
 
 % if two regions in the current frame map with no area change to the
 % reverse frame, (i) first check to see if one of those cells 
-% only maps to a single cell.
+% only map to a single cell.
 nrr = numel( repeated_ind_r );
 
 % make a new version of repeated_ind_r to remove elements from.
@@ -89,10 +91,8 @@ for ii = 1:nrr
    
    % if one of the c regions maps uniquely to this region, but none of the
    % others do, hard map the c and r regions. if not, do nothing.
-   if (nn(1) == 1) && (nn(2) ~= 1)
-        
-        ind_c_hard(ind_ind_r_unique) = ind_c_m(ord(1));
-        
+   if (nn(1) == 1) && (nn(2) ~= 1)       
+        ind_c_hard(ind_ind_r_unique) = ind_c_m(ord(1));        
         % remove this r region from the list of repeated r regions
         list_remove = [list_remove, repeated_ind_r(ii)];
    end

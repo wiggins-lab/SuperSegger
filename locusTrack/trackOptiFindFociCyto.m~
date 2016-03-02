@@ -8,9 +8,9 @@ function [clist, clist_def] = trackOptiFindFociCyto(dirname,CONST,header)
 % (2) Makes a mega region of all cells and fits foci in all cell
 %     simultaneously as opposed fitting foci cell-by-cell.
 %
-% INPUT :
+% INPUT : 
 %   dirname_xy: is the seg directory in the xy directory
-%   skip: frames mod skip are processed
+%   skip: frames mod skip are processed 
 %   CONST: are the segmentation constants.
 %   header : string displayed with information
 % OUTPUT :
@@ -43,31 +43,32 @@ for j = 1:nf;
 end
 
 if ~isfield( data_c, 'fluor1' ) || ~isfield( CONST.trackLoci, 'numSpots' ) ||...
-        ~any(CONST.trackLoci.numSpots)
-    disp ('No foci were fit. Set the constants if you want foci.');
+        ~any(CONST.trackLoci.numSpots) 
+    disp ('No loci were fit - Set constants again');
     return;
 end
 
 
-if CONST.show_status
-    h = waitbar( 0, 'Find Loci.');
-else
-    h = [];
-end
-
-parfor i = 1:num_im; % Parallelizing find loci
-    intDoFoci( i, dirname, contents, nc, CONST);
     if CONST.show_status
-        waitbar(i/num_im,h,['Find Loci--Frame: ',num2str(i),'/',num2str(num_im)]);
+        h = waitbar( 0, 'Find Loci.');
     else
-        disp( [header, 'FindLoci: No status bar. Frame ',num2str(i), ...
-            ' of ', num2str(num_im),'.']);
+        h = [];
     end
-end
+    
+    CONST.show_status = 0;
 
-if CONST.show_status
-    close(h);
-end
+    parfor i = 1:num_im; % Parallelizing find loci
+        intDoFoci( i, dirname, contents, nc, CONST);
+        if CONST.show_status
+            waitbar(i/num_im,h,['Find Loci--Frame: ',num2str(i),'/',num2str(num_im)]);
+        else
+            disp( [header, 'FindLoci: No status bar. Frame ',num2str(i), ...
+                ' of ', num2str(num_im),'.']);
+        end
+    end
+    if CONST.show_status
+        close(h);
+    end
 
 
 end
@@ -86,7 +87,7 @@ gf  = fspecial( 'gaussian', 21, 3 );
 im_filt = cell([1,nc]);
 for j = 1:nc
     fl_im = getfield( data_c, ['fluor',num2str(j)]);
-    fl_im = medfilt2( double(fl_im), [3,3], 'symmetric' );
+    fl_im = medfilt2( double(fl_im), [3,3], 'symmetric' );    
     Istd(j)  = std(fl_im(data_c.mask_bg));
     tmp = (fl_im-imfilter( fl_im, gf, 'replicate' ))/Istd(j);
     tmp(tmp<0) = 0;
@@ -95,12 +96,12 @@ end
 
 
 % Loop through the different fluorescence channels
-for channel_number = 1:nc
-    if isfield( CONST.trackLoci, 'numSpots' ) && numel(CONST.trackLoci.numSpots)>=channel_number
-        if CONST.trackLoci.numSpots(channel_number)
+for channel_number = 1:nc    
+    if isfield( CONST.trackLoci, 'numSpots' ) && numel(CONST.trackLoci.numSpots)>=channel_number        
+        if CONST.trackLoci.numSpots(channel_number)  
             % only runs if there are non zero number of foci set in constants
             % Fits the foci
-            data_c = intFindFociPAWCurve( data_c, CONST, channel_number );
+            data_c = intFindFociPAWCurve( data_c, CONST, channel_number ); 
         end
     end
 end
@@ -109,4 +110,7 @@ dataname = [dirname,contents(i).name];
 save(dataname,'-STRUCT','data_c');
 
 end
+
+
+
 

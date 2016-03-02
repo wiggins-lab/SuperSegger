@@ -1,4 +1,4 @@
-function [list_touch] = trackOptiErRes(dirname,disp_flag,nc_flag,CONST,header)
+function [list_touch] = trackOptiErRes(dirname,nc_flag,CONST,header)
 % trackOptiErRes : defines and resolves errors produced during frame linking.
 % This function can do calculations on the segments and fix segments
 % by frame skipping, removing, and splitting segements and by calling good
@@ -30,11 +30,8 @@ dA_LIMIT_ErRes = CONST.trackOpti.dA_LIMIT_ErRes;
 dA_LIMIT = CONST.trackOpti.dA_LIMIT;
 MAX_WIDTH = CONST.trackOpti.MAX_WIDTH;
 
-if nargin < 2 || isempty(disp_flag);
-    disp_flag = 0;
-end
 
-if nargin < 3 || isempty(nc_flag);
+if nargin < 2 || isempty(nc_flag);
     nc_flag = 0;
 end
 

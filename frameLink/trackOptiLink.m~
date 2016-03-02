@@ -74,12 +74,19 @@ end
                                                                     
 % write over old files
 contents=dir([dirname '*.mat_']);
+% if ispc
+%     move_cmd = '!move ';
+% else
+%     move_cmd = '!mv ';
+% end
 
 num_ch = numel(contents);
-% renames files from .mat_ to .mat
+% mov
 for i = 1:num_ch
     tmp = [dirname,contents(i).name];
     movefile (tmp,tmp(1:end-1))
+    %tot_move_cmd = [move_cmd,'"',tmp,'" "',tmp(1:end-1),'"'];
+    %eval(tot_move_cmd);
 end
 
 end
@@ -98,13 +105,13 @@ elseif (i == num_im) % last frame, loard current and reverse
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
     data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
     data_f = [];
-else % all other frames, load currrent, reverse and forward
+else % all other frames, loadd currrent, reverse and forward
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
     data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
     data_f = prepData(loaderInternal([dirname,contents(i+1).name]));
 end
 
-% Calculates overlaps
+% Calculate overlaps
 data_c = trackOptiIntDiskNR( data_c, data_r, data_f, CONST );
 
 if err_flag

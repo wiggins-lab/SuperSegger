@@ -1,12 +1,12 @@
 function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)
-% trackOptiIntDiskNR : computes the links (or overlaps) between subsequent frames
+% trackOptiIntDiskNR : computes the overlaps between subsequent frames 
+% (reverse and forward) and updates region fields in the data structure.
 %
 % INPUT :
 %       data    : region (cell) data structure
 %       data_r  : reverse region (cell) data structure
 %       data_f  : forward region (cell) data structure
 %       CONST   : SuperSeggerOpti set parameters
-%
 %
 % OUTPUT :
 %       data : updated region (cell) data structure.
@@ -35,6 +35,7 @@ function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)
 % This file is part of SuperSeggerOpti.
 
 % calculate overlap between current, reverse and forward regions
+% and update the map field with regions mapping
 [data.regs.ol.f,  data.regs.map.f,  data.regs.error.f,  data.regs.dA.f, ...
     data.regs.DA.f, dF1_f, dF2_f,dF1b_f,dF2b_f]   ...
     = calcRegsInt( data,   data_f, CONST);
@@ -42,23 +43,20 @@ function data  = trackOptiIntDiskNR(data,data_r,data_f,CONST)
     data.regs.DA.r,dF1_r, dF2_r,dF1b_r,dF2b_r] ...
     = calcRegsInt( data,   data_r, CONST);
 [data.regs.ol.rf, data.regs.map.rf, data.regs.error.rf, data.regs.dA.rf,...
-    data.regs.DA.rf]  ...
-    = calcRegsInt( data_r, data_f, CONST);
+    data.regs.DA.rf] = calcRegsInt( data_r, data_f, CONST);
 [data.regs.ol.fr, data.regs.map.fr, data.regs.error.fr, data.regs.dA.fr,...
-    data.regs.DA.fr]  ...
-    = calcRegsInt( data_f, data_r, CONST);
+    data.regs.DA.fr] = calcRegsInt( data_f, data_r, CONST);
 
-% keep the forward mapping....
+% keep the forward mapping.
 data.regs.dF1  = dF1_f;
 data.regs.dF2  = dF2_f;
 data.regs.dF1b = dF1b_f;
 data.regs.dF2b = dF2b_f;
 
+% initializing region fields
 data.regs.eccentricity = zeros(1,data.regs.num_regs);
-
 data.regs.L1           = zeros(1,data.regs.num_regs);
 data.regs.L2           = zeros(1,data.regs.num_regs);
-
 data.regs.contact     = zeros(1,data.regs.num_regs);
 data.regs.neighbors   = cell(1,data.regs.num_regs);
 data.regs.contactHist = zeros(1,data.regs.num_regs);
@@ -71,32 +69,31 @@ data.regs.birthF         = zeros(1,data.regs.num_regs);% division in this frame
 data.regs.age            = zeros(1,data.regs.num_regs);% cell age. starts at 1.
 data.regs.divide         = zeros(1,data.regs.num_regs);% succesful division in this frame.
 data.regs.ehist          = zeros(1,data.regs.num_regs);% True if cell has an unresolved error before this time.
+data.regs.stat0 = zeros(1,data.regs.num_regs); %  Successful division.
+data.regs.sisterID = zeros(1,data.regs.num_regs);   % sister cell ID
+data.regs.motherID  = zeros(1,data.regs.num_regs);   % mother cell ID
+data.regs.daughterID = cell(1,data.regs.num_regs);   % daughter cell ID
+data.regs.ID  = zeros(1,data.regs.num_regs); % cell ID number
+data.regs.error.label = cell(1,data.regs.num_regs);   % err
+data.regs.ignoreError = zeros(1,data.regs.num_regs); % a flag for ignoring the error in a region.
 
 % add lysis detection if lysis flag is set
 if CONST.trackOpti.LYSE_FLAG
-    data.regs.lyse.errorColor1         = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
-    data.regs.lyse.errorColor1Cum      = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
-    data.regs.lyse.errorColor2         = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-    data.regs.lyse.errorColor2Cum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
-    data.regs.lyse.errorColor1b         = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
-    data.regs.lyse.errorColor1bCum      = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
-    data.regs.lyse.errorColor2b         = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-    data.regs.lyse.errorColor2bCum      = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
-    data.regs.lyse.errorShape          = zeros(1,data.regs.num_regs); % Fluor intensity change error in this frame
-    data.regs.lyse.errorShapeCum       = zeros(1,data.regs.num_regs); % Cum intensity change error
+    data.regs.lyse.errorColor1 = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
+    data.regs.lyse.errorColor1Cum = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
+    data.regs.lyse.errorColor2 = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
+    data.regs.lyse.errorColor2Cum = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
+    data.regs.lyse.errorColor1b = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
+    data.regs.lyse.errorColor1bCum = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
+    data.regs.lyse.errorColor2b = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
+    data.regs.lyse.errorColor2bCum = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error   
+    data.regs.lyse.errorShape = zeros(1,data.regs.num_regs); % Fluor intensity change error in this frame
+    data.regs.lyse.errorShapeCum = zeros(1,data.regs.num_regs); % Cum intensity change error
 end
 
-data.regs.stat0          = zeros(1,data.regs.num_regs); %  Successful division.
-data.regs.sisterID       = zeros(1,data.regs.num_regs);   % sister cell ID
-data.regs.motherID       = zeros(1,data.regs.num_regs);   % mother cell ID
-data.regs.daughterID     = cell(1,data.regs.num_regs);   % daughter cell ID
-data.regs.ID             = zeros(1,data.regs.num_regs); % cell ID number
-data.regs.error.label    = cell(1,data.regs.num_regs);   % err
-data.regs.ignoreError    = zeros(1,data.regs.num_regs); % a flag for ignoring the error in a region.
-%data.regs.neighbors       = cell(1,data.regs.num_regs);   % err
+loop_ind = 1:data.regs.num_regs;
 
-loop_ind       = 1:data.regs.num_regs;
-
+% go through the regions and update info,L1,L2 and scoreRaw.
 for ii = loop_ind
     [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
     data.regs.info(ii,:) = CONST.regionScoreFun.props( (data.regs.regs_label(yy,xx)==ii),data.regs.props(ii) );
@@ -113,7 +110,6 @@ for ii = loop_ind
         end
     end
 end
-
 
 data.regs.eccentricity = drill(data.regs.props,'.MinorAxisLength')'...
     ./drill(data.regs.props,'.MajorAxisLength')';

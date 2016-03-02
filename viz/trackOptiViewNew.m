@@ -100,7 +100,12 @@ if ~num_xy
     disp('There are no xy dirs. Choose a different directory.');
     return;
 else
-    dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg',filesep];
+   if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
+      dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
+   else
+       dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg',filesep];
+   end
+    
     dirname_cell = [dirname0,contents_xy(dirnum).name,filesep,'cell',filesep];
     dirname_xy = [dirname0,contents_xy(dirnum).name,filesep];
     
@@ -785,6 +790,7 @@ end
 
 function padStr = getPadSize( dirname )
 % getPadSize : returns number of numbers in cell id's.
+
 contents = dir([dirname,'*ell*.mat']);
 
 if numel(contents) == 0

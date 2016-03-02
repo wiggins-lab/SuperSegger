@@ -76,7 +76,7 @@ end
 
 % This cuts out bright spots from the mask
 phase_ag = ag(phase_);
-phase__ = magicContrastFast2(phase_ag, [], 3);
+phase__ = magicContrastFast2(phase_ag, 3);
 CUT_INT = 50;
 mask_mod_50 = (phase__>CUT_INT);
 

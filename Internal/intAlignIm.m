@@ -14,7 +14,7 @@ function  [out, errNum, focusNum] = intAlignIm( imA, imB, precision )
 %           zero if images are non-negative).
 %           net_row_shift, net_col_shift : Pixel shifts between images
 %       errNum : error value of alignment
-%       focusNum : focused value
+%       focusNum : score of how focused the images are
 %
 % Copyright (C) 2016 Wiggins Lab 
 % University of Washington, 2016

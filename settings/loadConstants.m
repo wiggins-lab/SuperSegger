@@ -187,12 +187,10 @@ end
 
 
 CONST.ResFlag = ResFlag;
-CONST.align.CROP_FLAG  = false;
 CONST.align.ALIGN_FLAG = true;
 
-%%
-% This is where the function pointer to the segmentation backend is set.
-% By changing this field you can change the segmentation backend of
+% This is where the function pointer to the segmentation back-end is set.
+% By changing this field you can change the segmentation back-end of
 % BatchSuperSeggerOpti.
 
 CONST.seg.segFun = @ssoSegFun;

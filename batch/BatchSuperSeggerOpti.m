@@ -81,7 +81,7 @@ if clean_flag && SEGMENT_FLAG
     end
 end
 
-%% align frames
+% align frames
 if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
         disp('BatchSuperSeggerOpti : aligned images exist');
@@ -94,9 +94,8 @@ if exist( dirname_, 'dir' )
     else 
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
-            Neo_Crop(dirname_);
-            crop_box_array = trackOptiAlignPad( dirname_, ...
-                CONST.align.CROP_FLAG, CONST.parallel_pool_num, CONST );
+            crop_box_array = trackOptiAlignPad( dirname_,...
+                CONST.parallel_pool_num, CONST);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
             movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
@@ -110,14 +109,13 @@ else
 end
 
 
-%% setup the dir structure for analysis.
+% setups the dir structure for analysis.
 trackOptiPD(dirname_, CONST);
-
-save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Save the Const set you were using in your analysis
+save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Saves CONST set you used.
 save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 
-%% Loop through xy directories
-% Reset n values incase directories have already been made.
+% Loop through xy directories
+% Reset n values in case directories have already been made.
 % setup nxy values
 contents = dir([dirname_,'xy*']);
 
@@ -137,7 +135,7 @@ else
     end
 
     
-    % reset values for nc : array of channels (phase and fluorescent)
+    % set values for nc (array of channels (phase and fluorescent))
     contents = dir([dirname_list{1},'fluor*']);
     num_dir_tmp = numel(contents);
     nc = 1; 
@@ -149,10 +147,9 @@ else
             nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1]; 
         end
     end
-    %nc
     
     
-    %% Set up parallel loop for each xy point if more than one xy position
+    % Set up parallel loop for each xy point if more than one xy position
     % exists. If not more than one xy, we will parallelize inner loops
     if (num_xy>1) && (CONST.parallel_pool_num>0)
         MM = CONST.parallel_pool_num;
@@ -190,10 +187,8 @@ else
         close(h);
     end
     
-    %% Compute Consensus Images
-    
+    % Compute Consensus Images    
     if CONST.consensus
-        
         h =  waitbar(0,['Computing Consensus Images']);        
         dircons = [dirname_,'consensus',filesep];
         mkdir( dircons );       
@@ -228,12 +223,6 @@ end
 % done!
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% intProcessXY
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
     CONST, SEGMENT_FLAG, crop_box )
 % intProcessXY : the details of running the code in parallel.
@@ -277,7 +266,7 @@ end
 
 
 
-%% Do segmentation
+% Do segmentation
 disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
 
 if (CONST.parallel_pool_num>0)
@@ -327,16 +316,11 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
 end
 
 
-%% Link the cells
+% Link the cells
 trackOpti(dirname_xy, skip, CONST, clean_flag, header );
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% doSeg
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
     dirname_xy, clean_flag, skip, CONST, header, crop_box)
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.

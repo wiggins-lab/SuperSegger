@@ -1,16 +1,16 @@
 function imOut = intShiftIm( imIn, out )
-% intShiftIm: shifts image imIn by the parameters in out.
+% intShiftIm: shifts image 'imIn' by the parameters in 'out'
 % out is produced by intAlignIm( imA, imB, precision ).
 %
 % INPUT :
-%   imIn : image 
-%   out : output of intAligIm, row_shift in (3) and col_shift (4)
-%   array.
+%   imIn : input image
+%   out : output of intAlignIm,
+%       where the 3rd element is the row_shift and 4th and col_shift
 %
 % OUTPUT :
-%   imOut : shifter image
+%   imOut : shifted image
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
