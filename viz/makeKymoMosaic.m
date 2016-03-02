@@ -1,4 +1,4 @@
-function makeKymoMosaic (dirname, CONST)
+function [im]= makeKymoMosaic (dirname, CONST)
 % makeKymoMosaic creates a mosaic kymograph of multiple cells.
 % make kymo mosaic is only for fl1 in makeKymograph, which is currently
 % set to gfp. A kymograph shows the fluorescence of the cell along the
@@ -13,13 +13,10 @@ function makeKymoMosaic (dirname, CONST)
 % This file is part of SuperSeggerOpti.
 
 
-% PROBLEM IN MAKY KYMOGRAPH F1MM does not exist if view false color is not
-% true!
-
 % NOTE: TIME IN HOURS FOR 1 MIN FREQUENCY
 TimeStep     = CONST.getLocusTracks.TimeStep/60;
 PixelSize    = CONST.getLocusTracks.PixelSize;
-tmp = [];
+
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -39,9 +36,14 @@ end
 
 
 num_list_ = numel( dir_list ); % number of cells to be displayed
+
+if ~isfield(CONST.view, 'maxNumCell' )
+    CONST.view.maxNumCell = 100;
+else
+    
+num_list_ = min( [num_list_, CONST.view.maxNumCell] );
 num_list = 0;
 
-% why is this necessary?
 for ii = 1:num_list_   
     if (~isempty(dir_list(ii).name))
         num_list = num_list + 1;
@@ -59,6 +61,9 @@ data_A = cell(1,num_list);
 del = .1;
 ii = 0;
 
+h = waitbar(0, 'Computation' );
+
+
 for jj = 1:num_list_
     
     if ~isempty(dir_list(jj).name)
@@ -66,7 +71,7 @@ for jj = 1:num_list_
         ii = ii + 1;
         filename = [dirname,filesep,dir_list(jj).name];
         data = load(filename);
-        [kymo,ttmp,f1mm,f2mm] = makeKymographC(data,0,CONST);
+        [kymo,~,f1mm,~] = makeKymographC(data,0,CONST);
         
         name(jj) = data.ID;
         pole(jj) = getPoleSign( data );
@@ -84,9 +89,10 @@ for jj = 1:num_list_
         max_x = max([max_x,ss(1)]);
         max_t = max([max_t,ss(2)]);        
     end
-    
+     waitbar(jj/num_list_,h);
 end
-
+ close(h);
+ 
 max_x = max_x+1;
 max_t = max_t+1;
 imdim = [ max_x*numa + 1, max_t*numb + 1 ];
@@ -134,7 +140,8 @@ T_ = (1:ss(2))*TimeStep;
 X_ = (1:ss(1))*PixelSize;
 
 inv_flag = 0;
-
+figure;
+clf;
 if inv_flag
     imagesc(T_,X_,255-im);
 else

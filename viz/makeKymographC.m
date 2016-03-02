@@ -34,7 +34,7 @@ if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
 end
 
 if ~exist( 'filt_channel', 'var' ) || isempty(filt_channel)
-    filt_channel = [0,0,0];
+    filt_channel = 1;
 end
 
 
@@ -93,7 +93,7 @@ for ii = 1:num_im
     mask  = data.CellA{ii}.mask;
     
     if isfield( data.CellA{ii}, 'fluor1') && which_channel(1)
-        if filt_channel(1) && isfield( data.CellA{ii},'fluor1_filtered')
+        if filt_channel && isfield( data.CellA{ii},'fluor1_filtered')
             fluor1 =data.CellA{ii}.fluor1_filtered;
         else
             fluor1  = data.CellA{ii}.fluor1;
@@ -110,7 +110,7 @@ for ii = 1:num_im
     end
     
     if isfield( data.CellA{ii}, 'fluor2') && which_channel(2)
-        if filt_channel(2) && isfield( data.CellA{ii}, 'fluor2_filtered' )
+        if filt_channel && isfield( data.CellA{ii}, 'fluor2_filtered' )
             fluor2 = data.CellA{ii}.fluor2_filtered;
         else
             fluor2 = data.CellA{ii}.fluor2;

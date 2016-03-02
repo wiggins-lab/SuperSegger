@@ -93,8 +93,7 @@ if exist( dirname_, 'dir' )
         end
     else 
         mkdir( [dirname_,filesep,'raw_im'] );
-        if CONST.align.ALIGN_FLAG           
-            Neo_Crop(dirname_);
+        if CONST.align.ALIGN_FLAG
             crop_box_array = trackOptiAlignPad( dirname_, ...
                 CONST.align.CROP_FLAG, CONST.parallel_pool_num, CONST );
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
@@ -111,8 +110,8 @@ end
 
 
 %% setup the dir structure for analysis.
-trackOptiPD(dirname_, CONST);
 
+trackOptiPD(dirname_, CONST);
 save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Save the Const set you were using in your analysis
 save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 
@@ -127,7 +126,7 @@ else
     num_dir_tmp = numel(contents);
     nxy = [];
     num_xy = 0;
-    
+
     for i = 1:num_dir_tmp
         if (contents(i).isdir) && (numel(contents(i).name) > 2)
             num_xy = num_xy+1;
@@ -135,7 +134,6 @@ else
             dirname_list{i} = [dirname_,contents(i).name,filesep];
         end
     end
-
     
     % reset values for nc : array of channels (phase and fluorescent)
     contents = dir([dirname_list{1},'fluor*']);
@@ -152,7 +150,7 @@ else
     %nc
     
     
-    %% Set up parallel loop for each xy point if more than one xy position
+    % Set up parallel loop for each xy point if more than one xy position
     % exists. If not more than one xy, we will parallelize inner loops
     if (num_xy>1) && (CONST.parallel_pool_num>0)
         MM = CONST.parallel_pool_num;
@@ -190,8 +188,7 @@ else
         close(h);
     end
     
-    %% Compute Consensus Images
-    
+    % Compute Consensus Images   
     if CONST.consensus
         
         h =  waitbar(0,['Computing Consensus Images']);        
@@ -332,11 +329,7 @@ trackOpti(dirname_xy, skip, CONST, clean_flag, header );
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% doSeg
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
     dirname_xy, clean_flag, skip, CONST, header, crop_box)
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
@@ -369,12 +362,6 @@ data = [];
 
 % make the segment file name and check if it already exists
 nameInfo_tmp = nameInfo;
-
-% i think i can just replace all this with : 
-% name = MakeFileName(nameInfo)
-% name = name(1:nameInfo.npos(1,3)) % and then i get  imagename-tXX
-
-
 nameInfo_tmp.npos([2,4],:) = 0;
 nameInfo_tmp.npos(1,1) = nt(i);
 name = MakeFileName( nameInfo_tmp );
