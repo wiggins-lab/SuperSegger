@@ -42,7 +42,7 @@ elementsPhase = 'c';
 
 if exist([dirname,filesep,'raw_im'],'dir') && ~isempty(dir([dirname,filesep,'raw_im',filesep,'*tif*']))
     disp('Files already aligned');
-elseif numel(dir(['.',filesep,'*t*c*.tif']))
+elseif numel(dir([dirname,filesep,'*t*c*.tif']))
     disp('File names in NIS-Elements format')
     disp('Procede to segmentation')
 elseif isempty(images) && isempty(imagesInOrig)
