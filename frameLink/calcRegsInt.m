@@ -1,4 +1,4 @@
-function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] ...
+function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b] ...
     = calcRegsInt( data1, data2, CONST )
 % calcRegsInt : calculates the max overlap between data1 and data2 regions
 % data 1 and data 2 can be the reverse and current, current and forward
@@ -20,9 +20,9 @@ function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b,mapOld,XXOld,dAOld] ...
 %       dF2 : Change in fluorescence between regions of overlap
 %       dF1b : Change in fluorescence between regions of overlap
 %       dF2b : Change in fluorescence between regions of overlap
-%       mapOld :
-%       XXOld :
-%       dAOld :
+%       mapOld : old map, is the same as map
+%       XXOld : xxOld is the same as XX
+%       dAOld : dA old is the same as dA
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
@@ -41,9 +41,7 @@ dF1    = [];
 dF2    = [];
 dF1b   = [];
 dF2b   = [];
-mapOld = {};
-XXOld  = {};
-dAOld  = [];
+
 
 if ~isempty( data1 )
     loop_ind    = 1:data1.regs.num_regs;
@@ -124,10 +122,6 @@ if ~isempty( data1 )
             
         end
         
-        mapOld = map;
-        XXOld  = XX;
-        dAOld  = dA;
-        
         if CONST.trackOpti.HARDLINK_FLAG
             % hard links uniquely overlap regions
             [map, XX] = intDoHardLinkDel( map, XX, DA, CONST );
@@ -207,12 +201,11 @@ for ii = loop_ind
             mask2 = (data2.regs.regs_label(yy2,xx2)==ind);
 
             if isfield( data1, 'fluor1' )
+                
                 fluor_d1 = data1.fluor1(yy,xx);
                 fluor_d2 = data2.fluor1(yy2,xx2);
-                
                 mf1 = mean( fluor_d1(mask1) )-m1back;
-                mf2 = mean( fluor_d2(mask2) )-m1back;
-                
+                mf2 = mean( fluor_d2(mask2) )-m1back;                
                 mmax = max([mf1,mf2]);
                 
                 if mmax > s1back
@@ -221,7 +214,6 @@ for ii = loop_ind
                     dF1(ii) = 1;
                 end
                 
-                %blind
                 fluor_d1 = data1.fluor1(yy,xx);
                 fluor_d2 = data2.fluor1(yy,xx);
                 

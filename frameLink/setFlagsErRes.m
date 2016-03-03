@@ -1,7 +1,20 @@
-% setFlagsErRes : sets the error resolution flags
+% setFlagsErRes : sets the error flags in order to resolve errors in
+% regions. 
 
-% If there is an area mapping regions to the previous frame
-% -> Need to resolve a tracking error
+% Error flags : 
+% AreaChangeFlag : the area changes by more than dA_LIMIT_ErRes
+% localMapGoodFlag : the area change is between DA_MIN and DA_MAX
+% merged_flag : possibly a region merged in this frame 
+%       the area change is not between the values and more than one
+%       reverse regions maps to one region
+% strayflag : region found that does not map to anything before or after
+% fskip_flag : if there are errors before or after on mapped regions
+% s21_flag : region maps from 1 to 2
+% s12_flag : region maps from 2 to 1
+% cshift_flag : the cell shifted position, possibly pushed by other cells.
+% split_flag : either region in current frame split in the previous frame or current frame          
+% localMapGoodFlagEnd : DA reverse is in between  2*DA_MIN and 2*DA_MAX
+
 DA_MIN            = CONST.trackOpti.DA_MIN;
 DA_MAX            = CONST.trackOpti.DA_MAX;
 
@@ -19,9 +32,8 @@ for mm = list_r;
     end
 end
 
-list_rc = unique(list_rc );
+list_rc = unique(list_rc);
 list_rc_other = list_rc(list_rc~=ii);
-list_rcf = [];
 list_rcf = unique([data_c.regs.map.f{list_rc}]);
 
 try
@@ -35,14 +47,13 @@ num_list_r  = numel(list_r);
 num_list_rc = numel(list_rc);
 
 try
-    AreaChangeFlag = all( data_c.regs.dA.r(list_rc)> dA_LIMIT_ErRes );
+    AreaChangeFlag = all(data_c.regs.dA.r(list_rc)> dA_LIMIT_ErRes );
 catch
     AreaChangeFlag = 0;
 end
 
 localMapGoodFlag = and(data_c.regs.DA.r(ii) > DA_MIN,...
     data_c.regs.DA.r(ii) < DA_MAX);
-
 
 merged_flag = or(data_c.regs.DA.r(ii) < DA_MIN,...
     data_c.regs.DA.r(ii) > DA_MAX ) ...
@@ -54,8 +65,7 @@ if num_im == 1
 else
     stray_flag = (~isempty(data_c.regs.ol.r{ii}) && ...
         ~sum( data_c.regs.ol.r{ii}(1,:) )) ...
-        || ...
-        (~isempty(data_c.regs.ol.f{ii}) && ...
+        || (~isempty(data_c.regs.ol.f{ii}) && ...
         ~ sum( data_c.regs.ol.f{ii}(1,:) )) ...
         || stray_flag;
 end
@@ -77,57 +87,42 @@ catch ME
     fskip_flag = false;
 end
 
-
-
-
+% flag for regions that map from two regions to one in this frame
+% and have an error from reverse to forward
 s21_flag = any(data_c.regs.error.rf(list_r)) && ...
     (num_list_r == 2 ) && ...
     ( num_list_rc == 1);
 
-% to set the 1->2 flag insist that the mapping in 1->2
-% and that there is no mapping error in the next frame for the
-% prospective daughter cells
-% s12_flag =  ~any( data_c.regs.error.f(list_rc) & ...
-%     ((data_c.regs.DA.f(list_rc)<CONST.trackOpti.DA_MIN) | ...
-%      (data_c.regs.DA.f(list_rc)>CONST.trackOpti.DA_MAX))) && ...
-%     (num_list_r ==1 ) && ...
-%     ( num_list_rc == 2);
-
-
+% flag for regions that map from one region to two in the current frame
 s12_flag =  (numel(list_rcf)>1) && ...
     (num_list_r ==1 ) && ...
     ( num_list_rc > 1);
-
 
 % cell shift is an error that occurs because cells are pushing each
 % other.
 cshift_flag = (num_list_r ==1 ) && ( num_list_rc == 1) && ...
     ~isempty( data_c.regs.dA.r(ii) ) && (data_c.regs.dA.r(ii) > dA_LIMIT_ErRes);
+
 try
     split_flag = ((~isempty(data_r) && ...
         (numel(list_r) > 0) && ...
         all(data_r.regs.L2(list_r) < MAX_WIDTH)) ...
-        ...
         || (~isempty(data_f) && ...
         (numel(list_f) > 0) && ...
         all(data_f.regs.L2(list_f) < MAX_WIDTH))) ...
-        ...
         && (data_c.regs.L2(ii) > MAX_WIDTH);
 catch
     keyboard
 end
 
 
-
 localMapGoodFlagEnd = and(data_c.regs.DA.r(ii) > 2*DA_MIN,...
     data_c.regs.DA.r(ii) < 2*DA_MAX);
 
 
-rrrrr = 0;
-
-
 % set to 1 if you want to display the flags
-if 0
+display =0;
+if display
     disp(['Frame: ', num2str(i), ' seg: ', num2str(ii)] );
     if stray_flag
         disp('Stray');
@@ -149,8 +144,7 @@ if 0
         disp('Unresolved.');
     end
    
-    if ~(s12_flag || localMapGoodFlag)
-        
+    if ~(s12_flag || localMapGoodFlag)        
         %showDA4( data_c, data_r, data_f);
         rl_c = data_c.regs.regs_label;
         if isempty( data_r )
@@ -163,7 +157,6 @@ if 0
         else
             rl_f = data_f.regs.regs_label;
         end
-        
         
         figure(1);
         clf;
@@ -198,7 +191,6 @@ if 0
         title( 'blue f');
         
         disp( ['Frame: ', num2str(i), ' region: ', num2str(ii),'.'] );
-        
-        '';
+
     end
 end

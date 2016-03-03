@@ -1,16 +1,16 @@
 function [ data_new, ind ] = fix2to1( data_c, ii_c, data_r, list_r )
-% fix2to1 : turns on some segments to divide a region that is in data_c
-% to correspond with two regions in data_r. It cuts the region ii_c in data_c,
+% fix2to1 : fixing error when a region in data_c corresponts to two in data_r.
+% It turns on some segments to divide the region ii_c in data_c
 % provided the region is touching regions list_r in data_r.
 %
 % INPUT :
-%       data_c: cell / region to be modified
+%       data_c: current cell / region to be modified
 %       ii_c : region number
-%       data_r : corresponding cell/region
-%       list_r : list of regions to be touched by ii_c
+%       data_r : corresponding cell/region in the reverse frame
+%       list_r : list of regions touched by ii_c
 %
 % OUTPUT :
-%       data_new : new modified data file
+%       data_new : new modified data_c file
 %       ind : indices of regions
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -70,7 +70,7 @@ for jj = 1:nsegs
     jj_c = segs_c_ind_ord(jj);
     regs_c(segs_c==jj_c) = false;
     new_labels = bwlabel( regs_c );
-    if max(  new_labels(:)) > 1
+    if max(new_labels(:)) > 1
         flag = true;
         break;
     end

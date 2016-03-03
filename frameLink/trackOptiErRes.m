@@ -6,8 +6,6 @@ function [list_touch] = trackOptiErRes(dirname,nc_flag,CONST,header)
 %
 % INPUT :
 %       dirname_ : seg folder eg. maindirectory/xy1/seg
-%       disp_flag : 1 to display images
-%                   0 to not display images (default)
 %       nc_flag : no change flag, passed the second time in error resolution
 %       runs
 %       CONST : Constants file
@@ -35,7 +33,7 @@ if nargin < 2 || isempty(nc_flag);
     nc_flag = 0;
 end
 
-if ~exist('header')
+if ~exist('header','var')
     header = 'ErRes no header';
 end
 
@@ -104,7 +102,7 @@ while i <= num_im % loop through number of frames
             ignoreError  = 0;
         end
         
-        % set stray flag for regions in the first frame that don't map to
+        % first frame only: set stray flag for regions that don't map to
         % any regions in the next frame.
         if (i == 1) && isempty(data_c.regs.map.f{ii}) && (num_im>1)
             if ~ignoreError
@@ -143,20 +141,19 @@ while i <= num_im % loop through number of frames
         
         if ~data_c.regs.error.r(ii) || ismember(ii,list_change_last) ...
                 || ismember(ii,list_c_del)
-            if (i>1)
-                if (numel(list_r) > 0)
+            % update if no error, region in deleted list or changed last
+            if (i>1) && (numel(list_r) > 0)
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
-                else
-                    [data_c, data_r, cell_count] = update_cell( ...
-                        data_c, ii, data_r, list_r, i, 0, [], cell_count);
-                end
-            else
+            else % first frame or numel(list_r) == 0
                 [data_c, data_r, cell_count] = update_cell( ...
                     data_c, ii, data_r, list_r, i, 0, [], cell_count);
             end
         else
+            
+            % error flags for region ii are set in this script
             setFlagsErRes;
+            
             if stray_flag
                 % Stray Region : gets rid of regions that appear from nowhere.
                 if ignoreError
@@ -187,9 +184,8 @@ while i <= num_im % loop through number of frames
                     end
                 end
             elseif cshift_flag
-                % Cell Shift :
-                % Cell sometime shift rapidly. Clear the error if the cell
-                % size doesn't change very much
+                % Cell sometiems shift rapidly because of being pushed
+                % Clear the error if the cell size doesn't change very much
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -199,9 +195,7 @@ while i <= num_im % loop through number of frames
                     if  ~isempty( data_c.regs.dA.r(ii) ) && (data_c.regs.dA.r(ii) > dA_LIMIT_ErRes)
                         
                         data_c.regs.error.label{ii} = (['Frame: ', ...
-                            num2str(i), ', reg: ', num2str(ii),...
-                            '. Cell shift.']);
-                        
+                            num2str(i), ', reg: ', num2str(ii),'. Cell shift.']);                     
                         disp([header, 'ErRes: ', data_c.regs.error.label{ii}] );
                         data_c.regs.error.r(ii) = 0;
                         data_r.regs.error.f(list_r(1)) = 0;
@@ -233,12 +227,9 @@ while i <= num_im % loop through number of frames
                 end
                 
             elseif merged_flag
-                % One frame skip :
-                % This method of error resolution attempts to resolve the
-                % error by checking if there in no error in a map between the
-                % overlapping regions in the previous and next frames. If this
-                % is true, the regions from the next frame--that overlap the
-                % error segment--are copied into the current frame.
+                % when two regions in data_r correspond to one in data_c
+                % attempts to merge two regions that merged by turning on
+                % some segments in data_c.
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -246,23 +237,18 @@ while i <= num_im % loop through number of frames
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
                 else
                     
-                    [data_new, ind_new] = fix2to1( data_c, ii, data_r, data_c.regs.map.r{ii} );
-                    
-                    if isempty( data_new ) || nc_flag
-                        
+                    [data_new, ind_new] = fix2to1( data_c, ii, data_r, data_c.regs.map.r{ii} );                     
+                    if isempty( data_new ) || nc_flag                       
                         data_c.regs.error.label{ii} = ...
                             ['Frame: ', num2str(i), ', reg: ', num2str(ii),...
                             '. Merged fix fails'];
                         disp([header, 'ErRes: ',data_c.regs.error.label{ii}]);
                         data_c.regs.error.r(ii) = 2;
-                        %data_c = update_cell( data_c, ii, data_r, list_r(1), 1);
                         [data_c, data_r, cell_count] = update_cell( ...
                             data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
-                    else
-                        
+                    else                        
                         data_c = deleteRegions( data_c, ii);
-                        data_c = addRegions(    data_c, data_new, ...
-                            ind_new );     
+                        data_c = addRegions(data_c, data_new, ind_new );     
                         break_flag = 1;
                         data_c.regs.error.label{ii} = ...
                             ['Frame: ', num2str(i), ', reg: ', num2str(ii),...
@@ -270,7 +256,13 @@ while i <= num_im % loop through number of frames
                         disp([header, 'ErRes: ',data_c.regs.error.label{ii}]);
                     end
                 end
-            elseif fskip_flag      
+            elseif fskip_flag
+                % One frame skip :
+                % This method of error resolution attempts to resolve the
+                % error by checking if there in no error in a map between the
+                % overlapping regions in the previous and next frames. If this
+                % is true, the regions from the next frame, that overlap the
+                % error segment, are copied into the current frame.
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -304,8 +296,8 @@ while i <= num_im % loop through number of frames
                             data_c.regs.error.label{ii} = ['Frame: ', num2str(i),...
                                 ', reg: ', num2str(ii),'. fixed an error by frame skipping.'];
                             disp([header, 'ErRes: ',data_c.regs.error.label{ii}]);
-                            % zero out connected segments in the current frame;
                             
+                            % zero out connected segments in the current frame;
                             list_c_del = [list_c_del, list_rcrfc];
                             list_f_add = [list_f_add, list_rcrfcf];
 
@@ -315,6 +307,8 @@ while i <= num_im % loop through number of frames
                     end
                 end
             elseif split_flag
+                % region in current frame split in the previous frame or current frame
+                % attempt to resegment and delete regions
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -326,10 +320,8 @@ while i <= num_im % loop through number of frames
                             ', reg: ', num2str(ii),'. Splitting'];
                         disp([header, 'ErRes: ', data_c.regs.error.label{ii}]);
                         
-                        [xx,yy] = getBB( data_c.regs.props(ii).BoundingBox);
-                        
-                        mask = (data_c.regs.regs_label(yy,xx)==ii);
-                        
+                        [xx,yy] = getBB( data_c.regs.props(ii).BoundingBox);               
+                        mask = (data_c.regs.regs_label(yy,xx)==ii);                      
                         reseg = -double(mask);
                         
                         for mm = list_r;
@@ -339,24 +331,21 @@ while i <= num_im % loop through number of frames
                             reseg = reseg + -double(data_f.regs.regs_label(yy,xx)==mm);
                         end
                         
-                        %imshow(reseg,[])
                         try
                             ws = double(watershed(reseg)).*mask;
                         catch
                             keyboard;
                         end
                         data_c = deleteRegions( data_c, ii);
-                        data_c.regs.regs_label(yy,xx) = ...
-                            data_c.regs.regs_label(yy,xx)+ double(ws>0)*ii;
+                        data_c.regs.regs_label(yy,xx) = data_c.regs.regs_label(yy,xx)+ double(ws>0)*ii;
                         data_c.mask_cell(yy,xx) = data_c.mask_cell(yy,xx)+ double(ws>0);
                         break_flag = 1;
                     end
                 end
             elseif s21_flag
-                % 2 -> 1 Stable
-                % This error occurs when cells combine and cannot be
-                % resolved by skipping. This error currently cannot be
-                % resolved.
+                % From 2 regions to 1 Stable
+                % This error occurs when cells combine and cannot be resolved 
+                % by skipping. It attempts to turn on regions to fix this.
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -364,19 +353,18 @@ while i <= num_im % loop through number of frames
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
                 else   
                     [data_new, ind_new] = fix2to1( data_c, ii, data_r, data_c.regs.map.r{ii} );
-                    if isempty( data_new ) || nc_flag                      
+                    if isempty( data_new ) || nc_flag
+                        % stable : the error cannot be resolved.
                         data_c.regs.error.label{ii} = ...
                             ['Frame: ', num2str(i), ', reg: ', num2str(ii),...
                             '. 2 -> 1 stable'];
                         disp([header, 'ErRes: ',data_c.regs.error.label{ii}]);
                         data_c.regs.error.r(ii) = 2;
-                        %data_c = update_cell( data_c, ii, data_r, list_r(1), 1);
                         [data_c, data_r, cell_count] = update_cell( ...
                             data_c, ii, data_r, list_r(1), i, 1, [], cell_count);
                     else
                         data_c = deleteRegions( data_c, ii);
-                        data_c = addRegions(    data_c, data_new, ...
-                            ind_new );                       
+                        data_c = addRegions( data_c, data_new, ind_new );                       
                         break_flag = 1;
                         data_c.regs.error.label{ii} = ...
                             ['Frame: ', num2str(i), ', reg: ', num2str(ii),...
@@ -385,7 +373,7 @@ while i <= num_im % loop through number of frames
                     end    
                 end 
             elseif s12_flag
-                %% 1 -> 2 Stable
+                % 1 to 2 regions 
                 % This is an error compatible with cell division. If the
                 % intial and final cells have a reasonable size, clear the
                 % error and let this event be considered a cell division.
@@ -434,11 +422,10 @@ while i <= num_im % loop through number of frames
                         data_c, ii, data_r, list_r(1), i, 1, tmp_list(ii~=tmp_list), cell_count);
                 end
             elseif localMapGoodFlagEnd
-                % unresolved error
-                % none of the choices above were able to resolve it
+                % change in area with reverse region
+                % is in between  2*DA_MIN and 2*DA_MAX
                 data_c.regs.error.label{ii} = (['Frame: ', num2str(i), ...
-                    ', reg: ', num2str(ii),'. LocalMapGoodFlagEnd.']);
-                
+                    ', reg: ', num2str(ii),'. LocalMapGoodFlagEnd.']);             
                 disp([header, 'ErRes: ', data_c.regs.error.label{ii}] );
                 data_c.regs.error.r(ii) = 0;
                 if ~isempty(list_r)
@@ -450,6 +437,8 @@ while i <= num_im % loop through number of frames
                         data_c, ii, data_r, [], i, 0, [], cell_count);
                 end
             else
+                % unresolved error
+                % none of the choices above were able to resolve it
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;

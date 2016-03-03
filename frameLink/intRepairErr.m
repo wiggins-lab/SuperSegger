@@ -1,12 +1,13 @@
 function  [data_c,data_r] = intRepairErr( data_c,data_r)
-% intRepairErr repairs the error between data_c and the reverse
+% intRepairErr repairs the error fields of current and reverse data 
+% after error resolution.
 %
 % INPUT :
-%       data_c : data
-%       data_r :
+%       data_c : data / region files for current frame
+%       data_r : data/ region files for reverse frame
 % OUTPUT :
-%       data_c : 
-%       data_r :
+%       data_c : data/ region files for current frame with errors fixed
+%       data_r : data/ region files for reverse frame with errors fixed
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
