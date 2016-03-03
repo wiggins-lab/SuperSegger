@@ -185,7 +185,7 @@ while runFlag
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
     disp(['q  : To quit                                  reset : Reset Plot to Default View   ']);
     disp(['x# : Switch xy dirrectory from ', num2str(ixy), '              #  : Go to Frame Number #  ']);
-    disp(['t  : Show Cell Numbers ', [flagsStates.idState],'                  F# : Find Cell Number #   ']);
+    disp(['id  : Show Cell Numbers ', [flagsStates.idState],'                 F# : Find Cell Number #   ']);
     disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          outline  : Outline cells ', flagsStates.outlineState]);
     disp(['p  : Show/Hide Cell Poles      ', flagsStates.pState]);
     disp(['f#  : Change channel ', [flagsStates.fState],'                  s  : Show Fluor Foci Scores ', [flagsStates.sState]]);
@@ -401,7 +401,7 @@ while runFlag
         axis(tmp_axis);
         
     elseif strcmp(c,'con') % Show existant consensus for this XY or calculate new one
-        if ~exist('dataImArray','var')
+        if ~exist('dataImArray','var') || isempty(dataImArray)
            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
            save ([dirSave,'dataImArray'],'dataImArray');
         else 
@@ -416,7 +416,7 @@ while runFlag
         pause;
         
     elseif strcmp(c,'cK') % Show existant consensus for this XY or calculate new one
-         if ~exist('dataImArray','var')
+         if ~exist('dataImArray','var') || isempty(dataImArray)
            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
            save ([dirSave,'dataImArray'],'dataImArray');
         else 
@@ -962,8 +962,11 @@ end
 if ~isfield(FLAGS,'ID_flag')
 FLAGS.ID_flag  = 0;
 end
+if ~isfield(FLAGS,'T_flag')
+FLAGS.T_flag  = 0;
+end
 if ~isfield(FLAGS,'P_flag')
-FLAGS.T_flag  = 1;
+FLAGS.P_flag  = 0;
 end
 if ~isfield(FLAGS,'Outline_flag')
 FLAGS.Outline_flag  = 1;

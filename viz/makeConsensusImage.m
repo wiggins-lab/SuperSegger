@@ -24,7 +24,7 @@ if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
 
-T0 = numel( dataImArray.imCell ); % number of rames
+T0 = numel( dataImArray.imCell ); % number of frames
 
 for jj = 1:T0
     ssCell{jj} = size(dataImArray.imCell{jj} );

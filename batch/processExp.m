@@ -35,12 +35,12 @@ function processExp( dirname )
 % '','', {'BF','GFP'} )
 
 
-basename = 'date-strain'
-timeFilterBefore ='_'
-timeFilterAfter = 't' 
-xyFilterBefore=''
-xyFilterAfter=''
-channelNames = {'BF','GFP'}
+basename = 'date-strain';
+timeFilterBefore ='_';
+timeFilterAfter = 't' ;
+xyFilterBefore='';
+xyFilterAfter='';
+channelNames = {'BF','GFP'};
 
 convertImageNames(dirname, basename, timeFilterBefore, ...
     timeFilterAfter, xyFilterBefore,xyFilterAfter, channelNames )
@@ -64,9 +64,9 @@ CONST = loadConstants(res,parallel_flag) ;
 % after you load the constants you can modify them according to your needs
 % for more options, looks at the loadConstants file.
 
-CONST.trackLoci.numSpots = [ 5 0 ]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
+CONST.trackLoci.numSpots = [5]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
 CONST.trackLoci.fluorFlag = true ;    % compute integrated fluorescence (default = true)
-CONST.trackOpti.NEIGHBOR_FLAG = true; % calculate number of neighbors (default = false)
+CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
 CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
 
 %% Skip Frames for Segmentation
