@@ -45,10 +45,24 @@ channelNames = {'BF','GFP'};
 convertImageNames(dirname, basename, timeFilterBefore, ...
     timeFilterAfter, xyFilterBefore,xyFilterAfter, channelNames )
 
-%% Micrscope Resolution
+%% Set the segmentations constants for your bacteria and micrscope resolution
 % Using correct resolution ensures correct pixel size and segmentation constants
+% if you do not know which constants to use you can run 
+% tryDifferentConstants(pathPhaseImage) with a phase image to choose.
+
+% for E. coli we mainly use : 
 % '60XEc' : loadConstants 60X Ecoli
 % '100XEc': loadConstants 100X Ecoli
+
+% other possible constants are :
+%'100XPa' : 100X Pseudemonas
+% '60XPa' : 60X Pseudemonas
+%' 60XA' : 60X E.coli Ask
+% '60XEcLB' : E.coli LB
+% '60XPaM','60XPaM2' : for 60X, Pseudomonas Minimal
+% '60XBthai' : 60X Thailandensis
+
+
 res = '60XEc';
 
 %% Paralell Processing Mode

@@ -18,7 +18,7 @@ function [ data, err_flag ] = ssoSegFun( phase, CONST, header, dataname, crop_bo
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-data = superSeggerOpti( phase ,[], ~CONST.seg.OPTI_FLAG ,CONST,1,header, crop_box);
+data = superSeggerOpti( phase ,[], CONST.seg.OPTI_FLAG ,CONST, 1, header, crop_box);
 
 if numel(data.segs.score) > CONST.superSeggerOpti.MAX_SEG_NUM;
     err_flag = true;

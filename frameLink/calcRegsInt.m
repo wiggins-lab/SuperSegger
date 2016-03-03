@@ -80,7 +80,7 @@ if ~isempty( data1 )
                     % mask for the overlap region jj
                     overlaMaskjj = double(regs2==jj);
                     % area of overlap between jj and ii
-                    areaOverlapjj = sum(overlaMaskjj(mask1(:)))
+                    areaOverlapjj = sum(overlaMaskjj(mask1(:)));
                     % X is area of overlap / max ( area of ii, area of jj)
                     X(jj) = areaOverlapjj/...
                         max([data1.regs.props(ii).Area,data2.regs.props(jj).Area]);   

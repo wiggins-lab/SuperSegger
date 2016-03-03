@@ -41,8 +41,7 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...    % c1 channel name
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-% Take care of matlab pool. If a pool of workers doesn't exist, open it   %
-% up. This is for parallel processing on multiple cores.                  %
+% Parallel processing on multiple cores :
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -136,8 +135,7 @@ CONST.R60XPaM2 = R60XBthai;
 
 cl = class(res);
 
-if strcmp(cl,'double' )
-    
+if strcmp(cl,'double' )   
     if res == 60
         disp('loadConstants: 60X');
         ResFlag = R60X;
