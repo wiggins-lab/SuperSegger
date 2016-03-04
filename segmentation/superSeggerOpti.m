@@ -103,11 +103,10 @@ else
 end
 
 
-% fix the range...
+% fix the range, set the max and min value of the phase image
 mult_max = 2.5;
 mult_min = 0.3;
 mp       = mean(phase(:));
-
 phase( phase > (mult_max*mp) ) = mult_max*mp;
 phase( phase < (mult_min*mp) ) = mult_min*mp;
 
@@ -141,8 +140,6 @@ if nargin < 5 || isempty(adapt_flag)
     adapt_flag=1;
 end
 
-
-
 % Enhance inter-cellular image contrast
 %this filter enhances the contrast of the phase image by subtracting from
 %each pixel the minimum intensity in its neighborhood. It
@@ -151,13 +148,9 @@ phase = ag(phase);
 phase__ = magicContrastFast2(phase, MAGIC_RADIUS);
 phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
-
 % This cuts out bright spots from the mask
 mask_mod = (phase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_mod)>0);
-
-
-
 
 % Watershed the image
 %here we use matlab's standard watershed algorithm to watershed just the
@@ -224,8 +217,8 @@ end
 
 % Determine the "good" and "bad" segments
 [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A);
-data.mask_cell   = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
-data.phase       = phase_;
+data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+data.phase = phase_;
 
 
 % Calculate and return the final cell mask
@@ -253,14 +246,14 @@ function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A
 
 sim = size( phase );
 
-
 % Create labeled image of the segments
 %here we obtain the cell-background boundary, which we know is correct.
 sqr3 = strel('square',3);
 disk1 = strel('disk',1);
 outer_bound = xor(bwmorph(mask_bg,'dilate'),mask_bg);
 
-%label the cell regions in the mask and calculate the properties
+% label the connected regions in the mask with an id 
+% and calculate the properties
 regs_label = bwlabel( ~ws, 8);
 regs_prop = regionprops( regs_label,...
     {'BoundingBox','MinorAxisLength','MajorAxisLength','Area'});
@@ -278,7 +271,6 @@ segs_3n = double(((ws_cc > 2)+outer_bound)>0);
 % on. Since we have removed all the intersections, we can label these and
 % calculate their properties.
 segs    = ws-segs_3n.*ws;
-
 
 %turn on all the segs smaller than MIN_SEGS_SIZE
 MIN_SEGS_SIZE = 2;
@@ -506,7 +498,6 @@ num_regs = max(mask_label(:));
 Lmax = 0;
 
 for ii = 1:num_regs
-    
     [L1,L2] = makeRegionSizeProjectionBBint2( (mask_label==ii), props(ii) );
     Lmax = max([Lmax,L2]);
 end

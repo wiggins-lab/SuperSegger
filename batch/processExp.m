@@ -63,13 +63,13 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '60XBthai' : 60X Thailandensis
 
 
-res = '60XEc';
+res = 100;
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
 % for convenience default is false (non-parallel)
 
-parallel_flag = true;
+parallel_flag = false;
 
 %% Load Constants
 CONST = loadConstants(res,parallel_flag) ;

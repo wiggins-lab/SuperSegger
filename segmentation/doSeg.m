@@ -53,8 +53,8 @@ if ~exist(dataname,'file') || clean_flag
         
         for iz = 2:num_z
             nameInfo_tmp.npos(4,1) = iz;
-            name  = MakeFileName(nameInfo_tmp);
-            phaseCat(:,:,iz) =  imread( [dirname_xy,'phase',filesep,name] );
+            name = MakeFileName(nameInfo_tmp);
+            phaseCat(:,:,iz) = imread( [dirname_xy,'phase',filesep,name] );
         end        
         phase = mean( phaseCat, 3);      
     end
@@ -66,7 +66,7 @@ if ~exist(dataname,'file') || clean_flag
             data.crop_box = crop_box;
         end
         
-        % Copy fluor data into data structure 
+        % Copy fluor data into the seg data structure 
         nameInfo_tmp = nameInfo;
         for k = 2:num_c
             nameInfo_tmp.npos(1,1) = nt(i);

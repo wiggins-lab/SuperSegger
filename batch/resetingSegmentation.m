@@ -1,8 +1,4 @@
-function resetingSegmentation(dirname)%
-% ,removeOptiStrip,removeOptiLink,..
-% removeOptiErRes1,removeOptiSetEr,removeOptiErRes2,removeOptiSkipMerge,
-% removeOptiCellMaker,removeOptiFluor ,removeOptiMakeCell,removeOptiFindFoci,
-% removeOptiClist ,removeOptiCellFiles )
+function resetingSegmentation(dirname)
 % resetingSegmentation : deletes the stamp files to redo segmentation
 % at the points specified by set flags in the function.
 % To choose the functions you would like to re-run set the wanted flags to 1
@@ -18,7 +14,7 @@ function resetingSegmentation(dirname)%
 % removeOptiFindFoci 
 % removeOptiClist
 % removeOptiCellFiles
-% You may need to set all the flags following a specific flag for the results
+% You may need to set all the flags to 1 following a flag for the results
 % to propagate to the cell files. 
 %
 % INPUT : 
@@ -27,9 +23,6 @@ function resetingSegmentation(dirname)%
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
-
-
-
 
 dirname = fixDir(dirname);
 xydirs = dir([dirname,'xy*']);
@@ -49,9 +42,8 @@ removeOptiFindFoci = 0;
 removeOptiClist = 0;
 removeOptiCellFiles = 0;
 
-
-
 for i = 1 : numel(xydirs)
+    
     curXyDir = xydirs(i).name
     dirname_seg = [dirname,curXyDir,filesep,'seg',filesep]
     intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripMig.mat'])
@@ -66,7 +58,6 @@ for i = 1 : numel(xydirs)
     intDeleteFile (removeOptiFindFoci, [dirname_seg,'.trackOptiFindFociCyto.mat'])
     intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist.mat'])
     intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiCellFiles.mat'])
-    
     
 end
 

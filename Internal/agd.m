@@ -1,4 +1,4 @@
-function im = agd( im ,HOT_PX)
+function im = agd( im, HOT_PX)
 % agd : autogains the image setting hot pixels to min value
 % it sets pixels > hot pixels * Std.Dev to the min value
 %
@@ -29,3 +29,5 @@ im = im - im_min;
 im = double(255*im/im_max);
 
 im = reshape(im, sz);
+
+end

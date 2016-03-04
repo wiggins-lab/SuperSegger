@@ -2,10 +2,8 @@ function [data] = regionOpti( data, dispp, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
 % anneal, according to the number of segments to be considered.
-% if the number of segments are more than MAX_NUM_RESOLVE
-% it uses the rawScore
-% if the number of segments are more than MAX_NUM_SYSTEMATIC
-% it runs simulated anneal
+% if the number of segments > MAX_NUM_RESOLVE : uses the rawScore.
+% if the number of segments > MAX_NUM_SYSTEMATIC : uses simulated anneal.
 % and if it is below that it uses a systematic function.
 %
 % INPUT :
@@ -67,7 +65,7 @@ for ii = 1:num_regs
     debug_flag = 0;
     
     if debug_flag
-        clf
+        clf;
         imshow( cat(3,ag(regs_label==ii),ag(regs_label>0),ag(data.phase)), [])
         disp([num2str(L1),', ',num2str(L2)]);
         keyboard;
@@ -104,7 +102,6 @@ regs_props = regionprops( regs_label, 'BoundingBox','Orientation'  );
 num_regs   = max( regs_label(:));
 
 rs_list = cell(1,num_regs);
-
 ss = size(data.phase);
 
 for ii = 1:num_regs
@@ -121,9 +118,8 @@ for ii = 1:num_regs
     rs_list{ii} = segs_list;
     
     
-    % If there are too many regions to resolve, turn the highest as
-    % scores on as predicted by seg scores
-    
+    % If there are too many regions to resolve, turn the segments with
+    % highest scores on as predicted by seg scores    
     
     
     % Turn on segments who would help resolve cells that are too wide
@@ -169,6 +165,7 @@ for ii = 1:num_regs
             CONST.regionOpti.fignum        = 2;
             CONST.regionOpti.dt            = 25;
             CONST.regionOpti.Nt            = 256;
+            
             tic;
             [vect] = simAnnealFast( segs_list, data, ...
                 cell_mask, xx, yy, CONST, debug_flag);
@@ -252,7 +249,6 @@ end
 
 
 function vect = systematic( segs_list, data, cell_mask, xx, yy, CONST)
-
 
 debug_flag = 0;
 
@@ -370,8 +366,6 @@ if debug_flag
     stateMat = zeros(num_segs,Nt);
 end
 
-%debugFig
-
 for t = 1:Nt;
     
     T = tempSchedule(t,CONST,num_segs);
@@ -433,15 +427,12 @@ for t = 1:Nt;
 end
 
 
-%debugFig
-
 vect = double(state.seg_vect0');
 
 
 if debug_flag
     [minEHist,ppp] = min(EHist(end:-1:1));
     ppp = numel(EHist)-ppp+1;
-    minEHist
     
     figure(CONST.regionOpti.fignum);
     clf;
@@ -507,9 +498,6 @@ end
         end
         
         E = calcE(state.reg_vect0, state.seg_vect0, state);
-        
-        
-        %debugFig;
     end
 
     function E = perturbState( nn )
@@ -546,15 +534,6 @@ end
             state.reg_E(ind1) = ...
                 CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
             
-            %disp( 'Remove reg: ');
-            %ind0
-            
-            %disp( 'Add reg: ');
-            %ind1
-            
-            
-            
-            
         else
             % if the boundary is off, pick out the region to be split
             
@@ -585,14 +564,11 @@ end
                     CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
             end
             state.reg_vect1(ind0) = false;
-            
-            %disp('Add region: ');
-            %ind1
+
         end
         
         E = calcE(state.reg_vect1, state.seg_vect1, state);
-        
-        %debugFig;
+
     end
 
     function debugFig
@@ -646,9 +622,7 @@ end
         
         seg_props = regionprops( L, 'Centroid' );
         reg_props = regionprops( Lreg, 'Centroid' );
-        
-        
-        
+  
         figure(1);
         clf;
         
@@ -657,29 +631,22 @@ end
         imshow( cat(3,backer+0.3*ag(SegGood0),backer+0.15*ag(logical(Lreg)),...
             backer+0.3*ag(SegBad0)),'InitialMagnification','fit');
         hold on;
-        
-        
-        
+  
         for kk = 1:num_segs
-            
             cc = double(and(state.seg_vect0(kk),state.seg_vect1(kk)))*[1 1 1] + ...
                 double(and(~state.seg_vect0(kk),state.seg_vect1(kk)))*[0 0 1] + ...
-                double(and(state.seg_vect0(kk),~state.seg_vect1(kk)))*[1 0 0];
-            
-            text( seg_props(kk).Centroid(1), seg_props(kk).Centroid(2), ...
+                double(and(state.seg_vect0(kk),~state.seg_vect1(kk)))*[1 0 0];            
+            text(seg_props(kk).Centroid(1), seg_props(kk).Centroid(2), ...
                 num2str(kk), 'Color', cc );
         end
         
         
-        for kk = 1:num_segs+3
-            
+        for kk = 1:num_segs+3         
             cc = [0 1 0];
             if state.reg_vect0(kk);
                 text( reg_props(kk).Centroid(1), reg_props(kk).Centroid(2), ...
                     num2str(kk), 'Color', cc );
-            end
-            
-            
+            end           
         end
         
         figure(2);
@@ -688,26 +655,21 @@ end
             backer+0.3*ag(RegOnOff)),'InitialMagnification','fit');
         hold on;
         
-        for kk = 1:num_segs
-            
+        for kk = 1:num_segs         
             cc = double(and(state.seg_vect0(kk),state.seg_vect1(kk)))*[1 1 1] + ...
                 double(and(~state.seg_vect0(kk),state.seg_vect1(kk)))*[0 0 1] + ...
-                double(and(state.seg_vect0(kk),~state.seg_vect1(kk)))*[1 0 0];
-            
+                double(and(state.seg_vect0(kk),~state.seg_vect1(kk)))*[1 0 0];            
             text( seg_props(kk).Centroid(1), seg_props(kk).Centroid(2), ...
                 num2str(kk), 'Color', cc );
         end
         
         
-        for kk = 1:num_segs+3
-            
+        for kk = 1:num_segs+3           
             cc = [0 1 0];
             if state.reg_vect0(kk);
                 text( reg_props(kk).Centroid(1), reg_props(kk).Centroid(2), ...
                     num2str(kk), 'Color', cc );
             end
-            
-            
         end
         
         figure(3);
@@ -727,17 +689,16 @@ end
     end
 
     function fixState ( )
-        % fixState function fixes the perturbed state as the current state.
-        %disp( 'Fix Region' );
-        
-        %disp( 'Deleting: ');
+        % fixState : fixes the perturbed state as the current state.
+
+        % deleting
         ind_del = find(and(state.reg_vect0,~state.reg_vect1));
         for kk = ind_del
             state.reg_label(state.reg_mask{kk}) = 0;
             state.mask(state.reg_mask{kk})      = false;
         end
         
-        %disp( 'Adding: ');
+        % adding
         ind_add = find(and(state.reg_vect1,~state.reg_vect0));
         for kk = ind_add
             state.reg_label(state.reg_mask{kk}) = kk;
@@ -752,12 +713,6 @@ end
 end
 
 
-
-
-
-
-
-
 function E = calcE(reg_vect,seg_vect,state)
 E = sum(-state.reg_E(reg_vect))+sum((1-2*double(seg_vect)).*state.seg_E);
 end
@@ -766,9 +721,9 @@ end
 function    T = tempSchedule(t, CONST, num_segs)
 
 if isfield( CONST.regionOpti, 'ADJUST_FLAG' ) && CONST.regionOpti.ADJUST_FLAG
-    dt   = CONST.regionOpti.dt*10/num_segs;
+    dt = CONST.regionOpti.dt*10/num_segs;
 else
-    dt   = CONST.regionOpti.dt;
+    dt = CONST.regionOpti.dt;
 end
 
 Emax = CONST.regionOpti.Emax;

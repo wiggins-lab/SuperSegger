@@ -104,7 +104,8 @@ if Lneck > L2mean
 end
 
 if debug
-    xx = 1:numel(ww);    
+    xx = 1:numel(ww);
+    
     figure(1);
     clf;
     plot( xx, ww, '.-' );
@@ -113,6 +114,8 @@ if debug
     plot( xx(ind_), ww(ind_), 'g.' );
     figure(2)
 end
+
+
 
 % make stuff w/o rotating
 if abs(tan( props.Orientation*pi/180 )) > 1
@@ -163,16 +166,24 @@ yy = (ymin+dr):dr2:(ymax-dr);
 
 if numel(yy) > 4
     tmp = imRot(yy,:);
-    x = 1:ss(2);    
+    
+    x = 1:ss(2);
+    
+    
     [X,Y] = meshgrid(x,yy);
     
-    xx = sum( X.*tmp,2 )./sum(tmp,2);   
-    d1 = [xx(1:end-2)-xx(3:end),yy(1:end-2)'-yy(3:end)'];    
+    xx = sum( X.*tmp,2 )./sum(tmp,2);
+    
+    d1 = [xx(1:end-2)-xx(3:end),yy(1:end-2)'-yy(3:end)'];
+    
     dangle = ((d1(1:end-2,1).*d1(3:end,2)...
         -d1(1:end-2,2).*d1(3:end,1))./...
         (norm2(d1(1:end-2,:)).*norm2(d1(3:end,:))));
     
-    stm1 = max( dangle.^2 );    
+    
+    stm1 = max( dangle.^2 );
+    
+    
     angle = cumsum(dangle)';
     na = numel(angle)-1;
     
@@ -292,10 +303,13 @@ else
     RoundIndUnderTop = 0;
     RoundIndOverBot  = 0;
     RoundIndUnderBot = 0;
+    
 end
-
 RoundIndOver  = RoundIndOverTop  + RoundIndOverBot;
 RoundIndUnder = RoundIndUnderTop + RoundIndUnderBot;
+
+
+
 
 if L1 < 1
     L1 = 1;

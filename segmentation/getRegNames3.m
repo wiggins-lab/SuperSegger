@@ -1,7 +1,6 @@
 function names = getRegNames3()
-% getRegNames3 contains the CONST.regionScoreFun.names
-% it is not used anywhere in the code. It is mostly for your information.
-
+% getRegNames3 : contains the names of the parameters in the E matrix.
+% There are 21 parameters but the E matrix has 22. There is one missing?
 
 names = { 'long axis: ', ...
     'short axis mean: ', ...
