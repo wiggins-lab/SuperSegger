@@ -1,8 +1,8 @@
 function [ data ] = intFindFociPAWCurve( data, CONST, numc )
 % intFindFociPAWCurve: finds the foci and assigns them to the cells.
-% fits the cytoplasmic fluorescence in the cell.
-% It is fit cell by cell. The function adds to the datathe field cytoX,
-% where cytoX is the global cytofluorescence model model for channel X = numc.
+% It fits the cytoplasmic fluorescence to cell by cell.
+% The result of the global cytofluorescence model is added to the field
+% cyto[numc] in data, where [numc] is number of the channel. 
 %
 % INPUT : 
 %       data : cell/regions file (err file)

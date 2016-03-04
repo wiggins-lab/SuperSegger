@@ -1,4 +1,4 @@
-function trackOptiViewNew(dirname,file_filter)
+function superSeggerViewer(dirname,file_filter)
 % trackOptiView provides visulization of the segmented data.
 %
 % It has a lot of options such as :
@@ -184,10 +184,10 @@ while runFlag
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
     disp(['q  : To quit                                  reset : Reset Plot to Default View   ']);
-    disp(['x# : Switch xy dirrectory from ', num2str(ixy), '              #  : Go to Frame Number #  ']);
-    disp(['id  : Show Cell Numbers ', [flagsStates.idState],'                 F# : Find Cell Number #   ']);
+    disp(['x# : Switch xy directory from ', num2str(ixy), '              #  : Go to Frame Number #']);
+    disp(['id  : Show Cell Numbers ', [flagsStates.idState],'                 F# : Find Cell Number #']);
     disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          outline  : Outline cells ', flagsStates.outlineState]);
-    disp(['p  : Show/Hide Cell Poles      ', flagsStates.pState]);
+    disp(['p  : Show/Hide Cell Poles ', flagsStates.pState]);
     disp(['f#  : Change channel ', [flagsStates.fState],'                  s  : Show Fluor Foci Scores ', [flagsStates.sState]]);
     disp(['filter : Filtered fluorescence ',flagsStates.filtState,'          CC : Use Complete Cell Cycles ', flagsStates.CCState] );
     disp(['falseCol : False Color ', flagsStates.falseColState,'                  log : Log View ', flagsStates.logState ]);

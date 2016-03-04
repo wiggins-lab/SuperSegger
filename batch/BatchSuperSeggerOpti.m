@@ -36,6 +36,12 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)
 % This file is part of SuperSeggerOpti.
 
 % Init
+
+if nargin < 1 || isempty( dirname_ ) || dirname_ == '.'
+    dirname_ = pwd;
+end
+dirname_ = fixDir(dirname_);
+
 if nargin < 2 || isempty( skip )
     skip = 1; % default : don't skip frames
 end
@@ -52,11 +58,6 @@ if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
     SEGMENT_FLAG = 1;
 end
 
-if dirname_ == '.'
-    dirname_ = pwd;
-end
-
-dirname_ = fixDir(dirname_);
 
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.

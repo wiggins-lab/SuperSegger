@@ -1,8 +1,6 @@
-function trackOptiFindFociCyto(dirname,CONST,header)
+function [clist, clist_def] = trackOptiFindFociCyto(dirname,CONST,header)
 % trackOptiFindFociCyto : Finds foci in cells. Note that this only
 % runs if the number of foci to be fit is set in CONST.trackLoci.numSpots.
-% It runs on the err.mat files and saves the new err.mat files with the
-% found foci and cytoplasmic background.
 %
 % This is done by :
 % (1) Fits autofluor/cytoplasmic fluor background in cells, cell-by-cell
@@ -13,6 +11,9 @@ function trackOptiFindFociCyto(dirname,CONST,header)
 %   dirname: is the seg directory in the xy directory
 %   CONST: are the segmentation constants.
 %   header : string displayed with information
+% OUTPUT :
+%       clist : list of cells 
+%       clist_def :
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
@@ -78,19 +79,17 @@ function intDoFoci( i, dirname, contents, nc, CONST)
 % intDoLoci : finds the foci in the image i
 %
 % INPUT :
-%       i : time frame number
-%       dirname : seg directory path in xy folder
-%       contents : seg/err data files
+%       i :
+%       dirname :
 %       nc : number of channels
-%       CONST : segmentation parameters
-
+%       CONST :
 data_c = loaderInternal([dirname,contents(i).name]);
 gf  = fspecial( 'gaussian', 21, 3 );
 
 % make filtered images to fit
 im_filt = cell([1,nc]);
 for j = 1:nc
-    fl_im = data_c.(['fluor',num2str(j)]);
+    fl_im = getfield( data_c, ['fluor',num2str(j)]);
     fl_im = medfilt2( double(fl_im), [3,3], 'symmetric' );
     Istd(j)  = std(fl_im(data_c.mask_bg));
     tmp = (fl_im-imfilter( fl_im, gf, 'replicate' ))/Istd(j);
@@ -102,8 +101,8 @@ end
 % Loop through the different fluorescence channels
 for channel_number = 1:nc
     if isfield( CONST.trackLoci, 'numSpots' ) && numel(CONST.trackLoci.numSpots)>=channel_number
-        if CONST.trackLoci.numSpots(channel_number) 
-            % only runs if non zero number of foci are set in constants
+        if CONST.trackLoci.numSpots(channel_number)
+            % only runs if there are non zero number of foci set in constants
             % Fits the foci
             data_c = intFindFociPAWCurve( data_c, CONST, channel_number );
         end

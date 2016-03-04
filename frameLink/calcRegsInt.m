@@ -20,9 +20,6 @@ function [XX,map,error,dA,DA,dF1,dF2,dF1b,dF2b] ...
 %       dF2 : Change in fluorescence between regions of overlap
 %       dF1b : Change in fluorescence between regions of overlap
 %       dF2b : Change in fluorescence between regions of overlap
-%       mapOld : old map, is the same as map
-%       XXOld : xxOld is the same as XX
-%       dAOld : dA old is the same as dA
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016

@@ -101,7 +101,7 @@ else
         if isfield(CONST.trackOpti,'pole_flag') && CONST.trackOpti.pole_flag == 1       
             data_c = getNeighborPole(data_c) ;
             share_pole = drill( data_c.CellA, '.neighbor_pole');
-            data_c = pole_direction(data_c); 
+            data_c = poleDirection(data_c); 
         end
         
         

@@ -1,4 +1,4 @@
-function [data] = pole_direction( data )
+function [data] = poleDirection( data )
 % pole_direction switches the locus position so that it is aligned 
 % to the old and new pole. The new pole is in the positive direction.
 %

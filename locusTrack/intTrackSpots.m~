@@ -8,8 +8,8 @@ function locus = intTrackSpots(fluor, numLoci, celld, CONST)
 %   celld : is the cell file 
 %   CONST : are the segmentation constants
 % OUTPUT :
-%   locus : information about the fit foci
-%       .r is the 
+%   locus :
+% 
 % Copyright (C) 2016 Wiggins Lab 
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
@@ -18,6 +18,8 @@ opt =  optimset('MaxIter',25,'Display','off', 'TolX', 1/10);
 
 % fits the loci and finds their position, intensity and score
 locus = compSpotPosDevFmin(double(fluor),celld.mask,numLoci,CONST,1,[],2,opt);
+
+r=1;
 
 % correct the position of the loci with the offset of the lower corner of
 % the image.
@@ -28,6 +30,6 @@ for j = 1:num_spot;
         (locus(j).r-celld.coord.rcm)*celld.coord.e2;
     locus(j).longaxis = ...
         (locus(j).r-celld.coord.rcm)*celld.coord.e1;
+    
 end
-
 end
