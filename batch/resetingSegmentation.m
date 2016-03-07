@@ -1,7 +1,9 @@
 function resetingSegmentation(dirname)
 % resetingSegmentation : deletes the stamp files to redo segmentation
 % at the points specified by set flags in the function.
-% To choose the functions you would like to re-run set the wanted flags to 1
+% If you want to re-run the whole thing just set the clean_flag in 
+% BatchSuperSegger to 1. If you want to re-run specific function 
+% set from the following the wanted flags to 1:
 % removeOptiStrip 
 % removeOptiLink
 % removeOptiErRes1 
@@ -44,20 +46,20 @@ removeOptiCellFiles = 0;
 
 for i = 1 : numel(xydirs)
     
-    curXyDir = xydirs(i).name
-    dirname_seg = [dirname,curXyDir,filesep,'seg',filesep]
-    intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripMig.mat'])
-    intDeleteFile (removeOptiLink, [dirname_seg,'.trackOptiLink.mat'])
-    intDeleteFile (removeOptiErRes1, [dirname_seg,'.trackOptiErRes1.mat'])
-    intDeleteFile (removeOptiSetEr, [dirname_seg,'.trackOptiSetEr.mat'])
-    intDeleteFile (removeOptiErRes2, [dirname_seg,'.trackOptiErRes2.mat'])
-    intDeleteFile (removeOptiSkipMerge, [dirname_seg,'.trackOptiSkipMerge.mat'])
-    intDeleteFile (removeOptiCellMaker, [dirname_seg,'.trackOptiCellMarker.mat'])
-    intDeleteFile (removeOptiFluor, [dirname_seg,'.trackOptiFluor.mat'])
-    intDeleteFile (removeOptiMakeCell, [dirname_seg,'.trackOptiMakeCell.mat'])
-    intDeleteFile (removeOptiFindFoci, [dirname_seg,'.trackOptiFindFociCyto.mat'])
-    intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist.mat'])
-    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiCellFiles.mat'])
+    curXyDir = xydirs(i).name;
+    dirname_seg = [dirname,curXyDir,filesep,'seg',filesep];
+    intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripSmall.mat']);
+    intDeleteFile (removeOptiLink, [dirname_seg,'.trackOptiLink.mat']);
+    intDeleteFile (removeOptiErRes1, [dirname_seg,'.trackOptiErRes1.mat']);
+    intDeleteFile (removeOptiSetEr, [dirname_seg,'.trackOptiSetEr.mat']);
+    intDeleteFile (removeOptiErRes2, [dirname_seg,'.trackOptiErRes2.mat']);
+    intDeleteFile (removeOptiSkipMerge, [dirname_seg,'.trackOptiSkipMerge.mat']);
+    intDeleteFile (removeOptiCellMaker, [dirname_seg,'.trackOptiCellMarker.mat']);
+    intDeleteFile (removeOptiFluor, [dirname_seg,'.trackOptiFluor.mat']);
+    intDeleteFile (removeOptiMakeCell, [dirname_seg,'.trackOptiMakeCell.mat']);
+    intDeleteFile (removeOptiFindFoci, [dirname_seg,'.trackOptiFindFociCyto.mat']);
+    intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist.mat']);
+    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiCellFiles.mat']);
     
 end
 

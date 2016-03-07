@@ -1,6 +1,9 @@
 function names = getRegNames3()
 % getRegNames3 : contains the names of the parameters in the E matrix.
-% There are 21 parameters but the E matrix has 22. There is one missing?
+% The E matrix is the coefficients used to score the regions as a 
+% constant + linear function + quadratic function of the parameters.
+% There are 21 parameters but the E matrix has 22 because the first column
+% of the parameters is 1 to account for linear + constant.
 
 names = { 'long axis: ', ...
     'short axis mean: ', ...

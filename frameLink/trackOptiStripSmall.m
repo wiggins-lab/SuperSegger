@@ -1,6 +1,6 @@
-function trackOptiStripMig(dirname,CONST)
-% trackOptiStripMig : removes small regions that
-% are probably not real, typically bubbles, dust, or minicells.
+function trackOptiStripSmall(dirname,CONST)
+% trackOptiStripSmall : removes small regions that are probably
+% not real, typically bubbles, dust, or minicells.
 %
 % INPUT :
 %   dirname : seg folder eg. maindirectory/xy1/seg
@@ -15,8 +15,8 @@ MIN_AREA = CONST.trackOpti.MIN_AREA;
 dirseperator = filesep;
 
 if(nargin<1 || isempty(dirname))
-    dirname=uigetdir()
-    dirname=[dirname,dirseperator];
+    dirname = uigetdir();
+    dirname = [dirname,dirseperator];
 else
     if dirname(length(dirname))~=dirseperator
         dirname=[dirname,dirseperator];

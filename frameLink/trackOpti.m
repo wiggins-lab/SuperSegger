@@ -90,15 +90,15 @@ else
 end
 
 
-%% trackOptiStripMig
+%% trackOptiStripSmall
 % removes small regions that are probably not real (bubbles, dust, or minicells)
-stamp_name = [dirname_seg,'.trackOptiStripMig.mat'];
+stamp_name = [dirname_seg,'.trackOptiStripSmall.mat'];
 if ~exist( stamp_name, 'file' );
-    trackOptiStripMig(dirname_seg, CONST);
+    trackOptiStripSmall(dirname_seg, CONST);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
-    disp([header, 'trackOpti: trackOptiStripMig already run.'] );
+    disp([header, 'trackOpti: trackOptiStripSmall already run.'] );
 end
 
 %% Link frames
@@ -139,7 +139,7 @@ end
 % If skip is bigger than 1, it takes care of merging all the frames skipped.
 % the merged skipped frames are placed in the seg_full dir
 if skip>1
-    dirname_seg  = dirname_full;
+    dirname_seg  = dirname_full; % change dirname_seg to seg_all directory
     stamp_name = [dirname_seg,'.trackOptiSkipMerge.mat'];
     if ~exist( stamp_name, 'file' );
         trackOptiSkipMerge(dirname,skip,CONST, header);
@@ -162,10 +162,12 @@ if skip>1
 end
 
 %% ErRes (2)
-% Resolve Errors for a second time passing the no change flag as 1
+% The second time error resolution runs it records the errors but does not 
+% make any changes to the regions. 
+% The no change flag is passed as 1
 stamp_name = [dirname_seg,'.trackOptiErRes2.mat'];
 if ~exist( stamp_name, 'file' );
-    list_touch = trackOptiErRes(dirname_seg,1, CONST, header);
+    list_touch = trackOptiErRes(dirname_seg, 1, CONST, header);
     disp([header,'trackOpti: ErRes: modified ', num2str(numel(list_touch)),' frames.']);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');

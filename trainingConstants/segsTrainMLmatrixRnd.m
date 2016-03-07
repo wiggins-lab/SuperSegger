@@ -16,9 +16,6 @@ function [A_fit,wrong] = segsTrainMLmatrixRnd( score, info, A0, ...
 %       wrong : number of disagreeing segments between algorithm and user
 
 
-
-
-
 % Set the number of evals.
 c_num = c(isnumchar( c ));
 if ~isempty( c_num )

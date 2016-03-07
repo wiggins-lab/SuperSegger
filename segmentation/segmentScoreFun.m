@@ -5,7 +5,8 @@ function score = segmentScoreFun(info, A )
 % INPUT : 
 %       info : has information about the segment (look at superSeggerOpti for
 %       more info)
-%       A : scoring vector optimized for different cells and imaging conditions
+%       A : scoring segment vector optimized for different cells 
+%       and imaging conditions
 % OUTPUT :
 %       score : segment score, a score below 0 is set off.
 %

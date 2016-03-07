@@ -1,7 +1,7 @@
 function [list_touch] = trackOptiErRes(dirname,nc_flag,CONST,header)
 % trackOptiErRes : defines and resolves errors produced during frame linking.
-% This function can do calculations on the segments and fix segments
-% by frame skipping, removing, and splitting segements and by calling good
+% This function can do calculations on the regions and fix regions
+% by frame skipping, removing, and splitting regions and by calling good
 % divisions based on the cell score function from regionScoreFun.
 %
 % INPUT :

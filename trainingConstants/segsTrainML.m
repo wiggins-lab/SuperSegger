@@ -25,7 +25,7 @@ A_fit(activeInd) = A_fit_;
         
         try
             % same thing as intMakeMLL ?
-            ell = -(E/2).*sigma + log(2*cosh(E/2));           
+            ell = intMakeMLL(E,sigma);           
         catch ME           
             printError(ME);
         end

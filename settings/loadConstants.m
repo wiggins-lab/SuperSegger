@@ -394,16 +394,16 @@ CONST.regionOpti.fignum        = 1;
 CONST.regionOpti.dt            = 50;
 CONST.regionOpti.Nt            = 500;
 
-% sutomatically length sim anneal period linearly with the number of
+% automatically length sim anneal period linearly with the number of
 % segments
 CONST.regionOpti.ADJUST_FLAG   = true;
 
-% For regionOpti, this is the minimum region size, below which neighbor
-% segements are switch on during optimization.
+% For regionOpti, this is  minimum region size, below which neighbor 
+% segments are switched on during optimization.
 CONST.regionOpti.MAX_WIDTH  = CONST.superSeggerOpti.MAX_WIDTH;
 
-% For regionOpti, this is the minimum region size, below which neighbor
-% segements are switch on during optimization.
+% For regionOpti, this is  minimum region size, below which neighbor 
+% segments are switched on during optimization.
 if ResFlag == R60X
     CONST.regionOpti.MAX_LENGTH  = 15;
 elseif ResFlag == R60XEcHR
@@ -726,8 +726,7 @@ elseif ResFlag == R100X
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 0;
-    CONST.trackLoci.gaussR = 1.5;
-    
+    CONST.trackLoci.gaussR = 1.5;    
 elseif ResFlag == R100XPa
     CONST.trackLoci.crop = 6;
     CONST.trackLoci.numSpots = [4];
@@ -815,7 +814,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Const for trackOptiView
+% Const for trackOptiView / superSeggerViewer
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

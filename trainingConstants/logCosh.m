@@ -16,7 +16,7 @@ function [ xx ] = logCosh( y )
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-xx = [log(cosh(y))];
+xx = log(cosh(y));
 flag =  isinf(xx);
 y = y(flag);
 

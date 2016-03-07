@@ -202,7 +202,7 @@ while runFlag
     elseif c(1) == 'q'
         runFlag = 0  ;
         
-    elseif c(1) == 'I'
+    elseif c(1) == 'I' % toggle seg include
         if im_flag == 1
             goflag = true;
             
@@ -540,14 +540,14 @@ end
 
 
 function data = loaderInternal( filename )
+% loads a _seg file and populates Include and num_segs fields if empty.
 data = load( filename );
-
 data.segs.segs_good   = double(data.segs.segs_label>0).*double(~data.mask_cell);
 data.segs.segs_bad   = double(data.segs.segs_label>0).*data.mask_cell;
 
 if ~isfield( data.segs, 'Include' )    
-    data.segs.num_segs = max( data.segs.segs_label(:));
-    data.segs.Include = true( data.segs.num_segs, 1);
+    data.segs.num_segs = max(data.segs.segs_label(:));
+    data.segs.Include = true(data.segs.num_segs, 1);
 end
 
 end
@@ -605,28 +605,23 @@ end
 function data_tmp = intCollectDataSegs( dirname )
 
 contents = dir([dirname '*_seg.mat']);
-num_im   = length(contents);
-
-
+num_im = length(contents);
 data_tmp = [];
 data_tmp.segs.info    = [];
 data_tmp.segs.num_im  = [];
 data_tmp.segs.num_seg = [];
-
 data_tmp.segs.score   = [];
 data_tmp.segs.Include = [];
 
 for i = 1:num_im
-    data = loaderInternal([ dirname,contents(i  ).name           ]);
-    data_tmp.segs.info  = [ data_tmp.segs.info;  data.segs.info  ];
-    try
-        data_tmp.segs.Include  = [ data_tmp.segs.Include;  data.segs.Include  ];
-    catch ME
-        printError(ME)
+    data = loaderInternal([ dirname,contents(i).name]);
+    data_tmp.segs.info  = [data_tmp.segs.info; data.segs.info];
+    if isfield(data.segs,'Include')
+        data_tmp.segs.Include = [data_tmp.segs.Include;data.segs.Include];
     end
-    data_tmp.segs.num_im  = [ data_tmp.segs.num_im;  0*data.segs.score+i ];
-    data_tmp.segs.num_seg = [ data_tmp.segs.num_seg; (1:numel(data.segs.score))' ];
-    data_tmp.segs.score   = [ data_tmp.segs.score;   data.segs.score ];
+    data_tmp.segs.num_im = [data_tmp.segs.num_im;  0*data.segs.score+i];
+    data_tmp.segs.num_seg = [data_tmp.segs.num_seg; (1:numel(data.segs.score))'];
+    data_tmp.segs.score = [data_tmp.segs.score; data.segs.score ];
 end
 end
 

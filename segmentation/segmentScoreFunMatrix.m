@@ -1,4 +1,4 @@
-function score = segmentScoreFun(info, A )
+function score = segmentScoreFunMatrix(info, A )
 % segmentScoreFun calculates the score of a segment.
 % The score is calculated as :
 %  ((first element of A)  + info*A).*info
@@ -16,7 +16,7 @@ function score = segmentScoreFun(info, A )
 % This file is part of SuperSeggerOpti.
 
 ss    = size(info);
-info_ = [ones(ss(1),1),info];
+info_ = [ones(ss(1),1),info]; % adds ones on the top row
 score = sum((info_*A).*info_,2);
 
 end
