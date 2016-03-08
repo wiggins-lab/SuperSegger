@@ -95,7 +95,6 @@ updateScores(segTrainingDir,'segs',A);
 % 4) update the regions with the newly made segments
 
 
-
 % 5) create regions if they don't exist,
 % create bad region examples using current E
 % chops all cells up and places bad regions in _mod_seg files
@@ -103,7 +102,7 @@ makeBadRegions( dirname,Eold, CONST )
 
 
 % 6) run regularized logistic regression on regions
-[Xregs,Yregs] =  getInfoScores (segTrainingDir,'regs');
+[Xregs,Yregs] = getInfoScores (segTrainingDir,'regs');
 E = lassoLogisticRegression (Xregs,Yregs,parallel);
 
 

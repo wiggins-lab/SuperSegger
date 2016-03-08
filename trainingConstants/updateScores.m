@@ -16,7 +16,7 @@ for i = 1 : numel(contents)
     else
         X = data.regs.info;
     end
-    [data.segs.score,data.segs.scoreRaw] = calculateSegmentRegularizedLogisticScores (X,coefficients);
+    [data.segs.score,data.segs.scoreRaw] = calculateLassoScores (X,coefficients);
     
      % save data with updated scores
      save(dataname,'-STRUCT','data');
