@@ -1,4 +1,4 @@
-function tryDifferentConstants(dirname )
+function tryDifferentConstants(dirname,resFlags)
 % tryDifferentConstants : displays images of cells segmented with
 % different constants set in resFlags. It only does the initial
 % segmentation (only the doSeg part) and not the regions decisions,
@@ -15,12 +15,16 @@ function tryDifferentConstants(dirname )
 % This file is part of SuperSeggerOpti.
 
 % modify this accoding to the constants you want to try
-resFlags = {'60XEc','60XA','60XEcLB',...
-    '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
-
-if nargin < 1 || isempty( dirname ) || dirname == '.'
+if nargin < 1 || isempty( dirname ) || strcmp(dirname,'.')
     dirname = pwd;
 end
+
+if ~exist('var','resFlags') || isempty(resFlags)
+resFlags = {'60XEc','60XA','60XEcLB',...
+    '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
+end
+
+
 
 dirname = fixDir(dirname);
 images = dir([dirname,'*c1*.tif']);

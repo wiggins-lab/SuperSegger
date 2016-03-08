@@ -9,20 +9,14 @@ z_flag = false;
 % Get A and E from starting constants
 A = CONST.superSeggerOpti.A;
 E = CONST.regionScoreFun.E;
-
-
 dir_flag  = 0;
 varType   = class(data);
 
 if strcmp( varType, 'char' )
     dir_flag = 1;
     dirname = data;
-    dirseperator = filesep;
     
-    if dirname(length(dirname))~=dirseperator
-        dirname=[dirname,dirseperator];
-    end
-    
+    dirname = fixDir(dirname);
     contents=dir([dirname '*_seg.mat']);
     num_im = length(contents);
     
@@ -38,13 +32,13 @@ if strcmp( varType, 'char' )
         i = num_im;
     end
     
-    data = loaderInternal([dirname,contents(i  ).name]);
+    data = loaderInternal([dirname,contents(i).name]);
 end
 
 
 im_flag = 1;
 S_flag  = 0;
-runFlag = 1;
+runFlag = 1; % programs runs while this true
 t_flag  = 0;
 Sj_flag = false;
 
@@ -248,12 +242,10 @@ while runFlag
         data = intResetInfo(data, CONST);
         
         
-    elseif c(1) == 'o' % opti seg rule : finds new A that minimizes 
-        % score function for specific data loaded.
+    elseif c(1) == 'o'
         
         A = segsTrainML(data.segs.score,data.segs.info,A);
         data = intUpdateData( data, A, E );
-        
     elseif c(1) == 'i'
         
         figure(1);
@@ -298,7 +290,7 @@ while runFlag
         end
         plot( sub2, sub1, 'r.' );
         
-    elseif c(1) == 'O' % optimizes A for scoring segs for the whole directory
+    elseif c(1) == 'O'
         
         data_tmp = intCollectDataSegs( dirname );
         
@@ -442,7 +434,7 @@ while runFlag
         
         im_flag = 4;
         
-    elseif c(1) == 'R' % make region opti files, makes bad regions
+    elseif c(1) == 'R'
         
         delete( [dirname,'*_mod.mat'] );
         num = str2num( c(2:end) );
@@ -452,7 +444,7 @@ while runFlag
         
         intMakeRegOpti( dirname, E, num, CONST );
         
-    elseif c(1) == 'Z' % opti reg rule
+    elseif c(1) == 'Z'
         
         data_tmp = intCollectDataRegs( dirname, E );
         num_im_tmp = [];
@@ -476,7 +468,7 @@ while runFlag
         
         data = intUpdateData( data, A, E, CONST );
         
-    elseif c(1) == 'z' % toggle region opti files
+    elseif c(1) == 'z'
         z_flag = ~z_flag;
         
         if dir_flag
@@ -605,8 +597,6 @@ end
 
 
 function data_tmp = intCollectDataSegs( dirname )
-% go through all the _seg files in the seg folder and import information 
-% about the segments in a data_tmp data structure 
 
 contents = dir([dirname '*_seg.mat']);
 num_im = length(contents);
@@ -674,7 +664,8 @@ for i = 1:num_im
     data = loaderInternal([dirname,contents(i  ).name]);
     
     for j = 1:num
-        data_ = intModRegions( data, E, CONST );        
+        data_ = intModRegions( data, E, CONST );
+        
         dataname=[dirname,contents(i).name(1:end-4),'_',...
             sprintf('%02d',j),'_mod.mat'];
         save(dataname,'-STRUCT','data_');
@@ -800,11 +791,13 @@ for ii = 1:data.regs.num_regs
     mask = data.regs.regs_label(yy,xx)==ii;
     
     if ii == 1;
-        tmp = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+        tmp = CONST.regionScoreFun.props( mask, ...
+            data.regs.props(ii) );
         data.regs.info = zeros(data.regs.num_regs , numel(tmp));
     end
     
-    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, ...
+        data.regs.props(ii) );
     data.regs.boun(ii) = any( [1==xx(1),1==yy(1),ss(1)==yy(end),ss(2)==xx(end)] );
     
     
@@ -823,8 +816,6 @@ end
 
 
 function data = intUpdateData( data, A, E, CONST )
-% recalculates region score and segment score with given A and E
-% coefficients
 
 data.segs.scoreRaw = segmentScoreFun( data.segs.info, A );
 

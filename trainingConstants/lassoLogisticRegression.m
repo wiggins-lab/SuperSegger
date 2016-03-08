@@ -1,42 +1,35 @@
-function [B1] = lassoLinearLogisticRegression (dirname)
+function [B1] = lassoLogisticRegression (datalinearX,alldataY,parallel)
 % B1 are the coeffiecients, B1(0) is a constants, B1(1:end) are the
 % coefficients for the parameters in info.
+%   choice for x : 'segs', 'regs'
 %
 % dirname is directory with allready trained seg files
 % dirname = '/Users/Stella/Dropbox/100XTrain_/'
 
-contents = dir([dirname,'*_seg.mat']);
-alldataY = [];
-datalinearX = [];
-
-
-for i = 1 : numel(contents)
-    data = load([dirname,contents(i).name]);
-    if ~isnan(data.segs.score)
-    alldataY = [alldataY;data.segs.score];
-    datalinearX = [datalinearX;data.segs.info];
-    end
-end
-
 % construct squares
 dataQuadraticX = repmat(datalinearX,1,size(datalinearX,2)).*repelem(datalinearX,1,size(datalinearX,2));
 
-
-% numD = size(datalinearX,2);;
-% indices = find(triu(ones(numD,numD)));
-% [a,b] = ind2sub ([numD,numD],indices);
+numD = size(datalinearX,2);
+indicesToStay = find(tril(ones(numD,numD)));
+dataQuadraticX = dataQuadraticX(:,indicesToStay);
 
 alldataX = [datalinearX, dataQuadraticX];
 
-options = statset('UseParallel','on');
+if parallel == 1
+    options = statset('UseParallel',true);
+else
+    options = statset('UseParallel',false);
+end
 
 %Construct a regularized binomial regression using 25 Lambda values and 10-fold cross validation
 % B : fitted coefficients with size (number of predictors x lambda)
-[B,FitInfo] = lassoglm(alldataX,alldataY,'binomial','NumLambda',25,'CV',10,options);
+tic;
+[B,FitInfo] = lassoglm(alldataX,alldataY,'binomial','NumLambda',25,'CV',10,'Options',options);
+toc
 
 lassoPlot(B,FitInfo,'PlotType','CV');
 lassoPlot(B,FitInfo,'PlotType','Lambda','XScale','log');
-indx = FitInfo.Index1SE; % index of lambda with minimum deviance plus one standard deviation 
+indx = FitInfo.Index1SE; % index of lambda with minimum deviance plus one standard deviation
 B0 = B(:,indx); % B for the lambda with min deviance + std
 nonzeros = sum(B0 ~= 0) % non zero coefficients
 
@@ -50,13 +43,6 @@ histogram(alldataY - preds) % plot residuals
 title('Residuals from lassoglm model')
 disp (['error : ', num2str(sum(alldataY - round(preds)))])
 disp (['percentage error :', num2str(sum(alldataY - round(preds))/numel(alldataY))])
-
-% for non linear regression model
-
-modelfun = @(b,x) b(1) + b(2:numel(x)+1) * x + b(numel(x)+2:end) *x*x
-
-
-%modelfun = @(b,x)b(1) + b(2)*x(:,1).^b(3) +  b(4)*x(:,2).^b(5);
 
 
 end

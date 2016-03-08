@@ -1,4 +1,6 @@
 function A_fit = segsTrainML( score, vector, A0 )
+% starting from Ao it finds A_fit that minimizes the fitFunScore function
+% so that it best predicts score from vector.
 
 figure(2);
 ss = size(vector);

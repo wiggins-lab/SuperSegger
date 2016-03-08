@@ -10,6 +10,10 @@ function dirname = fixDir( dirname )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+if strcmp(dirname,'.')
+    dirname = pwd;
+end
+
 if dirname(end) ~= filesep
     dirname = [dirname,filesep];
 end
