@@ -1,19 +1,20 @@
 function makeBadRegions( dirname,E, CONST)
 %MAKEBADREGIONS makes bad regions to train the software on region shape 
 
-contents=dir([dirname '*_seg.mat']);
+dirname = fixDir(dirname);
+contents=dir([dirname,'*_seg.mat']);
 num_im = length(contents);
 
 h = waitbar( 0, 'Creating bad region examples' );
 for i = 1 : num_im % go through all the images
     waitbar(i/num_im,h);
-    dataname = [dirname,contents(i).name]
+    dataname = [dirname,contents(i).name];
     data = load(dataname);
 
     % if there are no regions it makes regions from the segments
-    if ~isfield( data, 'regs' );
+    %if ~isfield( data, 'regs' ); - i will just remake them for now!
         data = intMakeRegs( data, [], CONST ,E);
-    end
+    %end
     save(dataname,'-STRUCT','data');
     
     data_ = intModRegions( data, E, CONST );        
@@ -120,7 +121,7 @@ for ii = 1:data.regs.num_regs
     data.regs.boun(ii) = any( [1==xx(1),1==yy(1),ss(1)==yy(end),ss(2)==xx(end)] );
     data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
     data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:), E);
-    data.regs.score(ii) = data.regs.scoreRaw(ii) > 0
+    data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
   
     if exist( 'mask_bad_regs', 'var' ) && ~isempty( mask_bad_regs )
         mask_ = mask_bad_regs(yy,xx);        

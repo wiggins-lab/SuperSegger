@@ -10,12 +10,12 @@ contents = dir([dirname,'*_seg.mat']);
 
 for i = 1 : numel(contents)
     dataname = [dirname,contents(i).name];
-    
-    end
-    [data.segs.score,data.segs.scoreRaw] = calculateLassoScores (X,coefficients);
-    
+    data = load(dataname);
+    X = data.segs.info;
+    [data.segs.score,data.segs.scoreRaw] = calculateLassoScores (X,coefficients);    
      % save data with updated scores
      save(dataname,'-STRUCT','data');
 end
 
 end
+

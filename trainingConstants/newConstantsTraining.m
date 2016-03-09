@@ -38,11 +38,12 @@ trackOptiCropMulti(dirname,1)
 segTrainingDir = [dirname,'crop',filesep];
 
 % 3) run the whole segmentation with your favorite constants
+
 dirname_seg = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
 mkdir(dirname_seg);
-% to run less things...
-time_stamp = clock;
 
+% create time stamps to not run the fluorescence and cell maker parts
+time_stamp = clock;
 stamp_name = [dirname_seg,'.trackOptiCellMarker.mat'];
 save( stamp_name, 'time_stamp');
 stamp_name = [dirname_seg,'.trackOptiFluor.mat'];
@@ -101,12 +102,12 @@ updateScores(segDirMod,'segs',A);
 % create bad region examples using current E
 % chops all cells up and places bad regions in _mod_seg files
 
-makeBadRegions( dirname,Eold, CONST )
+makeBadRegions( segDirMod,Eold, CONST )
 
 
 % 6) run regularized logistic regression on regions
 disp ('starting training on regions...');
-[Xregs,Yregs] =  getInfoScores (segTrainingDir,'regs');
+[Xregs,Yregs] =  getInfoScores (segDirMod,'regs');
 
 E = lassoLogisticRegression (Xregs,Yregs,parallel);
 
@@ -120,7 +121,7 @@ CONST.regionScoreFun.fun = @calculateLassoScores
 save([constname,'_FULLCONST'],'-STRUCT','CONST');
 
 % save A,E, and whole constants file
-save(constname,'-STRUCT','A','E');
+save(constname,'A','E');
 
 end
 
