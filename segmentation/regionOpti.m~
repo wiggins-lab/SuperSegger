@@ -338,7 +338,7 @@ end
 function vect = simAnnealFast( segs_list, data, cell_mask, xx, yy, CONST, debug_flag)
 % simAnneal: Find the minimum energy configuration by a simulated
 % anneal procedure.
-
+debug_flag = 1;
 if ~exist('debug_flag', 'var') || isempty( debug_flag )
     debug_flag = 0;
 end
@@ -453,15 +453,13 @@ if debug_flag
     clf;
     subplot(2,1,1);
     imagesc( stateMat );
-    title('stateMat');
     set( gca, 'YTick', 1:size( stateMat, 1) );
     
     subplot(2,1,2);
-    title('ttt vs Ehist-minEhist+1 and tempSchedule');
     semilogy(tttt,EHist-minEHist+1,'r.-');
     hold on;
     semilogy(tttt(ppp),1,'go');
-
+    'hi'
     
     tt_ = tttt(ppp);
     plot( tttt,  tempSchedule(tttt, CONST, num_segs), 'b' );
@@ -740,6 +738,7 @@ end
         %debugFig();
     end
 end
+
 
 
 
