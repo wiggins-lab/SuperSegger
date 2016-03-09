@@ -1,4 +1,4 @@
-function trackOptiCropMulti(dirname_,xydir)
+function trackOptiCropMulti(dirname,xydir)
 % trackOptiCropMulti user chooses two corners to crops multiple images
 % Images must be in NIS name-format. 
 % new cut images are saved in dirname/crop folder.
@@ -8,12 +8,9 @@ function trackOptiCropMulti(dirname_,xydir)
 %       xydir : number of xydirectory you would like to crop, it cuts all
 %       if none.
 
-if ~isempty(dirname_)
+if ~isempty(dirname)
     
     file_filter = '*.tif';
-    if strcmp(dirname,'.')
-        dirname = pwd;
-    end
     dirname = fixDir(dirname)
     
     contents=dir([dirname,file_filter]);
@@ -40,7 +37,7 @@ if ~isempty(dirname_)
        nxy = xydir
     end
     
-    targetd = [dirname,'crop',dirseperator];
+    targetd = [dirname,'crop',filesep];
     mkdir(targetd);
     
     for nnxy = nxy;

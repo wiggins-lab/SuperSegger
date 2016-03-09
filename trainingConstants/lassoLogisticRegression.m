@@ -24,7 +24,7 @@ end
 %Construct a regularized binomial regression using 25 Lambda values and 10-fold cross validation
 % B : fitted coefficients with size (number of predictors x lambda)
 tic;
-[B,FitInfo] = lassoglm(alldataX,alldataY,'binomial','NumLambda',25,'CV',10,'Options',options);
+[B,FitInfo] = lassoglm(alldataX,alldataY,'binomial','NumLambda',10,'CV',10,'Options',options);
 toc
 
 lassoPlot(B,FitInfo,'PlotType','CV');

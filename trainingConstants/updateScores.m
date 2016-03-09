@@ -10,11 +10,7 @@ contents = dir([dirname,'*_seg.mat']);
 
 for i = 1 : numel(contents)
     dataname = [dirname,contents(i).name];
-    data = load(dataname);
-    if strcmp (xChoice,'segs')
-         X = data.segs.info;
-    else
-        X = data.regs.info;
+    
     end
     [data.segs.score,data.segs.scoreRaw] = calculateLassoScores (X,coefficients);
     

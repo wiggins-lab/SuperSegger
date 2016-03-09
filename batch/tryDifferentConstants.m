@@ -19,7 +19,7 @@ if nargin < 1 || isempty( dirname ) || strcmp(dirname,'.')
     dirname = pwd;
 end
 
-if ~exist('var','resFlags') || isempty(resFlags)
+if ~exist('resFlags','var') || isempty(resFlags)
 resFlags = {'60XEc','60XA','60XEcLB',...
     '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
 end
@@ -29,7 +29,7 @@ end
 dirname = fixDir(dirname);
 images = dir([dirname,'*c1*.tif']);
 lastPhaseImage = images(end).name;
-phase = intCropImage (imread(lastPhaseImage));
+phase = intCropImage (imread([dirname,lastPhaseImage]));
 
 
 numFlags = numel(resFlags);
