@@ -1,0 +1,46 @@
+function [ data ] = newRegionFeatures ( data, CONST)
+%NEWREGIONFEATURES Summary of this function goes here
+%   Detailed explanation goes here
+
+% intMakeRegs : creates info for bad regions or makes new regions
+
+ss = size( data.mask_cell );
+NUM_INFO = CONST.regionScoreFun.NUM_INFO;
+data.regs.regs_label = bwlabel( data.mask_cell );
+data.regs.num_regs = max( data.regs.regs_label(:) );
+data.regs.props = regionprops( data.regs.regs_label, ...
+    'BoundingBox','Orientation','Centroid','Area');
+data.regs.score  = ones( data.regs.num_regs, 1 );
+data.regs.scoreRaw = ones( data.regs.num_regs, 1 );
+data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
+data.regs.boun = zeros( data.regs.num_regs, 1 );
+
+for ii = 1:data.regs.num_regs
+    
+    [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
+    mask = data.regs.regs_label(yy,xx)==ii;
+    maskedPhase = (double(mask_cell).*double(data.phase));
+    maskedPhase = maskedPhase(yy,xx);
+    Orientation = data.regs.props.Orientation;
+    maskRot = (fast_rotate_loose_double( mask, -Orientation+90 ));
+    maskedPhaseRot = imrotate((maskedPhase), -Orientation+90, 'bilinear');
+    gclm_maskedPhase = graycomatrix(maskedPhaseRot); 
+    hfout = GLCM_Features1(gclm_maskedPhase);
+    haralickfeatures(1) = 
+    haralickfeatures(2) =
+    haralickfeatures(2) =
+    haralickfeatures(2) =
+    haralickfeatures(2) =
+    haralickfeatures(2) =
+    
+    
+    
+    
+    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    data.regs.boun(ii) = any( [1==xx(1),1==yy(1),ss(1)==yy(end),ss(2)==xx(end)] );
+ 
+
+
+
+end
+

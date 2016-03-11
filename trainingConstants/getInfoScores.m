@@ -10,7 +10,7 @@ end
 if strcmp (xChoice,'segs')
     contents = dir([dirname,'*_seg.mat']);
 else
-   contents = dir([dirname,'*_seg*.mat']);
+    contents = dir([dirname,'*_seg*.mat']);
 end
 Y = [];
 X = [];

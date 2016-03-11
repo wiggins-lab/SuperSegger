@@ -4,26 +4,27 @@ function [data,touch_list] = makeTrainingData (data,FLAGS)
 % segs.
 
 
-if ~exist('FLAGS') ||  ~exist(FLAGS,'im_flag')
+if ~exist('FLAGS','var') ||  ~isfield(FLAGS,'im_flag')
     FLAGS.im_flag  = 1;
 end
 im_flag = FLAGS.im_flag ;
 touch_list = []
 ss = size(data.phase);
-goflag = true;
+selectMode = true;
 
-while goflag
-    
-    figure(1);
-    showSegRule( data, FLAGS )
-    
-    prompt1 = ' mod to modify segments/regions, q to quit.';
-    answer = input(prompt1,'s');
-    if strcmp (answer,'mod')
-        selectMode = true;
-    elseif strcmp (answer,'q')
-        goflag = false;
-    end
+% while goflag
+%     
+%     figure(1);
+%     showSegRule( data, FLAGS )
+%     
+% %     prompt1 = ' mod to modify segments/regions, q to quit.';
+% %     answer = input(prompt1,'s');
+% %     if strcmp (answer,'mod')
+% %         selectMode = true;
+% %     elseif strcmp (answer,'q')
+% %         selectMode = false;
+% %         goflag = false;
+% %     end
     
     while selectMode
         figure(1);

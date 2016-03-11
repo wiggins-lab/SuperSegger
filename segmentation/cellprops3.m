@@ -31,7 +31,7 @@ function info = cellprops3( mask, props )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-debug = false;
+debug = true;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,6 +42,7 @@ debug = false;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Orientation = props.Orientation;
 
+% rotated image
 imRot = (fast_rotate_loose_double( mask, -Orientation+90 ));
 ss = size(imRot);
 
@@ -53,61 +54,53 @@ if debug
     hold on;
 end
 
+% short axis width
 width       = sum(double(imRot),2);
 ymask       = (width>=1);
 widthWindow = ([0;width(1:end-1)] + width + [width(2:end);0] )/3;
 
-L1          = sum(ymask);
-L2max       = max(widthWindow);
-L2v         = var(widthWindow);
+L1          = sum(ymask); % short axis
+L2max       = max(widthWindow); % max of short axis
+L2v         = var(widthWindow); % variance of shrot axis
 
 ymin = find(ymask,1,'first');
 ymax = find(ymask,1,'last');
-
-
 ind = (ymin):(ymax);
 L2mean = mean(width(ind));
+
 if L2mean<1
     L2mean=1;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Sine Cosine Idea
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nn = (numel(ind)-1);
-s  = 2*pi*(0:nn)/nn;
 
+% sine cosine idea : width(0:L1) * sin (2*pi*(0:L1)/L1)
+
+nn = (numel(ind)-1); % long axis width
+s  = 2*pi*(0:nn)/nn;
 s1 = mean(width(ind)'.*sin(s/2));
 s2 = mean(width(ind)'.*sin(s));
 s3 = mean(width(ind)'.*sin(s/3));
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Calculate the neck width
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% neck width
 if numel(widthWindow) > 6;
     ww       = widthWindow';
-    v        = ww(3:end)-ww(1:end-2);
-    s_change = logical([0, sign(v(2:end))-sign(v(1:end-1)),0,0]);
-    s_change(2:end) = logical(s_change(2:end)+s_change(1:end-1));
+    v        = ww(3:end)-ww(1:end-2); % change in width from i3 to i1
     
+    s_change = logical([0, sign(v(2:end))-sign(v(1:end-1)),0,0]); % positive change in change
+    s_change(2:end) = logical(s_change(2:end)+s_change(1:end-1));
     ind = find(s_change);
     ind_ = ind(logical((ind>3).*(ind<(numel(ww)-2))));
-    
     
     if isempty(ind_)
         Lneck = L2mean;
         pos = mean([ymin,ymax]);
     else
-        [Lneck,pos] = min( ww(ind_) );
-        pos = ind_(pos);
+        [Lneck,pos] = min(ww(ind_)); % minimum width value
+        pos = ind_(pos); % index in width window
     end
 else
-           Lneck = L2mean;
+        Lneck = L2mean;
         pos = mean([ymin,ymax]);
 end
 
@@ -117,26 +110,26 @@ if Lneck > L2mean
 end
 
 if debug
+    % ww : width window
     xx = 1:numel(ww);
-    
     figure(1);
     clf;
     plot( xx, ww, '.-' );
+    ylabel ('width');
+    xlabel ('Image Pixel (1 : width window)');
     hold on;
-    plot( pos+0*x,x, 'r:' );
-        plot( xx(ind_), ww(ind_), 'g.' );
+    x = 1:Lneck
+    y=pos*ones(1,numel(x))
+    plot(y,x, 'r--'); % marks position of neck
+    plot( xx(ind_), ww(ind_), 'g.' );
     figure(2)
+    
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% thin ends
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% finds thin ends
 im = find( logical(width), 1, 'first' );
 ip = find( logical(width), 1, 'last' );
-
 if ip-im >= 3
    m1 = mean( width(im+[ 0, 1]) );
    m4 = mean( width(ip+[-1, 0]) );
@@ -145,11 +138,7 @@ else
    minWidthEnd = L2mean;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Square ends
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% finds square ends
 if ip-im >= 7
     m2 = mean( width(im+[ 2, 3]) );
     m3 = mean( width(ip+[-3,-2]) );
@@ -163,11 +152,8 @@ else
    sqmax = 0;
    sqmin = 0;
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Calculate the maximum bend angle.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% maximum bend angle
 dr  = 3;
 dr2 = 3;
 yy = (ymin+dr):dr2:(ymax-dr);
@@ -176,7 +162,6 @@ if numel(yy) > 4
     tmp = imRot(yy,:);
     
     x = 1:ss(2);
-
     
     [X,Y] = meshgrid(x,yy);
     
@@ -187,8 +172,7 @@ if numel(yy) > 4
     dangle = ((d1(1:end-2,1).*d1(3:end,2)...
         -d1(1:end-2,2).*d1(3:end,1))./...
         (norm2(d1(1:end-2,:)).*norm2(d1(3:end,:))));
-    
-        
+            
     stm1 = max( dangle.^2 );
     
     
@@ -204,17 +188,11 @@ if numel(yy) > 4
     sa4 = mean( angle.*sin(s*4) );
     catch
         'hi'
-    end
-    
-    
-    
+    end     
         
-    if debug
-        
-        ss_ = size(d1);
-        
-        for ii = 1:ss_(1)
-            
+    if debug       
+        ss_ = size(d1);       
+        for ii = 1:ss_(1)            
             plot( xx(ii)+[0,-d1(ii,1)], yy(ii)+[0,-d1(ii,2)], 'c.' );
         end
     end
@@ -325,8 +303,6 @@ else
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 RoundIndOver  = RoundIndOverTop  + RoundIndOverBot;
 RoundIndUnder = RoundIndUnderTop + RoundIndUnderBot;
 
@@ -338,7 +314,6 @@ if L1 < 1
 end
 
 
-%info = [L1,L2,Lneck,curve];
 info = [L1, ...
     L2mean, ...
     Lneck, ...

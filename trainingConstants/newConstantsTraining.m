@@ -102,14 +102,39 @@ updateScores(segDirMod,'segs',A);
 % create bad region examples using current E
 % chops all cells up and places bad regions in _mod_seg files
 
+% fixes regions if they were bad..
+% for i = 1 : numel(segData)
+%     data = load([segDirMod,filesep,segData(i).name]);
+%     % calculate scoreRaw and save regions
+%     data = intMakeRegs( data, [], CONST, CONST.regionScoreFun.E )
+%     save([segDirMod,segData(i).name],'-STRUCT','data');
+% end
+
 makeBadRegions( segDirMod,Eold, CONST )
+segData = dir([segDirMod,filesep,'*seg*.mat']);
+FLAGS.im_flag = 2;
+
+for i = 1 : numel(segData)
+    data = load([segDirMod,filesep,segData(i).name]);
+    segData(i).name
+    
+    % update scores..
+    [~,data.regs.scoreRaw] = calculateLassoScores (data.regs.info,E);
+
+    [data,touch_list] = makeTrainingData (data,FLAGS)
+    save([segDirMod,segData(i).name],'-STRUCT','data');
+end
 
 
 % 6) run regularized logistic regression on regions
 disp ('starting training on regions...');
 [Xregs,Yregs] =  getInfoScores (segDirMod,'regs');
-
 E = lassoLogisticRegression (Xregs,Yregs,parallel);
+
+
+
+% calculate new scores for regions?
+
 
 
 % save constants

@@ -308,7 +308,7 @@ for jj = 1:num_comb;
     
     
     regionScore(jj) = sum(-CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E))+...
-        sum((1-2*vect).*FixE(data.segs.scoreRaw(segs_list)'))*CONST.regionOpti.DE_norm;
+        sum((1-2*vect).*data.segs.scoreRaw(segs_list)')*CONST.regionOpti.DE_norm;
     
     if debug_flag
         clf;
@@ -471,7 +471,7 @@ end
 
     function MLL = initState( vect0 )
         
-        state.seg_E = FixE(data.segs.scoreRaw(segs_list))*CONST.regionOpti.DE_norm;
+        state.seg_E = data.segs.scoreRaw(segs_list)*CONST.regionOpti.DE_norm;
         state.seg_vect0 = logical(vect0);
         state.seg_mask= cell (1, num_segs  );
         state.mask_out= cell (1, num_segs  );
@@ -719,8 +719,8 @@ end
 
     function fixState ( )
         % fixState : fixes the perturbed state as the current state.
-
         % deleting
+        
         ind_del = find(and(state.reg_vect0,~state.reg_vect1));
         for kk = ind_del
             state.reg_label(state.reg_mask{kk}) = 0;
@@ -744,7 +744,7 @@ end
 
 
 function MLL = calcMLL(reg_vect,seg_vect,state)
-
+% calcMLL: calculates the maximum likelihood for a set of vectors and segments
 E_reg = state.reg_E(reg_vect);
 E_seg = state.seg_E;
 sigma = 2*double(seg_vect)-1;
@@ -752,13 +752,6 @@ mll_regs = intMakeMLL( E_reg );
 mll_segs = intMakeMLL( E_seg, sigma );
 
 MLL = sum( mll_regs )+sum( mll_segs );
-end
-
-
-
-
-function E = calcE(reg_vect,seg_vect,state)
-E = sum(-state.reg_E(reg_vect))+sum((1-2*double(seg_vect)).*state.seg_E);
 end
 
 
@@ -773,17 +766,5 @@ end
 Emax = CONST.regionOpti.Emax;
 
 T = Emax*exp(-t/dt);
-end
-
-function ee = FixE( ee )
-%global CutOffScoreHi;
-%global CutOffScoreLo;
-
-
-%cutH = 5*CutOffScoreHi;
-%cutL = 5*CutOffScoreLo;
-
-%ee = ee.*(ee<=cutH).*(ee>=cutL) + cutH.*(ee>cutH) + cutL.*(ee<cutL);
-
 end
 
