@@ -2,8 +2,8 @@ function [clist_tmp] = trackOptiListNeighbor(dirname,CONST,header)
 % trackOptiListNeighbor : creates a neighbors list for each cell.
 %
 % INPUT :
-%       dirname: seg folder eg. maindirectory/xy1/seg
-%       CONST: are the segmentation constants.
+%       dirname : seg folder eg. maindirectory/xy1/seg
+%       CONST : segmentation constants.
 %       header : string displayed with information
 % OUTPUT :
 %       clist_temp : contains list of neighbors
@@ -12,12 +12,10 @@ function [clist_tmp] = trackOptiListNeighbor(dirname,CONST,header)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
-
-dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
@@ -25,10 +23,11 @@ dirname = fixDir(dirname);
 
 % Get the track file names...
 contents=dir([dirname '*_err.mat']);
-if isempty( contents )
-    clist.data = [];
-    clist.def={};
-    clist.gate=[];
+if isempty(contents)
+    disp('trackOptiListNeighbor : No files found');
+    clist_tmp.data = [];
+    clist_tmp.def={};
+    clist_tmp.gate=[];
 else
     data_c = loaderInternal([dirname,contents(end).name]);
     MAX_CELL = max(data_c.regs.ID) + 100;
@@ -76,6 +75,6 @@ else
 end
 end
 
-function data = loaderInternal( filename );
+function data = loaderInternal( filename )
 data = load( filename );
 end

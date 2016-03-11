@@ -1,34 +1,56 @@
 function [clist] = trackOptiClist(dirname,CONST,header)
-% trackOptiClist generates an array called the clist
+% trackOptiClist : generates an array called the clist
 % which contains non time dependent information for each cell.
-%
+% It contains the following : 
+%         '1: Cell ID'
+%         '2: Cell Birth Time'
+%         '3: Cell Division Time'
+%         '4: Cell Age'
+%         '5: Cell Dist to edge'
+%         '6: Old Pole Age'
+%         '7: Long Axis Birth'
+%         '8: Long Axis Divide'
+%         '9: Complete Cell Cycles'
+%         '10: Short Axis Birth'
+%         '11: Short Axis Divide'
+%         '12: Area Birth'
+%         '13: Area Divide'
+%         '14: fluor1 sum'
+%         '15: fluor1 mean'
+%         '16: fluor2 sum'
+%         '17: fluor2 mean'
+%         '18: number of neighbors'
+%         '19: locus1_1 longaxis'
+%         '20: locus1_1 shortaxis'
+%         '21: locus1_1 score'
+%         '22: locus1_1 Intensity'
+%         '23: mother ID'
+%         '24: daughter1 ID'
+%         '25: daughter2 ID'
 % INPUT :
-%   dirname: seg folder eg. maindirectory/xy1/seg
-%   CONST: segmentation constants
-%   header : string displayed with information
+%       dirname : seg folder eg. maindirectory/xy1/seg
+%       CONST : segmentation constants
+%       header : string displayed with information
+% OUTPUT :
+%       clist : array with the above info for each cell in the frame
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
 dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
-    
     dirname = '.';
-    dirname = [dirname,dirseperator];
-else
-    if dirname(length(dirname))~=dirseperator
-        dirname = [dirname,dirseperator];
-    end
 end
 
+dirname = fixDir(dirname);
 
-% Get the track file names...
+% Get the track file names.
 contents=dir([dirname '*_err.mat']);
 if isempty( contents )
     clist.data = [];
@@ -46,7 +68,7 @@ else
     end
     
     clist = [];
-    clist.def =     { '1: Cell ID', ...
+    clist.def = { '1: Cell ID', ...
         '2: Cell Birth Time', ...
         '3: Cell Division Time', ...
         '4: Cell Age', ...
@@ -73,13 +95,13 @@ else
         '25: daughter2 ID'...
         };
     
-    % These guys will be updated every frame.
+    % These definitions will be updated in every frame.
     death_ind = [3,4,8,9,11,13,24,25];
     
     clist_tmp = nan( MAX_CELL, numel( clist.def) );
     clist_tmp(:,1) = 0;
     
-    %initialize case neighbor flag is not set
+    % initialize in case neighbor flag is not set
     share_pole = [];
     
     % loop through all the cells.
@@ -90,20 +112,17 @@ else
                 ~isfield( data_c.CellA{1}, 'numNeighbors' )
             for ii = 1:data_c.regs.num_regs
                 nei_ = numel(trackOptiNeighbors(data_c,ii));
-                %data_c.regs.numNeighbors{ii} = nei_ ;
                 data_c.CellA{ii}.numNeighbors = nei_ ;
             end
         end
         
         
-        % SWITCH LOCUS POSITIONS TO BE ALIGNED TO OLD AND NEW POLES (OLD =
-        % POSITIVE
-        if isfield(CONST.trackOpti,'pole_flag') && CONST.trackOpti.pole_flag == 1       
+        % align locus positionsto old (positive) and new (negative) pole
+        if isfield(CONST.trackOpti,'pole_flag') && CONST.trackOpti.pole_flag == 1
             data_c = getNeighborPole(data_c) ;
             share_pole = drill( data_c.CellA, '.neighbor_pole');
-            data_c = poleDirection(data_c); 
+            data_c = poleDirection(data_c);
         end
-        
         
         % figure out which cells are new born.
         maxID = max( clist_tmp(:,1) );
@@ -122,8 +141,6 @@ else
         
         lold(    IDlog) = clist_tmp(IDnz,8);
         lbirth(  IDlog) = clist_tmp(IDnz,7);
-        %dlmaxOld(IDlog) = clist_tmp(IDnz,68);
-        %dlminOld(IDlog) = clist_tmp(IDnz,69);
         
         regnum = (1:data_c.regs.num_regs)';
         zz = zeros( data_c.regs.num_regs, 1);
@@ -200,31 +217,6 @@ else
         end
         
         
-        %         lnew = data_c.regs.L1;
-        %
-        %         dl = (lnew-lold);
-        %
-        %         dlmin = nan( size( dl ) );
-        %         dlmax = nan( size( dl ) );
-        %
-        %         indTmp = isnan(dlminOld);
-        %         dlmin( indTmp ) = dl( indTmp );
-        %
-        %         indTmp = isnan(dlmaxOld);
-        %         dlmax( indTmp ) = dl( indTmp );
-        %
-        %         indTmp = isnan(dl);
-        %         dlmin( indTmp ) = dlminOld( indTmp );
-        %         dlmax( indTmp ) = dlmaxOld( indTmp );
-        %
-        %         indTmp = ~isnan(dl+dlminOld);
-        %         dlmin( indTmp ) = min( [dl( indTmp );dlminOld( indTmp )] );
-        %
-        %         indTmp = ~isnan(dl+dlmaxOld);
-        %         dlmax( indTmp ) = max( [dl( indTmp );dlmaxOld( indTmp )] );
-        %
-        %         lrel = lnew./lbirth;
-        
         tmp = [ ID', ...
             i + zz, ...
             i + zz, ...
@@ -255,10 +247,10 @@ else
         % these are the guys that are set at birth
         try
             clist_tmp( ID(bci), : ) = tmp( bci, :);
-        catch
-            'help'
+        catch ME
+            printError(ME);
         end
-        % update guys that you want to set to the death value
+        % update the fields that are set to be updated every frame
         clist_tmp( ID(ci), death_ind ) = tmp( ci, death_ind );
         
         if CONST.show_status
@@ -270,15 +262,10 @@ else
         
     end
     
-    % save the updated err files.
-    
-    
     if CONST.show_status
         close(h);
     end
-    
-    
-    
+        
     clist.data = clist_tmp(logical(clist_tmp(:,1)),:);
     clist.gate = CONST.trackLoci.gate;
     clist.neighbor = [];
@@ -287,8 +274,9 @@ else
         clist.neighbor = trackOptiListNeighbor(dirname,CONST,[]);
     end
 end
+
 end
 
-function data = loaderInternal( filename );
+function data = loaderInternal( filename )
 data = load( filename );
 end

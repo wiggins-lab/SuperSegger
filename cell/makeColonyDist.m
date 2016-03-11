@@ -1,10 +1,10 @@
 function dist_mask = makeColonyDist( mask )
 % makeColonyDist : returns the distance mask for the colony
 % It dilates, the image, fills the holes, and then returns for each pixel 
-% the distance between that pixel and nearest non zero pixel. 
+% the distance from the nearest non zero pixel. 
 %
 % INPUT : 
-%   mask : mask of image
+%   mask : image of mask of cells
 % OUTPUT :
 %   dist_mask : distance between that pixel and nearest non zero pixel.
 %

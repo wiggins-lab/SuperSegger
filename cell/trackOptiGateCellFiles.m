@@ -5,10 +5,7 @@ function trackOptiGateCellFiles(dirname_cell, clist )
 % the notGated directory.
 %
 % INPUT :
-%       dirname: seg folder eg. maindirectory/xy1/seg % not used
 %       dirname_cell : directory with cell files
-%       CONST: are the segmentation constants. % not used
-%       header : string displayed with information % not used
 %       clist : array with non time dependent information of cells
 %
 % Copyright (C) 2016 Wiggins Lab

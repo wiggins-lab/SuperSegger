@@ -1,15 +1,15 @@
 function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
 % trackOptiCellFiles : organizes the data into the final cell files that
 % contain all the time lapse data for a single cell.
-% It allows for cell gating. If a clist is passed, gate the list and then make an
-% ID_LIST containing cells for which we want to generate cell files.
+% It allows for cell gating. If a clist is passed with an already made gate t
+% code generates cell files for only cells that pass the gate.
 %
 % INPUT :
 %       dirname : xy directory
 %       dirname_cell : where cell files are placed, usually dirname/cell file
-%       CONST : segmentation cosntants
-%       header : is the last axis of the cell
-%       clist : array of cell files, can be used to generate cell files from the gated clist
+%       CONST : segmentation constants
+%       header : string with information
+%       clist : array of cell files, can be used to generate gated cell files
 %
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
@@ -17,7 +17,7 @@ function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
 
 if ~exist( 'clist', 'var') || isempty( clist) || isempty(clist.data)
     ID_LIST = [];
-else
+else % gating clist
     clist = gate(clist);
     ID_LIST = clist.data(:,1);
 end
@@ -28,17 +28,14 @@ end
 
 max_cell_num = 0;
 
-
 % Set up directory etc.
-dirseperator = filesep;
-
 if(nargin<1 || isempty(dirname))
     dirname='.';
 end
 
 dirname = fixDir(dirname);
 
-if(nargin<2 || isempty(dirname))
+if(nargin<2 || isempty(dirname_cell))
     dirname_cell = dirname;
 end
 
@@ -48,11 +45,11 @@ contents=dir([dirname '/*_err.mat']);
 % check to make sure that there are err.mat files to work from. If not,
 % return.
 if isempty( contents )
-    disp( [header, 'trackOptiCellFiles: No error files have been found... possibly too many segs.'] );
+    disp( [header, 'trackOptiCellFiles: No error files have been found. Possibly too many segments.'] );
 else
-    num_im = length(contents);
     
-    % get the right number of cell malloc'd:
+    % create a DA cell array for the number of cells in last frame
+    num_im = length(contents);
     data_c    = loaderInternal([dirname,contents(end).name]);
     MAX_NUM_CELLS = max(data_c.regs.ID)+100;
     DA            = cell(1,MAX_NUM_CELLS);
@@ -62,6 +59,7 @@ else
     else
         h = [];
     end
+    
     for i = 1:num_im;
         
         if CONST.show_status
@@ -79,13 +77,15 @@ else
             
             cellNum = data_c.regs.ID(ii);
             max_cell_num = max([max_cell_num, cellNum]);
-            
-            
+                        
             if cellNum && ( isempty( ID_LIST ) || ismember( cellNum, ID_LIST ))
                 if data_c.regs.birthF(ii) == 1 && data_c.regs.deathF(ii) == 1
                     % for snapshot images (birth and death are 1)
+                    % initialize cell
                     DA{cellNum} = intInitCell( data_c, ii, cellNum );
+                    % update cell
                     DA{cellNum} = intUpCell( DA{cellNum}, data_c, ii );
+                    % delete and save cell
                     DA{cellNum} = intDelCell( DA{cellNum},...
                         dirname_cell, cellNum );
                     
@@ -98,34 +98,27 @@ else
                     % the structure then delete the cell after saving
                     DA{cellNum} = intUpCell( DA{cellNum}, data_c, ii );
                     
-                    % add cell dist to cell structure.
+                    % saves and deletes cell from datastructure
                     DA{cellNum} = intDelCell( DA{cellNum},...
                         dirname_cell, cellNum );
                     
                 else
-                    % else just update the cell
+                    % update the cell
                     DA{cellNum} = intUpCell( DA{cellNum}, data_c, ii );
                 end
             end
             
         end
-        '';
     end
     
-    
-    %% debug - added 1/26/2012
-    % cells without a death flag were not put into the Cell directory,
-    % fix this b/c lysed cells often fall in this category
-    
+    % deletes and saves cells that were not saved yet
     for ii=1:MAX_NUM_CELLS
         if ~isempty(DA{ii})
             disp( ['Missing cell ', num2str(DA{ii}.ID)] );
-            DA{ii} = intDelCell( DA{ii},...
-                dirname_cell, ii );
+            DA{ii} = intDelCell( DA{ii},dirname_cell, ii );
         end
     end
     
-    %
     if CONST.show_status
         close(h);
     end
@@ -194,7 +187,7 @@ end
 
 
 function data = intDelCell( data, dirToSave, cellNum )
-% inDelCell : destroys a cell on division to liberate memory and save the cell file.
+% inDelCell : destroys a cell when it divides and saves the cell file.
 %
 % INPUT :
 %       data : cell data

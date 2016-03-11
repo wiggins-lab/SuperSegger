@@ -1,5 +1,5 @@
 function trackOptiMakeCell(dirname,CONST,header)
-% trackOptiMakeCell generates the CellA field indexed by the region number
+% trackOptiMakeCell : generates the CellA field indexed by the region number
 % which contains information about each cell in each region in each frame.
 %
 % It goes through the dirname/*err.mat files and computes the characteristics of the
@@ -8,7 +8,7 @@ function trackOptiMakeCell(dirname,CONST,header)
 % age and also computes statistics on the fluorescence channels as
 % well as fitting the locus positions. These last two features are
 % controlled by parameters set in the loadConstants.m or
-% loadConstantsMine.m files.  numSpots variable in no longer used.
+% loadConstantsMine.m files.
 %
 % data.CellA{1}.
 %           mask		: logical (1 and 0) cell mask, unoriented
@@ -26,8 +26,8 @@ function trackOptiMakeCell(dirname,CONST,header)
 % 			fluor2		: the 2nd fluor channel image
 % 			fluor2mm	: min and max of fluor2
 % 			fl2         : statistics of fluor2
-% 			cell_dist	: ?
-% 			gray		: ?
+% 			cell_dist	: distance to the edge of the colony
+% 			gray		: average phase gray value in cell region
 % 			locus1		: If focus fitting was run, data on the fit
 % 			(locations, score..), see below
 % 			locus2		: Same as above for channel 2
@@ -41,13 +41,13 @@ function trackOptiMakeCell(dirname,CONST,header)
 % data.CellA{1}.coord =
 %         A: Area of cell mask
 %         r_center: geometrical center of the cell
-%         box: coord of box surrounding cell
-%         xaxis: coord of major axis
-%         yaxis:  coord of minor axis
+%         box: coordinates of box surrounding cell
+%         xaxis: coordinates of major axis
+%         yaxis: coordinates of minor axis
 %         I: Moment of inertia of cell mask
 %         e1: priniple axis (major) unit vector
 %         e2: priniple axis (minor) unit vector
-%         rcm: center of ?mass? position of mask
+%         rcm: center of mass position of mask
 %
 % The pole field contains info pertaining to the cell pole and pole ages:
 % data.CellA{1}.pole =
@@ -76,18 +76,16 @@ function trackOptiMakeCell(dirname,CONST,header)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
-dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
 dirname = fixDir(dirname);
 
-
-% Get the track file names...
+% Get the track/error file names
 contents=dir([dirname '*_err.mat']);
 num_im = numel(contents);
 
@@ -100,25 +98,26 @@ end
 % loop through all the cells.
 for i = 1:num_im;
     
-    if (i ==1) && (1 == num_im)
+    if (i ==1) && (1 == num_im) % snapshots
         data_r = [];
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         data_f = [];
-    elseif i == 1;
-        data_c = loaderInternal([dirname,contents(i  ).name]);
-        data_f = loaderInternal([dirname,contents(i+1).name]);
+    elseif i == 1; % first frame
         data_r = [];
-    elseif i==num_im;
-        data_c = loaderInternal([dirname,contents(i  ).name]);
-        data_f = [];
+        data_c = loaderInternal([dirname,contents(i).name]);
+        data_f = loaderInternal([dirname,contents(i+1).name]);        
+    elseif i==num_im; % last frame
         data_r = loaderInternal([dirname,contents(i-1).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);        
+        data_f = [];
     else
-        data_c = loaderInternal([dirname,contents(i  ).name]);
-        data_f = loaderInternal([dirname,contents(i+1).name]);
         data_r = loaderInternal([dirname,contents(i-1).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
+        data_f = loaderInternal([dirname,contents(i+1).name]);
     end
     
-    if i==1;
+    % first frame, find the total number of channels
+    if i==1
         nc = 0;
         tmp_fn = fieldnames( data_c );
         nf = numel( tmp_fn );
@@ -129,9 +128,9 @@ for i = 1:num_im;
         end
     end
     
-    % set min max.
+    % set min max of fluorescence
     for j = 1:nc
-        tmp   = getfield( data_c,['fluor',num2str(j)]);
+        tmp = getfield( data_c,['fluor',num2str(j)]);
         ff(j,:) = [min(tmp(:)),max(tmp(:))];
     end
     
@@ -146,12 +145,12 @@ for i = 1:num_im;
         PAD_SIZE = 5;
         ss = size(data_c.phase);
         
-        [xx,yy]        = getBBpad( data_c.regs.props(ii).BoundingBox, ss, PAD_SIZE);
+        [xx,yy]  = getBBpad( data_c.regs.props(ii).BoundingBox, ss, PAD_SIZE);
         celld.xx = xx;
         celld.yy = yy;
-        celld.mask     = logical(data_c.regs.regs_label(yy,xx)==ii);
+        celld.mask  = logical(data_c.regs.regs_label(yy,xx)==ii);
         celld.r_offset = [xx(1),yy(1)];
-        celld.BB       = [xx(1),yy(1),xx(end)-xx(1),yy(end)-yy(1)];
+        celld.BB  = [xx(1),yy(1),xx(end)-xx(1),yy(end)-yy(1)];
         tmpEdge = [ ceil(data_c.regs.props(ii).BoundingBox(1)),...
             ceil(data_c.regs.props(ii).BoundingBox(2)),...
             floor(sum(data_c.regs.props(ii).BoundingBox([1,3]))),...
@@ -176,61 +175,50 @@ for i = 1:num_im;
         % Keep track of pole age and what direction the old pole is in.
         if isempty(data_r) || isempty(data_c.regs.map.r{ii})
             celld             = toMakeCell(celld,[],data_c.regs.props(ii));
-            celld.pole.e1     = celld.coord.e1;
-            
+            celld.pole.e1     = celld.coord.e1;            
             celld.pole.op_ori =   0;
             celld.pole.op_age = NaN;
             celld.pole.np_age = NaN;
         else
             if data_c.regs.error.r(ii)
                 try
-                    celld             = toMakeCell(celld, data_r.CellA{data_c.regs.map.r{ii}(1)}.pole.e1,data_c.regs.props(ii));
-                catch
-                    'hi';
+                    celld = toMakeCell(celld, data_r.CellA{data_c.regs.map.r{ii}(1)}.pole.e1,data_c.regs.props(ii));
+                catch ME
+                    printError(ME);
                 end
                 celld.pole.e1     = celld.coord.e1;
-                
                 celld.pole.op_ori =   0;
                 celld.pole.op_age = NaN;
                 celld.pole.np_age = NaN;
                 
             elseif data_c.regs.birthF(ii) && ( data_c.regs.sisterID(ii) ) && ~isempty(find( data_c.regs.sisterID(ii) == data_c.regs.ID ))
                 
-                cell_old = data_r.CellA{data_c.regs.map.r{ii}(1)};
-                
+                cell_old = data_r.CellA{data_c.regs.map.r{ii}(1)};                
                 celld             = toMakeCell(celld, cell_old.pole.e1,data_c.regs.props(ii));
                 celld.pole.e1     = celld.coord.e1;
                 e1 = celld.pole.e1;
                 op_ori = cell_old.pole.op_ori;
-                
-                
+
                 jj = find( data_c.regs.sisterID(ii) == data_c.regs.ID );
-                
-                
                 jj = jj(1);
                 rs = data_c.regs.props(jj).Centroid;
                 r0 = data_c.regs.props(ii).Centroid;
                 
-                dr = (r0-rs)*e1;
-                
+                dr = (r0-rs)*e1;                
                 celld.pole.op_ori = sign(dr);
+                
                 if celld.pole.op_ori == cell_old.pole.op_ori
                     celld.pole.op_age = cell_old.pole.op_age+1;
                 else
                     celld.pole.op_age = cell_old.pole.np_age+1;
                 end
+                
                 celld.pole.np_age = 1;
                 
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % This region of the code is only turned on for debugging
-                % purposes.
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 debug_flag = 0;
                 if debug_flag
                     clf;
-                    
                     kk = find( data_c.regs.motherID(ii) == data_r.ID );
-                    
                     imshow( 0.5*cat(3, ag(data_c.regs.regs_label==jj), ag(data_c.regs.regs_label==ii),ag(data_r.regs_label==kk)));
                     hold on;
                     
@@ -266,7 +254,6 @@ for i = 1:num_im;
                         plot( old_pole(1), old_pole(2), 'r.');
                         plot( new_pole(1), new_pole(2), 'w.');
                     end
-                    '';
                 end
             else
                 celld             = toMakeCell(celld, data_r.CellA{data_c.regs.map.r{ii}(1)}.pole.e1,data_c.regs.props(ii));
@@ -276,25 +263,19 @@ for i = 1:num_im;
         end
         
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %
-        % copy fluor fields, compute fluor statistics, and find loci
-        %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        % copy fluorescence fields, compute fluorescence statistics and find loci
         for j = 1:nc
-            tmp   = getfield( data_c,['fluor',num2str(j)]);
-            celld = setfield( celld, ['fluor',num2str(j)], tmp(yy,xx));
-            celld = setfield( celld, ['fluor',num2str(j),'mm'], ff(j,:) );
+            tmp   = data_c.(['fluor',num2str(j)]);
+            celld.(['fluor',num2str(j)]) = tmp(yy,xx);
+            celld.(['fluor',num2str(j),'mm']) = ff(j,:) ;
             
             if isfield( CONST.trackLoci, 'fluorFlag' ) && CONST.trackLoci.fluorFlag
                 tmp = trackOptiCellFluor( tmp(yy,xx), celld.mask, celld.r_offset);
             else
                 tmp = [];
-            end
-            
-            tmp = setfield(tmp,'bg', getfield(data_c, ['fl',num2str(j),'bg'] ));
-            celld = setfield( celld, ['fl',num2str(j)], tmp );
+            end       
+            tmp.bg = data_c.(['fl',num2str(j),'bg']);
+            celld.(['fl',num2str(j)]) = tmp;
             
         end
         
@@ -307,7 +288,7 @@ for i = 1:num_im;
             cell_dist      = min(dist_mask_crop(mask_cell));
             celld.cell_dist = cell_dist;
             
-            % calculate average phase gray val in cell region
+            % calculate average phase gray value in cell region
             celld.gray = mean(double(celld.phase(celld.mask)));
             
         end
@@ -316,7 +297,7 @@ for i = 1:num_im;
     end
     
     % save the updated err files.
-    dataname = [dirname,contents(i  ).name];
+    dataname = [dirname,contents(i).name];
     save(dataname,'-STRUCT','data_c');
     
     if CONST.show_status
@@ -325,9 +306,11 @@ for i = 1:num_im;
         disp([header, 'MakeCell frame: ',num2str(i),' of ',num2str(num_im)]);
     end
 end
+
 if CONST.show_status
     close(h);
 end
+
 end
 
 function data = loaderInternal(filename);

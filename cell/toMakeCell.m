@@ -3,9 +3,9 @@ function celld = toMakeCell(celld, e1_old, props)
 %
 % INPUT : 
 %       celld : Cell file
+%       e1_old : is the last axis of the cell
 %       props : contains information about the cell such as bounding box, area,
 %       and centroid 
-%       e1_old : is the last axis of the cell
 % OUTPUT :
 %       celld : new cell file with calculated properties
 %
