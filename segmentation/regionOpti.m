@@ -24,7 +24,11 @@ CutOffScoreHi      = CONST.regionOpti.CutOffScoreHi;
 CutOffScoreLo      = CONST.regionOpti.CutOffScoreLo;
 MAX_NUM_RESOLVE    = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
-DE_norm            = CONST.regionOpti.DE_norm;
+
+CONST.regionOpti.Emin          = .2;
+%CONST.regionOpti.Nt            = 50;
+
+DE_norm          = CONST.regionOpti.DE_norm;
 
 if ~exist('header')
     header = [];
@@ -68,7 +72,7 @@ for ii = 1:num_regs
         clf;
         imshow( cat(3,ag(regs_label==ii),ag(regs_label>0),ag(data.phase)), [])
         disp([num2str(L1),', ',num2str(L2)]);
-        keyboard;
+      %  keyboard;
     end
     
     
@@ -162,10 +166,10 @@ for ii = 1:num_regs
         
         if debug_flag
             CONST.regionOpti.Emax          = 1e2;
+            CONST.regionOpti.Emin          = .2;
             CONST.regionOpti.fignum        = 2;
-            CONST.regionOpti.dt            = 25;
-            CONST.regionOpti.Nt            = 256;
-            
+            CONST.regionOpti.dt            = 20;
+            CONST.regionOpti.Nt            = 50;
             tic;
             [vect] = simAnnealFast( segs_list, data, ...
                 cell_mask, xx, yy, CONST, debug_flag);
@@ -304,7 +308,7 @@ for jj = 1:num_comb;
     
     
     regionScore(jj) = sum(-CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E))+...
-        sum((1-2*vect).*FixE(data.segs.scoreRaw(segs_list)'))*CONST.regionOpti.DE_norm;
+        sum((1-2*vect).*data.segs.scoreRaw(segs_list)')*CONST.regionOpti.DE_norm;
     
     if debug_flag
         clf;
@@ -364,6 +368,16 @@ if debug_flag
     EHist = zeros(1,Nt);
     tttt = 1:Nt;
     stateMat = zeros(num_segs,Nt);
+    
+    figure(4);
+    clf;
+    masker = ismember( data.segs.segs_label, segs_list);
+    tmp =  data.segs.segs_label;
+    tmp(~masker) = 0;
+    
+    imshow( cat(3, ag(masker), 0.3*ag(logical(data.mask_cell)), 0*ag(masker)));
+    hold on;
+
 end
 
 for t = 1:Nt;
@@ -433,23 +447,31 @@ vect = double(state.seg_vect0');
 if debug_flag
     [minEHist,ppp] = min(EHist(end:-1:1));
     ppp = numel(EHist)-ppp+1;
+    minEHist
     
     figure(CONST.regionOpti.fignum);
     clf;
     subplot(2,1,1);
     imagesc( stateMat );
+    title('stateMat');
+    set( gca, 'YTick', 1:size( stateMat, 1) );
     
     subplot(2,1,2);
+    title('ttt vs Ehist-minEhist+1 and tempSchedule');
     semilogy(tttt,EHist-minEHist+1,'r.-');
     hold on;
     semilogy(tttt(ppp),1,'go');
+
+    
+    tt_ = tttt(ppp);
+    plot( tttt,  tempSchedule(tttt, CONST, num_segs), 'b' );
 end
 
 
 
-    function E = initState( vect0 )
+    function MLL = initState( vect0 )
         
-        state.seg_E = FixE(data.segs.scoreRaw(segs_list))*CONST.regionOpti.DE_norm;
+        state.seg_E = data.segs.scoreRaw(segs_list)*CONST.regionOpti.DE_norm;
         state.seg_vect0 = logical(vect0);
         state.seg_mask= cell (1, num_segs  );
         state.mask_out= cell (1, num_segs  );
@@ -497,10 +519,14 @@ end
             state.reg_mask{kk} = false(state.ss);
         end
         
-        E = calcE(state.reg_vect0, state.seg_vect0, state);
+        MLL = calcMLL(state.reg_vect0, state.seg_vect0, state);
+        
+        
+        %debugFig;
+        %'hi'
     end
 
-    function E = perturbState( nn )
+    function MLL = perturbState( nn )
         
         state.seg_vect1 = state.seg_vect0;
         state.reg_vect1 = state.reg_vect0;
@@ -567,8 +593,11 @@ end
 
         end
         
-        E = calcE(state.reg_vect1, state.seg_vect1, state);
-
+        MLL = calcMLL(state.reg_vect1, state.seg_vect1, state);
+        
+        %debugFig;
+        %'hi'
+        
     end
 
     function debugFig
@@ -690,8 +719,8 @@ end
 
     function fixState ( )
         % fixState : fixes the perturbed state as the current state.
-
         % deleting
+        
         ind_del = find(and(state.reg_vect0,~state.reg_vect1));
         for kk = ind_del
             state.reg_label(state.reg_mask{kk}) = 0;
@@ -713,33 +742,29 @@ end
 end
 
 
-function E = calcE(reg_vect,seg_vect,state)
-E = sum(-state.reg_E(reg_vect))+sum((1-2*double(seg_vect)).*state.seg_E);
+
+function MLL = calcMLL(reg_vect,seg_vect,state)
+% calcMLL: calculates the maximum likelihood for a set of vectors and segments
+E_reg = state.reg_E(reg_vect);
+E_seg = state.seg_E;
+sigma = 2*double(seg_vect)-1;
+mll_regs = intMakeMLL( E_reg );
+mll_segs = intMakeMLL( E_seg, sigma );
+
+MLL = sum( mll_regs )+sum( mll_segs );
 end
 
 
 function    T = tempSchedule(t, CONST, num_segs)
 
 if isfield( CONST.regionOpti, 'ADJUST_FLAG' ) && CONST.regionOpti.ADJUST_FLAG
-    dt = CONST.regionOpti.dt*10/num_segs;
+    dt   = CONST.regionOpti.Nt*num_segs/log(CONST.regionOpti.Emax/CONST.regionOpti.Emin);
 else
-    dt = CONST.regionOpti.dt;
+    dt   = CONST.regionOpti.dt;
 end
 
 Emax = CONST.regionOpti.Emax;
 
 T = Emax*exp(-t/dt);
-end
-
-function ee = FixE( ee )
-%global CutOffScoreHi;
-%global CutOffScoreLo;
-
-
-%cutH = 5*CutOffScoreHi;
-%cutL = 5*CutOffScoreLo;
-
-%ee = ee.*(ee<=cutH).*(ee>=cutL) + cutH.*(ee>cutH) + cutL.*(ee<cutL);
-
 end
 

@@ -23,7 +23,7 @@ if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
     FLAGS.S_flag = 0;
 end
 
-S_flag = FLAGS.S_flag
+S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
     FLAGS.t_flag = 0;
@@ -116,7 +116,7 @@ if im_flag == 1
     if S_flag && (~t_flag)
         for ii = 1:num_segs
             r = props(ii).Centroid;
-            tmp_flag = double(data.segs.scoreRaw(ii)>0)-double(data.segs.score(ii));
+            tmp_flag = double(round(data.segs.scoreRaw(ii)))-double(data.segs.score(ii));
             if tmp_flag == 0
                 if ~Sj_flag
                     text( r(1), r(2), num2str( data.segs.scoreRaw(ii), 2), 'Color', [0.5,0.5,0.5] );
@@ -187,7 +187,7 @@ elseif im_flag == 2 % region view
             
             r = data.regs.props(ii).Centroid;
             
-            flagger =  logical(data.regs.score(ii)) == (data.regs.scoreRaw(ii)<0);
+            flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii));
             
             if flagger
                 text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', 'w' );
@@ -217,8 +217,8 @@ elseif im_flag == 4 % phase image
     
 end
 
-if ~all(axis_current == [ 0     1     0     1])
-    axis(axis_current);
-end
+% if ~all(axis_current == [ 0     1     0     1])
+%     axis(axis_current);
+% end
 
 end

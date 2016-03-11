@@ -166,8 +166,8 @@ else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
     end
     
-    parfor(j = 1:num_xy,MM)
-        %    for j = 1:num_xy
+    %parfor(j = 1:num_xy,MM)
+        for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box_array{j} )

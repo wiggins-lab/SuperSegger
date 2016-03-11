@@ -63,7 +63,7 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '60XBthai' : 60X Thailandensis
 
 
-res = 100;
+res = 60;
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
@@ -78,8 +78,8 @@ CONST = loadConstants(res,parallel_flag) ;
 % after you load the constants you can modify them according to your needs
 % for more options, looks at the loadConstants file.
 
-CONST.trackLoci.numSpots = [5]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
-CONST.trackLoci.fluorFlag = true ;    % compute integrated fluorescence (default = true)
+CONST.trackLoci.numSpots = [0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
+CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (default = true)
 CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
 CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
 
