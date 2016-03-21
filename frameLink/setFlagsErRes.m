@@ -3,14 +3,16 @@
 
 % Error flags : 
 % AreaChangeFlag : the area changes by more than dA_LIMIT_ErRes
+% from big to small or other way around
 % localMapGoodFlag : the area change is between DA_MIN and DA_MAX
+% not so good overlap but area change is good.
 % merged_flag : possibly a region merged in this frame 
 %       the area change is not between the values and more than one
-%       reverse regions maps to one region
+%       reverse regions maps to one region - tries to find segment
 % strayflag : region found that does not map to anything before or after
 % fskip_flag : if there are errors before or after on mapped regions
-% s21_flag : region maps from 1 to 2
-% s12_flag : region maps from 2 to 1
+% s21_flag : region maps from 1 to 2 (merging)
+% s12_flag : region maps from 2 to 1 (division)
 % cshift_flag : the cell shifted position, possibly pushed by other cells.
 % split_flag : either region in current frame split in the previous frame or current frame          
 % localMapGoodFlagEnd : DA reverse is in between  2*DA_MIN and 2*DA_MAX
@@ -28,6 +30,7 @@ for mm = list_r;
         ind__ = find(data_r.regs.ol.f{mm}(1,:) > OVERLAP_LIMIT_MIN);
         list_rc = [list_rc, data_r.regs.ol.f{mm}(2,ind__)];
     catch ME
+        keyboard;
         printError( ME )
     end
 end
@@ -47,7 +50,7 @@ num_list_r  = numel(list_r);
 num_list_rc = numel(list_rc);
 
 try
-    AreaChangeFlag = all(data_c.regs.dA.r(list_rc)> dA_LIMIT_ErRes );
+    AreaChangeFlag = all(data_c.regs.dA.r(list_rc) > dA_LIMIT_ErRes );
 catch
     AreaChangeFlag = 0;
 end
@@ -121,7 +124,7 @@ localMapGoodFlagEnd = and(data_c.regs.DA.r(ii) > 2*DA_MIN,...
 
 
 % set to 1 if you want to display the flags
-display =0;
+display =1;
 if display
     disp(['Frame: ', num2str(i), ' seg: ', num2str(ii)] );
     if stray_flag

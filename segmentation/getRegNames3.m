@@ -27,5 +27,6 @@ names = { 'long axis: ', ...
     'round end min: ',...
     'round end max: '};
 
+    names = names';
 
 end

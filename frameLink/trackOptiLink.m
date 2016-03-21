@@ -86,6 +86,7 @@ end
 
 
 function intParFun( i, num_im, dirname, contents, err_flag, CONST )
+% intParFun : function to do the linking in parallel
 if (i ==1) && (1 == num_im) % one frame only
     data_r = [];
     data_c = prepData(loaderInternal([dirname,contents(i).name]));
@@ -96,11 +97,11 @@ elseif i == 1; % first frame, load current and forward
     data_f = prepData(loaderInternal([dirname,contents(i+1).name]));
 elseif (i == num_im) % last frame, loard current and reverse
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
-    data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
+    data_c = prepData(loaderInternal([dirname,contents(i).name]));
     data_f = [];
 else % all other frames, load currrent, reverse and forward
     data_r = prepData(loaderInternal([dirname,contents(i-1).name]));
-    data_c = prepData(loaderInternal([dirname,contents(i  ).name]));
+    data_c = prepData(loaderInternal([dirname,contents(i).name]));
     data_f = prepData(loaderInternal([dirname,contents(i+1).name]));
 end
 
@@ -125,7 +126,7 @@ end
 end
 
 
-function data = prepData( data)
+function data = prepData(data)
 % prepData : extracts region information from data
 % INPUT : initial data file
 % OUTPUT : data file with regs info

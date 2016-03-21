@@ -43,7 +43,6 @@ if ~exist('header','var')
     header = [];
 end
 
-dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
@@ -106,7 +105,7 @@ else
     
     % loop through all the cells.
     for i = 1:num_im
-        data_c = loaderInternal([dirname,contents(i  ).name]);
+        data_c = loaderInternal([dirname,contents(i).name]);
         % record the number of cell neighbors
         if CONST.trackOpti.NEIGHBOR_FLAG && ...
                 ~isfield( data_c.CellA{1}, 'numNeighbors' )
@@ -117,7 +116,7 @@ else
         end
         
         
-        % align locus positionsto old (positive) and new (negative) pole
+        % align locus positions to old (positive) and new (negative) pole
         if isfield(CONST.trackOpti,'pole_flag') && CONST.trackOpti.pole_flag == 1
             data_c = getNeighborPole(data_c) ;
             share_pole = drill( data_c.CellA, '.neighbor_pole');
@@ -139,8 +138,8 @@ else
         dlminOld = nan(1,numel(ID));
         
         
-        lold(    IDlog) = clist_tmp(IDnz,8);
-        lbirth(  IDlog) = clist_tmp(IDnz,7);
+        lold(IDlog) = clist_tmp(IDnz,8);
+        lbirth(IDlog) = clist_tmp(IDnz,7);
         
         regnum = (1:data_c.regs.num_regs)';
         zz = zeros( data_c.regs.num_regs, 1);

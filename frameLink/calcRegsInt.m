@@ -107,8 +107,8 @@ if ~isempty( data1 )
             % map (if overlap > overlap_limit_min)
             [overlap, B] = sort(X,'descend');
             nnn = min([5,data2.regs.num_regs]);           
-            XX{ii}(1,1:nnn) = overlap(1:nnn);
-            XX{ii}(2,1:nnn) = B(1:nnn);
+            XX{ii}(1,1:nnn) = overlap(1:nnn); % overlap area
+            XX{ii}(2,1:nnn) = B(1:nnn); % index of sorted
             
             try
                 B = B(overlap > OVERLAP_LIMIT_MIN );

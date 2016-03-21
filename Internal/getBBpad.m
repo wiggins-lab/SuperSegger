@@ -1,16 +1,15 @@
-function [xx,yy] = getBBpad( bb1,ss,pad );
-% getBB : coordinates from start to end of bounding box with padding
-% along the x and y axis
+function [xx,yy] = getBBpad( bb1,ss,pad )
+% getBB : coordinates of bounding box with extra 'pad' pixels along x & y.
 %
 % INPUT :
 %       bb1: bounding box [x, y, width, height]
 %       ss : size of the phase image
-%       pad :  padding to be added around bounding box
+%       pad :  pixels to be added right,left, above and below of the bounding box
 % OUTPUT :
 %       xx : array from start to end of bounding box along x
 %       yy : array from start to end of bounding box along y
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Labs
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 

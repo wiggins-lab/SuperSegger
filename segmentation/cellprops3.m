@@ -31,7 +31,7 @@ function info = cellprops3( mask, props )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-debug = true;
+debug = false;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

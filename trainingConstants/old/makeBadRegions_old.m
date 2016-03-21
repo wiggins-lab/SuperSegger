@@ -1,6 +1,5 @@
-function makeBadRegions( dirname)
+function makeBadRegions( dirname,E, CONST)
 %MAKEBADREGIONS makes bad regions to train the software on region shape 
-
 
 dirname = fixDir(dirname);
 contents=dir([dirname,'*_seg.mat']);
@@ -14,34 +13,33 @@ for i = 1 : num_im % go through all the images
 
     % if there are no regions it makes regions from the segments
     %if ~isfield( data, 'regs' ); - i will just remake them for now!
-    data = newRegionFeatures( data, []);
+        data = intMakeRegs( data, [], CONST ,E);
+    %end
     save(dataname,'-STRUCT','data');
-    for j = 1 : 2
-    data_ = intModRegions( data );        
-    datamodname=[dirname,contents(i).name(1:end-4),'_',sprintf('%02d',j),'_mod.mat'];
+    
+    data_ = intModRegions( data, E, CONST );        
+    datamodname=[dirname,contents(i).name(1:end-4),'_',...
+            sprintf('%02d',j),'_mod.mat'];
     save(datamodname,'-STRUCT','data_');
-    end
 
 end
 close(h);
 end
 
 
-function [data] = intModRegions ( data )
+function [data] = intModRegions ( data, E, CONST )
 % intModRegions ; modifies regions to create bad regions
 
 % fraction of segments to be modified to create bad regions 
-FRACTION_SEG_MOD = 0.3;
+FRACTION_SEG_MOD = 0.8;
 num_segs = numel(data.segs.score);
 num_mod  = ceil( num_segs*FRACTION_SEG_MOD );
 mod_list = unique(ceil(rand(1,num_mod)*num_segs));
 mod_map = logical(data.mask_cell)*0;
-mod_map2 = logical(data.mask_cell)*0;
 
-
-% find the indices of regions that have bad score
+% find the indices of bad regs
 try
-    ind_bad_regs = find(data.regs.score == 0 ); % find bad scores
+    ind_bad_regs = find( data.regs.score == 0 ); % find bad scores
     ind_bad_regs = reshape(ind_bad_regs, 1, numel(ind_bad_regs));
     mask_bad_regs = false(size(data.phase));
 catch ME
@@ -55,23 +53,27 @@ end
 
 if ~ isempty( mod_list )
     for ii = mod_list % segments to be modified
-        % xx and yy location of segment in image
         [xx,yy] = getBB( data.segs.props(ii).BoundingBox );
-        
         if ~isnan(data.segs.score(ii))
             if data.segs.score(ii) % score of the segment is 1
                 data.segs.score(ii) = 0;                
-                data.segs.segs_good(yy,xx) = 0; ...              
-                data.segs.segs_bad(yy,xx) = 1;
+                data.segs.segs_good(yy,xx) ...
+                    = double(~~(data.segs.segs_good(yy,xx)...
+                    - double(data.segs.segs_label(yy,xx)==ii)));               
+                data.segs.segs_bad(yy,xx) = ...
+                    double(~~(data.segs.segs_bad(yy,xx)...
+                    +double(data.segs.segs_label(yy,xx)==ii)));
             else % score of the segment is 0
                 data.segs.score(ii) = 1;              
-                data.segs.segs_good(yy,xx) = 1;              
-                data.segs.segs_bad(yy,xx) = 0;
+                data.segs.segs_good(yy,xx) = ...
+                    double(~~(data.segs.segs_good(yy,xx)+...
+                    double(data.segs.segs_label(yy,xx)==ii)));                
+                data.segs.segs_bad(yy,xx) = ...
+                    double(~~(data.segs.segs_bad(yy,xx)-...
+                    double(data.segs.segs_label(yy,xx)==ii)));
             end
             % image of modified segments
-            mod_map (yy,xx) = (data.segs.segs_label(yy,xx)==ii);
-            %imshow(ag(mod_map));
-     
+            mod_map(yy,xx) = (data.segs.segs_label(yy,xx)==ii);
         end
     end
     
@@ -83,11 +85,11 @@ sqr3 = strel( 'square', 3 );
 mod_map = imdilate( mod_map, sqr3 );
 
 % make new regions using the new cell mask from modified segments
-data  = newRegionFeatures( data, mask_bad_regs );
-mod_regs = unique( data.regs.regs_label( logical(mod_map) ) );
-mod_regs = mod_regs(logical(mod_regs));
-% sets scores of all regions which had modified segments to 0
-data.regs.score(mod_regs) = 0;
+% and set their score to 0
+data  = intMakeRegs( data, mask_bad_regs, CONST, E );
+mod_segs = unique( data.regs.regs_label( logical(mod_map) ) );
+mod_segs = mod_segs(logical(mod_segs));
+data.regs.score(mod_segs) = 0;
 
 end
 

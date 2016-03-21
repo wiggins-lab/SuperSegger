@@ -191,7 +191,9 @@ CONST.align.ALIGN_FLAG = true;
 % By changing this field you can change the segmentation back-end of
 % BatchSuperSeggerOpti.
 
+CONST.seg.segmentScoreFun = @segmentScoreFun
 CONST.seg.segFun = @ssoSegFun;
+
 if ResFlag == R60XPaM2
     CONST.seg.segFun = @ssoSegFunPa;
 end
@@ -403,7 +405,8 @@ CONST.regionOpti.ADJUST_FLAG   = true;
 CONST.regionOpti.MAX_WIDTH  = CONST.superSeggerOpti.MAX_WIDTH;
 
 % For regionOpti, this is  minimum region size, below which neighbor 
-% segments are switched on during optimization.
+% segments are switched on during optimization - should be named
+% MIN_LENGTH.
 if ResFlag == R60X
     CONST.regionOpti.MAX_LENGTH  = 15;
 elseif ResFlag == R60XEcHR

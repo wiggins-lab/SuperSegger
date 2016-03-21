@@ -201,7 +201,7 @@ end
 
 
 %% Make Cell
-% Computes cell characteristics in make cells
+% Computes cell characteristics and puts them in *err files under CellA{}
 stamp_name = [dirname_seg,'.trackOptiMakeCell.mat'];
 if ~exist( stamp_name, 'file' );
     trackOptiMakeCell(dirname_seg, CONST, header);
@@ -236,7 +236,8 @@ if ~exist( stamp_name, 'file' );
     
     try
         save( [dirname,'clist.mat'],'-STRUCT','clist');
-    catch
+    catch ME
+        printError(ME);
         disp([header,'trackOpti: Cell list error being saved.']);
     end
     time_stamp = clock;

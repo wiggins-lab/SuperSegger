@@ -256,6 +256,9 @@ for i = 1:num_im;
                     end
                 end
             else
+                if (data_c.regs.map.r{ii}(1) == 0)
+                    data_c.regs.map.r{ii}(1) = [];
+                end
                 celld             = toMakeCell(celld, data_r.CellA{data_c.regs.map.r{ii}(1)}.pole.e1,data_c.regs.props(ii));
                 celld.pole        = data_r.CellA{data_c.regs.map.r{ii}(1)}.pole;
                 celld.pole.e1     = celld.coord.e1;
@@ -313,6 +316,6 @@ end
 
 end
 
-function data = loaderInternal(filename);
+function data = loaderInternal(filename)
 data = load( filename );
 end

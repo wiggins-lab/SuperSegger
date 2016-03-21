@@ -33,7 +33,6 @@ segs_c_ind = segs_c_ind(logical(segs_c_ind));
 overlap = 0*regs_r;
 
 se = strel('line',11,90);
-
 str = strel('square', 3 );
 
 for jj_r = list_r

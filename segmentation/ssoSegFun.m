@@ -1,4 +1,4 @@
-function [ data, err_flag ] = ssoSegFun( phase, CONST, header, dataname, crop_box )
+function [data, err_flag] = ssoSegFun( phase, CONST, header, dataname, crop_box )
 % ssoSegFun : starts segmentation of phase image and sets error flags
 % It creates the first set of good, bad and permanent segments and if
 % CONST.seg.OPTI_FLAG is set to true it optimizes the region sizes.
@@ -34,7 +34,7 @@ end
 
 % optimize the regions 
 if CONST.seg.OPTI_FLAG
-    data = regionOpti( data, 1, CONST,header);
+    data = perRegionOpti( data, 1, CONST,header);
     drawnow;
 end
 

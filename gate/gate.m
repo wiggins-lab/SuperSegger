@@ -1,4 +1,3 @@
-
 function [clist0] = gate( clist )
 % gate : used to gate the list of cells.
 % This is done according to an already made gate field in clist
@@ -20,7 +19,7 @@ ss = size(clist.data);
 
 inflag = true(ss(1),1);
 
-if isfield( clist, 'gate' )
+if isfield( clist, 'gate' ) && ~isempty ('gate.clist')
     disp ('gating clist');
     for ii = 1:numel(clist.gate)
         

@@ -71,6 +71,7 @@ function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag,
 % This file is part of SuperSeggerOpti.
 
 % Load the constants from the package settings file
+
 MIN_BG_AREA     = CONST.superSeggerOpti.MIN_BG_AREA;
 MAGIC_RADIUS    = CONST.superSeggerOpti.MAGIC_RADIUS;
 MAGIC_THRESHOLD = CONST.superSeggerOpti.MAGIC_THRESHOLD;
@@ -80,6 +81,8 @@ MEAN_THRESHOLD  = CONST.superSeggerOpti.MEAN_THRESHOLD;
 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
+
+
 
 if ~exist('header')
     header = [];
@@ -216,7 +219,7 @@ end
 
 
 % Determine the "good" and "bad" segments
-[data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A);
+[data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A,CONST);
 data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
 data.phase = phase_;
 
@@ -234,7 +237,7 @@ end
 end
 
 
-function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A)
+function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A,CONST)
 % defineGoodSegs is a sub function that uses intensity thresholds to
 % segregate the set of segments produced by the watershed algorithm
 % into "good" segments (segs_good) which lie along a real cellular
@@ -243,6 +246,8 @@ function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A
 % note that we assume (safely) that the watershed always over- rather
 % than under-segment the image. That is, the set of all real segments is
 % contained with the set of all segments produced by the watershed algorithm.
+
+
 
 sim = size( phase );
 
@@ -460,8 +465,8 @@ for ii = 1:numSegs
     
     % Calculate the score to determine if the seg will be included.
     % if score is less than 0 set the segment off
-    scoreRaw(ii) = segmentScoreFun( seg_info(ii,:), A );
-    score(ii) = double( 0 < scoreRaw (ii));
+    [scoreRaw(ii)] = CONST.seg.segmentScoreFun( seg_info(ii,:), A );
+     score(ii) = double( 0 < scoreRaw (ii));
     
     % update the good and bad segs images.
     

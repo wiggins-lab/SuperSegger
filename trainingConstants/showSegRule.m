@@ -14,13 +14,13 @@ function showSegRule( data, FLAGS )
 %           too)
 
 if ~exist('FLAGS','var') || ~isfield( FLAGS, 'im_flag' )
-    FLAGS.im_flag=1;
+    FLAGS.im_flag=2;
 end
 
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 0;
+    FLAGS.S_flag = 1;
 end
 
 S_flag = FLAGS.S_flag;
@@ -43,8 +43,9 @@ end
 
 Sj_flag = FLAGS.Sj_flag;
 
-
-figure(1)
+% figNum = 4;
+% figure(figNum);
+figure;
 axis_current = axis;
 clf;
 
@@ -68,10 +69,10 @@ if im_flag == 1
     end
     
     segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
-    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,data.segs.scoreRaw>0))));
-    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~(data.segs.scoreRaw>0)))));
-    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,data.segs.scoreRaw>0))));
-    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~(data.segs.scoreRaw>0)))));
+    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
+    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
+    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
+    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
     
     segsInlcudeag  = autogain(segs_Include);
     segsGoodag  = autogain(segs_good);
@@ -109,7 +110,7 @@ if im_flag == 1
     %     hold on;
     %     semilogy( x_bad,y_bad,'.-b');
     
-    figure(1);
+    figure(figNum);
     props = regionprops( data.segs.segs_label, 'Centroid'  );
     num_segs = numel(props);
     
@@ -139,63 +140,46 @@ if im_flag == 1
         end
     end
     
-    if ~isempty( data.segs.scoreRaw(data.segs.score>0) )
-        disp( ['Min on: ',...
-            num2str(min(data.segs.scoreRaw(data.segs.score>0)))] );
-    end
-    if ~isempty( data.segs.scoreRaw(data.segs.score==0) )
-        disp( ['Max off: ',...
-            num2str(max(data.segs.scoreRaw(data.segs.score==0)))] );
-    end
     
 elseif im_flag == 2 % region view
     
     backer = 0*ag(data.phase);
-    regs_good = zeros(size(backer));
-    regs_bad = zeros(size(backer));
-    
     num_regs = data.regs.num_regs;
     
-    regs_good = double(ag(ismember( data.regs.regs_label, find(and(data.regs.score,data.regs.scoreRaw<0))))) + ...
-        0.5*double(ag(ismember( data.regs.regs_label, find(and(data.regs.score,~(data.regs.scoreRaw<0))))));
+    if isfield(data.regs,'score')
+    regs_good_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(data.regs.score & round(data.regs.scoreRaw)))));
+    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~round(data.regs.scoreRaw)))));
     
-    regs_bad = double(ag(ismember( data.regs.regs_label, find(and(~data.regs.score,data.regs.scoreRaw>0))))) + ...
-        0.5*double(ag(ismember( data.regs.regs_label, find(and(~data.regs.score,~(data.regs.scoreRaw>0))))));
+    regs_bad_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw)))));
+    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw)))));
     
-    imshow( cat(3, 0.8*backer + 1*uint8(regs_good), ...
+    imshow( cat(3, 0.8*backer + 1*uint8(regs_good_agree+regs_good_disagree), ...
         0.8*backer, ...
-        0.8*backer + 1*uint8(regs_bad)) , 'InitialMagnification', 'fit');
-    
-    [y_good,x_good] = hist(data.regs.scoreRaw(data.regs.score>0));
-    [y_bad,x_bad] = hist(data.regs.scoreRaw(~data.regs.score));
-    
-    %     figure(2);
-    %     clf;
-    %     semilogy( x_good,y_good,'o-r');
-    %     hold on;
-    %     semilogy( x_bad,y_bad,'o-b');
-    
-    figure(1);
-    
-    if ~isempty( data.regs.scoreRaw(data.regs.score>0) )
-        disp( ['Min on: ',...
-            num2str(min(data.regs.scoreRaw(data.regs.score>0)))] );
+        0.8*backer + 1*uint8(regs_bad_agree+regs_bad_disagree)) , 'InitialMagnification', 'fit');
+    else
+       % imshow(label2rgb(data.regs.regs_label))
+         
+        imshow( cat(3, 0.8*backer + 1*ag(data.mask_cell), ...
+        0.8*backer, ...
+        0.8*backer) , 'InitialMagnification', 'fit');
+  
+        
     end
     
+    
     if S_flag && (~t_flag)
-        for ii = 1:num_regs
-            
+        for ii = 1:num_regs            
             r = data.regs.props(ii).Centroid;
-            
-            flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii));
-            
+            flagger = 1;
+            if isfield (data.regs,'score')
+            flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii)); 
+            end
             if flagger
                 text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', 'w' );
             elseif ~Sj_flag
                 text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', [0.5,0.5,0.5] );
             end
-        end
-        
+        end        
     end
     
     if t_flag
@@ -214,7 +198,23 @@ elseif im_flag == 4 % phase image
     
     backer = autogain(data.phase);
     imshow( cat(3,backer,backer,backer), 'InitialMagnification', 'fit' );
+elseif im_flag == 5
     
+cell_mask = data.mask_cell;
+segs_3n = data.segs.segs_3n ;
+segs_good = data.segs.segs_good;   
+segs_bad = data.segs.segs_bad  ;
+
+back = double(0.7*ag( data.phase ));
+outline = imdilate( cell_mask, strel( 'square',3) );
+outline = ag(outline-cell_mask);
+  
+        clf
+        imshow(uint8(cat(3,back + 0.1*double(outline)+ double(ag(segs_good+segs_3n)),...
+            back ,...
+            back + 0.2*double(ag(segs_bad))+ 0.2*double(ag(~cell_mask)-outline))));
+
+    drawnow;
 end
 
 % if ~all(axis_current == [ 0     1     0     1])

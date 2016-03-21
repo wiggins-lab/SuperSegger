@@ -18,14 +18,22 @@ X = [];
 
 for i = 1 : numel(contents)
     data = load([dirname,contents(i).name]);
-    if ~isnan(data.segs.score)
-        if strcmp (xChoice,'segs')
-            Y = [Y;data.segs.score];
-            X = [X;data.segs.info];
-        else
-            Y = [Y;data.regs.score];
-            X = [X;data.regs.info];
-        end
+    if strcmp (xChoice,'segs')
+        Y = [Y;data.segs.score];
+        X = [X;data.segs.info];
+    else
+        Y = [Y;data.regs.score];
+        X = [X;data.regs.info];
     end
+    
 end
+
+[indices] = find(~isnan(Y));
+X = X(indices,:);
+Y = Y(indices);
+
+[indices] = find(isfinite(sum(X,2)));
+X = X(indices,:);
+Y = Y(indices);
+
 end

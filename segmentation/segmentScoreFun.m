@@ -1,4 +1,4 @@
-function score = segmentScoreFun(info, A )
+function [scoreRaw] = segmentScoreFun(info, A )
 % segmentScoreFun calls a function to calculates the score of the segment. 
 % to determine if the segment will be included.
 %
@@ -14,7 +14,7 @@ function score = segmentScoreFun(info, A )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-score = segmentScoreFunMatrix(info,A);
-
+scoreRaw = segmentScoreFunMatrix(info,A);
+%score =  double( 0 < scoreRaw);
 
 end

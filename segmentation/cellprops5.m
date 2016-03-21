@@ -1,4 +1,3 @@
-
 function info = cellprops5( mask, props )
 % cellprops5 : Calculates the shape properties of a region or 'cell'.
 % This are used later to calculate the score of a region.

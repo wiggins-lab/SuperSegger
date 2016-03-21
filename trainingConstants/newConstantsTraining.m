@@ -81,76 +81,44 @@ for i = 1 : numel(segData)
     save([segDirMod,segData(i).name],'-STRUCT','data');
 end
 
-% 5) run regularized logistic regression on segments
-disp ('starting training on segments...');
-[Xsegs,Ysegs] = getInfoScores (segDirMod,'segs');
-A = lassoLogisticRegression (Xsegs,Ysegs,parallel);
+
+% 5) train the neural network on the segments
+disp ('training segments with neural network');
+[Xsegs,Ysegs] =  getInfoScores (segDirMod,'segs');
+[A] = neuralNetTrain (Xsegs,Ysegs);
 
 % update scores and save data files again
 disp ('updating segments'' scores with new coefficients...');
-updateScores(segDirMod,'segs',A);
-
-% load('/Users/Stella/Documents/MATLAB/training_constants/100X/lasso100x.mat')% B1
-% CONST.superSeggerOpti.A  = B1;
-% phase_im = imread('raw_im/tsyfp-p-t029c1.tif');
-% ssoSegFunLasso( phase_im, CONST, 'test', 'hi', [] )
-
-% 4) update the regions with the newly made segments
+updateScores(segDirMod,'segs', A, scoreNeuralNet);
 
 
-% 5) create regions if they don't exist,
-% create bad region examples using current E
-% chops all cells up and places bad regions in _mod_seg files
-
-% fixes regions if they were bad..
-% for i = 1 : numel(segData)
-%     data = load([segDirMod,filesep,segData(i).name]);
-%     % calculate scoreRaw and save regions
-%     data = intMakeRegs( data, [], CONST, CONST.regionScoreFun.E )
-%     save([segDirMod,segData(i).name],'-STRUCT','data');
-% end
-
-makeBadRegions( segDirMod,Eold, CONST )
-segData = dir([segDirMod,filesep,'*seg*.mat']);
-FLAGS.im_flag = 2;
-
-for i = 1 : numel(segData)
-    data = load([segDirMod,filesep,segData(i).name]);
-    segData(i).name
-    
-    % update scores..
-    [~,data.regs.scoreRaw] = calculateLassoScores (data.regs.info,E);
-
-    [data,touch_list] = makeTrainingData (data,FLAGS)
-    save([segDirMod,segData(i).name],'-STRUCT','data');
-end
+% 4) create regions, with the newly made segments, set their scores all to
+% 1 and create bad regions.
+makeBadRegions( segDirMod )
 
 
-% 6) run regularized logistic regression on regions
-disp ('starting training on regions...');
+% 6) run neural network training on regions
+disp ('training regions with neural network');
 [Xregs,Yregs] =  getInfoScores (segDirMod,'regs');
-E = lassoLogisticRegression (Xregs,Yregs,parallel);
+[netRegions] = neuralNetTrain (Xregs,Yregs);
+E = netRegions;
 
+% 7) calculate new scores for regions
+disp ('updating regions'' scores with new coefficients...');
+updateScores(segDirMod,'regs', E, scoreNeuralNet);
 
-
-% calculate new scores for regions?
-
-
-
-% save constants
+% save A,E and whole constants file
 CONST.superSeggerOpti.A = A;
+CONST.seg.segmentScoreFun = @calculateLassoScores;
+
 CONST.regionScoreFun.E = E;
-CONST.seg.segFun = @ssoSegFunLasso
-CONST.regionScoreFun.fun = @calculateLassoScores
+CONST.regionScoreFun.fun = @scoreNeuralNet;
+CONST.regionOpti.CutOffScoreHi = 10;
+CONST.regionOpti.CutOffScoreLo = -10;
 
 save([constname,'_FULLCONST'],'-STRUCT','CONST');
-
-% save A,E, and whole constants file
 save(constname,'A','E');
-
 end
-
-
 
 function saveSegData (dataname)
  save(dataname,'-STRUCT','data');

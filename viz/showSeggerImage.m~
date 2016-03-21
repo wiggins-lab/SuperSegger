@@ -361,8 +361,8 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     reg_color = uint8( 255*cat( 3, ...
         double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)),...
         0.30*(map_no_err),...
-        0.30*(3*(map_stat0_2+map_stat0_2O)+ ...
-        1.5*(map_stat0_1+map_stat0_1O)+0.5*(map_stat0_0+map_stat0_0O))));
+        0.30*(3*(map_stat0_2+map_stat0_1O>0)+ ...
+        1.5*(map_stat0_1+map_stat0_2O>0)+0.5*(map_stat0_0))));
     
     im = reg_color + im;
 end
@@ -671,7 +671,7 @@ persistent sqrStrel;
 if isempty( sqrStrel );
     sqrStrel = strel('square',3);
 end
-outline = 2*double(imdilate( map, sqrStrel ))-double(map);
+outline = double(imdilate( map, sqrStrel ))-double(map);
 end
 
 

@@ -33,7 +33,7 @@ function superSeggerViewer(dirname,file_filter)
 %         lyse_flag : outlines cell that lysed
 %         m_flag : shows mask (default 0)
 %         c_flag : ? reserts to default view
-%         v_flag : shows cells outlines (default 1)
+%         v_flag : toogles between cell and regions / using cell numbers versus region numbers
 %         f_flag : shows flurescence image
 %         s_flag : shows the foci and their score
 %         T_flag : ? something related to regions (default 0)
@@ -196,11 +196,15 @@ while runFlag
     disp(['con  : Show Consensus                         cK : Show consensus kymograph  ']);
     disp(['K  : Mosaic Kymograph of all cells            kym# : Show Kymograph for Cell #']);
     disp(['twr# : Tower for Cell #                       Z  : Towers of all cells        ']);                 
+    disp(['Movie : Movie of this xy position             Movie#  : Movie of # cell     ']);                 
+  
     disp(' ');
     disp('                        k : Enter debugging mode                      ');
      disp('------------------------------------------------------------------------------------------');
     disp(' ');
-       
+        if FLAGS.e_flag
+            intDispError( data_c, FLAGS );
+        end
     if ~isempty( touch_list );
         disp('Warning! Frames touched. Run re-link.');
         touch_list
@@ -228,10 +232,9 @@ while runFlag
             CONST.view.LogView = ~CONST.view.LogView;
         end
     elseif (c(1) == 'Q' || c(1) == 'q' ) % Quit Command
-        try
+        if exist('clist','var') && ~isempty(clist)
             save( [dirname0,contents_xy(dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
-        catch ME
-            printError(ME);
+        else
             disp('Error saving clist file.');
         end
         runFlag = 0  ;
@@ -537,8 +540,9 @@ while runFlag
         
         for nn = 1:num_im
             
-            [data_r, data_c, data_f] = intLoadData( dirname, ...
-                contents, nn, num_im, nameInfo, clist, dirnum);
+            
+            [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
+                contents, nn, num_im, clist);
             
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
             
@@ -821,7 +825,7 @@ ixy = str2num(str_xy(ismember(str_xy, '0123456789' )));
 end
 
 
-function [data_r, data_c, data_f] = intLoadData( dirname, contents, nn, num_im, clist)
+function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist)
 % intLoadData : loads current, reverse and forward data.
 % INPUT :
 %       dirname : seg directory

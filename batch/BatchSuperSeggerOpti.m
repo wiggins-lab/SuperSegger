@@ -27,9 +27,9 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)
 %            : files regardless of whether any seg files exist. If this
 %            : flag is false, use existing segments, if they exist and
 %            : new segs if they don't yet exist.
-% res      : is a string that is passed to loadConstants(Mine).m to load
-%          : the right constants for processing.
-%
+% res       : is a string that is passed to loadConstants(Mine).m to load
+%           : the right constants for processing.
+% SEGMENT_FLAG : to segment cells
 %
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
@@ -317,7 +317,7 @@ end
 
 
 % Link the cells
-trackOpti(dirname_xy, skip, CONST, clean_flag, header );
+%trackOpti(dirname_xy, skip, CONST, clean_flag, header );
 
 end
 

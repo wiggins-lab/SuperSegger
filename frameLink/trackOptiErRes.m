@@ -131,6 +131,8 @@ while i <= num_im % loop through number of frames
         list_r     = data_c.regs.map.r{ii};
         list_f     = data_c.regs.map.f{ii};
         
+ 
+        
         if ~isempty(list_r) && all(data_r.regs.stat0(list_r)==3)
             stray_flag = 1;
             data_c.regs.error.r(ii) = 1;
@@ -143,9 +145,11 @@ while i <= num_im % loop through number of frames
                 || ismember(ii,list_c_del)
             % update if no error, region in deleted list or changed last
             if (i>1) && (numel(list_r) > 0)
+                    disp (['updating cell from id ', num2str(data_r.regs.ID(list_r))]);
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
             else % first frame or numel(list_r) == 0
+               % disp (['updating cell from id ', num2str(data_r.regs.ID(list_r))]);
                 [data_c, data_r, cell_count] = update_cell( ...
                     data_c, ii, data_r, list_r, i, 0, [], cell_count);
             end
@@ -507,7 +511,9 @@ end
 list_touch = sort(unique(list_touch));
 
 if ~isempty( list_touch)
+    disp('Linking again the frames that had segments modified')
     trackOptiLink(dirname,[],sort(list_touch),1,CONST,header);
+    %trackOptiLinkNew(dirname,[],sort(list_touch),'*err.mat',CONST,header);
 end
 end
 

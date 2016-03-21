@@ -20,11 +20,8 @@ end
 ss = size( data.regs.regs_label );
 num_regs = data.regs.num_regs;
 [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 6);
-
 tmp_label = data.regs.regs_label(yy,xx);
-
 mask = logical(imdilate( tmp_label==ii, sdisk));
-
 ind = unique( tmp_label(mask ));
 ind = ind(ind~=ii);
 ind = ind(logical(ind));

@@ -12,20 +12,9 @@ function trackOptiStripSmall(dirname,CONST)
 
 
 MIN_AREA = CONST.trackOpti.MIN_AREA;
-dirseperator = filesep;
-
-if(nargin<1 || isempty(dirname))
-    dirname = uigetdir();
-    dirname = [dirname,dirseperator];
-else
-    if dirname(length(dirname))~=dirseperator
-        dirname=[dirname,dirseperator];
-    end
-end
-
+dirname = fixDir(dirname);
 contents=dir([dirname '*_seg.mat']);
 num_im = length(contents);
-clist = [];
 
 if CONST.show_status
     h = waitbar( 0, 'Strip small cells.');
@@ -40,17 +29,15 @@ for i = 1:num_im;
         waitbar((num_im-i)/num_im,h,['Strip small cells--Frame: ',num2str(i),'/',num2str(num_im)]);
     end
 
-    data_c = loaderInternal([dirname,contents(i  ).name]);  % load data
-        
+    data_c = loaderInternal([dirname,contents(i).name]);  % load data
+     
     %% strip off extra stuff
     %mask__ = bwmorph(bwmorph( masktmp, 'erode'), 'dilate' );
     
     %% remove small area regions
     regs_label = bwlabel( data_c.mask_cell );
-    props = regionprops( regs_label, 'Area' );
-    
-    keepers = find([props(:).Area]>MIN_AREA);
-    
+    props = regionprops( regs_label, 'Area' );    
+    keepers = find([props(:).Area]>MIN_AREA);   
     data_c.mask_cell= ismember( regs_label, keepers );
     
     %% fill holes
@@ -88,6 +75,6 @@ end
 end
 
 
-function data = loaderInternal( filename );
+function data = loaderInternal( filename )
 data = load( filename );
 end

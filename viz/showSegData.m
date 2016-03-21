@@ -15,7 +15,7 @@ segs_good = data.segs.segs_good;
 segs_bad = data.segs.segs_bad;
 mask_bg = data.mask_bg;
 
-figure(1)
+figure(2)
 if ~exist('im_flag')
     im_flag = 1;
 end
@@ -34,6 +34,12 @@ elseif im_flag == 2;
     
 elseif im_flag == 3;
     imshow( cat(3,backer,backer,backer) );
+
+elseif im_flag == 4;
+        imshow( cat(3,...
+        backer+0.3*autogain(segs_good+segs_3n), ...
+        backer, ...
+        backer+0.3*autogain(segs_bad )),[], 'InitialMagnification', 'fit');
     
 else
     backer = autogain(data.phase);

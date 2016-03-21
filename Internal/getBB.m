@@ -1,4 +1,4 @@
-function [xx,yy] = getBB( bb1 );
+function [xx,yy] = getBB( bb1 )
 % getBB : coordinates from start to end of bounding box
 % along the x and y axis
 %
