@@ -201,9 +201,6 @@ end
 % optimize regions based on cell shape (slower)
 CONST.seg.OPTI_FLAG = true;
 
-if ResFlag == R60XPaM
-    CONST.seg.OPTI_FLAG                = true;
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -395,6 +392,11 @@ CONST.regionOpti.Emax          = 1e2;
 CONST.regionOpti.fignum        = 1;
 CONST.regionOpti.dt            = 50;
 CONST.regionOpti.Nt            = 500;
+
+% per region opti constants 
+CONST.regionOpti.minGoodRegScore = 0; % regions with scores below this are optimized
+CONST.regionOpti.neighMaxScore = 5; % neighbors with scores below this are used to optimize the small regions
+
 
 % automatically length sim anneal period linearly with the number of
 % segments

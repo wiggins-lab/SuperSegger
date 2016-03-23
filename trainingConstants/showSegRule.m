@@ -1,39 +1,43 @@
-function showSegRule( data, FLAGS )
-% showSegRule : shows the segmentations rules for regions and segments
+function showSegRule( data, FLAGS, figNum )
+% showSegRule : shows the segmentation for regions and segments
 %
 % INPUT :
-%       data :
+%       data : data file with segmentation information.
 %       FLAGS :
 %           .im_flag = 1 : segment view ,
 %                      2 : region view,
 %                      3 : false color,
 %                      4 : phase image
-%           .S_flag = segments' scores
-%           .t_flag = segments' labels
+%           .S_flag = segments/regions' scores
+%           .t_flag = segments/regions' labels
 %           .Sj_flag = shows disagreeing segments scores (S_flag must be on
 %           too)
+%
+% Copyright (C) 2016 Wiggins Lab
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
-if ~exist('FLAGS','var') || ~isfield( FLAGS, 'im_flag' )
+if (~exist('FLAGS','var') || isempty(FLAGS)) || ~isfield( FLAGS, 'im_flag' )
     FLAGS.im_flag=2;
 end
 
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 1;
+    FLAGS.S_flag = 0;
 end
 
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 0;
+    FLAGS.t_flag = 1;
 end
 
 t_flag = FLAGS.t_flag;
 
 
 if ~isfield( FLAGS, 'phase' ) % labels for segments
-    FLAGS.phase = 1 ;
+    FLAGS.phase = 0 ;
 end
 
 % shows scores for segments/regions that computer/user disagrees
@@ -43,9 +47,11 @@ end
 
 Sj_flag = FLAGS.Sj_flag;
 
-% figNum = 4;
-% figure(figNum);
-figure;
+if ~exist('figNum','var')
+    figNum = 4;
+end
+
+figure(figNum);
 axis_current = axis;
 clf;
 
@@ -57,7 +63,7 @@ segs_Include   = segs_good;
 num_segs = numel( data.segs.score(:) );
 
 sz = size(segs_good);
-backer = 0*autogain(data.segs.phaseMagic);
+backer = 0*ag(data.segs.phaseMagic);
 
 if im_flag == 1
     
@@ -74,42 +80,33 @@ if im_flag == 1
     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
     
-    segsInlcudeag  = autogain(segs_Include);
-    segsGoodag  = autogain(segs_good);
-    gegsGoodFailag = autogain(segs_good_fail);
-    segs3nag = autogain(data.segs.segs_3n  );
-    segsBadag  = autogain(segs_bad );
-    segsBadFailag = autogain(segs_bad_fail);
-    maskBgag = autogain(~data.mask_bg);
+    segsInlcudeag  = ag(segs_Include);
+    segsGoodag  = ag(segs_good);
+    segsGoodFailag = ag(segs_good_fail);
+    segs3nag = ag(data.segs.segs_3n  );
+    segsBadag  = ag(segs_bad );
+    segsBadFailag = ag(segs_bad_fail);
+    maskBgag = ag(~data.mask_bg);
     
     if FLAGS.phase
-        phaseBackag = uint8(autogain(data.segs.phaseMagic));
-        imshow( uint8(cat(3,...
-            phaseBackag + 0.3*segsGoodag + 0.9*gegsGoodFailag, ...
-            phaseBackag + 0.25*uint8(segs3nag) + 0.4*segs3nag + 0.5*(gegsGoodFailag+segsBadFailag)+0.6*segsInlcudeag, ...
-            phaseBackag + 0.3*segsBadag + 0.9*segsBadFailag)), ...
-            'InitialMagnification', 'fit','Border','tight');
+        phaseBackag = uint8(ag(data.segs.phaseMagic));
     else
-        imshow( uint8(cat(3,...
-            0.5*segsGoodag + 1*gegsGoodFailag, ...
-            0.25*uint8(maskBgag -segs3nag) + 0.4*segs3nag + 0.5*(gegsGoodFailag+segsBadFailag)+0.6*segsInlcudeag, ...
-            0.5*segsBadag + 1*segsBadFailag)), ...
-            'InitialMagnification', 'fit','Border','tight');
-        
+        phaseBackag = uint8(ag(data.mask_cell));
     end
+    
+    imshow( uint8(cat(3,...
+            0.1*phaseBackag + 0.3*segs3nag +0.6*(segsGoodag + segsGoodFailag), ...
+            0.15*phaseBackag + 0.1*segs3nag + 0.4*(segsGoodFailag+segsBadFailag), ...
+            0.2*phaseBackag + 0.4*(segsBadag + segsBadFailag))), ...
+            'InitialMagnification', 'fit','Border','tight');
+    
     
     flagger = and( data.segs.Include, ~isnan(data.segs.score) );
     scoreRawTmp = data.segs.scoreRaw(flagger);
     scoreTmp    = data.segs.score(flagger);
     [y_good,x_good] = hist(scoreRawTmp(scoreTmp>0),[-40:2:40]);
     [y_bad,x_bad] = hist(scoreRawTmp(~scoreTmp),[-40:2:40]);
-    %
-    %     figure(2);
-    %     clf;
-    %     semilogy( x_good,y_good,'.-r');
-    %     hold on;
-    %     semilogy( x_bad,y_bad,'.-b');
-    
+
     figure(figNum);
     props = regionprops( data.segs.segs_label, 'Centroid'  );
     num_segs = numel(props);
@@ -196,7 +193,7 @@ elseif im_flag == 3 % phase image in jet color
     
 elseif im_flag == 4 % phase image
     
-    backer = autogain(data.phase);
+    backer = ag(data.phase);
     imshow( cat(3,backer,backer,backer), 'InitialMagnification', 'fit' );
 elseif im_flag == 5
     

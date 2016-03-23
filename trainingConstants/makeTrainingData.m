@@ -2,33 +2,36 @@ function [data,touch_list] = makeTrainingData (data,FLAGS)
 % makeTrainingData : user can click on segments or regions to change score
 % from 0 to 1 or vice versa. It updates scores, cell mask, good and bad
 % segs.
-
+%
+% INPUT : 
+%       data : data file with segments to be modified
+%       FLAGS : im_flag = 1 for segments, 2 for regions.
+% INPUT : 
+%       data : data file with modified segments
+%       touch_list : list with modified segments/regions
+%
+% Copyright (C) 2016 Wiggins Lab
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
 if ~exist('FLAGS','var') ||  ~isfield(FLAGS,'im_flag')
     FLAGS.im_flag  = 1;
+    FLAGS.S_flag  = 0;
+    FLAGS.t_flag  = 0;
 end
+
 im_flag = FLAGS.im_flag ;
 touch_list = []
 ss = size(data.phase);
 selectMode = true;
 
-% while goflag
-%     
-%     figure(1);
-%     showSegRule( data, FLAGS )
-%     
-% %     prompt1 = ' mod to modify segments/regions, q to quit.';
-% %     answer = input(prompt1,'s');
-% %     if strcmp (answer,'mod')
-% %         selectMode = true;
-% %     elseif strcmp (answer,'q')
-% %         selectMode = false;
-% %         goflag = false;
-% %     end
     
     while selectMode
+        figure(2)
+        imshow(data.phase);
         figure(1);
-        showSegRule( data, FLAGS )
+        showSegRule( data, FLAGS ,1)
+       
         disp ('Click on segment/region to modify. To exit press enter while image is selected.');
         x = floor(ginput(1));
         disp(x);
@@ -53,9 +56,10 @@ selectMode = true;
             
             if im_flag == 1
                 
-                tmp = tmp(26-x(2)+rrind,26-x(1)+ccind).*...
-                    (data.segs.segs_good(rrind,ccind) + ...
-                    data.segs.segs_bad(rrind,ccind));
+                segs = data.segs.segs_good(rrind,ccind) + ...
+                    data.segs.segs_bad(rrind,ccind);
+                segs = segs>0;
+                tmp = tmp(26-x(2)+rrind,26-x(1)+ccind).*segs ;
                 
                 [~,ind] = max( tmp(:) );
                 
@@ -86,22 +90,6 @@ selectMode = true;
                     
                     % updates cell mask
                     data.mask_cell   = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
-                    
-                    %% is this necessary? can i just do it at the end?
-                    % image with 1 where a region had a good score = 1
-                    %                 old_good_map = ismember(data.regs.regs_label, find(data.regs.score));
-                    %
-                    %                 %data = intMakeRegs( data, [], CONST );
-                    %                 %data = intUpdateData( data, A, E ,CONST);
-                    %
-                    %                 % go through all the regions and update their scores?
-                    %                 for hh = 1: data.regs.num_regs
-                    %                     [xx,yy] = getBBpad( data.regs.props(hh).BoundingBox, ss, 1);
-                    %                     tmp_old_good  = old_good_map(yy,xx);
-                    %                     tmp_cell_mask = (hh==data.regs.regs_label(yy,xx));
-                    %                     data.regs.score(hh) = any(tmp_old_good(tmp_cell_mask));
-                    %                 end
-                    %%
                     touch_list = [touch_list, ii];
                 end
             elseif im_flag == 2

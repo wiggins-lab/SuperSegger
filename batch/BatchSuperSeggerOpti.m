@@ -1,4 +1,4 @@
-function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG)
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -58,6 +58,9 @@ if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
     SEGMENT_FLAG = 1;
 end
 
+if ~exist( 'ONLY_SEG', 'var' ) || isempty( ONLY_SEG )
+    ONLY_SEG = 0;
+end
 
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.
@@ -152,27 +155,28 @@ else
     % Set up parallel loop for each xy point if more than one xy position
     % exists. If not more than one xy, we will parallelize inner loops
     if (num_xy>1) && (CONST.parallel_pool_num>0)
-        MM = CONST.parallel_pool_num;
+        workers = CONST.parallel_pool_num;
         CONST.parallel_pool_num = 0;
         SWITCH_FLAG = true;
     else
-        MM=0;
+        workers=0;
         SWITCH_FLAG = false;
     end
     
-    if MM
+    if workers
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
     end
     
-    %parfor(j = 1:num_xy,MM)
-        for j = 1:num_xy
+    parfor(j = 1:num_xy,workers)
+        %for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
-        intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, CONST, SEGMENT_FLAG, crop_box_array{j} )
+        intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
+            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG )
         
-        if MM
+        if workers
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
                 ' of ', num2str(num_xy),'.']);
         else
@@ -183,7 +187,7 @@ else
         
         
     end
-    if ~MM
+    if ~workers
         close(h);
     end
     
@@ -225,11 +229,11 @@ end
 end
 
 function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-    CONST, SEGMENT_FLAG, crop_box )
+    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG )
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
-
+ 
 % Initialization
 file_filter = '*.tif';
 
@@ -265,15 +269,13 @@ if  isempty(nz) || nz(1)==-1 % no z frames
     nz = 1;
 end
 
-% Do segmentation
+
 disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
 
 if (CONST.parallel_pool_num>0)
-    MM = CONST.parallel_pool_num; % number of workers
-    SWITCH_FLAG = true;
+    workers = CONST.parallel_pool_num; % number of workers
 else
-    MM=0;
-    SWITCH_FLAG = false;
+    workers=0;
 end
 
 if ~CONST.show_status
@@ -282,14 +284,15 @@ else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
 end
 
-stamp_name = [dirname_xy,'seg',filesep,'.doSeg.mat'];
+stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
 if clean_flag & exist(stamp_name,'file')
     delete(stamp_name)
 end
 
 
+% does the segmentations for all the frames in parallel
 if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
-    parfor(i=1:num_t,MM) % through all frames
+    parfor(i=1:num_t,workers) % through all frames
     %for i = 1:num_t
         if isempty( crop_box )
             crop_box_tmp = [];
@@ -316,8 +319,11 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
 end
 
 
-% Link the cells
-%trackOpti(dirname_xy, skip, CONST, clean_flag, header );
-
+% trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
+if ~ONLY_SEG
+    trackOpti(dirname_xy, skip, CONST, clean_flag, header );
+else
+    disp ('Only segmentation was set to true - Linking and cell files were not made');
+end
 end
 

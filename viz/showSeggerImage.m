@@ -330,12 +330,12 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
     % in list, cell was not born in this frame with good division or divided
     % but stat0==2 : succesfful division was observed
-    map_stat0_2_ind = find(and(cells_In_Frame,and(~cellBorn,data.regs.stat0==2)));
+    map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
     map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));   
     
     % outline the ones that were just born with stat0 == 2
     map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
-    map_stat0_2O = intDoOutline(ismember(data.regs.regs_label, map_stat0_2O_ind));  
+    map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));  
     
     
     % in list, cell was not born in this frame with good division or divided
@@ -345,26 +345,35 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
     % outline the ones that were just born with stat0 == 1
     map_stat0_1O_ind = find(and(cells_In_Frame,data.regs.stat0==1));
-    map_stat0_1O = intDoOutline(ismember(data.regs.regs_label, map_stat0_1O_ind));
+    map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
     
     
     % in list, cell was not born in this frame with good division or divided
     % stat0 == 0  : cell has errors, or division not observed
-    map_stat0_0_ind = find(and(cells_In_Frame,and(~cellBorn,data.regs.stat0==0)));
+    map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
     map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
     
    % outline the ones that were just born with stat0 == 1
     map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
-    map_stat0_0O = intDoOutline(ismember(data.regs.regs_label, map_stat0_0O_ind));
+    map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
     
     
-    reg_color = uint8( 255*cat( 3, ...
-        double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)),...
-        0.30*(map_no_err),...
-        0.30*(3*(map_stat0_2+map_stat0_2O)+ ...
-        1.5*(map_stat0_1+map_stat0_1O)+0.5*(map_stat0_0+map_stat0_0O))));
+    redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+    greenChannel =  0.30*(map_no_err);
+    blueChannel = 0.7*((map_stat0_2)+ 0.5*(map_stat0_1)+0.25*(map_stat0_0));
+    
+    reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
     
     im = reg_color + im;
+    
+    %% colors : 
+    % baby-blue : no errors, stat0=2 cells 
+    % tirquaz :  stat0 = 1 cells
+    % deep green : stat0 = 0 cells
+    % pink : has error in reverse frame
+    % purple : has error in forward frame
+    % red outlines : dividing or has just divided
+
 end
    
 end
