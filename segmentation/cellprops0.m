@@ -39,7 +39,7 @@ debug = false;
 %
 % Calculate cell thickness and length by rotating the
 % region based on the angle of the majorAxis.
-%
+% hello john
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Orientation = props.Orientation;
 
