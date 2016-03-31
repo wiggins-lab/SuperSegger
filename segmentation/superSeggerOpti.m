@@ -97,10 +97,8 @@ end
 %this step is necessary to reduce the camera and read noise in the raw
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
-if CONST.ResFlag == CONST.R100X
+if all(ismember('100X',CONST.ResFlag))
     phase = imfilter(phase_,fspecial('disk',1),'replicate');
-elseif CONST.ResFlag == CONST.R100XPa
-    phase = imfilter(phase_,fspecial('disk',1),'replicate'); 
 else
     phase = phase_;
 end

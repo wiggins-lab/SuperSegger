@@ -70,7 +70,7 @@ if ~exist([dirname_xy,'seg_full'],'dir')
     mkdir( [dirname_xy,'seg_full'] );
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, ['Merging Skipped frames xy: 0/',num2str(num_t)] );
 else
     h=[];
@@ -79,7 +79,7 @@ end
 %parfor i=1:num_t;
 for i=1:num_t;
     intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z);
-    if CONST.show_status
+    if CONST.parallel.show_status
         try
         waitbar( i/num_t,h,...
             ['Merging Skipped frames t: ',num2str(i),'/',num2str(num_t)]);
@@ -90,7 +90,7 @@ for i=1:num_t;
     end
     
 end
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 end

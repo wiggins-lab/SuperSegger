@@ -30,7 +30,7 @@ dirname = fixDir(dirname);
 contents=dir([dirname '*_err.mat']);
 num_im = numel(contents);
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Fluor Comp.');
 else
     h = [];
@@ -80,7 +80,7 @@ for i = 1:num_im;
     dataname = [dirname,contents(i  ).name];
     save(dataname,'-STRUCT','data_c');
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar(i/num_im,h,['Fluor Comp--Frame: ',num2str(i),'/',num2str(num_im)]);
     else
         disp([header, 'Fluor Comp frame: ',num2str(i),' of ',num2str(num_im)]);
@@ -88,7 +88,7 @@ for i = 1:num_im;
     
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

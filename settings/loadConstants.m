@@ -51,14 +51,15 @@ if PARALLEL_FLAG
     if isempty(poolobj)
         poolobj = parpool('local')
     end
-    CONST.parallel_pool_num = poolobj.NumWorkers
+    poolobj.IdleTimeout = 360; % close after idle for 3 hours
+    CONST.parallel.parallel_pool_num = poolobj.NumWorkers
 else
-    CONST.parallel_pool_num = 0;
+    CONST.parallel.parallel_pool_num = 0;
 end
 
-CONST.xy_parallel = 0;
-CONST.PARALLEL_FLAG = PARALLEL_FLAG;
-CONST.show_status   = ~(CONST.parallel_pool_num);
+CONST.parallel.xy_parallel = 0;
+CONST.parallel.PARALLEL_FLAG = PARALLEL_FLAG;
+CONST.parallel.show_status   = ~(CONST.parallel.parallel_pool_num);
 
 % PARALLEL FOR MATLAB 2014
 % if PARALLEL_FLAG
@@ -107,80 +108,76 @@ CONST.show_status   = ~(CONST.parallel_pool_num);
 % '60XEc' : loadConstants 60X Ecoli
 % '100XEc': loadConstants 100X Ecoli
 
-R100X    = 1; % for 100X unbinned, 6 um pixels
-R100XB   = 2; % for 100X 2x2 binned, 6 um pixels
-R60X     = 3; % for 60X, 6 um pixels
-R100XPa  = 4; % for 100X, Pseudomonas
-R60XPa   = 5; % for 60X, Pseudomonas
-R60XEcHR = 6; % for 60X, coli slow high density.
-R60XEcLB = 7; % for 60X, coli slow high density.
-R60XA    = 8; % for 60X, coli ASKA
-R60XPaM  = 9; % for 60X, Pseudomonas Minimal
-R60XPaM2 = 10; % for 60X, Pseudomonas Minimal
-R60XBthai = 11;
+% R100XEc    = 1; % for 100X unbinned, 6 um pixels
+% R100XB   = 2; % for 100X 2x2 binned, 6 um pixels
+% R60XEc     = 3; % for 60X, 6 um pixels
+% R100XPa  = 4; % for 100X, Pseudomonas
+% R60XPa   = 5; % for 60X, Pseudomonas
+% R60XEcHR = 6; % for 60X, coli slow high density.
+% RR60XEcLB = 7; % for 60X, coli slow high density.
+% R60XA    = 8; % for 60X, coli ASKA
+% R60XPaM  = 9; % for 60X, Pseudomonas Minimal
+% R60XPaM2 = 10; % for 60X, Pseudomonas Minimal
+% R60XBthai = 11;
 
-CONST.R100X    = R100X;
-CONST.R100XB   = R100XB;
-CONST.R60X     = R60X;
-CONST.R100XPa  = R100XPa;
-CONST.R60XPa   = R60XPa;
-CONST.R60XEcHR = R60XEcHR;
-CONST.R60XEcLB = R60XEcLB;
-CONST.R60XA    = R60XA;
-CONST.R60XPaM  = R60XPaM;
-CONST.R60XPaM2 = R60XPaM2;
-CONST.R60XPaM2 = R60XBthai;
+% CONST.100XEc    = 100XEc;
+% CONST.R100XB   = R100XB;
+% CONST.60XEc     = 60XEc;
+% CONST.100XPa  = 100XPa;
+% CONST.60XPa   = 60XPa;
+% CONST.60XEcHR = 60XEcHR;
+% CONST.R60XEcLB = R60XEcLB;
+% CONST.60XA    = 60XA;
+% CONST.60XPaM  = 60XPaM;
+% CONST.60XPaM2 = 60XPaM2;
+% CONST.60XPaM2 = 60XBthai;
 
 
 
 cl = class(res);
 
-if strcmp(cl,'double' )   
-    if res == 60
+if strcmp(cl,'double' )  && res == 60
         disp('loadConstants: 60X');
-        ResFlag = R60X;
-    else
+        ResFlag = '60XEc';
+elseif strcmp(cl,'double' )  && res == 100
         disp('loadConstants:  100X');
-        ResFlag = R100X;
-    end
-elseif strcmp(cl, 'char' );
-    if strcmp(res,'100XPa');
-        disp('loadConstants:  100X Pseudomonas');
-        ResFlag = R100XPa;
-    elseif strcmp(res,'60XEc')
+        ResFlag = '100XEc';
+elseif strcmp(cl, 'char' );  
+    if strcmp(res,'60XEc') % 1
         disp('loadConstants:  60X Ecoli');
-        ResFlag = R60X;
-     elseif strcmp(res,'100XEc')
+        ResFlag = '60XEc';
+     elseif strcmp(res,'100XEc') % 2
         disp('loadConstants:  100X Ecoli');
-        ResFlag = R100X;
+        ResFlag = '100XEc';
+    elseif strcmp(res,'100XPa');
+        disp('loadConstants:  100X Pseudomonas');
+        ResFlag = '100XPa';
     elseif strcmp(res,'60XPa')
         disp('loadConstants:  60X Pseudomonas');
-        ResFlag = R60XPa;
+        ResFlag = '60XPa';
     elseif strcmp(res,'60XEcHR')
         disp('loadConstants:  60X Ecoli Highres');
-        ResFlag = R60XEcHR;
+        ResFlag = '60XEcHR';
     elseif strcmp(res,'60XA')
         disp('loadConstants:  60X ASKA');
-        ResFlag = R60XA;
+        ResFlag = '60XA';
     elseif strcmp(res,'60XEcLB')
         disp('loadConstants:  60X Ecoli LB');
-        ResFlag = R60XEcLB;
+        ResFlag = 'R60XEcLB';
     elseif strcmp(res,'60XPaM')
         disp('loadConstants:  60X Pseudomonas Minimal');
-        ResFlag = R60XPaM;
+        ResFlag = '60XPaM';
     elseif strcmp(res,'60XPaM2')
         disp('loadConstants:  60X Pseudomonas Minimal 2');
-        ResFlag = R60XPaM2;
+        ResFlag = '60XPaM2';
     elseif strcmp(res,'60XBthai')
         disp('loadConstants:  60X B Thai');
-        ResFlag = R60XBthai;
+        ResFlag = '60XBthai';
     else
-        disp(' No match found - loading default : loadConstants:  60X Ecoli');
-        ResFlag = R60X;
+       error('Constants not loaded : no match found. Aborting.');  
     end
 else
-    disp(' No match found - loading default : loadConstants:  60X Ecoli');
-    ResFlag = R60X;
+    error('Constants not loaded : no match found. Aborting.');  
 end
 
 
@@ -194,7 +191,7 @@ CONST.align.ALIGN_FLAG = true;
 CONST.seg.segmentScoreFun = @segmentScoreFun
 CONST.seg.segFun = @ssoSegFun;
 
-if ResFlag == R60XPaM2
+if strcmp(ResFlag, '60XPaM2')
     CONST.seg.segFun = @ssoSegFunPa;
 end
 
@@ -223,43 +220,43 @@ CONST.superSeggerOpti.Amax     = 5000;
 
 % Size in pixels of the structuring element in the contrast-enhancing filter. It
 % should be proportional to the width of a cell.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 70;
     CONST.superSeggerOpti.Amax         = 1000;
     CONST.superSeggerOpti.MAX_SEG_NUM  = 10000000;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.superSeggerOpti.MAGIC_RADIUS =  5;
     CONST.superSeggerOpti.CUT_INT      = 70;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.superSeggerOpti.MAGIC_RADIUS =  5;
     CONST.superSeggerOpti.CUT_INT      = 100;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 70;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 50;
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 50;
     CONST.superSeggerOpti.MAX_SEG_NUM = 10000000;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 50;
     CONST.superSeggerOpti.Amax         = 80;
-elseif (ResFlag == R60XPaM)
+elseif (strcmp(ResFlag, '60XPaM'))
     CONST.superSeggerOpti.MAGIC_RADIUS =  6;
     CONST.superSeggerOpti.CUT_INT      = 50;
     CONST.superSeggerOpti.Amax         = 80;
     CONST.superSeggerOpti.MAX_SEG_NUM  = 10000000;
-elseif (ResFlag == R60XPaM2)
+elseif (strcmp(ResFlag, '60XPaM2'))
     CONST.superSeggerOpti.MAGIC_RADIUS =  3;
     CONST.superSeggerOpti.CUT_INT      = 50;
     CONST.superSeggerOpti.Amax         = 80;
     CONST.superSeggerOpti.MAX_SEG_NUM  = 10000000;
     CONST.superSeggerOpti.MIN_BG_AREA = 30;
-elseif (ResFlag == R60XBthai)
+elseif (strcmp(ResFlag, '60XBthai'))
     CONST.superSeggerOpti.MAGIC_RADIUS =  3;
     CONST.superSeggerOpti.CUT_INT      = 50;
     CONST.superSeggerOpti.Amax         = 150;
@@ -284,25 +281,25 @@ CONST.superSeggerOpti.MEAN_THRESHOLD = 18;
 
 % Width in pixels of the gaussian used to smooth the raw phase image. It
 % should be on the order of a pixel.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1/2;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.superSeggerOpti.SMOOTH_WIDTH = 1;
 end
 
@@ -311,56 +308,56 @@ end
 % whose minor axis is greater than this number are considered for further
 % segmentation. All other masked regions are assumed to correctly define
 % a cell.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.superSeggerOpti.MAX_WIDTH = 10;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.superSeggerOpti.MAX_WIDTH = 20;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.superSeggerOpti.MAX_WIDTH = 20;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.superSeggerOpti.MAX_WIDTH = 20;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.superSeggerOpti.MAX_WIDTH = 10;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.superSeggerOpti.MAX_WIDTH = 10;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.superSeggerOpti.MAX_WIDTH = 10;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.superSeggerOpti.MAX_WIDTH = 10;
     CONST.superSeggerOpti.crop_rad  =  2;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.superSeggerOpti.MAX_WIDTH = 20;
     CONST.superSeggerOpti.crop_rad  =  2;
 end
 
 
 % A is the vector used to generate the segment score.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     tmp = load( 'Ec60.mat' );
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     tmp = load( 'Ec60.mat' );
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     tmp = load( 'Ec100X.mat' );
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     tmp = load( 'Pseud.mat' );
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     tmp = load( 'Ec60XASKA.mat' );
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     tmp = load( 'Pseud60Min.mat' );
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     tmp = load( 'Pseud60Min.mat' );
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     tmp = load( 'Bthai.mat' );
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     tmp = load( 'Pseud60.mat' );
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     tmp = load( 'Ec60XLB.mat' );
 end
 
@@ -409,25 +406,25 @@ CONST.regionOpti.MAX_WIDTH  = CONST.superSeggerOpti.MAX_WIDTH;
 % For regionOpti, this is  minimum region size, below which neighbor 
 % segments are switched on during optimization - should be named
 % MIN_LENGTH.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.regionOpti.MAX_LENGTH  = 15;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.regionOpti.MAX_LENGTH  = 15;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.regionOpti.MAX_LENGTH  = 25;
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.regionOpti.MAX_LENGTH  = 25;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.regionOpti.MAX_LENGTH  = 25;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.regionOpti.MAX_LENGTH  = 8;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.regionOpti.MAX_LENGTH  = 8;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.regionOpti.MAX_LENGTH  = 8;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.regionOpti.MAX_LENGTH  = 10;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.regionOpti.MAX_LENGTH  = 25;
 end
 
@@ -451,53 +448,53 @@ CONST.regionOpti.DE_norm = 0.5;
 % mu is a score constant.
 % E0 is the multiplier that sets the balance between cell width and cell
 % length.
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops5;
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.names    = @getRegNames3;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 11;
     CONST.regionScoreFun.fun      = @regionScoreFun0;
     CONST.regionScoreFun.props    = @cellprops0;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 8;
     CONST.regionScoreFun.fun      = @regionScoreFunPseud2;
     CONST.regionScoreFun.props    = @cellpropsPseud;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;   
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 8;
     CONST.regionScoreFun.fun      = @regionScoreFunPseud2;
     CONST.regionScoreFun.props    = @cellpropsPseud;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.regionScoreFun.E        = tmp.E;
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;
-elseif ResFlag == R60XPa    
+elseif strcmp(ResFlag, '60XPa')    
     CONST.regionScoreFun.NUM_INFO = 21;
     CONST.regionScoreFun.fun      = @regionScoreFunMatrix;
     CONST.regionScoreFun.props    = @cellprops3;
@@ -537,7 +534,7 @@ CONST.trackOpti.DA_MAX          =  0.2;
 CONST.trackOpti.DA_MIN          = -0.2;
 
 
-if ResFlag == R100X
+if strcmp(ResFlag, '100XEc')
     CONST.trackOpti.REMOVE_STRAY      = 1;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;    
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -551,7 +548,7 @@ if ResFlag == R100X
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -1;
     CONST.trackOpti.MIN_CELL_AGE      = 3;
     
-elseif ResFlag == R60X
+elseif strcmp(ResFlag, '60XEc')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -565,7 +562,7 @@ elseif ResFlag == R60X
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 1;
     
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;    
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -579,7 +576,7 @@ elseif ResFlag == R100XPa
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 5;
     
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;   
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -593,7 +590,7 @@ elseif ResFlag == R60XA
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 5;
     
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = true;
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -607,7 +604,7 @@ elseif ResFlag == R60XPaM
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 5;
     
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = true;    
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -626,7 +623,7 @@ elseif ResFlag == R60XPaM2
     CONST.trackOpti.LSPHEREMIN            = 10;
     CONST.trackOpti.LSPHEREMAX            = 20;
     CONST.trackOpti.ECCENTRICITY          = .7;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = true;    
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -645,7 +642,7 @@ elseif ResFlag == R60XBthai
     CONST.trackOpti.LSPHEREMIN            = 10;
     CONST.trackOpti.LSPHEREMAX            = 20;
     CONST.trackOpti.ECCENTRICITY          = .7;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 1;    
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -659,7 +656,7 @@ elseif ResFlag == R60XPa
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 5;
     
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -673,7 +670,7 @@ elseif ResFlag == R60XEcHR
     CONST.trackOpti.SCORE_LIMIT_MOTHER   = -15;
     CONST.trackOpti.MIN_CELL_AGE      = 5;
     
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.trackOpti.REMOVE_STRAY      = 0;
     CONST.trackOpti.NEIGHBOR_FLAG     = 0;   
     CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.08;
@@ -719,48 +716,48 @@ end
 CONST.trackLoci.gaussR = 1;
 
 
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots  = [];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R100XB
+elseif strcmp(ResFlag, '100XEc')
     CONST.trackLoci.crop = 2;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 0;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XEc')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 0;
     CONST.trackLoci.gaussR = 1.5;    
-elseif ResFlag == R100XPa
+elseif strcmp(ResFlag, '100XPa')
     CONST.trackLoci.crop = 6;
     CONST.trackLoci.numSpots = [4];
     CONST.trackLoci.fluorFlag = 0;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [0,3];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [0,3];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 1;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 0;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.trackLoci.crop = 4;
     CONST.trackLoci.numSpots = [];
     CONST.trackLoci.fluorFlag = 0;
@@ -768,7 +765,7 @@ end
 
 
 % Do gating....
-if ResFlag == R60XA
+if strcmp(ResFlag, '60XA')
     gate_file_name = 'default_gate.mat';
     if exist(gate_file_name, 'file' );
         disp(['loading default gate file: ', gate_file_name] );
@@ -792,27 +789,25 @@ CONST.getLocusTracks.FLUOR1_REL       = 0.3;
 CONST.getLocusTracks.FLUOR2_REL       = 0.3;
 CONST.getLocusTracks.TimeStep         = 1;
 
-if ResFlag == R60X
+if strcmp(ResFlag, '60XEc')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R100XB
+elseif strcmp(ResFlag, '100XEc')
     CONST.getLocusTracks.PixelSize        = 6/100;
-elseif ResFlag == R100X
+elseif strcmp(ResFlag, '100XPa')
     CONST.getLocusTracks.PixelSize        = 6/100;
-elseif ResFlag == R100XPa
-    CONST.getLocusTracks.PixelSize        = 6/100;
-elseif ResFlag == R60XA
+elseif strcmp(ResFlag, '60XA')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XPaM
+elseif strcmp(ResFlag, '60XPaM')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XPaM2
+elseif strcmp(ResFlag, '60XPaM2')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XBthai
+elseif strcmp(ResFlag, '60XBthai')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XPa
+elseif strcmp(ResFlag, '60XPa')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XEcHR
+elseif strcmp(ResFlag, '60XEcHR')
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif ResFlag == R60XEcLB
+elseif strcmp(ResFlag, 'R60XEcLB')
     CONST.getLocusTracks.PixelSize        = 6/60;
 end
 
@@ -831,7 +826,7 @@ CONST.view.maxNumCell            = [];
 % show log fluor reduce variation at high intensity
 CONST.view.LogView         = false;
 
-if ResFlag == R60XPaM2
+if strcmp(ResFlag, '60XPaM2')
     CONST.trackOpti.LogView               = true;
 end
 

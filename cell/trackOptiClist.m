@@ -51,6 +51,7 @@ dirname = fixDir(dirname);
 
 % Get the track file names.
 contents=dir([dirname '*_err.mat']);
+
 if isempty( contents )
     clist.data = [];
     clist.def={};
@@ -60,7 +61,7 @@ else
     MAX_CELL = max(10000, max(data_c.regs.ID) + 100);
     num_im = numel(contents);
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         h = waitbar( 0, 'Making Cells.');
     else
         h = [];
@@ -103,7 +104,7 @@ else
     % initialize in case neighbor flag is not set
     share_pole = [];
     
-    % loop through all the cells.
+    % loop through all .err fileså
     for i = 1:num_im
         data_c = loaderInternal([dirname,contents(i).name]);
         % record the number of cell neighbors
@@ -252,7 +253,7 @@ else
         % update the fields that are set to be updated every frame
         clist_tmp( ID(ci), death_ind ) = tmp( ci, death_ind );
         
-        if CONST.show_status
+        if CONST.parallel.show_status
             waitbar(i/num_im,h,['Clist--Frame: ',num2str(i),'/',num2str(num_im)]);
         else
             disp([header, 'Clist frame: ',num2str(i),' of ',num2str(num_im)]);
@@ -261,7 +262,7 @@ else
         
     end
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         close(h);
     end
         

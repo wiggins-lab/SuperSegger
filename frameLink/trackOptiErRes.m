@@ -51,7 +51,7 @@ end
 
 num_im = length(contents);
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Error Resolution');
 else
     h = [];
@@ -64,7 +64,7 @@ cell_count = 0;
 
 while i <= num_im % loop through number of frames
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar((i-1)/num_im,h,['Error Resolution--Frame: ',...
             num2str(i),'/',num2str(num_im)])
     end
@@ -232,8 +232,8 @@ while i <= num_im % loop through number of frames
                 
             elseif merged_flag
                 % when two regions in data_r correspond to one in data_c
-                % attempts to merge two regions that merged by turning on
-                % some segments in data_c.
+                % possible merging of region in data_c, attempts to find a 
+                % segment that was missed.
                 if ignoreError
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
@@ -504,7 +504,7 @@ while i <= num_im % loop through number of frames
     
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

@@ -54,7 +54,7 @@ else
     MAX_NUM_CELLS = max(data_c.regs.ID)+100;
     DA            = cell(1,MAX_NUM_CELLS);
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         h = waitbar( 0, 'Make Cell Files.');
     else
         h = [];
@@ -62,7 +62,7 @@ else
     
     for i = 1:num_im;
         
-        if CONST.show_status
+        if CONST.parallel.show_status
             waitbar(i/num_im,h,['Make Cell Files--Frame: ',num2str(i),'/',num2str(num_im)]);
         else
             disp( [header, 'Cell Files--Frame: ',num2str(i),'/',num2str(num_im)] );
@@ -119,7 +119,7 @@ else
         end
     end
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         close(h);
     end
 end
@@ -166,7 +166,6 @@ celld.r = data_c.regs.props(ii).Centroid;
 celld.error.label = data_c.regs.error.label{ii};
 celld.ehist = data_c.regs.ehist(ii);
 celld.contactHist = data_c.regs.contactHist(ii);
-
 celld.stat0  = data_c.regs.stat0(ii);
 
 try

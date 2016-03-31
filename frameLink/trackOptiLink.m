@@ -49,7 +49,7 @@ if ~exist('frames','var') || isempty(frames)
 end
 
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Linking Cells');
 else
     h = [];
@@ -57,9 +57,9 @@ end
 
 num_iii = numel(frames);
 
-parfor(i = 1:num_iii, CONST.parallel_pool_num)
+parfor(i = 1:num_iii, CONST.parallel.parallel_pool_num)
     intParFun( frames(i), num_im, dirname, contents, err_flag, CONST );
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar(i/num_iii,h,['Linking Cells--Frame: ',num2str(frames(i)),'/',num2str(num_im)]);
     else
         disp( [header, 'Link: No status bar. Frame ',num2str(i), ...
@@ -67,7 +67,7 @@ parfor(i = 1:num_iii, CONST.parallel_pool_num)
     end
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

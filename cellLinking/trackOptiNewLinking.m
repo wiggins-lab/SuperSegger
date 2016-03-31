@@ -86,7 +86,7 @@ end
 % Calculate the overlap between cells between subsequent frames.
 stamp_name = [dirname_seg,'.trackOptiLinkCell.mat'];
 if ~exist( stamp_name, 'file' );
-    trackOptiLinkCell(dirname_seg, 0, CONST, header);
+    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else

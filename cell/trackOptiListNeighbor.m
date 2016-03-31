@@ -33,7 +33,7 @@ else
     MAX_CELL = max(data_c.regs.ID) + 100;
     num_im = numel(contents);
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         h = waitbar( 0, 'Make Neighbor List.');
     else
         h = [];
@@ -44,7 +44,7 @@ else
     % loop through all the cells.
     for i = 1:num_im
         data_c = loaderInternal([dirname,contents(i  ).name]);            
-        if CONST.show_status
+        if CONST.parallel.show_status
             waitbar(i/num_im,h,['Make Neighbor List--Frame: ',num2str(i),'/',num2str(num_im)]);
         else
             disp([header, 'Make Neighbor List. frame: ',num2str(i),' of ',num2str(num_im)]);
@@ -67,7 +67,7 @@ else
     end
     
     % save the updated err files.
-    if CONST.show_status
+    if CONST.parallel.show_status
         close(h);
     end
     

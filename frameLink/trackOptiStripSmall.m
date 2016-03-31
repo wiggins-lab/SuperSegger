@@ -16,7 +16,7 @@ dirname = fixDir(dirname);
 contents=dir([dirname '*_seg.mat']);
 num_im = length(contents);
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Strip small cells.');
 else
     h = [];
@@ -25,7 +25,7 @@ end
 % Work barkwards starting at the last frame.
 for i = 1:num_im;
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar((num_im-i)/num_im,h,['Strip small cells--Frame: ',num2str(i),'/',num2str(num_im)]);
     end
 
@@ -68,7 +68,7 @@ for i = 1:num_im;
     
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

@@ -35,7 +35,7 @@ num_im = length(contents);
 num_loop = num_im;
 
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Reset Errors');
 else
     h = [];
@@ -44,14 +44,14 @@ end
 for i = 1:num_loop
     
     trackOptiIntSetEr( [dirname,contents(i  ).name], CONST, i );
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar(i/num_loop,h,['Reset Errors--Frame: ',num2str(i),'/',num2str(num_im)]);
     else
         disp( [header, 'SetEr: No status bar. Frame ',num2str(i), ...
             ' of ', num2str(num_im),'.']);
     end
 end
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

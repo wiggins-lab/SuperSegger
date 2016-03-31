@@ -36,7 +36,7 @@ function trackOptiMakeCell(dirname,CONST,header)
 % 			ehist		: ehist is the sum of all errors in the region?s history
 %           contactHist	: ?
 %           stat0		: stat0 flag that is true if the cell is born without error
-%
+% 
 % The coord field contains a lot of cell specific info:
 % data.CellA{1}.coord =
 %         A: Area of cell mask
@@ -48,7 +48,7 @@ function trackOptiMakeCell(dirname,CONST,header)
 %         e1: priniple axis (major) unit vector
 %         e2: priniple axis (minor) unit vector
 %         rcm: center of mass position of mask
-%
+% 
 % The pole field contains info pertaining to the cell pole and pole ages:
 % data.CellA{1}.pole =
 %        e1: major axis direction.
@@ -57,8 +57,8 @@ function trackOptiMakeCell(dirname,CONST,header)
 %        op_age: age of old pole in cell cycles
 %             NaN if no birth is observed
 %        np_age: age of new pole in cell cycles
-%
-% The locus field contains info from locus finding - if it is run.
+% 
+% The locus field contains info from locus fitting - if it ran.
 % data.CellA{1}.locus1(1) =
 %       r: Spot position in global coords
 %       score: score from spot fit.
@@ -89,7 +89,7 @@ dirname = fixDir(dirname);
 contents=dir([dirname '*_err.mat']);
 num_im = numel(contents);
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Making Cells.');
 else
     h = [];
@@ -303,14 +303,14 @@ for i = 1:num_im;
     dataname = [dirname,contents(i).name];
     save(dataname,'-STRUCT','data_c');
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar(i/num_im,h,['Making Cells--Frame: ',num2str(i),'/',num2str(num_im)]);
     else
         disp([header, 'MakeCell frame: ',num2str(i),' of ',num2str(num_im)]);
     end
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 

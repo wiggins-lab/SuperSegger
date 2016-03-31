@@ -82,14 +82,14 @@ if ~isempty(contents);
         end
     end
     
-    if CONST.show_status
+    if CONST.parallel.show_status
         h = waitbar(0, 'Moving Files');
     else
         h = [];
     end
     
     for i = 1:num_im; % goes through all the images
-        if CONST.show_status
+        if CONST.parallel.show_status
             waitbar(i/num_im,h);
         end
         
@@ -121,7 +121,7 @@ if ~isempty(contents);
         movefile( tmp_source, tmp_target ,'f');
                 
     end
-    if CONST.show_status
+    if CONST.parallel.show_status
         close(h);
     end
     

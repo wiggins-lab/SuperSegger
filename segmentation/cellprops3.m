@@ -46,7 +46,6 @@ Orientation = props.Orientation;
 imRot = (fast_rotate_loose_double( mask, -Orientation+90 ));
 ss = size(imRot);
 
-
 if debug
     figure(2);
     clf;
@@ -59,14 +58,14 @@ width       = sum(double(imRot),2);
 ymask       = (width>=1);
 widthWindow = ([0;width(1:end-1)] + width + [width(2:end);0] )/3;
 
-L1          = sum(ymask); % short axis
+L1          = sum(ymask); % long axis
 L2max       = max(widthWindow); % max of short axis
-L2v         = var(widthWindow); % variance of shrot axis
+L2v         = var(widthWindow); % variance of short axis
 
 ymin = find(ymask,1,'first');
 ymax = find(ymask,1,'last');
 ind = (ymin):(ymax);
-L2mean = mean(width(ind));
+L2mean = mean(width(ind)); % mean of short axis
 
 if L2mean<1
     L2mean=1;
@@ -186,8 +185,8 @@ if numel(yy) > 4
     sa2 = mean( angle.*sin(s*2) );
     sa3 = mean( angle.*sin(s*3) );
     sa4 = mean( angle.*sin(s*4) );
-    catch
-        'hi'
+    catch ME
+        printError(ME);
     end     
         
     if debug       
@@ -339,7 +338,7 @@ info = [L1, ...
 info(isnan(info)) = 0;
 
 if numel(info) ~= 21
-    'hi'
+    disp ('incorrect number of cell properties calculated')
 end
 
 

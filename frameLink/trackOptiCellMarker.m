@@ -59,7 +59,7 @@ contents=dir([dirname '*_err.mat']);
 num_im = length(contents);
 clist = [];
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Marking complete cell cycles.');
 else
     h = [];
@@ -69,7 +69,7 @@ end
 for i = (num_im-1):-1:2;
     
    
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar((num_im-i)/num_im,h,['Marking complete cell cycles--Frame: ',num2str(i),'/',num2str(num_im)]);
     end
     % load data
@@ -118,8 +118,7 @@ for i = (num_im-1):-1:2;
                     pole_age = NaN;
                 end
                 
-                % store data in clist so good cells can be set to have
-                % stat0 == 2 for each frame.
+                % store data in clist to set stat0 == 2 (good division)
                 clist = [clist; data_c.regs.ID(ii), ii, ii, data_c.regs.birth(ii), i, i-data_c.regs.birth(ii), cell_dist, pole_age, data_c.regs.L1(ii), data_c.regs.L1(ii)];
                 
                 %                         clist_def =     { 'Cell ID', ...
@@ -194,7 +193,7 @@ for i = (num_im-1):-1:2;
     
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 % Resort the list of cells so it is listed by cell ID number.
@@ -211,6 +210,6 @@ end
 
 
 
-function data = loaderInternal( filename );
+function data = loaderInternal( filename )
 data = load( filename );
 end

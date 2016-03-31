@@ -183,6 +183,7 @@ elseif im_flag == 2 % region view
         for ii = 1:num_regs
             r = data.regs.props(ii).Centroid;
             text( r(1), r(2), num2str( ii ), 'Color', 'w' );
+            %text( r(1), r(2), num2str( data.regs.props(ii).Orientation ), 'Color', 'w' );
         end
     end
     

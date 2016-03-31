@@ -99,7 +99,7 @@ if exist( dirname_, 'dir' )
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             crop_box_array = trackOptiAlignPad( dirname_,...
-                CONST.parallel_pool_num, CONST);
+                CONST.parallel.parallel_pool_num, CONST);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
             movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
@@ -154,13 +154,11 @@ else
     
     % Set up parallel loop for each xy point if more than one xy position
     % exists. If not more than one xy, we will parallelize inner loops
-    if (num_xy>1) && (CONST.parallel_pool_num>0)
-        workers = CONST.parallel_pool_num;
-        CONST.parallel_pool_num = 0;
-        SWITCH_FLAG = true;
+    if (num_xy>1) && (CONST.parallel.parallel_pool_num>0)
+        workers = CONST.parallel.parallel_pool_num;
+        CONST.parallel.parallel_pool_num = 0;
     else
         workers=0;
-        SWITCH_FLAG = false;
     end
     
     if workers
@@ -169,8 +167,7 @@ else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
     end
     
-    parfor(j = 1:num_xy,workers)
-        %for j = 1:num_xy
+    parfor(j = 1:num_xy,workers) %for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
@@ -187,11 +184,18 @@ else
         
         
     end
+    
+    if workers % shutting down parallel pool
+        poolobj = gcp('nocreate');
+        delete(poolobj);
+    end
+        
+    
     if ~workers
         close(h);
     end
     
-
+    
     % Compute Consensus Images   
     if CONST.consensus
         h =  waitbar(0,['Computing Consensus Images']);        
@@ -272,13 +276,13 @@ end
 
 disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
 
-if (CONST.parallel_pool_num>0)
-    workers = CONST.parallel_pool_num; % number of workers
+if (CONST.parallel.parallel_pool_num>0)
+    workers = CONST.parallel.parallel_pool_num; % number of workers
 else
     workers=0;
 end
 
-if ~CONST.show_status
+if ~CONST.parallel.show_status
     h = [];
 else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
@@ -303,7 +307,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
         doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, ...
             clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp );
         
-        if ~CONST.show_status
+        if ~CONST.parallel.show_status
             disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
                 ' of ', num2str(num_t),'.']);
         else
@@ -311,7 +315,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
                 ['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
         end
     end
-    if CONST.show_status
+    if CONST.parallel.show_status
         close(h);
     end
     time_stamp = clock;

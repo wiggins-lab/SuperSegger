@@ -1,9 +1,9 @@
-function trackOptiLinkCell (dirname,disp_flag,CONST,header)
+function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
 % trackOptiCellLink : links the cells frame-to-frame and resolves errors.
 %
 % INPUT :
 %       dirname    : seg folder eg. maindirectory/xy1/seg
-%       disp_flag  : a flag set for displaying the results
+%       debug_flag  : a flag set for displaying the results
 %       err_flag   : is set when called after error resolution.
 %       CONST      : SuperSeggerOpti set parameters
 %       header     : displayed string
@@ -20,9 +20,14 @@ end
 
 dirname = fixDir(dirname);
 
-if ~exist('disp_flag','var') || isempty( disp_flag );
-    disp_flag = 0;
+if ~exist('debug_flag','var') || isempty( debug_flag );
+    debug_flag = 0;
 end
+
+if ~exist('clean_flag','var') || isempty( clean_flag );
+    clean_flag = 0;
+end
+
 
 if ~exist('header','var')
     header = [];
@@ -41,23 +46,17 @@ numIm = length(contents);
 cell_count = 0;
 time = 1;
 
-continueFromLast = 0;
-if continueFromLast
+if clean_flag
+    delete([dirname,'*err.mat'])
+else
     disp ('continuing from where i stopped');
     contents2=dir([dirname,'*',filt2]);
     time = numel(contents2)+1;
     dataLast = load(contents2(end).name);
     cell_count = max(dataLast.regs.ID);
-else
-    !rm *err.mat
 end
-
-while time <= numIm
     
-    if time == 13
-        disp(time);
-        keyboard;
-    end
+while time <= numIm  
     
     if (time == 1)
         data_r = [];
@@ -78,21 +77,16 @@ while time <= numIm
     data_c = intDataLoader (datacName);
     data_c = updateRegionFields (data_c,CONST);  % make regions
     
-    % calculate overlaps between time t and time t + 1
+
     if ~isempty(data_r)
-        [data_r.regs.areaCost.f,data_r.regs.centroidCost.f,...
-            data_r.regs.totCost.f,data_r.regs.map.f,data_r.regs.error.f,data_r.regs.dA.]]]]]]]]]data_r.regs.DA.f,~,~] ...
-            = calcRegionOverlap( data_r, data_c, CONST);
+       [data_r.regs.map.f,data_r.regs.error.f] = multiAssignmentPairs (data_r, data_c,CONST,1,0);
     end
+        
     
-    [data_c.regs.areaCost.r,data_c.regs.centroidCost.r,...
-        data_c.regs.totCost.r,data_c.regs.map.r,data_c.regs.error.r,data_c.regs.dA.r,data_c.regs.DA.r,~,~] ...
-        = calcRegionOverlap( data_c, data_r, CONST);
-    
-    [data_c.regs.areaCost.f,data_c.regs.centroidCost.f,...
-        data_c.regs.totCost.f,data_c.regs.map.f,data_c.regs.error.f,data_c.regs.dA.f,data_c.regs.DA.f,~,~] ...
-        = calcRegionOverlap( data_c, data_f, CONST);
-    
+    % backwards currently does not work... 
+    [data_c.regs.map.r,data_c.regs.error.r] = multiAssignmentPairs (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.f,data_c.regs.error.f] = multiAssignmentPairs (data_c, data_f,CONST,1,0);
+
     resetRegions = false;
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
     
@@ -121,6 +115,7 @@ while time <= numIm
             end
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 % maps to one in the next frame
+    
             
             mapRC = data_r.regs.map.f{mapCR};
             
@@ -128,17 +123,34 @@ while time <= numIm
                 % sets cell ID from mapped reg, updates death in data_r
                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r,mapCR, time, 0);
                 
-                if disp_flag
+                if debug_flag
                     figure(1);
                     imshow(cat(3,0.5*ag(data_c.phase), ag(data_c.regs.regs_label==regNum),ag(data_r.regs.regs_label==mapCR)));
                     keyboard;
                 end
             else
                 
-                imshow(cat(3,0.5*ag(data_c.phase),ag(data_c.regs.regs_label==regNum),ag(data_r.phase)));
-                disp('Error :  disagreement in mapRC ==  mapCR');
-                % how to resolve?
+                 imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum),ag(data_r.regs.regs_label == mapCR),ag(data_c.regs.regs_label==mapRC)));
+               
+                 % how to resolve?
                 keyboard;
+                
+                % continue anyway and put an error..
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r,mapCR, time, 0);
+                 data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
+                        ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+                   data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
+                        ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+                 data_r.regs.error.label{mapRC} = (['Frame: ', num2str(time),...
+                        ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+               
+                    
+                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );
+                 
+                 data_c.regs.error.r(regNum) = 1;
+                 data_r.regs.error.f(mapCR) = 1;
+                 data_r.regs.error.f(mapRC) = 1;
+                 
                 
             end
             
@@ -146,22 +158,45 @@ while time <= numIm
             % the 1 in reverse maps to two in current : possible splitting event
             mapRC = data_r.regs.map.f{mapCR};
             mother = mapCR;
+            
+            
+            if  ~any(mapRC==regNum)
+                keyboard;
+                % assignments from rev to forward mismatch
+            end
+              
             sister1 = regNum;
             sister2 = mapRC(mapRC~=sister1);
             
+            
+            
+            
             % check that the two sisters have forward mappings in the
             % next frame - otherwise it may be a wrong division
+            
+            
+            
+            % 1 : if one has mapping and hte other has not but they were
+            % look like correct cells possible bad mapping in f
+            
+            % 2 : or one may be a bad cell
+            
+            % 3 : if they both map to the same thing in f then merge
+            
             if ~isempty(data_f) && (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}))
                 % wrong division atempt to merge!
                 data_c.regs.error.r(regNum) = 1;
                 keyboard;
+                imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
+
+                
             else
                 
                 errorM  = (data_r.regs.scoreRaw(mother) < SCORE_LIMIT_MOTHER );
                 errorD1 = (data_c.regs.scoreRaw(sister1) < SCORE_LIMIT_DAUGHTER);
                 errorD2 = (data_c.regs.scoreRaw(sister2) < SCORE_LIMIT_DAUGHTER);
                 
-                if disp_flag
+                if debug_flag && ~data_c.regs.ID(sister1)
                     figure(1);
                     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
 
@@ -207,7 +242,7 @@ while time <= numIm
             % frame, exit regNum loop, make time - 1 and relink - dont
             % save anything?
             
-            if disp_flag
+            if debug_flag
             imshow(cat(3,ag(data_c.phase), ag(data_c.regs.regs_label==regNum),ag((data_r.regs.regs_label==mapCR(1))>0 + (data_r.regs.regs_label==mapCR(2))>0)));
             keyboard
             end

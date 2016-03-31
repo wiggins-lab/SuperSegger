@@ -47,7 +47,7 @@ if ~isfield( data_c, 'fluor1' ) || ~isfield( CONST.trackLoci, 'numSpots' ) ||...
 end
 
 
-if CONST.show_status
+if CONST.parallel.show_status
     h = waitbar( 0, 'Find Loci.');
 else
     h = [];
@@ -55,7 +55,7 @@ end
 
 parfor i = 1:num_im; % Parallelizing find loci through each image
     intDoFoci( i, dirname, contents, nc, CONST);
-    if CONST.show_status
+    if CONST.parallel.show_status
         waitbar(i/num_im,h,['Find Loci--Frame: ',num2str(i),'/',num2str(num_im)]);
     else
         disp( [header, 'FindLoci: No status bar. Frame ',num2str(i), ...
@@ -63,7 +63,7 @@ parfor i = 1:num_im; % Parallelizing find loci through each image
     end
 end
 
-if CONST.show_status
+if CONST.parallel.show_status
     close(h);
 end
 
