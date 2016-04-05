@@ -1,4 +1,4 @@
-function bw_filled = fillHolesAround(magicPhase)
+function bw_filled = fillHolesAround(magicPhase,crop_box)
 % fillHolesAround : creates an image of the regions that have halos.
 % It blurs the image, then takes things above the cut off intensity, and
 % fills the holes in the middle and edges.
@@ -12,10 +12,12 @@ function bw_filled = fillHolesAround(magicPhase)
 % This file is part of SuperSeggerOpti.
 
 
+
+
 blurFilter = fspecial( 'gaussian',15, 1 );
 phaseFilt = imfilter(magicPhase,blurFilter, 'replicate');
 
-CUT_INT_LOW = 45;
+CUT_INT_LOW = CONST.superSeggerOpti.CUT_INT/1.5;
 halos = (phaseFilt>CUT_INT_LOW);
 halos_filled = imfill(halos,'holes');
 

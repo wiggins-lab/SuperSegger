@@ -150,7 +150,7 @@ phase__ = magicContrastFast2(phase, MAGIC_RADIUS);
 phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
 % keeps only objects with bright halos 
-filled_halos = fillHolesAround(phase);
+filled_halos = fillHolesAround(phase,CONST,crop_box);
 mask_bg_ = filled_halos & mask_bg_;
 
 % cuts out bright halos from the mask
