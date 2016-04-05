@@ -146,12 +146,17 @@ end
 %each pixel the minimum intensity in its neighborhood. It
 %forces the interior of the cells closer to zero intensity.
 phase = ag(phase);
-phase__ = magicContrastFast2(phase, MAGIC_RADIUS);
-phase = double(uint16(phase__-MAGIC_THRESHOLD));
+magicPhase_ = magicContrastFast2(phase, MAGIC_RADIUS);
+phase = double(uint16(magicPhase_-MAGIC_THRESHOLD));
 
-% keeps only objects with bright halos 
+% this is to remove small object - it keeps only objects with bright halos 
 filled_halos = fillHolesAround(phase,CONST,crop_box);
-mask_bg_ = filled_halos & mask_bg_;
+
+% make sure that not too much was discarded
+if sum(phase(:)>0) < 1.5 * sum(filled_halos(:))
+    disp('keeping only objects with bright halos');
+    mask_bg_ = filled_halos & mask_bg_;
+end
 
 % cuts out bright halos from the mask
 mask_mod = (phase>CUT_INT);
@@ -188,7 +193,7 @@ if adapt_flag
             [xx,yy] = getBB( props(ii).BoundingBox );                        
             mask_reg = (regs_label(yy,xx)==ii);          
             
-            pp = double(phase__(yy,xx)).*mask_reg;
+            pp = double(magicPhase_(yy,xx)).*mask_reg;
             mm = 1-mask_reg;
             ppp = pp+max(pp(:))*mm;
             wsl = double(watershed( ppp )>0);

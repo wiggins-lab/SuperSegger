@@ -37,7 +37,7 @@ if nargin < 2 || isempty(disp_flag);
     disp_flag = 1;
 end
 
-debug_flag = 0;
+debug_flag = 1;
 
 segsLabelAll = data.segs.segs_label;
 segs_3n    = data.segs.segs_3n;
@@ -246,7 +246,10 @@ while ~isempty(badReg)
         
         figure (2);
         backer = 0.5*ag(mask_regs);
-        imshow(cat(3,backer+ag(segment_mask),backer + ag(mod>0),backer + ag(mod>0)))
+       
+         
+        imshow(cat(3,backer+ag(segment_mask) + 0.7*ag(ismember(segsLabelAll,segs_list)),backer + ag(mod>0), ag(mod>0) + backer))
+
         keyboard;
     end
     

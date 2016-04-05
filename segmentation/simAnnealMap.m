@@ -22,7 +22,7 @@ function [x,regEmin]= simAnnealMap( segs_list, data, ...
 num_segs = numel(segs_list);
 
 if ~exist('debug_flag', 'var') || isempty( debug_flag )
-    debug_flag = 0
+    debug_flag = 1;
 end
 
 if debug_flag
@@ -42,16 +42,10 @@ reannealIter = round(maxiter / 2);
 ss = size(data.phase);
 
 % initial state
-x0 = ones(num_segs,1);
+x0 = zeros(num_segs,1);
 
 % a hashmap to find energies of states tried before faster
 stateEnergyMap = containers.Map();
-
-% create inital segment mask
-seg_mask = cell (1,num_segs);
-for ff = 1:num_segs
-    seg_mask{ff} = (segs_list(ff)==data.segs.segs_label(yy,xx));
-end
 
 % runs simulated anneal
 options = saoptimset('Display',display,'ReannealInterval',reannealIter,'DataType','custom', 'AnnealingFcn',@newPoint,'StallIterLimit',num_segs*12,'MaxIter',maxiter);
@@ -63,19 +57,19 @@ xSegment = data.segs.score(segs_list);
 Esegment = stateCostFunction (xSegment);
 if Esegment < Emin
     x = xSegment;
-    Emin = Esegment;
 end
 
-minState = calualteStateEnergies(x);
-regEmin = minState.reg_E(minState.reg_vect0); % energy per region
+[Emin,minState] = calculateStateEnergy(cell_mask,vect0,segs_list,data,xx,yy,CONST);
+regEmin = minState.reg_E; % energy per region
 
 if debug_flag
+    disp (['minimum energy is ', num2str(Emin)]);
     displayState(x,segs_list,data)
 end
 
 
     function displayState(x,segs_list,data)
-        % displayState : displays the modified mask given a vector x of 
+        % displayState : displays the modified mask given a vector x of
         % segments that are on and off.
         cell_mask_mod = cell_mask;
         num_segs = numel(segs_list);
@@ -85,7 +79,7 @@ end
         imshow(cell_mask_mod);
     end
 
-        
+
     function vect1 = newPoint ( optimvalues,~ )
         %  newPoint : modifies the previous state to a new state, by
         % switching one of the segments.
@@ -95,41 +89,7 @@ end
         vect1(nn) = ~vect1(nn);
     end
 
-    function state = calualteStateEnergies(vect0)
-      % calualteStateEnergies : calculate new state for vect0
-            state.seg_E = data.segs.scoreRaw(segs_list)*CONST.regionOpti.DE_norm;
-            state.seg_vect0 = logical(vect0);
-            state.seg_mask= cell (1, num_segs  );
-            state.reg_E= zeros(1, num_segs+3);
-            state.reg_vect0= false(1, num_segs+3);
-            
-            % make the new modified mask based on the seg state vector
-            state.mask = cell_mask;
-            
-            for ff = 1:num_segs
-                if vect0(ff)
-                    state.mask(seg_mask{ff}) = false;
-                end
-            end
-            
-            % label the regs
-            state.reg_label = bwlabel( state.mask, 8 );
-            state.reg_props = regionprops( state.reg_label,'BoundingBox','Orientation','Area');
-            num_regs_mod  = max(state.reg_label(:));
-            state.ss = size(state.reg_label);
-            
-            % loop through the regs and get their scores
-            kk_range = 1:num_regs_mod;
-            state.reg_vect0(kk_range) = 1;
-            
-            for ff = kk_range;
-                [xx_,yy_] = getBBpad( state.reg_props(ff).BoundingBox, state.ss, 0);
-                state.reg_mask{ff} = (state.reg_label==ff);
-                info = CONST.regionScoreFun.props(state.reg_mask{ff}(yy_,xx_), state.reg_props(ff));
-                state.reg_E(ff) = CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
-            end      
-    end
-    
+
     function E = stateCostFunction (vect0)
         % stateCostFunction : caclulates the cost function of a given state
         % vect0
@@ -139,21 +99,12 @@ end
         if isKey(stateEnergyMap, key)
             % state tried before, get energy from the hashmap
             E = stateEnergyMap(key);
-        else         
+        else
             % calculate total score
-            state = calualteStateEnergies(vect0);
-            E = calcCost(state.reg_vect0, state.seg_vect0, state);
+            [E,~] = calculateStateEnergy(cell_mask,vect0,segs_list,data,xx,yy,CONST);
             stateEnergyMap(key) = E;
         end
-    end
-
-    function E = calcCost(reg_vect,seg_vect,state)
-        % calcMLL: calculates the cost for a set of vectors and segments
-        % seg_E energies are already multiplied by DE_norm       
-        E_reg = state.reg_E(reg_vect);
-        E_seg = state.seg_E;
-        sigma = 1-2*double(seg_vect);
-        E = mean (-E_reg) + mean( sigma .* E_seg);        
+        
     end
 
     function str = makeKey(vect)

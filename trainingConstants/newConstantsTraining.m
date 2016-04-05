@@ -136,7 +136,8 @@ makeBadRegions( segDirMod, CONST)
 
 % 6) Runs neural network training on regions
 
-% change this out if you want to use different  cell properties
+% you can use different cell properties than the original constants you chose
+% if you want by changing this
 CONST.regionScoreFun.props = @cellprops3; 
 CONST.regionScoreFun.NUM_INFO = 21;
 
