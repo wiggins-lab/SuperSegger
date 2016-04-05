@@ -503,9 +503,6 @@ elseif strcmp(ResFlag, '60XPa')
 end
 
 
-CONST.trackOpti.MIN_AREA = 12;
-
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 % Constants for trackOpti                                                 %
@@ -520,6 +517,9 @@ CONST.trackOpti.MIN_AREA = 12;
 % SCORE_LIMIT      : no longer used
 % SCORE_LIMIT_DAUGHTER : limiting score for daughter cell on cell division
 % SCORE_LIMIT_MOTHER   : limiting score for mother cell on cell division
+
+
+CONST.trackOpti.MIN_AREA = 30;
 
 % THIS TURNS ON FUNCTIONALITY TO GUESS NEW AND OLD POLES IN RECENCTLY
 % DIVIDED CELLS IN A SNAPSHOT ANALYISIS
@@ -891,5 +891,9 @@ CONST.SR.rcut = 10; % The maximum distance between frames that two PSFs
 % this is the threshold intensity for including loci in analysis measured
 % in std
 CONST.SR.Ithresh = 2;
+
+
+
+
 
 end

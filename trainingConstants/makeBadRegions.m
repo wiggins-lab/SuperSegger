@@ -25,7 +25,7 @@ for i = 1 : num_im % go through all the images
     %if ~isfield( data, 'regs' ); - i will just remake them for now!
     data = intMakeRegs( data, CONST, [],1);
     save(dataname,'-STRUCT','data');
-    for j = 1 : 5
+    for j = 1 : 3
         data_ = intModRegions( data, CONST );
         datamodname=[dirname,contents(i).name(1:end-4),'_',sprintf('%02d',j),'_mod.mat'];
         save(datamodname,'-STRUCT','data_');

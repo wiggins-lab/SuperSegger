@@ -1,7 +1,7 @@
-function [data] = perRegionOpti( data, disp_flag, CONST,header)
+function [data] = perRegionOptiChecked( data, disp_flag, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
-% anneal, according to the nudmber of segments to be considered.
+% anneal, according to the number of segments to be considered.
 % if the number of segments > MAX_NUM_RESOLVE : uses the rawScore.
 % if the number of segments > MAX_NUM_SYSTEMATIC : uses simulated anneal.
 % and if it is below that it uses a systematic function.
@@ -39,6 +39,8 @@ end
 
 debug_flag = 0;
 
+% keep the good ones safe?
+
 segsLabelAll = data.segs.segs_label;
 segs_3n    = data.segs.segs_3n;
 above_Hi_ind = find(data.segs.scoreRaw > CutOffScoreHi);
@@ -47,29 +49,34 @@ segs_HiGood = double(ismember(segsLabelAll, above_Hi_ind));
 segs_good = segs_HiGood;
 segs_bad = double(ismember(segsLabelAll, below_Hi_ind));
 ss = size(segs_3n);
-
-
+segs_good_start = find(data.segs.score == 1);
+segs_bad_start = find(data.segs.score == 0);
 % remaining segs allowed to be tweaked!
 
 segsLabelMod = data.segs.segs_label;
 segsLabelMod(logical(segs_3n+segs_good)) = 0;
-% remake mask with best guessed regions : segs_3n and high segs_good
-mask_regs = double((data.mask_bg-segs_3n-segs_good)>0);
-data.regs.regs_label = (bwlabel( mask_regs, 4 ));
-data.regs.props = regionprops( data.regs.regs_label, ...
-    'BoundingBox','Orientation','Centroid','Area');
-data.regs.num_regs = max( data.regs.regs_label(:) );
-data.regs.score  = ones( data.regs.num_regs, 1 );
-data.regs.scoreRaw = ones( data.regs.num_regs, 1 );
-data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
 
-for ii = 1:data.regs.num_regs
-    [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
-    mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
-    data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:), E);
-    data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
-end
+origMask = data.mask_cell;
+data = intMakeRegs( data, CONST, [], [] ); % uses original mask to make regions
+
+% 
+% % remake mask with best guessed regions : segs_3n and high segs_good
+% mask_regs = double((data.mask_bg-segs_3n-segs_good)>0);
+% data.regs.regs_label = (bwlabel( mask_regs, 4 ));
+% data.regs.props = regionprops( data.regs.regs_label, ...
+%     'BoundingBox','Orientation','Centroid','Area');
+% data.regs.num_regs = max( data.regs.regs_label(:) );
+% data.regs.score  = ones( data.regs.num_regs, 1 );
+% data.regs.scoreRaw = ones( data.regs.num_regs, 1 );
+% data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
+% 
+% for ii = 1:data.regs.num_regs
+%     [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
+%     mask = data.regs.regs_label(yy,xx)==ii;
+%     data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+%     data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:), E);
+%     data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
+% end
 
 
 disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
@@ -79,21 +86,19 @@ disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
 
 regs_label = data.regs.regs_label;
 badReg = find(data.regs.scoreRaw < minGoodRegScore);
-
-props = data.regs.props;
-
-% delete tiny 
-small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
-badReg = badReg(ismember(badReg,small));
-
 numBadRegions = size(badReg,1);
+
+% not sure if i need this yet..
+badScores = data.regs.scoreRaw(badReg);
+[~,sortedBadScore] = sort(badScores);
+sortedBadRegions = badReg(sortedBadScore);
+%
+
 disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
 disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
 
 
 % to add segments around bad regions to be tweaked
-
-
 % remake mask, remake labels, find bad Regions that have not been
 % checked...?
 goodSegList = [];
@@ -103,9 +108,9 @@ badSegList = [];
 while ~isempty(badReg)
     ii = badReg(1);
     
-%     if ii == 54
-%         keyboard;
-%     end
+    if ii == 54
+        keyboard;
+    end
     
     % get padded box
     originalBBbox = data.regs.props(ii).BoundingBox;
@@ -163,7 +168,7 @@ while ~isempty(badReg)
     neighborsToCheck = unique(regs_label.* (regCombLabels == ind));
     badReg = setdiff (badReg,neighborsToCheck);
     
-    % dilate and erode mask to add more segments.
+    % add more segments.
     combMaskDil = imdilate(combMask, strel('square',2));
     combMaskErode = imerode(combMaskDil, strel('square',2));
     segs_list_extra = unique(combMaskErode.*segsLabelMod(yy,xx));
@@ -177,23 +182,22 @@ while ~isempty(badReg)
     goodChecked = segs_list(ismember(segs_list,goodSegList));
     badChecked = segs_list(ismember(segs_list,badSegList));
     
-    % remove from mask already checked segments
+    combMaskErode = (combMaskErode>0);
     for kk = 1 : numel(goodChecked)
-        combMask = combMask - (segsLabelMod(yy,xx)==goodChecked(kk));
+        combMaskErode = combMaskErode - (segsLabelMod(yy,xx)==goodChecked(kk));
     end
     
-    
+    combMaskErode = (combMaskErode>0);
     for kk = 1 : numel(badChecked)
-        combMask = combMask + (segsLabelMod(yy,xx)==badChecked(kk));
+        combMaskErode = combMaskErode + (segsLabelMod(yy,xx)==badChecked(kk));
     end
     
-    combMask = double(combMask>0);
     % keep only not checked segs
     if ~isempty(goodChecked)
-        segs_list =  segs_list(~ismember(segs_list,goodChecked));
+        segs_list = segs_list(~ismember(segs_list,goodSegList));
     end
     if ~isempty(badChecked)
-        segs_list =  segs_list(~ismember(segs_list,badChecked));
+        segs_list = segs_list(~ismember(segs_list,badSegList));
     end
     
     
@@ -205,7 +209,7 @@ while ~isempty(badReg)
     end
     
     if debug_flag
-        figure(1);
+        figure(1)
         mod = mask_regs;
         mod(yy,xx) = mod(yy,xx) + combMaskErode;
         imshow(cat(3,0.5*ag(mask_regs),ag(mod),ag(mod)));
@@ -225,7 +229,33 @@ while ~isempty(badReg)
         disp([header, 'rO: Systematic : (',num2str(num_segs),' segments).']);
         [vect,regEmin] = systematic( segs_list, data, combMask, xx, yy, CONST);
     end
-        
+    
+    % remake mask
+    decidedGoodSegs = segs_list(logical(vect));
+    decidedBadSegs = segs_list(~vect);
+    
+    modified = 0;
+    if sum(ismember(segs_good_start,decidedGoodSegs))~=numel(decidedGoodSegs)
+        modified = 1;
+        segs_good_start = [segs_good_start;decidedGoodSegs];
+        segs_bad_start = segs_bad_start(~ismember(segs_bad_start,decidedGoodSegs));
+    end
+    if sum(ismember(segs_bad_start,decidedBadSegs))~=numel(decidedBadSegs)
+        modified = 1;
+        segs_bad_start = [segs_bad_start;decidedBadSegs];
+        segs_good_start = segs_good_start(~ismember(segs_good_start,decidedBadSegs));
+    end
+    
+    
+    % red : segments that were removed, blue segs that were added. 
+    if modified
+        new_segs_good = (ismember(segsLabelAll,segs_good_start));
+        new_mask_cell = double((data.mask_bg-segs_3n-new_segs_good)>0);
+        imshow(cat(3,new_mask_cell,data.mask_cell,data.mask_cell));
+        keyboard;
+    end
+    
+    % maybe not need this anymore
     if ~isempty(segs_list)
         goodSegList = [goodSegList;segs_list(logical(vect))];
         badSegList = [badSegList;segs_list(~vect)];
@@ -233,7 +263,8 @@ while ~isempty(badReg)
     
     
     if debug_flag
-        % shows the final optimized segments for the combined mask      
+        % shows the final optimized segments for the combined mask
+        
         mod = mask_regs*0;
         mod(yy,xx) = combMask;
         segment_mask = mask_regs*0;

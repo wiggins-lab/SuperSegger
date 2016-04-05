@@ -74,8 +74,7 @@ if ~isempty(data_c)
         counter = 1;
         pairsC = NaN * zeros(2,numRegs2 * numRegs2);
         
-        for jj = regsInC
-            
+        for jj = regsInC            
             maskC = (data_c.regs.regs_label==jj);
             % get neighbors
             tmp_mask = imdilate(maskC, strel('square',5));
@@ -117,9 +116,17 @@ if ~isempty(data_c)
                 || goodOneToOne(cRegs(2))) ;
             
             
-            if  ~alreadyFoundOneToOne
+            % check if region is still around
+            if isSingleRegC
+                regionExists = sum(data_c.regs.regs_label(:) == cRegs(1));
+            else
+                regionExists = sum(data_c.regs.regs_label(:) == cRegs(1)) &&...
+                sum(data_c.regs.regs_label(:) == cRegs(2));
+            end
+            if  ~alreadyFoundOneToOne && regionExists
                 
                 [maskC,areaC,centroidC] = regProperties (data_c,cRegs);
+                
                 
                 % colony it belongs to
                 colonyId =  max(colony_labels(maskC));
@@ -290,6 +297,7 @@ if ~isempty(data_c)
         [~,minIndxF] = min(totCost');
         %[~,minIndxC] = min(totCost');
         
+
         for kk = 1 : numel(leftInC)
             leftC = leftInC(kk);
             bestF = minIndxF(leftC);

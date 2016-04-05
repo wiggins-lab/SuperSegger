@@ -6,6 +6,7 @@ function data = intMakeRegs( data, CONST, mask_bad_regs, good_regs )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+
 E = CONST.regionScoreFun.E;
 
 % sets all scores to 1

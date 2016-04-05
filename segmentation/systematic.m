@@ -1,5 +1,4 @@
-
-function [vect,Emin] = systematic( segs_list, data, cell_mask, xx, yy, CONST)
+function [vect,regEmin] = systematic( segs_list, data, cell_mask, xx, yy, CONST)
 
 debug_flag = 0;
 
@@ -43,7 +42,7 @@ for jj = 1:num_comb;
     regE(1:mm,jj) = -CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
     segE(1:num_segs,jj) = ((1-2*vect).*data.segs.scoreRaw(segs_list)')*CONST.regionOpti.DE_norm;
     
-    regionScore(jj) = mean(regE(:,jj) )+ mean(segE(:,jj));
+    regionScore(jj) = mean(regE(1:mm,jj) )+ mean(segE(:,jj));
     
     if debug_flag
         figure(1);
@@ -60,7 +59,8 @@ end
 [Emin, jj_min] = min(regionScore);
 vect = makeVector(jj_min-1,num_segs);
 
-
+regEmin = -regE(:,jj_min);
+regEmin = regEmin(regEmin~=0);
 
 if debug_flag
     % shows the minimum score found from systematic

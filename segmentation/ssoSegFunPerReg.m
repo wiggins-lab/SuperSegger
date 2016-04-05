@@ -21,7 +21,7 @@ function [data, err_flag] = ssoSegFunPerReg( phase, CONST, header, dataname, cro
 % This file is part of SuperSeggerOpti.
 
 % create the masks and segments
-data = superSeggerOpti( phase ,[], ~CONST.seg.OPTI_FLAG ,CONST, 1, header, crop_box);
+data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box);
 
 if numel(data.segs.score) > CONST.superSeggerOpti.MAX_SEG_NUM;
     err_flag = true;

@@ -149,9 +149,14 @@ phase = ag(phase);
 phase__ = magicContrastFast2(phase, MAGIC_RADIUS);
 phase = double(uint16(phase__-MAGIC_THRESHOLD));
 
-% This cuts out bright spots from the mask
+% keeps only objects with bright halos 
+filled_halos = fillHolesAround(phase);
+mask_bg_ = filled_halos & mask_bg_;
+
+% cuts out bright halos from the mask
 mask_mod = (phase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_mod)>0);
+
 
 % Watershed the image
 %here we use matlab's standard watershed algorithm to watershed just the

@@ -1,4 +1,4 @@
-function showSegRule( data, FLAGS, figNum )
+function showSegRule( data, FLAGS, figNum,CONST )
 % showSegRule : shows the segmentation for regions and segments
 %
 % INPUT :
@@ -24,13 +24,13 @@ end
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 0;
+    FLAGS.S_flag = 1;
 end
 
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 1;
+    FLAGS.t_flag = 0;
 end
 
 t_flag = FLAGS.t_flag;
@@ -47,7 +47,7 @@ end
 
 Sj_flag = FLAGS.Sj_flag;
 
-if ~exist('figNum','var')
+if ~exist('figNum','var') || isempty(figNum)
     figNum = 4;
 end
 
@@ -141,6 +141,9 @@ if im_flag == 1
 elseif im_flag == 2 % region view
     
     backer = 0*ag(data.phase);
+    if ~isfield(data,'regs')
+        data = updateRegionFields (data,CONST)
+    end
     num_regs = data.regs.num_regs;
     
     if isfield(data.regs,'score')

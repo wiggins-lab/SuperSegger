@@ -56,9 +56,6 @@ segTrainingDir = [dirname,'crop',filesep];
 dirname_seg = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
 mkdir(dirname_seg);
 
-% create time stamps to not run the fluorescence and cell maker parts
-time_stamp = clock;
-
 only_seg = 1; % runs only segmentation, no linking
 BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,1,only_seg);
 
@@ -76,7 +73,7 @@ segData = dir([segDir,'*seg.mat']);
 FLAGS.im_flag = 1;
 FLAGS.S_flag = 0;
 FLAGS.t_flag = 0;
-repeat = true
+repeat = true;
 
 while repeat
     for i = 1 : numel(segData)
@@ -109,15 +106,18 @@ disp ('Training neural network to identify correct and false segments.');
 disp ('Updating segments'' scores using the trained neural network.');
 updateScores(segDirMod,'segs', A, @scoreNeuralNet);
 
+% scoring parameters - 21
+
+
 
 FLAGS.im_flag = 2;
 FLAGS.S_flag = 0;
 FLAGS.t_flag = 0;
-repeat = true
-segData = dir([segDir,'*seg*.mat']);
+repeat = true;
+segData = dir([segDirMod,'*seg*.mat']);
 while repeat
     for i = 1 : numel(segData)
-        data = load([segDir,segData(i).name]);
+        data = load([segDirMod,segData(i).name]);
         [data,touch_list] = makeTrainingData (data,FLAGS)
         save([segDirMod,segData(i).name],'-STRUCT','data');
     end
@@ -135,8 +135,13 @@ makeBadRegions( segDirMod, CONST)
 
 
 % 6) Runs neural network training on regions
+
+% change this out if you want to use different  cell properties
+CONST.regionScoreFun.props = @cellprops3; 
+CONST.regionScoreFun.NUM_INFO = 21;
+
 disp ('Training neural network to identify correct and false regions');
-[Xregs,Yregs] =  getInfoScores (segDirMod,'regs');
+[Xregs,Yregs] =  getInfoScores (segDirMod,'regs',CONST);
 [netRegions] = neuralNetTrain (Xregs,Yregs);
 E = netRegions;
 
@@ -146,7 +151,9 @@ updateScores(segDirMod,'regs', E, @scoreNeuralNet);
 
 % saves A,E and whole constants file
 CONST.superSeggerOpti.A = A;
+CONST.seg.segFun = @ssoSegFunPerReg; % to use the new per region scoring segm
 CONST.seg.segmentScoreFun = @scoreNeuralNet;
+
 CONST.regionScoreFun.E = E;
 CONST.regionScoreFun.fun = @scoreNeuralNet;
 
@@ -155,7 +162,7 @@ CONST.regionOpti.CutOffScoreHi = 10;
 CONST.regionOpti.CutOffScoreLo = -10;
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30;
 CONST.trackOpti.SCORE_LIMIT_MOTHER = - 30;
-CONST.regionOpti.minGoodRegScore = 10; %CONST.trackOpti.SCORE_LIMIT_DAUGHTER; % change to 10.. put it in the constants..
+CONST.regionOpti.minGoodRegScore = 10; 
 CONST.regionOpti.neighMaxScore = 10;
 
 save([dirname,constname,'_FULLCONST'],'-STRUCT','CONST');

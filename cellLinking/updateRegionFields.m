@@ -1,34 +1,14 @@
 function data  = updateRegionFields (data,CONST)
-% trackOptiIntDiskNR : computes the overlaps between subsequent frames
-% (reverse and forward) and updates region fields in the data structure.
+% updateRegionFields: computes the reg fields in the seg and err data structure.
+% using the cell mask. It also initialized the fields to be used by the 
+% linking aglorithm.
 %
 % INPUT :
-%       data    : region (cell) data structure
-%       data_r  : reverse region (cell) data structure
-%       data_f  : forward region (cell) data structure
+%       data    : region (cell) data structure (seg file)
 %       CONST   : SuperSeggerOpti set parameters
 %
 % OUTPUT :
-%       data : updated region (cell) data structure.
-%
-%           It contains the following updated fields :
-%           regs.ol.{r,f,rf,fr}: these are the numerical values for the
-%           area overlap between f (forward) and r (reverse) frames. Also
-%           makes from f to r and r to f.
-%
-%           regs.map.{r,f,rf,fr}: these are connections between regions.
-%           For instance map.r{i} = [....] is a list of regions that
-%           "overlap" over the threshold (OVERLAP_LIMIT_MIN)
-%
-%           regs.error.{r,f,rf,fr}: these are the error flags that
-%           are set if the area change between the largest overlap region
-%           is below a cut off (dA_LIMIT) OR that there is more than one
-%           linked region that overlaps above cut off... see map. Note
-%           that this happens in a successful cell division.
-%
-%           regs.dA.{r,f,rf,fr}: these area ratios between the largest
-%           overlap regions. This is defined as min(A1,A2)/max(A2,A1).
-%           We set an error if this gets too large.
+%       data : updated region (cell) data structure with regions field.
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
