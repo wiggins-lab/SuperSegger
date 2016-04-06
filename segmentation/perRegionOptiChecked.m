@@ -58,27 +58,6 @@ segsLabelMod(logical(segs_3n+segs_good)) = 0;
 
 origMask = data.mask_cell;
 data = intMakeRegs( data, CONST, [], [] ); % uses original mask to make regions
-
-% 
-% % remake mask with best guessed regions : segs_3n and high segs_good
-% mask_regs = double((data.mask_bg-segs_3n-segs_good)>0);
-% data.regs.regs_label = (bwlabel( mask_regs, 4 ));
-% data.regs.props = regionprops( data.regs.regs_label, ...
-%     'BoundingBox','Orientation','Centroid','Area');
-% data.regs.num_regs = max( data.regs.regs_label(:) );
-% data.regs.score  = ones( data.regs.num_regs, 1 );
-% data.regs.scoreRaw = ones( data.regs.num_regs, 1 );
-% data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
-% 
-% for ii = 1:data.regs.num_regs
-%     [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
-%     mask = data.regs.regs_label(yy,xx)==ii;
-%     data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
-%     data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:), E);
-%     data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
-% end
-
-
 disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
 
 
@@ -107,10 +86,6 @@ badSegList = [];
 
 while ~isempty(badReg)
     ii = badReg(1);
-    
-    if ii == 54
-        keyboard;
-    end
     
     % get padded box
     originalBBbox = data.regs.props(ii).BoundingBox;

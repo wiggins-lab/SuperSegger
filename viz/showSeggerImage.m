@@ -1,10 +1,10 @@
 function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
-% showSeggerImage : produces the trackOptiView image according to clist and
+% showSeggerImage : produces the superSeggerViewer image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
 % Colors : green are cells without errors, red are cells with error flags
 % reverse or forward, or lysed cells, blue are cells that came from a good
-% division, if error or not observed (?), or had a succesfful divison. 
+% division, if error or not observed (?), or had a succesfful divison.
 %
 % INPUT :
 %         data : current frame data (*err usually data)
@@ -106,7 +106,7 @@ else
 end
 
     function doAnnotation( data_, x_, y_ )
-    % doAnnotation : annotates spots, cell numbers and poles
+        % doAnnotation : annotates spots, cell numbers and poles
         if ~isempty(data_)
             
             % plots cell numbers
@@ -235,7 +235,7 @@ if FLAGS.f_flag > 0
             else
                 fluor1 = fluor1-mean(fluor1(:));
                 fluor1( fluor1< 0 ) = 0;
-            end            
+            end
         end
     else
         fluor1 = 0*data.phase;
@@ -262,7 +262,7 @@ if FLAGS.f_flag > 0
         fluor1 =   ag( double(fluor1).^.6 );
         fluor2 =   ag( double(fluor2).^.6 );
     end
-        
+    
     if isfield( data, 'fluor1')
         minner = medfilt2( fluor1, [2,2], 'symmetric' );
         maxxer = max( minner(:));
@@ -292,99 +292,107 @@ if FLAGS.f_flag > 0
     im(:,:,1) = 255*uint8(lyse_im) + im(:,:,1);
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
-            
+    
 elseif FLAGS.Outline_flag  % it just outlines the cells
-        if FLAGS.v_flag && isfield(data,'cell_outline')
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
-        else
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
-        end
+    if FLAGS.v_flag && isfield(data,'cell_outline')
+        im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+    else
+        im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+    end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
-    if isfield( data.regs, 'ignoreError' )
-        ignoreErrorV = data.regs.ignoreError;
+    if ~isfield( data.regs, 'ID') % no cell ids - seg files
+        
+        blueChannel = 0.3*(data.mask_cell);
+        reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
+        im = reg_color + im;
+        
     else
-        ignoreErrorV = 0*data.reg.divide;
+        
+        if isfield( data.regs, 'ignoreError' )
+            ignoreErrorV = data.regs.ignoreError;
+        else
+            ignoreErrorV = 0*data.reg.divide;
+        end
+        
+        % cells in the ID list and in this region
+        % if v_flag is off, all cells are in is_in_cell_V
+        cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
+        cellBorn = or(and(data.regs.birthF,data.regs.stat0),data.regs.divide);
+        
+        % cells with errors current->reverse or ignoreError
+        map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+            data.regs.error.r),ignoreErrorV)));
+        map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
+        
+        % cells with errors current->reverse or ignoreError
+        map_err_fw_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+            ~data.regs.error.r),ignoreErrorV)));
+        map_err_fw  = double(ismember( data.regs.regs_label, map_err_fw_ind ));
+        
+        
+        % cells without errors
+        map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
+        map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
+        
+        % in list, cell was not born in this frame with good division or divided
+        % but stat0==2 : succesfful division was observed
+        map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
+        map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));
+        
+        % outline the ones that were just born with stat0 == 2
+        map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
+        map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
+        
+        
+        % in list, cell was not born in this frame with good division or divided
+        % stat0==1 : cell was result of succesfful division
+        map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
+        map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
+        
+        % outline the ones that were just born with stat0 == 1
+        map_stat0_1O_ind = find(and(cells_In_Frame,data.regs.stat0==1));
+        map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
+        
+        
+        % in list, cell was not born in this frame with good division or divided
+        % stat0 == 0  : cell has errors, or division not observed
+        map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
+        map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
+        
+        % outline the ones that were just born with stat0 == 1
+        map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
+        map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
+        
+        
+        redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+        greenChannel =  0.30*(map_no_err);
+        blueChannel = 0.7*((map_stat0_2)+ 0.5*(map_stat0_1)+0.25*(map_stat0_0));
+        
+        reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
+        
+        im = reg_color + im;
     end
-    
-    % cells in the ID list and in this region
-    % if v_flag is off, all cells are in is_in_cell_V
-    cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
-    cellBorn = or(and(data.regs.birthF,data.regs.stat0),data.regs.divide);
-    
-    % cells with errors current->reverse or ignoreError
-    map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
-        data.regs.error.r),ignoreErrorV)));
-    map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
-    
-   % cells with errors current->reverse or ignoreError
-    map_err_fw_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
-        ~data.regs.error.r),ignoreErrorV)));
-    map_err_fw  = double(ismember( data.regs.regs_label, map_err_fw_ind ));
-    
-
-    % cells without errors
-    map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
-    map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
-    
-    % in list, cell was not born in this frame with good division or divided
-    % but stat0==2 : succesfful division was observed
-    map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
-    map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));   
-    
-    % outline the ones that were just born with stat0 == 2
-    map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
-    map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));  
-    
-    
-    % in list, cell was not born in this frame with good division or divided
-    % stat0==1 : cell was result of succesfful division
-    map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
-    map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
-    
-    % outline the ones that were just born with stat0 == 1
-    map_stat0_1O_ind = find(and(cells_In_Frame,data.regs.stat0==1));
-    map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
-    
-    
-    % in list, cell was not born in this frame with good division or divided
-    % stat0 == 0  : cell has errors, or division not observed
-    map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
-    map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
-    
-   % outline the ones that were just born with stat0 == 1
-    map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
-    map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
-    
-    
-    redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
-    greenChannel =  0.30*(map_no_err);
-    blueChannel = 0.7*((map_stat0_2)+ 0.5*(map_stat0_1)+0.25*(map_stat0_0));
-    
-    reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
-    
-    im = reg_color + im;
-    
-    %% colors : 
-    % baby-blue : no errors, stat0=2 cells 
+    %% colors :
+    % baby-blue : no errors, stat0=2 cells
     % tirquaz :  stat0 = 1 cells
     % deep green : stat0 = 0 cells
     % pink : has error in reverse frame
     % purple : has error in forward frame
     % red outlines : dividing or has just divided
-
+    
 end
-   
+
 end
 
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
 % intPlotNum : Plot cell number or region numbers
 
-counter = 200; % max amount of cell numbers to be plotted
+counter = 500; % max amount of cell numbers to be plotted
 kk = 0; % counter for regions
 while (counter > 0 && kk < data.regs.num_regs)
-   % disp(counter)
+    % disp(counter)
     kk = kk + 1;
     rr = data.regs.props(kk).Centroid;
     
@@ -397,7 +405,7 @@ while (counter > 0 && kk < data.regs.num_regs)
     
     if ignoreError
         cc = 'g';
-    elseif data.regs.error.r(kk)
+    elseif isfield (data.regs, 'error') && data.regs.error.r(kk)
         cc = 'r';
     else
         cc = 'w';
@@ -410,36 +418,23 @@ while (counter > 0 && kk < data.regs.num_regs)
             (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
         
         counter = counter - 1;
-        if FLAGS.v_flag == 1 % cell view
-            if isfield( data.regs, 'ID' ) && ismember( data.regs.ID(kk), ID_LIST )
+        if FLAGS.v_flag == 1 && isfield( data.regs, 'ID' ) && ismember( data.regs.ID(kk), ID_LIST )
                 text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
                     'Color', cc,...
                     'FontWeight', 'Bold',...
                     'HorizontalAlignment','Center',...
                     'VerticalAlignment','Middle');
                 title('Cell ID');
-            end
             
-            
-        elseif FLAGS.v_flag == 0 % region view
+        else % region view v_flag is 0
             text( xpos, ypos, ['\fontsize{11}',num2str(kk)],...
                 'Color', cc,...
                 'Color', cc,...
                 'FontWeight', 'normal',...
                 'HorizontalAlignment','Center',...
                 'VerticalAlignment','Middle');
-            title('Region Number');
-            
-        else
-            text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.age(kk))],...
-                'Color', cc,...
-                'Color', cc,...
-                'FontWeight', 'normal',...
-                'HorizontalAlignment','Center',...
-                'VerticalAlignment','Middle');
-            title('Region Number');
-            
-        end     
+            title('Region Number');            
+        end
     end
     
 end

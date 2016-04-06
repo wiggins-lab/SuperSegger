@@ -234,9 +234,6 @@ while ~isempty(badReg)
         imshow(cat(3,backer+ag(segment_mask) + 0.7*ag(ismember(segsLabelAll,segs_list)),backer + ag(mod>0), ag(mod>0) + backer))
         keyboard;
     end
-    
-    
-    
 end
 
 if ~isempty(goodSegList)

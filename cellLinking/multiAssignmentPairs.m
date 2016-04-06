@@ -144,8 +144,7 @@ if ~isempty(data_c)
                 % calculate masks, areas, centroids
                 
                 for uu = 1:numel(possibleMapInd)
-                    
-                    
+                                       
                     % one to one mapping
                     idF = possibleMapInd(uu);
                     [maskF,areaF,centroidF] = regProperties (data_f,idF);

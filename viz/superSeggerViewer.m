@@ -63,12 +63,16 @@ touch_list = [];
 setHeader =[];
 
 if nargin<2 || isempty(file_filter);
-    file_filter = '*err.mat';
+    if numel(dir([dirname,filesep,'xy1',filesep,'seg',filesep,'*err.mat']))~=0
+        file_filter = '*err.mat';
+    else
+        file_filter = '*seg.mat';
+    end
 end
 
 % Add slash to the file name if it doesn't exist
 if(nargin<1 || isempty(dirname))
-    dirname=uigetdir()
+    dirname=uigetdir();
 end
 
 dirname = fixDir(dirname);
@@ -207,11 +211,11 @@ while runFlag
         end
     if ~isempty( touch_list );
         disp('Warning! Frames touched. Run re-link.');
-        touch_list
+        touch_list;
     end
     
     disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);   
-    c = input(':','s')
+    c = input(':','s');
     
     % LIST OF COMMANDS
     if isempty(c)
