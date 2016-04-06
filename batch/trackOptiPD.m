@@ -14,7 +14,7 @@ function trackOptiPD(dirname, CONST)
 file_filter = '*.tif';
 
 if(nargin<1 || isempty(dirname))    
-    dirname=uigetdir()
+    dirname = uigetdir();
 end
 
 dirname = fixDir(dirname);
@@ -30,30 +30,22 @@ if ~isempty(contents);
     
     num_im = numel(contents);
        
-    nt  = []; % time
-    nc  = []; % channel
-    nxy = []; % xy
-    nz  = []; % z
+    nc  = zeros(1, num_im); % channel
+    nxy = zeros(1, num_im); % xy
         
     for i = 1:num_im;
         % creates an array with the the numbers after the strings t,c,xy,z
         % for the filename of each image
         nameInfo = ReadFileName(contents(i).name);    
-        nt  = [nt,  nameInfo.npos(1,1)];
-        nc  = [nc,  nameInfo.npos(2,1)];
-        nxy = [nxy, nameInfo.npos(3,1)];
-        nz  = [nz,  nameInfo.npos(4,1)];
+        nc(i)  = nameInfo.npos(2,1);
+        nxy(i) = nameInfo.npos(3,1);
     end
     
-    nt  = sort(unique(nt));
     nc  = sort(unique(nc));
     nxy = sort(unique(nxy));
-    nz  = sort(unique(nz));
 
     num_xy = numel(nxy);
     num_c  = numel(nc);
-    num_z  = numel(nz);
-    num_t  = numel(nt);
     
     dirname_list = cell(1,num_xy);
     
@@ -95,10 +87,8 @@ if ~isempty(contents);
         
         nameInfo = ReadFileName( contents(i).name );
         
-        it  = nameInfo.npos(1,1); % time
         ic  = nameInfo.npos(2,1); % channel
         ixy = nameInfo.npos(3,1); % xy position
-        iz  = nameInfo.npos(4,1); % z position
                
         if ixy == -1
             ii = 1;

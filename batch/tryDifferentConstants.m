@@ -66,7 +66,7 @@ corner1 = ginput (1);
 
 hold on; plot (corner1(1) * ones (1,ss(1)),1:ss(1),'r');
 hold on; plot (1:ss(2),corner1(2) * ones (1,ss(2)),'r');
-disp('Pick the second corners of the crop region.')
+disp('Pick the second corner of the crop region.')
 corner2 = ginput (1);
 x = floor(sort([corner1(1),corner2(1)]));
 y = floor(sort([corner1(2),corner2(2)]));

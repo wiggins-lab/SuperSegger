@@ -124,7 +124,7 @@ localMapGoodFlagEnd = and(data_c.regs.DA.r(ii) > 2*DA_MIN,...
 
 
 % set to 1 if you want to display the flags
-display =1;
+display = 0;
 if display
     disp(['Frame: ', num2str(i), ' seg: ', num2str(ii)] );
     if stray_flag

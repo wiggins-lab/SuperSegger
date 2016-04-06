@@ -138,7 +138,7 @@ while time <= numIm
                 % how to resolve?
                 % FIX THIS :  probably best i can do is take all cells that overlap
                 % and look for missing segments?
-                keyboard;
+                %keyboard;
                 
                 
                 
@@ -171,7 +171,7 @@ while time <= numIm
                 imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                     ag((data_c.regs.regs_label == mapRC(1)) + ...
                     (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));     
-                keyboard;
+                %keyboard;
                 % assignments from rev to forward mismatch
             else
                 
@@ -196,7 +196,7 @@ while time <= numIm
                 if ~isempty(data_f) && (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}))
                     % wrong division atempt to merge!
                     data_c.regs.error.r(regNum) = 1;
-                    keyboard;
+                    %keyboard;
                     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
                     
                     
@@ -210,7 +210,7 @@ while time <= numIm
                         figure(1);
                         imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
                         
-                        keyboard;
+                        %keyboard;
                     end
                     
                     if ~(errorM || errorD1 || errorD2)
@@ -254,7 +254,7 @@ while time <= numIm
             
             if debug_flag
                 imshow(cat(3,ag(data_c.phase), ag(data_c.regs.regs_label==regNum),ag((data_r.regs.regs_label==mapCR(1))>0 + (data_r.regs.regs_label==mapCR(2))>0)));
-                keyboard
+                %keyboard
             end
             
             [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,mapCR,CONST);

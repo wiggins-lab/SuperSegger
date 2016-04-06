@@ -136,13 +136,13 @@ CONST.parallel.show_status   = ~(CONST.parallel.parallel_pool_num);
 
 cl = class(res);
 
-if strcmp(cl,'double' )  && res == 60
+if isa(res,'double') && res == 60
         disp('loadConstants: 60X');
         ResFlag = '60XEc';
-elseif strcmp(cl,'double' )  && res == 100
+elseif isa(res,'double') && res == 100
         disp('loadConstants:  100X');
         ResFlag = '100XEc';
-elseif strcmp(cl, 'char' );  
+elseif ischar(res)  
     if strcmp(res,'60XEc') % 1
         disp('loadConstants:  60X Ecoli');
         ResFlag = '60XEc';
@@ -188,7 +188,7 @@ CONST.align.ALIGN_FLAG = true;
 % By changing this field you can change the segmentation back-end of
 % BatchSuperSeggerOpti.
 
-CONST.seg.segmentScoreFun = @segmentScoreFun
+CONST.seg.segmentScoreFun = @segmentScoreFun;
 CONST.seg.segFun = @ssoSegFun;
 
 if strcmp(ResFlag, '60XPaM2')

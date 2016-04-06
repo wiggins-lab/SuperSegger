@@ -1,6 +1,6 @@
 function [minVect,regEmin] = systematic( segs_list, data, cell_mask, xx, yy, CONST)
 
-debug_flag = 1;
+debug_flag = 0;
 
 num_segs = numel(segs_list);
 num_comb = 2^num_segs;
@@ -21,7 +21,7 @@ end
 [Emin, jj_min] = min(regionScore);
 minVect = makeVector(jj_min-1,num_segs)';
 minState = state{jj_min};
-minState = minState.reg_E;
+regEmin = minState.reg_E;
 
 if debug_flag
     % shows the minimum score found from systematic

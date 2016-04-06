@@ -37,7 +37,7 @@ if nargin < 2 || isempty(disp_flag);
     disp_flag = 1;
 end
 
-debug_flag = 1;
+debug_flag = 0;
 
 segsLabelAll = data.segs.segs_label;
 segs_3n    = data.segs.segs_3n;
@@ -48,11 +48,10 @@ segs_good = segs_HiGood;
 segs_bad = double(ismember(segsLabelAll, below_Hi_ind));
 ss = size(segs_3n);
 
-
-% remaining segs allowed to be tweaked!
-
+% remaining segs allowed to be tweaked
 segsLabelMod = data.segs.segs_label;
 segsLabelMod(logical(segs_3n+segs_good)) = 0;
+
 % remake mask with best guessed regions : segs_3n and high segs_good
 mask_regs = double((data.mask_bg-segs_3n-segs_good)>0);
 data.regs.regs_label = (bwlabel( mask_regs, 4 ));
@@ -76,13 +75,11 @@ disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
 
 
 % get regions with bad scores
-
 regs_label = data.regs.regs_label;
 badReg = find(data.regs.scoreRaw < minGoodRegScore);
-
 props = data.regs.props;
 
-% delete tiny 
+% remove tiny region
 small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
 badReg = badReg(ismember(badReg,small));
 
@@ -91,21 +88,13 @@ disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segs
 disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
 
 
-% to add segments around bad regions to be tweaked
-
-
-% remake mask, remake labels, find bad Regions that have not been
-% checked...?
+% list of already tweaked segments
 goodSegList = [];
 badSegList = [];
 
 
 while ~isempty(badReg)
     ii = badReg(1);
-    
-%     if ii == 54
-%         keyboard;
-%     end
     
     % get padded box
     originalBBbox = data.regs.props(ii).BoundingBox;
@@ -171,9 +160,6 @@ while ~isempty(badReg)
     segs_list = unique(segs_list);
     segs_list = segs_list(segs_list~=0);
     
-    
-    % possibly this is not needed - instead I need to add the bad regions
-    % previously I worked on, with already things set? maybe?
     goodChecked = segs_list(ismember(segs_list,goodSegList));
     badChecked = segs_list(ismember(segs_list,badSegList));
     
@@ -241,15 +227,11 @@ while ~isempty(badReg)
         for kk = 1:num_segs
             mod = mod - vect(kk)*(segs_list(kk)==segsLabelAll);
             segment_mask = segment_mask + vect(kk)*(segs_list(kk)==segsLabelAll);
-        end
-        
+        end        
         
         figure (2);
-        backer = 0.5*ag(mask_regs);
-       
-         
+        backer = 0.5*ag(mask_regs);      
         imshow(cat(3,backer+ag(segment_mask) + 0.7*ag(ismember(segsLabelAll,segs_list)),backer + ag(mod>0), ag(mod>0) + backer))
-
         keyboard;
     end
     
@@ -268,7 +250,6 @@ if ~isempty(badSegList)
     segs_bad = (segs_bad + ismember(segsLabelAll,badSegList ))>0;
     data.segs.score(badSegList) = 0;
 end
-
 
 data.mask_cell = double((data.mask_bg-segs_3n-segs_good)>0);
 data.segs.segs_good = segs_good;

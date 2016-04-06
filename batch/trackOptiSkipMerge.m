@@ -46,16 +46,15 @@ end
 contents=dir([dirname_xy,'phase',filesep,file_filter]);
 num_im = numel(contents);
 
-nz = [];
-nt = [];
+nz = zeros(1, num_im);
+nt = zeros(1, num_im);
 
 % reset nz values
 for i = 1:num_im;
     nameInfo = ReadFileName( contents(i).name );    
-    nt = [nt, nameInfo.npos(1,1)];
-    nz = [nz, nameInfo.npos(4,1)];
+    nt(i) = nameInfo.npos(1,1);
+    nz(i) = nameInfo.npos(4,1);
 end
-
 
 nt = sort(unique(nt));
 nz = sort(unique(nz));

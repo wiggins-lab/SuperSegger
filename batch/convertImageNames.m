@@ -39,7 +39,6 @@ elementsTime='t';
 elementsXY ='xy';
 elementsPhase = 'c';
 
-
 if exist([dirname,filesep,'raw_im'],'dir') && ~isempty(dir([dirname,filesep,'raw_im',filesep,'*tif*']))
     disp('Files already aligned');
 elseif numel(dir([dirname,filesep,'*t*c*.tif']))
@@ -54,7 +53,7 @@ else
         mkdir(dirOriginal) ;
     end
     
-    if isempty(imagesInOrig) % move original images 
+    if isempty(imagesInOrig) % move original images
         movefile('*.tif',dirOriginal); % move all images to dir original
     end
     
@@ -111,33 +110,23 @@ if isempty(regexp(fileName,[patternBefore,'[0123456789]+',patternAfter], 'once')
 end
 
 % both empty set numbers to 1
-if strcmp(patternBefore, '') && strcmp(patternAfter, '')
+if strcmp(patternBefore, '') && strcmp(patternAfter, '') ||...
+    isempty(patternBefore) &&  isempty(patternAfter)
     numbers = 1;
     return
 end
 
-% find starting number
-if ~strcmp(patternBefore, '')
-    timeStart = regexp(fileName,[patternBefore,'[0123456789]']) + 1;
-end
-
-% find ending number
-if ~strcmp(patternAfter, '')
-    timeEnd = regexp(fileName,['[0123456789]',patternAfter]);
-end
-
+% find starting and ending number
+[timeStart,timeEnd] =  regexp(fileName,[patternBefore,'[0123456789]+',patternAfter]);
 
 if isempty(timeStart) ||isempty(timeEnd)
     disp (['pattern was not found',patternBefore,patternAfter,fileName,'setting to 1']);
     numbers = 1;
 else
-    if timeStart == 0 && timeEnd ~=0
-        timeStart = find( ~is_num_mask(1:timeEnd),1,'last')+1;
-    end
-    if timeStart ~= 0 && timeEnd ==0
-        timeEnd = timeStart + find( ~is_num_mask(timeStart:end),1,'first')-2;
-    end
-    numbers = str2double(fileName(timeStart:timeEnd));
+    extraBefore = numel(patternBefore);
+    extraAfter = numel(patternAfter);
+    pattern = fileName(timeStart+extraBefore:timeEnd-extraAfter);
+    numbers = str2double(pattern);
 end
 
 end
