@@ -33,10 +33,10 @@ function superSeggerViewer(dirname,file_filter)
 %         lyse_flag : outlines cell that lysed
 %         m_flag : shows mask (default 0)
 %         c_flag : ? reserts to default view
-%         v_flag : toogles between cell and regions / using cell numbers versus region numbers
+%         cell_flag : toogles between cell and regions / using cell numbers versus region numbers
 %         f_flag : shows flurescence image
 %         s_flag : shows the foci and their score
-%         T_flag : ? something related to regions (default 0)
+%         T_flag : something related to regions (default 0)
 %         p_flag : shows pole positions and connects daughter cells to each other
 %         e_flag : 0, errors displayed for this frame
 %         f_flag : 0
@@ -101,6 +101,10 @@ else
     error_list = [];
     nn = 1;
     dirnum = 1;
+end
+
+if strcmp(file_filter,'*seg.mat')
+    FLAGS.cell_flag = 0;
 end
 
 % Load info from one of the xy directories. dirnum tells you which one. If
@@ -178,7 +182,6 @@ while runFlag
         imshow(data_c.phase);        
     end
     
-     
     showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);    
     flagsStates = intSetStateStrings(FLAGS,CONST);
     
@@ -258,7 +261,7 @@ while runFlag
     elseif c(1) == 'F' % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
         if numel(c) > 1
             find_num = floor(str2num(c(2:end)));
-            if FLAGS.v_flag
+            if FLAGS.cell_flag
                 regnum = find( data_c.regs.ID == find_num);
                 
                 if ~isempty( regnum )
@@ -567,7 +570,7 @@ while runFlag
         FLAGS.e_flag = ~FLAGS.e_flag;
         
     elseif strcmp(c,'v') % Toggle between cell view and region view
-        FLAGS.v_flag = ~FLAGS.v_flag;
+        FLAGS.cell_flag = ~FLAGS.cell_flag;
         
         
     elseif strcmp(c,'editSegs')  % Edit Segments : Use at your own risk
@@ -872,7 +875,7 @@ for kk = 1:data_c.regs.num_regs
             isfield(data_c.regs, 'error') && ...
             isfield(data_c.regs.error,'label') && ...
             ~isempty( data_c.regs.error.label{kk} )
-        if FLAGS.v_flag && isfield( data_c.regs, 'ID' )
+        if FLAGS.cell_flag && isfield( data_c.regs, 'ID' )
             disp(  ['Cell: ', num2str(data_c.regs.ID(kk)), ', ', ...
                 data_c.regs.error.label{kk}] );
         else
@@ -890,6 +893,7 @@ flagsStates.mState = '(on) ';
 flagsStates.idState = '(on) ';
 flagsStates.TState = '(on) ';
 flagsStates.PState ='(on) ';
+flagsStates.pState ='(off) ';
 flagsStates.rState = '(on) ';
 flagsStates.eState = '(on) ';
 flagsStates.fState = '(Fluor)';
@@ -899,7 +903,7 @@ flagsStates.lyseState = '';
 flagsStates.sState = '(on) ';
 flagsStates.outlineState = '(on) ';
 
-if ~FLAGS.v_flag
+if ~FLAGS.cell_flag
     flagsStates.vState = '(off)';
 end
 
@@ -964,8 +968,8 @@ end
 
 function FLAGS = fixFlags(FLAGS)
 % intSetDefaultFlags : sets default flags for when the program begins
-if ~isfield(FLAGS,'v_flag')
-FLAGS.v_flag  = 1;
+if ~isfield(FLAGS,'cell_flag')
+FLAGS.cell_flag  = 1;
 end
 if ~isfield(FLAGS,'m_flag')
 FLAGS.m_flag  = 0;

@@ -216,7 +216,7 @@ if FLAGS.f_flag > 0
     im = FLAGS.P_val*im;
     
     if FLAGS.P_flag  % if P_flag is true, it outlines the cells
-        if FLAGS.v_flag
+        if FLAGS.cell_flag
             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
         else
             im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
@@ -270,7 +270,7 @@ if FLAGS.f_flag > 0
         if CONST.view.falseColorFlag
             im = doColorMap( ag(fluor1,minner,maxxer), uint8(255*jet(256)) );
             if FLAGS.P_flag
-                if FLAGS.v_flag
+                if FLAGS.cell_flag
                     im = im + 0.2*cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
                 else
                     im = im + 0.2*cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
@@ -294,7 +294,7 @@ if FLAGS.f_flag > 0
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
 elseif FLAGS.Outline_flag  % it just outlines the cells
-    if FLAGS.v_flag && isfield(data,'cell_outline')
+    if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
     else
         im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
@@ -418,7 +418,7 @@ while (counter > 0 && kk < data.regs.num_regs)
             (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
         
         counter = counter - 1;
-        if FLAGS.v_flag == 1 && isfield( data.regs, 'ID' ) 
+        if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' ) 
             if ismember( data.regs.ID(kk), ID_LIST )
                 text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
                     'Color', cc,...
@@ -457,7 +457,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
     
     for kk = 1:data.regs.num_regs
         % only plot spots in the cell that are gated.
-        if ~FLAGS.v_flag || ismember(data.regs.ID(kk), clist.data(:,1))
+        if ~FLAGS.cell_flag || ismember(data.regs.ID(kk), clist.data(:,1))
             
             % locus 1
             if isfield( data.CellA{kk}, 'locus1') &&  ( FLAGS.f_flag == 1 );
@@ -509,13 +509,18 @@ end
 
 function intPlotLink( data, x_, y_ )
 % intPlotLink shows pole positions and connects daughter cells to each other
+if ~isfield(data,'CellA')
+    disp ('Showing poles is not supported in this mode');
+    return;
+else
 for kk = 1:data.regs.num_regs
+    
     rr1 = data.regs.props(kk).Centroid;
-    ID       = data.regs.ID(kk);
+    ID  = data.regs.ID(kk);
     sisterID = data.regs.sisterID(kk);
     
     if sisterID
-        ind = find( data.regs.ID == sisterID );
+        ind = find(data.regs.ID == sisterID);
         if numel(ind)>1
             ind = ind(1)
         end
@@ -539,7 +544,7 @@ for kk = 1:data.regs.num_regs
             printError(ME);
         end
         
-        plot( [r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
+        plot([r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
         
         if tmp.pole.op_ori
             plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
@@ -557,8 +562,8 @@ for kk = 1:data.regs.num_regs
                 plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
             end
         end
-    end
-    
+    end 
+end
 end
 end
 
@@ -640,7 +645,7 @@ end
 
 if ~isfield(FLAGS, 'v_flag' );
     disp('there is no filed v_flag')
-    FLAGS.v_flag = 0;
+    FLAGS.cell_flag = 0;
 end
 
 if ~isfield(FLAGS, 'f_flag');
