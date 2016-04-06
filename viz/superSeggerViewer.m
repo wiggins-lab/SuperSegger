@@ -172,18 +172,21 @@ while runFlag
     end
 
     
-%       
-%     if ~first_flag
-%         tmp_axis = axis;
-%     end
-%     
+    if ~first_flag
+        tmp_axis = axis;
+    else % if first time - load image to get the axis
+        imshow(data_c.phase);        
+    end
+    
+     
     showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);    
     flagsStates = intSetStateStrings(FLAGS,CONST);
     
-%     if FLAGS.c_flag && ~first_flag
-%         axis( tmp_axis );
-%     end
-%     first_flag = false;
+     if FLAGS.c_flag && ~first_flag
+         axis( tmp_axis );
+     end
+     
+    first_flag = false;
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
