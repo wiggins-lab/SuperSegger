@@ -1,37 +1,39 @@
-function [touch_list] = segsTLEdit( dirname, frame_num )
+function [saved_touch_list] = segsTLEdit( dirname, frame_num, CONST )
 % segsTLEdit : used to visually modify segments in a frame.
+% red are segments that are on, bad are the segments that are off and green
+% the permanent segments. 
 % Possible choices : q to quit
-%                    []  to modify
-%                    s  to save
-%                    g: go to frame n
+%                    press the enter button to select a segment to modify
+%                    s to save the modified segments
+%                    g#: go to frame #
 %                    1, 2, 3, & 4 are different image modes
 %                    c  clear figure
-%              
+%
 % INPUT :
-%       dirname : xy directory
-%       frame_num : frame number
+%       dirname : xy/seg directory
+%       frame_num : initial frame number to be loaded
+%
 % OUTPUT :
-%       touch_list :
+%       final_touch_list : frames that were modified
+%
+% Copyright (C) 2016 Wiggins Lab
+% University of Washington, 2016
+% This file is part of SuperSeggerOpti.
 
-
-tmpdir = pwd;
-cd(dirname);
-dirname = '.';
 
 if ~exist('disp_flag');
     disp_flag = 0;
 end
 
 touch_list = [];
-
+saved_touch_list = [];
 if(nargin<1 || isempty(dirname))
-    dirname=uigetdir()
+    dirname=pwd;
 end
 dirname = fixDir(dirname);
 
 contents=dir([dirname '*_seg.mat']);
 num_im = length(contents);
-
 im_flag = 1;
 runFlag = 1;
 
@@ -42,7 +44,7 @@ else
 end
 
 
-data = loaderInternal([dirname,contents(i  ).name]);
+data = loaderInternal([dirname,contents(i).name]);
 ss = size( data.segs.phaseMagic );
 
 while runFlag
@@ -50,15 +52,16 @@ while runFlag
     data.mask_cell   = double((data.mask_bg - data.segs.segs_good - ...
         data.segs.segs_3n)>0);
     
-    showSegData( data, im_flag);
+    showSegData( data,im_flag);
     figure(1);
     hold on;
-    disp('q to quit');
-    disp('[] to modify');
-    disp('s to save' );
-    disp('g: go to frame n');
-    disp('1, 2, 3, & 4 are different image modes');
-    disp('c clear the figure');
+    disp('--- Segment Editing ---');
+    disp('q       : quit');
+    disp('[enter] : modify');
+    disp('s       : save' );
+    disp('g#      : go to frame #');
+    disp('1,2,3,4 : different image modes');
+    disp('c       : clear the figure');
     disp(['Frame #: ', num2str(i)] );
     
     c = input(':','s')
@@ -76,14 +79,10 @@ while runFlag
         %imshow( tmp, [] );
         
         tmp = tmp.*(data.segs.segs_good+data.segs.segs_bad);
-        [junk,ind] = max( tmp(:) );
-        
+        [~,ind] = max( tmp(:) );
         [sub1, sub2] = ind2sub( ss, ind );
-        
         ii = data.segs.segs_label(sub1,sub2);
-        
         plot( sub2, sub1, 'r.' );
-        
         
         yymin = floor(data.segs.props(ii).BoundingBox(2));
         yymax = yymin + floor(data.segs.props(ii).BoundingBox(4));
@@ -91,7 +90,6 @@ while runFlag
         xxmax = xxmin + floor(data.segs.props(ii).BoundingBox(3));
         
         if data.segs.score(ii)
-            
             data.segs.score(ii) = 0;
             data.segs.segs_good(yymin:yymax, xxmin:xxmax) ...
                 = double(~~(data.segs.segs_good(yymin:yymax, xxmin:xxmax)...
@@ -101,7 +99,6 @@ while runFlag
                 +double(data.segs.segs_label(yymin:yymax, xxmin:xxmax)==ii)));
             
         else
-            
             data.segs.score(ii) = 1;
             data.segs.segs_good(yymin:yymax, xxmin:xxmax) = ...
                 double(~~(data.segs.segs_good(yymin:yymax, xxmin:xxmax)+...
@@ -109,10 +106,11 @@ while runFlag
             data.segs.segs_bad(yymin:yymax, xxmin:xxmax) = ...
                 double(~~(data.segs.segs_bad(yymin:yymax, xxmin:xxmax)-...
                 double(data.segs.segs_label(yymin:yymax, xxmin:xxmax)==ii)));
-            
         end
         
-        data.mask_cell   = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+        % recalculate regions and cell mask
+        data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+        data = intMakeRegs(data, CONST, [], [])
         touch_list = [touch_list, i];
         
     elseif c(1) == 'q' % quit
@@ -128,47 +126,43 @@ while runFlag
             i = num_im;
         end
         
-        data = loaderInternal([dirname,contents(i  ).name]);
-        data.mask_cell   = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+        data = loaderInternal([dirname,contents(i).name]);
+        data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
         
-    elseif c(1) == 's' % save - why is it empty?
+    elseif c == 's' % save
+        if any(touch_list==i)
+            saved_touch_list = unique([saved_touch_list,i]);
+        end
+        dataname=[dirname,contents(i).name];
+        save(dataname,'-STRUCT','data');
         
-        
-        
-    elseif c(1) == '1' % image mode 1
-        
+    elseif c == '1' % image mode 1
         im_flag = 1;
         
-    elseif c(1) == '2'
-        
+    elseif c == '2'
         im_flag = 2;
         
-    elseif c(1) == '3'
-        
+    elseif c == '3'        
         im_flag = 3;
         
-    elseif c(1) == '4'
-        
+    elseif c == '4'
         im_flag = 4;
         
-    elseif c(1) == 'c' % clear figure
+    elseif c == 'c' % clear figure
         clf;
     end
     
-    dataname=[dirname,contents(i).name];
-    save(dataname,'-STRUCT','data');
+    
 end
 
-tmp = pwd;
-cd(tmpdir);
 touch_list = unique(touch_list);
 
 end
 
 function data = loaderInternal( filename )
 
-data = load( filename );
-data.segs.segs_good   = double(data.segs.segs_label>0).*double(~data.mask_cell);
-data.segs.segs_bad   = double(data.segs.segs_label>0).*data.mask_cell;
+data = load(filename);
+data.segs.segs_good = double(data.segs.segs_label>0).*double(~data.mask_cell);
+data.segs.segs_bad = double(data.segs.segs_label>0).*data.mask_cell;
 
 end

@@ -22,7 +22,15 @@ guidata(hObject, handles);
 function varargout = gui_OutputFcn(hObject, eventdata, handles) 
 varargout{1} = handles.output;
 
-function parallel_flag_Callback(hObject, eventdata, handles)
+function imageFolder_ClickedCallback(hObject, eventdata, handles)
+handles.directory.String = uigetdir;
+
+function directory_Callback(hObject, eventdata, handles)
+
+function directory_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 function basename_Callback(hObject, eventdata, handles)
 
@@ -31,49 +39,55 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function timeFilterBefore_Callback(hObject, eventdata, handles)
+function channels_Callback(hObject, eventdata, handles)
 
-function timeFilterBefore_CreateFcn(hObject, eventdata, handles)
+function channels_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function xyFilterBefore_Callback(hObject, eventdata, handles)
+function timeBefore_Callback(hObject, eventdata, handles)
 
-function xyFilterBefore_CreateFcn(hObject, eventdata, handles)
+function timeBefore_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function channelNames_Callback(hObject, eventdata, handles)
+function timeAfter_Callback(hObject, eventdata, handles)
 
-function channelNames_CreateFcn(hObject, eventdata, handles)
+function timeAfter_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function timeFilterAfter_Callback(hObject, eventdata, handles)
+function xyBefore_Callback(hObject, eventdata, handles)
 
-function timeFilterAfter_CreateFcn(hObject, eventdata, handles)
+function xyBefore_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function xyFilterAfter_Callback(hObject, eventdata, handles)
+function xyAfter_Callback(hObject, eventdata, handles)
 
-function xyFilterAfter_CreateFcn(hObject, eventdata, handles)
+function xyAfter_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function cleanflag_Callback(hObject, eventdata, handles)
+function convert_images_Callback(hObject, eventdata, handles)
+convertImageNames(handles.directory.String, handles.basename.String, ...
+    handles.timeBefore.String, handles.timeAfter.String, handles.xyBefore.String, ...
+    handles.xyAfter.String, strsplit(handles.channels.String, ','));
 
-function res_Callback(hObject, eventdata, handles)
+function consensus_Callback(hObject, eventdata, handles)
 
-function res_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+function clean_flag_Callback(hObject, eventdata, handles)
+
+function fluor_flag_Callback(hObject, eventdata, handles)
+
+function neighbor_flag_Callback(hObject, eventdata, handles)
+
+function parallel_flag_Callback(hObject, eventdata, handles)
 
 function skip_Callback(hObject, eventdata, handles)
 
@@ -82,33 +96,87 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function dirname_Callback(hObject, eventdata, handles)
+function segment_images_Callback(hObject, eventdata, handles)
 
-function dirname_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+if (handles.ec60.Value + handles.ec100.Value + handles.pa100.Value + ...
+        handles.a60.Value + handles.pa60.Value + handles.a60.Value + ...
+        handles.pam60.Value) > 1
+    errordlg ('too many constants selected')
+    return
 end
 
-function loadConstants_Callback(hObject, eventdata, handles)
-res = handles.res.String;
-if ~isnan(str2double(res))
-    res = str2double(res);
+if handles.ec60.Value;
+    text = '60XEc';
+elseif handles.ec100.Value;
+    text = '100XEc';
+elseif handles.pa100.Value;
+    text = '100XPa';
+elseif handles.pa60.Value;
+    text = '60XPa';
+elseif handles.a60.Value;
+    text = '60XA';
+elseif handles.eclb60.Value;
+    text = '60XEcLB';
+elseif handles.pam60.Value;
+    text = '60XPaM';
+elseif handles.bthai60.Value;
+    text = '60XBthai';
+else
+    errordlg ('No constants selected');
+    return
 end
-CONST = loadConstants(res, handles.parallel_flag.Value);
 
-function tryDifferentConstants_Callback(hObject, eventdata, handles)
-tryDifferentConstants(handles.dirname.String);
-
-function convertImageNames_Callback(hObject, eventdata, handles)
-chanNames = strsplit(handles.channelNames.String, ',');
-convertImageNames(handles.dirname.String, handles.basename.String, handles.timeFilterBefore.String, ...
-handles.timeFilterAfter.String, handles.xyFilterBefore.String, handles.xyFilterAfter.String, chanNames);
-
-function BatchSuperSeggerOpti_Callback(hObject, eventdata, handles)
-res = handles.res.String;
-if ~isnan(str2double(res))
-    res = str2double(res);
+if isempty (handles.directory.String)
+     errordlg ('Please select a directory');
+     return
 end
-CONST = loadConstants(res, handles.parallel_flag.Value);
 
-BatchSuperSeggerOpti(handles.dirname.String, str2double(handles.skip.String), handles.cleanflag.Value, CONST);
+CONST = loadConstants(text, handles.parallel_flag.Value);
+CONST.consensus = handles.consensus.Value;
+CONST.trackLoci.fluorFlag = handles.fluor_flag.Value;
+CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
+BatchSuperSeggerOpti(handles.directory.String, str2double(handles.skip.String), handles.clean_flag.Value, CONST);
+
+function ec60_Callback(hObject, eventdata, handles)
+
+function ec100_Callback(hObject, eventdata, handles)
+
+function pa100_Callback(hObject, eventdata, handles)
+
+function pa60_Callback(hObject, eventdata, handles)
+
+function a60_Callback(hObject, eventdata, handles)
+
+function eclb60_Callback(hObject, eventdata, handles)
+
+function pam60_Callback(hObject, eventdata, handles)
+
+function bthai60_Callback(hObject, eventdata, handles)
+
+function try_constants_Callback(hObject, eventdata, handles)
+resFlags = {};
+if handles.ec60.Value;
+    resFlags{end+1} = '60XEc';
+end
+if handles.ec100.Value;
+    resFlags{end+1} = '100XEc';
+end
+if handles.pa100.Value;
+    resFlags{end+1} = '100XPa';
+end
+if handles.pa60.Value;
+    resFlags{end+1} = '60XPa';
+end
+if handles.a60.Value;
+    resFlags{end+1} = '60XA';
+end
+if handles.eclb60.Value;
+    resFlags{end+1} = '60XEcLB';
+end
+if handles.pam60.Value;
+    resFlags{end+1} = '60XPaM';
+end
+if handles.bthai60.Value;
+    resFlags{end+1} = '60XBthai';
+end
+tryDifferentConstants(handles.directory.String, resFlags);

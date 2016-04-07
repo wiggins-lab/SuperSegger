@@ -1,4 +1,4 @@
-function [assignments,errorR]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
+function [assignments,errorR,totCost,allC,allF]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
 % each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
 % works only c - > f (r -> c) not backwards. attempts to map candidates to
@@ -30,7 +30,7 @@ if ~isempty(data_c)
             data_f = updateRegionFields (data_f,CONST);
         end
         
-        areaFactor = 10;
+        areaFactor = 20;
         areaChangeFactor = 100;
         
         numRegs2 = data_f.regs.num_regs;

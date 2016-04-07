@@ -15,7 +15,8 @@ segs_good = data.segs.segs_good;
 segs_bad = data.segs.segs_bad;
 mask_bg = data.mask_bg;
 
-figure(2)
+figure(1)
+
 if ~exist('im_flag')
     im_flag = 1;
 end
@@ -44,6 +45,5 @@ elseif im_flag == 4;
 else
     backer = autogain(data.phase);
     imshow( cat(3,backer,backer,backer) );
-    
 end
 end

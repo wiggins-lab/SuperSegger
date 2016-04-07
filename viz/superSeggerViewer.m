@@ -569,22 +569,21 @@ while runFlag
         % Show Error List
         FLAGS.e_flag = ~FLAGS.e_flag;
         
-    elseif strcmp(c,'v') % Toggle between cell view and region view
+    elseif strcmp(c,'cell') % Toggle between cell view and region view
         FLAGS.cell_flag = ~FLAGS.cell_flag;
         
-        
-    elseif strcmp(c,'editSegs')  % Edit Segments : Use at your own risk
+    %% DEVELOPER FUNCTIONS : Use at your own risk
+    elseif strcmp(c,'editSegs')  % Edit Segments, allows to turn on and off segments
         disp('Are you sure you want to edit the segments?')
         d = input('[y/n]:','s');
         if strcmp(d,'y')
-            segsTLEdit( dirname, nn);
+            segsTLEdit(dirname_seg, nn, CONST);
         end
         
-    elseif strcmp(c, 'relink') % Re-Link : Use at your own risk
-        disp('Are you sure you want to relink the cells?')
+    elseif strcmp(c, 'relink') % Re-Link - relinks the cells after modifications in segments
+        disp('Are you sure you want to relink and remake the cell files?')
         d = input('[y/n]:','s');
-        if strcmp(d,'y')
-            
+        if strcmp(d,'y')            
             delete([dirname_cell,'*.mat']);
             delete([dirname,'*trk.mat*']);
             delete([dirname,'*err.mat*']);
@@ -608,12 +607,11 @@ while runFlag
                 
                 if ~ii
                     disp('missed region');
-                else
-                    
+                else                    
                     if isfield( data_c.regs, 'ignoreError' )
                         disp(['Picked region ',num2str(ii)]);
                         data_c.regs.ignoreError(ii) = 1;
-                        save([dirname,contents(nn  ).name],'-STRUCT','data_c');
+                        save([dirname,contents(nn).name],'-STRUCT','data_c');
                     else
                         disp( 'Ignore error not implemented for your version of trackOpti.');
                     end
@@ -621,7 +619,7 @@ while runFlag
             end
         end
         
-    elseif strcmp(c,'link'); % Reset Linking in Current Frame
+    elseif strcmp(c,'link'); % Does not work ? - Reset Linking in Current Frame
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
         else
@@ -637,14 +635,13 @@ while runFlag
                 else
                     disp(['Picked region ',num2str(ii)]);
                     showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
-                    axis( tmp_axis );
-                    disp( 'Click on linked cell(s). press enter to return');
+                    axis(tmp_axis);
+                    disp('Click on linked cell(s). press enter to return');
                     x = floor(ginput());                    
                     ss = size(x);
                     list_of_regs = [];
                     
-                    for hh = 1:ss(1);
-                        
+                    for hh = 1:ss(1);                      
                         jj = data_f.regs.regs_label(x(hh,2),x(hh,1));
                         if jj
                             list_of_regs = [list_of_regs, jj];
@@ -654,10 +651,8 @@ while runFlag
                     if ~isempty(list_of_regs)
                         
                         %list_of_regs
-                        data_c.regs.ol.f{ii}    = zeros(2, 5);
-                        
-                        nnn = min([5,numel(list_of_regs)]);
-                        
+                        data_c.regs.ol.f{ii}    = zeros(2, 5);                     
+                        nnn = min([5,numel(list_of_regs)]);                     
                         data_c.regs.ol.f{ii}(1,1:nnn) = 1;
                         data_c.regs.ol.f{ii}(2,1:nnn) = list_of_regs(1:nnn);
                         data_c.regs.map.f{ii}   = list_of_regs;
@@ -666,11 +661,9 @@ while runFlag
                         
                         for kk = list_of_regs
                             
-                            data_f.regs.ol.r{kk}     = zeros(2,5);
-                            
+                            data_f.regs.ol.r{kk}     = zeros(2,5);                           
                             data_f.regs.ol.r{kk}(1,1)= 1/numel(list_of_regs);
-                            data_f.regs.ol.r{kk}(2,1)= ii;
-                            
+                            data_f.regs.ol.r{kk}(2,1)= ii;                           
                             data_f.regs.dA.r(kk)     = 1/numel(list_of_regs);
                             data_f.regs.map.r{kk}    = ii;
                             data_f.regs.error.r(kk)  = double(numel(list_of_regs)>1);
@@ -679,7 +672,7 @@ while runFlag
                         
                         % Save files....
                         
-                        save([dirname,contents(nn  ).name],'-STRUCT','data_c');
+                        save([dirname,contents(nn).name],'-STRUCT','data_c');
                         save([dirname,contents(nn+1).name],'-STRUCT','data_f');
                         
                     end
@@ -687,8 +680,8 @@ while runFlag
             end
         end
         
-    elseif strcmp(c,'errRez'); % ReRun Error Resolution and  linking code trackOpti
-        ctmp = input('Are you sure you want to re-run error resolution? (y/n): ','s');
+    elseif strcmp(c,'errRez'); % ReRun Error Resolution 2 and  cell making file
+        ctmp = input('Are you sure you want to re-run error resolution 2 and cell making? (y/n): ','s');
         
         if ismember(ctmp(1),'yY')
             % Erase all stamp files after .trackOptiSetEr.mat
@@ -696,17 +689,16 @@ while runFlag
             num_stamp = numel( contents_stamp );
             
             for iii = 1:num_stamp
-                if isempty( strfind( contents_stamp(iii).name,...
-                        '.trackOptiLink.mat'  ) ) && ...
-                        isempty( strfind( contents_stamp(iii).name,...
-                        '.trackOptiErRes1.mat') ) && ...
-                        isempty( strfind( contents_stamp(iii).name,...
-                        '.trackOptiSetEr.mat' ) )
+                if isempty(strfind(contents_stamp(iii).name,...
+                        '.trackOptiLink.mat')) && ...
+                        isempty(strfind(contents_stamp(iii).name,...
+                        '.trackOptiErRes1.mat')) && ...
+                        isempty(strfind(contents_stamp(iii).name,...
+                        '.trackOptiSetEr.mat'))
                     delete ([dirname,filesep,contents_stamp(iii).name]);
                 end
             end
-            
-            
+                        
             delete ([dirname_cell,'*.mat']);
             delete ([dirname_cell,'clist.mat']);
             
@@ -714,8 +706,7 @@ while runFlag
             skip = 1;
             CLEAN_FLAG = false;
             header = 'trackOptiView: ';
-            trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
-            
+            trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);           
         end
         
     else % we assume that it is a number for a frame change.
@@ -730,10 +721,8 @@ while runFlag
             resetFlag = true;
         else % not a number - command not found
             disp ('Command not found');
-        end
-        
+        end       
     end
-    
 end
 
 try
