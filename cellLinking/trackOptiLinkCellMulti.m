@@ -48,10 +48,13 @@ contents2=dir([dirname,'*',filt2]);
 if clean_flag
     delete([dirname,'*err.mat'])
 elseif ~isempty(contents2)
-    time = numel(contents2)+1;
-    disp (['continuing from where I stopped - time', num2str(time)]);
-    dataLast = load([dirname,contents2(end).name]);
-    cell_count = max(dataLast.regs.ID);
+    time = numel(contents2);
+    if time > 1
+        disp (['continuing from where I stopped - time : ', num2str(time)]);
+        delete([dirname,contents2(end).name])
+        dataLast = load([dirname,contents2(end-1).name]);
+        cell_count = max(dataLast.regs.ID);
+    end
 end
 
 while time <= numIm
@@ -83,16 +86,18 @@ while time <= numIm
     if ~all(size(data_c.regs.score) == size(data_c.regs.scoreRaw))
         keyboard;
     end
+     
     
-    
-    if ~isempty(data_r)
-        [data_r.regs.map.f,data_r.regs.error.f] = multiAssignmentPairs (data_r, data_c,CONST,1,0);
-    end
-    [data_c.regs.map.r,data_c.regs.error.r] = multiAssignmentPairs (data_c, data_r,CONST,0,0);
-    [data_c.regs.map.f,data_c.regs.error.f] = multiAssignmentPairs (data_c, data_f,CONST,1,0);
-    
-    [cell_count,resetRegions] =  errorRez (data_c, data_r, data_f, CONST, cell_count);
-    
+    disp (['Calculating maping for frame', num2str(time)])
+     if ~isempty(data_r)
+        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f]  = multiAssignmentPairs (data_r, data_c,CONST,1,0);
+     end    
+    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r]  = multiAssignmentPairs (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f] = multiAssignmentPairs (data_c, data_f,CONST,1,0);
+  
+    [data_c,data_r,cell_count,resetRegions] =  errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
+
+ 
     if resetRegions
         disp (['Frame ', num2str(time), ' segments reset to resolve error, frame repeated.']);
         cell_count = lastCellCount;

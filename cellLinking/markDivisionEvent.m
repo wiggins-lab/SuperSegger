@@ -65,6 +65,6 @@ if isfield( data_c.regs, 'lyse' )
         time*double(logical(data_c.regs.lyse.errorColor2b(sister1)));   
 end
 else
-    disp ([num2str(sister1),'already has and ID']);
+    disp (['Frame ', num2str(time), ': ' , num2str(sister1),' already has an ID from division event.']);
 end
 end

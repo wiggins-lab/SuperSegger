@@ -193,7 +193,7 @@ while runFlag
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
-    disp(['q  : To quit                                  reset : Reset Plot to Default View   ']);
+    disp(['q  : To quit                                  Reset : Reset Plot to Default View   ']);
     disp(['x# : Switch xy directory from ', num2str(ixy), '              #  : Go to Frame Number #']);
     disp(['id  : Show Cell Numbers ', [flagsStates.idState],'                 F# : Find Cell Number #']);
     disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          outline  : Outline cells ', flagsStates.outlineState]);
@@ -316,7 +316,7 @@ while runFlag
         
         end
       
-    elseif c(1) == 'r' % Show/Hide Region Outlines
+    elseif strcmp(c,'r')  % Show/Hide Region Outlines
         FLAGS.P_flag = ~FLAGS.P_flag;
         FLAGS.Outline_flag = 0;
     elseif strcmp(c,'outline') % Show/Hide Region Outlines

@@ -41,10 +41,13 @@ for i = 1:num_im;
     data_c = loaderInternal([dirname,contents(i).name]);  % load data
 
     % remove small area regions
-    regs_label = bwlabel( data_c.mask_cell );
+    regs_label = bwlabel(data_c.mask_cell);
     props = regionprops( regs_label, 'Area' );    
-    keepers = find([props(:).Area]>MIN_AREA);   
+    keepers = find([props(:).Area]>MIN_AREA);
+    small = find([props(:).Area]<=MIN_AREA);
     cellmask_nosmall= ismember( regs_label, keepers );
+    cellmask_small= ismember( regs_label,small );
+    data_c.mask_bg (cellmask_small) =0;
     
     % remove segments in small regions
     dilatedMask = imdilate(cellmask_nosmall, strel('square',4));

@@ -14,7 +14,9 @@ end
 
 assignments = [];
 errorR = [];
-
+totCost=[];
+allC=[];
+allF=[];
 
 if ~isempty(data_c)
     if ~isfield(data_c,'regs')
@@ -244,14 +246,14 @@ if ~isempty(data_c)
         
         % delete big area changes
         
-        areaChangePenalty(abs(areaChange) > 0.7) = 50;
+        areaChangePenalty(abs(areaChange) > 0.6) = 50;
         if forward
             areaChangePenalty((areaChange) < -0.1) = 100;
         else
             outwardMot = - outwardMot;
             areaChangePenalty((areaChange) > 0.1) = 100;
         end
-        totCost = areaChangePenalty + outwardMot + areaChangeFactor * 1./areaOverlapTransCost + areaFactor * 1./areaOverlapCost + centroidCost +  areaChangeFactor * abs(areaChange);
+        totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + areaFactor * 1./areaOverlapCost + 5 * centroidCost +  areaChangeFactor * abs(areaChange);
         
         costMat = totCost;
         
@@ -274,7 +276,10 @@ if ~isempty(data_c)
             
             if debug_flag
                 intDisplay (data_c,data_f,assignTemp,regionsInC);
-                pause;
+                assignTemp
+                regionsInC
+
+               % pause;
             end
             
             assignedInC  = [assignedInC;regionsInC'];

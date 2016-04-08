@@ -643,8 +643,8 @@ if ~isfield(FLAGS, 'P_flag');
     FLAGS.P_flag = 0;
 end
 
-if ~isfield(FLAGS, 'v_flag' );
-    disp('there is no filed v_flag')
+if ~isfield(FLAGS, 'cell_flag' );
+    disp('there is no filed cell_flag')
     FLAGS.cell_flag = 0;
 end
 

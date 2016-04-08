@@ -20,6 +20,20 @@ function [data, err_flag] = ssoSegFunPerReg( phase, CONST, header, dataname, cro
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+if ~exist('header','var')
+    header = '';
+end
+
+if ~exist('dataname','var')
+    dataname = '';
+end
+
+if ~exist('crop_box','var')
+    crop_box = '';
+end
+
+
+
 % create the masks and segments
 data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box);
 

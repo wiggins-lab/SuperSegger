@@ -261,7 +261,6 @@ sim = size( phase );
 
 % Create labeled image of the segments
 %here we obtain the cell-background boundary, which we know is correct.
-sqr3 = strel('square',3);
 disk1 = strel('disk',1);
 outer_bound = xor(bwmorph(mask_bg,'dilate'),mask_bg);
 
@@ -299,7 +298,7 @@ segs = ismember(labelmatrix(cc), idx);
 % redefine segs after eliminating the small segs and calculate all the
 % region properties we will need.
 % here we create coordinates to crop around each segment. This decreases the time
-% required to process each segment.segs = double(segs_label>0);
+% required to process each segment
 segs_label = bwlabel( segs,4);
 numSegs    = max( segs_label(:) );
 segs_props = regionprops(  segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
@@ -479,9 +478,9 @@ for ii = 1:numSegs
     % update the good and bad segs images.
     
     if score(ii)
-        segs_good(yy, xx)  = or(segs_good(yy, xx),mask_ii);
+        segs_good(yy,xx) = or(segs_good(yy, xx),mask_ii);
     else
-        segs_bad(yy, xx)   = or(segs_bad(yy, xx),mask_ii);
+        segs_bad(yy,xx) = or(segs_bad(yy, xx),mask_ii);
     end
     
 end
