@@ -75,7 +75,7 @@ data = load( filename );
 end
 
 function intDoFoci( i, dirname, contents, nc, CONST)
-% intDoLoci : finds the foci in the image i
+% intDoLoci : finds the foci in image i
 %
 % INPUT :
 %       i : time frame number
@@ -89,6 +89,7 @@ gf  = fspecial( 'gaussian', 21, 3 );
 
 % make filtered images to fit
 im_filt = cell([1,nc]);
+Istd = zeros(1,nc);
 for j = 1:nc
     fl_im = data_c.(['fluor',num2str(j)]);
     fl_im = medfilt2( double(fl_im), [3,3], 'symmetric' );

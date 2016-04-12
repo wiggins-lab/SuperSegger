@@ -1,6 +1,8 @@
 function trackOptiFluor(dirname,CONST,header)
-% trackOptiFluor calculates the basic fluorescence information
-% such as mean and integrated intensity. It does not do any focus fitting. 
+% trackOptiFluor calculates the mean background fluorescence for each frame.
+% This is the fluroscence outside the cell mask. It does not do any focus
+% fitting at this stage. It saves the information in the err/seg
+% files under data_c.fl1bg for channel 1 and data_c.fl2bg for channel 2.
 %
 % INPUT : 
 %   dirname: seg folder eg. maindirectory/xy1/seg
@@ -12,7 +14,7 @@ function trackOptiFluor(dirname,CONST,header)
 % This file is part of SuperSeggerOpti.
 
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
@@ -20,7 +22,6 @@ end
 SE = strel( 'disk', 5 );
 
 
-dirseperator = filesep;
 if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
@@ -31,7 +32,7 @@ contents=dir([dirname '*_err.mat']);
 num_im = numel(contents);
 
 if CONST.parallel.show_status
-    h = waitbar( 0, 'Fluor Comp.');
+    h = waitbar( 0, 'Fluorescence Computation');
 else
     h = [];
 end
@@ -43,13 +44,10 @@ for i = 1:num_im;
     % Compute the background fluorescence level in both channel
     ss = size( data_c.mask_cell );
     
-    if isfield( data_c, 'fluor1' )
-        
-        if isfield( data_c, 'crop_box' );
-            
+    if isfield( data_c, 'fluor1' )        
+        if isfield( data_c, 'crop_box' );           
             yycb = max([1,ceil(data_c.crop_box(1))]):min([ss(1),floor(data_c.crop_box(3))]);
             xxcb = max([1,ceil(data_c.crop_box(2))]):min([ss(2),floor(data_c.crop_box(4))]);
-            
             fluor_tmp = data_c.fluor1(yycb,xxcb);
             mask_bg   = data_c.mask_bg(yycb,xxcb);
         else
