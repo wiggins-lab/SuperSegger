@@ -165,6 +165,7 @@ else
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
+        cleanup = onCleanup( @()( delete( h ) ) );
     end
     
     %parfor(j = 1:num_xy,workers)

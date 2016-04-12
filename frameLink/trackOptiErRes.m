@@ -145,11 +145,11 @@ while i <= num_im % loop through number of frames
                 || ismember(ii,list_c_del)
             % update if no error, region in deleted list or changed last
             if (i>1) && (numel(list_r) > 0)
+                % not first frame, and maps to something
                     disp (['updating cell from id ', num2str(data_r.regs.ID(list_r))]);
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
-            else % first frame or numel(list_r) == 0
-               % disp (['updating cell from id ', num2str(data_r.regs.ID(list_r))]);
+            else % first frame or maps to nothing
                 [data_c, data_r, cell_count] = update_cell( ...
                     data_c, ii, data_r, list_r, i, 0, [], cell_count);
             end
@@ -160,7 +160,9 @@ while i <= num_im % loop through number of frames
             
             if stray_flag
                 % Stray Region : gets rid of regions that appear from nowhere.
+                % map to nowhere and map to nothing
                 if ignoreError
+                    % creates a new cell
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
                     [data_c, data_r, cell_count] = update_cell( ...
@@ -168,16 +170,12 @@ while i <= num_im % loop through number of frames
                 else
                     if REMOVE_STRAY
                         if ~nc_flag
+                            % add the region to the regions to be deleted
                             disp([header, 'ErRes: Frame: ', num2str(i),...
-                                ', reg: ', num2str(ii),'. removed stray region' ]);
-                            
-                            % is the regions are mapped to by nobody of map into
-                            % nobody, zero them out.
+                                ', reg: ', num2str(ii),'. removed stray region' ])
                             list_c_del = [list_c_del, ii];
                             data_c.regs.stat0(ii) = 3;
-                            
-                            % set the break flag to recalculate the regions
-                            break_flag = 1;
+                            break_flag = 1; % to recalculate the regions
                             
                         end
                     else
@@ -191,13 +189,15 @@ while i <= num_im % loop through number of frames
                 % Cell sometiems shift rapidly because of being pushed
                 % Clear the error if the cell size doesn't change very much
                 if ignoreError
+                    % continue the cell with id of list_r(1)
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
                 else  
                     if  ~isempty( data_c.regs.dA.r(ii) ) && (data_c.regs.dA.r(ii) > dA_LIMIT_ErRes)
-                        
+                        % area changed by less than dA_Limit_Res
+                        % clear error and continue cell
                         data_c.regs.error.label{ii} = (['Frame: ', ...
                             num2str(i), ', reg: ', num2str(ii),'. Cell shift.']);                     
                         disp([header, 'ErRes: ', data_c.regs.error.label{ii}] );
@@ -206,6 +206,7 @@ while i <= num_im % loop through number of frames
                         [data_c, data_r, cell_count] = update_cell( ...
                             data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
                     else
+                        % continue cell but keep the error
                         data_c.regs.error.label{ii} = ['Frame: ', num2str(i), ', reg: ', ...
                             num2str(ii),...
                             '. Cell shift failed due dA: ',num2str(data_c.regs.dA.r(ii),3), ' < ',...
@@ -222,6 +223,7 @@ while i <= num_im % loop through number of frames
                 disp([header, 'ErRes: ', data_c.regs.error.label{ii}] );
                 data_c.regs.error.r(ii) = 0;
                 if ~isempty(list_r)
+                    % remove error in reverse frame
                     data_r.regs.error.f(list_r(1)) = 0;
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
@@ -235,13 +237,13 @@ while i <= num_im % loop through number of frames
                 % possible merging of region in data_c, attempts to find a 
                 % segment that was missed.
                 if ignoreError
+                    % remove errors
                     data_c.regs.error.r(ii) = 0;
                     data_r.regs.error.f(list_r(1)) = 0;
                     [data_c, data_r, cell_count] = update_cell( ...
                         data_c, ii, data_r, list_r(1), i, 0, [], cell_count);
-                else
-                    
-                    [data_new, ind_new] = fix2to1( data_c, ii, data_r, data_c.regs.map.r{ii} );                     
+                else                 
+                    [data_new, ind_new] = fix2to1 (data_c, ii, data_r, data_c.regs.map.r{ii});                     
                     if isempty( data_new ) || nc_flag                       
                         data_c.regs.error.label{ii} = ...
                             ['Frame: ', num2str(i), ', reg: ', num2str(ii),...
@@ -280,8 +282,8 @@ while i <= num_im % loop through number of frames
                         list_rcrfc   = unique([data_f.regs.map.r{list_rcrf}]);
                         list_rcrfcf  = unique([data_c.regs.map.f{list_rcrfc}]);
                         list_rcrfcfc = unique([data_f.regs.map.r{list_rcrfcf}]);
-                        if numel(list_rcrfcfc) > numel(list_rcrfc)
-                            
+                        
+                        if numel(list_rcrfcfc) > numel(list_rcrfc)                            
                             data_c.regs.error.label{ii} = ['Frame: ', num2str(i),...
                                 ', reg: ', ...
                                 num2str(ii),'. has mapping error. Cannot recovered.'];

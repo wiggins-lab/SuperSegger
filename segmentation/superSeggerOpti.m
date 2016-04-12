@@ -163,9 +163,8 @@ mask_mod = (phase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_mod)>0);
 
 
-% Watershed the image
-%here we use matlab's standard watershed algorithm to watershed just the
-%cell-filled regions of the image.
+% Use matlab's standard watershed algorithm to watershed just the
+% cell-filled regions of the image.
 phaseMask = uint8(agd(phase) + 255*(1-(mask_bg)));
 ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
 

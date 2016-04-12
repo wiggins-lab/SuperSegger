@@ -57,6 +57,9 @@ elseif strcmp(cl, 'char' );
     elseif strcmp(res,'60XEcLB') % 2
         disp('loadConstants:  60X LB Ecoli');
         resFlag = '60XEcLB';
+    elseif strcmp(res,'60XBay') % 2
+        disp('loadConstants:  60X LB Ecoli');
+        resFlag = '60XBay';
     end
 end
 
@@ -66,6 +69,8 @@ elseif strcmp (resFlag,'100XEc')
     CONST = load('100XEcnn_FULLCONST.mat');
 elseif strcmp (resFlag,'60XEcLB')
     CONST = load('60XEcLBnn_FULLCONST.mat');
+elseif strcmp (resFlag,'60XBay')
+    CONST = load('60XBaynn_FULLCONST.mat');
 else
     error('Constants not loaded : no match found. Aborting.');
 end

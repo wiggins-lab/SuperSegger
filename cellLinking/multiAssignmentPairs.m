@@ -50,9 +50,7 @@ if ~isempty(data_c)
         maskBgFill= imfill(data_c.mask_bg,'holes');
         colony_labels = bwlabel(maskBgFill);
         colony_props = regionprops( colony_labels,'Centroid','Area');
-        
-        
-        
+             
         % find possible pairs....
         counter = 1;
         pairsF = NaN * zeros(2,numRegs2 * numRegs2);
@@ -103,7 +101,7 @@ if ~isempty(data_c)
         areaChangePenalty =  zeros(size(allC,2),size(allF,2));
         % one to one mapping
         goodOneToOne = zeros(1,size(allC,2));
-        
+        distFromColn = zeros(1,size(allC,2));
         for ii = 1:size(allC,2) % loop through the regions
             % ind : list of regions that overlap with region ii in data 1
             
@@ -133,6 +131,7 @@ if ~isempty(data_c)
                 % colony it belongs to
                 colonyId =  max(colony_labels(maskC));
                 distFromColony = centroidC - colony_props(colonyId).Centroid;
+                distFromColn (ii) = sqrt(sum(distFromColony.^2));
                 
                 % dilate mask and get adjacent regions within dilated area
                 tmp_mask = imdilate(maskC, strel('square',5));
@@ -223,6 +222,7 @@ if ~isempty(data_c)
                                 
                                 displacement = centroidC - centroidF;
                                 centroidCost(ii,location) = sqrt(sum((displacement).^2));
+                                
                                 outwardMot(ii,location) = (distFromColony*displacement')/centroidCost(ii,location);
                                 
                                 offset = round(displacement);
@@ -232,7 +232,7 @@ if ~isempty(data_c)
                                 areaOverlapTransCost(ii,location) = areaOverlapTrns/areaC;
                                 
                                 if  (areaOverlapTransCost(ii,location) == 0)
-                                    areaOverlapTransCost(ii,location) = 0.001;
+                                    areaOverlapTransCost(ii,location) = 0.01;
                                 end
                                 
                                 
@@ -244,20 +244,28 @@ if ~isempty(data_c)
             end
         end
         
-        % delete big area changes
         
-        areaChangePenalty(abs(areaChange) > 0.6) = 50;
+        
         if forward
+            % area decreases
             areaChangePenalty((areaChange) < -0.1) = 100;
         else
             outwardMot = - outwardMot;
             areaChangePenalty((areaChange) > 0.1) = 100;
         end
-        totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + areaFactor * 1./areaOverlapCost + 5 * centroidCost +  areaChangeFactor * abs(areaChange);
+        
+        % delete big area changes
+        areaChangePenalty(abs(areaChange) > 0.6) = 50;
+        areaChangePenalty(abs(areaChange) > 2) = 1000;
+        distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
+        
+        totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + ...
+            areaFactor * distFromColonyMat * 1./areaOverlapCost +...
+            5 * centroidCost +  areaChangeFactor * abs(areaChange);
         
         costMat = totCost;
         
-        numElements = size(costMat,1);
+     
         assignedInC = [];
         assignedInF = [];
         
@@ -324,6 +332,8 @@ if ~isempty(data_c)
                 assignments{leftC} = bestF;
                 newleftInC = setdiff(newleftInC,leftC);
             end
+            
+            
         end
         
         

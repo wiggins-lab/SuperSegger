@@ -7,20 +7,18 @@ REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
 SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
 SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
 
-
 resetRegions = false;
 
 for regNum =  1 : data_c.regs.num_regs;
     
-    if regNum > 67
-        imshow(data_c.mask_cell);
-    end
     mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
-    
+    %mapRC = find(cell2mat(data_r.regs.map.f )==regNum)
+    % nothing maps to it?
     
     %%% maps to 0
     if numel(mapCR) == 0 % maps to 0 in the previous frame - stray
         
+        % think whether this is useful :  numel(mapRC) == 0
         if (time ~= 1) && (hasNoFwMapping(data_c,regNum) || REMOVE_STRAY)
             % deletes the regions not appearing at time = 1 that do not map to anything
             % or if remove_stray flag is set to true.
@@ -65,13 +63,14 @@ for regNum =  1 : data_c.regs.num_regs;
             % mark division
               [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
         else
-             keyboard;      
-              % how to resolve?
-             % FIX THIS :  probably best i can do is take all cells that overlap
-            % and look for missing segments?
+            % one to one mapping but disagreement between current and
+            % reverse
+            % NEEDS TO BE FIXED
        
             % continue anyway and put an error..
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r,mapCR, time, 0);
+             errorStat = 1;
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
+        
             data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
                 ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
             data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
@@ -83,9 +82,7 @@ for regNum =  1 : data_c.regs.num_regs;
             disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );
 
             data_c.regs.error.r(regNum) = 1;
-            data_r.regs.error.f(mapCR) = 1;
-            data_r.regs.error.f(mapRC) = 1;
-        
+            data_r.regs.error.f(mapCR) = 1;    
         end
         
        
@@ -95,9 +92,14 @@ for regNum =  1 : data_c.regs.num_regs;
         mapRC = data_r.regs.map.f{mother};
         
         if  ~any(mapRC==regNum)
+            % mapCR maps to mother. but mother maps to two other cells..
+            % FIX THIS : 
+
             % POSSIBLE RESOLUTIONS :
-            % 1 : merging missing, cell divided but piece fell out
-            % 2 : wrong mapping for some reason?
+            % 1 : merging missing, cell divided but piece fell out - check
+            % if all three should be mapped
+            % 2 : get the best two couples of the three
+            % other?
             
             
             % force mapping
@@ -105,6 +107,14 @@ for regNum =  1 : data_c.regs.num_regs;
             sister2 = mapRC(1);
             sister3 = mapRC(2);
             
+            % make a new cell for regNum with error...
+            [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
+            data_c.regs.error.r(regNum) = 1;
+            data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+                ', reg: ', num2str(regNum),'. Incorrect Mapping 1 to 2 - making a new cell'];
+            disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+             
+             
             % red is regNum, green is the ones mother maps to, blue is
             % mother
             imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
@@ -116,22 +126,14 @@ for regNum =  1 : data_c.regs.num_regs;
             
             sister1 = regNum;
             sister2 = mapRC(mapRC~=sister1);
-            
-                        
-            % 1 : if one has mapping and the other has not but they were
-            % look like correct cells possible bad mapping in f            
-            % 2 : or one may be a bad cell
-            
-            
+                  
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
             
             % r: one has no forward mapping, or both map to the same in forwa
             if ~isempty(data_f) && (haveNoMatch || matchToTheSame)              
                 % wrong division atempt to merge
-                data_c.regs.error.r(regNum) = 1;
-                [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2);
-                
+                [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2);                
             else
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);              
             end
@@ -160,55 +162,79 @@ for regNum =  1 : data_c.regs.num_regs;
                 ag(data_r.regs.regs_label == mapCR(2))));
             resetRegions = true;
         else
-            % if one region in r is tiny remove it! / or connect it to the
-            % other one
-            areaR1 = data_r.regs.props(mapCR(1)).Area;
-            areaR2 = data_r.regs.props(mapCR(2)).Area;
-            [~,i] = min ([areaR1,areaR2]);
-            areaMin = 50;
-            if i == 1 && areaR1 < areaMin
-                data_c.regs.error.r(regNum) = 0;
+            % link to the one with the best score
+            % and keep error..
+            cost1 = data_c.regs.cost.r(regNum,mapCR(1));
+            cost2 = data_c.regs.cost.r(regNum,mapCR(2));
+            
+            
+            if cost1<cost2 || isnan(cost2)
+                data_c.regs.error.r(regNum) = 2;
+                errorStat = 1;
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                    ', reg: ', num2str(regNum),'. Smallest cell deleted'];
+                    ', reg: ', num2str(regNum),'. Map to minimum cost'];
                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+                [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, errorStat);
                 
-                [data_r] = deleteRegions(data_r, mapCR(1));
-                % deletes region from labels and mask
-                resetRegions = true;
-            elseif i == 2 && areaR2 < areaMin
-                data_c.regs.error.r(regNum) = 0;
-                data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                    ', reg: ', num2str(regNum),'. Smallest cell deleted'];
-                disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-                
-                [data_r] = deleteRegions(data_r, mapCR(2));
-                resetRegions = true;
             else
-                
-                % keep the cell with the most overlap - not implemented
-                % yet
-                imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
-                    ag(data_r.regs.regs_label == mapCR(1)),...
-                    ag(data_r.regs.regs_label == mapCR(2))));
-                
-                data_c.regs.error.r(regNum) = 1; % keep error?
+                errorStat = 1;
+                data_c.regs.error.r(regNum) = 2;
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                    ', reg: ', num2str(regNum),'. 2 -> 1 error, link the one with the most area overlap'];
+                    ', reg: ', num2str(regNum),'. Map to minimum cost'];
                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+                [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
                 
-                % choosing randomly one..
-                [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, 0);
-                
-                
-                %                     areaCost1 = data_c.regs.areaCost.r(regNum,mapCR(1));
-                %                     areaCost2 = data_c.regs.areaCost.r(regNum,mapCR(2));
-                %                     if areaCost1 > areaCost2
-                %                         [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, 0);
-                %                     else
-                %                         [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, 0);
-                %                     end
             end
+                
+%             % if one region in r is tiny remove it! / or connect it to the
+%             % other one
+%             areaR1 = data_r.regs.props(mapCR(1)).Area;
+%             areaR2 = data_r.regs.props(mapCR(2)).Area;
+%             [~,i] = min ([areaR1,areaR2]);
+%             areaMin = 50;
+%             if i == 1 && areaR1 < areaMin
+%                 data_c.regs.error.r(regNum) = 0;
+%                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+%                     ', reg: ', num2str(regNum),'. Smallest cell deleted'];
+%                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+%                 
+%                 [data_r] = deleteRegions(data_r, mapCR(1));
+%                 % deletes region from labels and mask
+%                 resetRegions = true;
+%             elseif i == 2 && areaR2 < areaMin
+%                 data_c.regs.error.r(regNum) = 0;
+%                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+%                     ', reg: ', num2str(regNum),'. Smallest cell deleted'];
+%                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+%                 
+%                 [data_r] = deleteRegions(data_r, mapCR(2));
+%                 resetRegions = true;
+%             else
+%                 
+%                 % link to the max possible one?
+%                 imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
+%                     ag(data_r.regs.regs_label == mapCR(1)),...
+%                     ag(data_r.regs.regs_label == mapCR(2))));
+%                 
+%                 data_c.regs.error.r(regNum) = 1; % keep error?
+%                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+%                     ', reg: ', num2str(regNum),'. 2 -> 1 error, link the one with the most area overlap'];
+%                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+%                 
+%                 % choosing randomly one..
+%                 [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, 0);
+%                 
+
+           % end
         end
+    else
+         if debug_flag
+             disp ('not sure what to do with you');
+            imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
+               data_c.phase));
+           keyboard;
+        end
+        
     end
     
 end

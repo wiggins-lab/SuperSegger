@@ -93,7 +93,6 @@ TmpSegsLabel = tmp.segs.segs_label.*newmask;
 segs_list = unique(TmpSegsLabel);
 segs_list = segs_list(segs_list~=0);
 
-
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (TmpSegsLabel,segs_list,dist,newmask,CONST,areaR1,areaR2,tmp.segs.scoreRaw);
 
 % get best segments..
@@ -102,7 +101,7 @@ segs_list = segs_list(segs_list~=0);
 % check if a good solution was found
 if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.AREA_CHANGE_LIMIT
     % a good solution
-    num_segs = numel(segs_close)
+    num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);
     segsAdded = TmpSegsLabel * 0;
     segsRemoved = TmpSegsLabel * 0;
