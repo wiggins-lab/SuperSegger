@@ -159,6 +159,7 @@ FLAGS.e_flag = 0 ;
 
 %% Run the main loop... and run it while the runFlag is true.
 while runFlag
+    figure(1);
     
     contents=dir([dirname_seg, '*seg.mat']);
     num_segs = length(contents);
@@ -292,6 +293,7 @@ while runFlag
         disp(clist.def')
         cc = str2double(input('Characteristic [ ] :','s')) ;
         figure(2);
+        clf;
         hist(clist.data(:,cc));
         xlabel(clist.def{cc});
         ylabel('Number of cells');
@@ -299,6 +301,8 @@ while runFlag
         disp('Choose histogram characteristic')
         cc1 = str2double(input('Characteristic 1 [ ] :','s')) ;
         cc2 = str2double(input('Characteristic 2 [ ] :','s')) ;
+        figure(2);
+        clf;
         plot(clist.data(:,cc1),clist.data(:,cc2),'.');
         xlabel(clist.def{cc1});
         ylabel(clist.def{cc2});        
