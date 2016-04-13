@@ -355,7 +355,13 @@ while runFlag
         hist(clist.data(:,cc));
         xlabel(clist.def{cc});
         ylabel('Number of cells');
-        
+    elseif strcmp(c,'hist2') % choose characteristics and values to gate cells 
+        disp('Choose histogram characteristic')
+        cc1 = str2double(input('Characteristic 1 [ ] :','s')) ;
+        cc2 = str2double(input('Characteristic 2 [ ] :','s')) ;
+        plot(clist.data(:,cc1),clist.data(:,cc2),'.');
+        xlabel(clist.def{cc1});
+        ylabel(clist.def{cc2});        
     elseif strcmp(c,'save') % choose characteristics and values to gate cells
        figNum = str2double(input('Figure number :','s')) ;
        filename = input('Filename :','s') ;
