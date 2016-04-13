@@ -30,7 +30,7 @@ end
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 1;
+    FLAGS.t_flag = 0;
 end
 
 t_flag = FLAGS.t_flag;

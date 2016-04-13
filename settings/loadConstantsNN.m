@@ -38,7 +38,9 @@ disp('loadConstants: Initializing.');
 % '60XEc' : loadConstants 60X Ecoli
 % '100XEc': loadConstants 100X Ecoli
 % '60XEcLB': loadConstants 60X Ec LB Ecoli
-
+% '60XBay'
+% '60XPa'
+% '100XPa'
 
 cl = class(res);
 resFlag = [];
@@ -58,13 +60,13 @@ elseif strcmp(cl, 'char' );
         disp('loadConstants:  60X LB Ecoli');
         resFlag = '60XEcLB';
     elseif strcmp(res,'60XBay') % 2
-        disp('loadConstants:  60X LB Ecoli');
+        disp('loadConstants:  60X Baylyi');
         resFlag = '60XBay';
      elseif strcmp(res,'60XPa') % 2
-        disp('loadConstants:  60X LB Ecoli');
+        disp('loadConstants:  60X Pseudemonas');
         resFlag = '60XPa';
     elseif strcmp(res,'100XPa') % 2
-        disp('loadConstants:  60X LB Ecoli');
+        disp('loadConstants:  100X Pseudemonas');
         resFlag = '100XPa';
     end
 end

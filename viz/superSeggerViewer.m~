@@ -357,13 +357,13 @@ while runFlag
         ylabel('Number of cells');
         
     elseif strcmp(c,'save') % choose characteristics and values to gate cells
-       figNum = str2double(input('Figure number :','s')) ;
-       filename = input('Filename :','s') ;
-       savename = sprintf('%s/%s',dirSave,filename);
+       figNum = str2double(input('Figure number [ ] :','s')) ;
+       filename = input('Figure number [ ] :','s') ;
+       savename = sprintf('%s/%s',dirname,'figures',filesep,filename);
        saveas(figNum,(savename),'fig');
        print(figNum,'-depsc',[(savename),'.eps'])
        saveas(figNum,(savename),'png');
-       disp (['Figure ', num2str(figNum) ,' is saved in eps, fig and png format at ',savename]); 
+       disp (['Figure ', figNum ,' is saved in eps and png format at ',savename]); 
        
     elseif strcmp(c,'Clear')  % Clear All Gates
         clist.gate = [] ;
@@ -573,12 +573,18 @@ while runFlag
         file_tmp = ['%0',num2str(z_pad),'d'];
         
         for nn = 1:num_im
+            
+            
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
-                contents, nn, num_im, clist);            
+                contents, nn, num_im, clist);
+            
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
+            
             drawnow;
-            disp( ['Frame number: ', num2str(nn)] );          
-            imwrite( tmp_im, [movdir,filesep,'mov',sprintf(file_tmp,nn),'.tif'], 'TIFF', 'Compression', 'none' );            
+            disp( ['Frame number: ', num2str(nn)] );
+          
+            imwrite( tmp_im, [movdir,filesep,'mov',sprintf(file_tmp,nn),'.tif'], 'TIFF', 'Compression', 'none' );
+            
         end
         nn = nn_old;
         resetFlag = true;
