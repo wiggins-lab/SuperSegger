@@ -1,4 +1,4 @@
-function varargout = superSeggerGui(varargin)
+function varargout = gui(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -75,6 +75,10 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function convert_images_Callback(hObject, eventdata, handles)
+if isempty (handles.directory.String)
+     errordlg ('Please select a directory');
+     return
+end
 convertImageNames(handles.directory.String, handles.basename.String, ...
     handles.timeBefore.String, handles.timeAfter.String, handles.xyBefore.String, ...
     handles.xyAfter.String, strsplit(handles.channels.String, ','));
@@ -96,15 +100,24 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function segment_images_Callback(hObject, eventdata, handles)
+function spots_Callback(hObject, eventdata, handles)
 
+function spots_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function segment_images_Callback(hObject, eventdata, handles)
+if isempty (handles.directory.String)
+     errordlg ('Please select a directory');
+     return
+end
 if (handles.ec60.Value + handles.ec100.Value + handles.pa100.Value + ...
         handles.a60.Value + handles.pa60.Value + handles.a60.Value + ...
         handles.pam60.Value) > 1
-    errordlg ('too many constants selected')
+    errordlg ('Too many constants selected')
     return
 end
-
 if handles.ec60.Value;
     text = '60XEc';
 elseif handles.ec100.Value;
@@ -125,16 +138,11 @@ else
     errordlg ('No constants selected');
     return
 end
-
-if isempty (handles.directory.String)
-     errordlg ('Please select a directory');
-     return
-end
-
 CONST = loadConstants(text, handles.parallel_flag.Value);
 CONST.consensus = handles.consensus.Value;
 CONST.trackLoci.fluorFlag = handles.fluor_flag.Value;
 CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
+CONST.trackLoci.numSpots = str2double(strsplit(handles.spots.String, ','));
 BatchSuperSeggerOpti(handles.directory.String, str2double(handles.skip.String), handles.clean_flag.Value, CONST);
 
 function ec60_Callback(hObject, eventdata, handles)
@@ -179,4 +187,15 @@ end
 if handles.bthai60.Value;
     resFlags{end+1} = '60XBthai';
 end
+if isempty (handles.directory.String)
+     errordlg ('Please select a directory');
+     return
+end
 tryDifferentConstants(handles.directory.String, resFlags);
+
+function view_cells_Callback(hObject, eventdata, handles)
+if isempty (handles.directory.String)
+     errordlg ('Please select a directory');
+     return
+end
+superSeggerViewer(handles.directory.String);
