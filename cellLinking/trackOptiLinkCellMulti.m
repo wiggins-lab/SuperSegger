@@ -12,7 +12,6 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-CONST.regionOpti.MIN_LENGTH = 10;
 
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir();

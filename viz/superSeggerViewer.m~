@@ -601,17 +601,15 @@ while runFlag
             num = floor(str2double(c(6:end)));
             [data_cell,cell_name] = loadCellData(num,dirname_cell);
             if ~isempty(data_cell)
-                mov = makeCellMovie(data_cell)
-                disp('Save movie?')
-                d = input('[y/n]:','s');
-                if strcmp(d,'y')
-                    saveFilename = [dirSave,cell_name(1:end-4),'.avi'];
-                    disp (['saving movie at ',saveFilename]);
-                    v = VideoWriter(saveFilename);
-                    open(v)
-                    writeVideo(v,mov)
-                    close(v)
-                end
+                mov = makeCellMovie(data)           
+                   disp('Save movie?')
+                    d = input('[y/n]:','s');
+                    if strcmp(d,'y')                      
+                        v = VideoWriter([dirSave,cell_name('.avi']);
+                        open(v)
+                        writeVideo(v,mov)
+                        close(v)
+                    end
             end
         end
         
@@ -810,7 +808,7 @@ catch
 end
 
 end
-
+end
 
 % END OF MAIN FUNCTION (superSeggerViewer)
 
@@ -953,240 +951,239 @@ for kk = 1:data_c.regs.num_regs
         end
     end
 end
-end
 
 
-function flagsStates = intSetStateStrings(FLAGS,CONST)
-% intSetStateStrings : sets default flags for when the program begins
-flagsStates.vState = '(on) ';
-flagsStates.mState = '(on) ';
-flagsStates.idState = '(on) ';
-flagsStates.TState = '(on) ';
-flagsStates.PState ='(on) ';
-flagsStates.pState ='(off) ';
-flagsStates.rState = '(on) ';
-flagsStates.eState = '(on) ';
-flagsStates.fState = '(Fluor)';
-flagsStates.CCState ='(on) ';
-flagsStates.PValState = '';
-flagsStates.lyseState = '';
-flagsStates.sState = '(on) ';
-flagsStates.outlineState = '(on) ';
-
-if ~FLAGS.cell_flag
-    flagsStates.vState = '(off)';
-end
-
-if ~FLAGS.Outline_flag
-    flagsStates.vState = '(off)';
-end
-
-if ~FLAGS.m_flag
-    flagsStates.mState = '(off)';
-end
-
-if ~FLAGS.ID_flag
-    flagsStates.idState = '(off)';
-end
-
-if ~FLAGS.T_flag
-    flagsStates.TState = '(off)';
-end
-
-if ~FLAGS.P_flag % regions
-    flagsStates.rState = '(off)';
-end
-if ~FLAGS.e_flag
-    flagsStates.eState = '(off)';
-end
-
-if ~FLAGS.f_flag
-    flagsStates.fState = '(Phase)';
-end
-
-if ~FLAGS.s_flag
-    flagsStates.sState = '(off)';
-end
-if ~FLAGS.p_flag
-    flagsStates.pState = '(off)';
-end
-if ~CONST.view.showFullCellCycleOnly
-    flagsStates.CCState= '(off)';
-end
-if ~FLAGS.lyse_flag
-    flagsStates.lyseState = '(off)';
-end
-flagsStates.falseColState = '(on) ';
-if ~CONST.view.falseColorFlag
-    flagsStates.falseColState= '(off)';
-end
-
-flagsStates.logState = '(on) ';
-if ~CONST.view.LogView
-    flagsStates.logState = '(off)';
-end
-
-flagsStates.filtState = '(on) ';
-if ~FLAGS.filt
-    flagsStates.filtState = '(off)';
-end
-
-flagsStates.regionScores = '(on) ';
-if ~FLAGS.regionScores
-    flagsStates.regionScores = '(off)';
-end
-
-end
-
-function [data_cell,cell_name] = loadCellData (num,dirname_cell)
-
-data_cell = [];
-cell_name = [];
-padStr = getPadSize(dirname_cell);
-
-if ~isempty( padStr )
-    data_cell = [];
-    filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
-    filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
-else
-    return;
-end
-
-
-if exist(filename_cell_C, 'file' )
-    filename_cell = filename_cell_C;
-    cell_name = ['Cell',num2str(num,padStr),'.mat'];
-elseif exist(filename_cell_c, 'file' )
-    filename_cell = filename_cell_c;
-    cell_name = ['cell',num2str(num,padStr),'.mat'];
-else
-    disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
-    return;
-end
-
-try
-    data_cell = load( filename_cell );
-catch
-    disp(['Error loading: ', filename_cell] );
-end
-
-end
-
-function FLAGS = fixFlags(FLAGS)
-% intSetDefaultFlags : sets default flags for when the program begins
-if ~isfield(FLAGS,'cell_flag')
-    FLAGS.cell_flag  = 1;
-end
-if ~isfield(FLAGS,'m_flag')
-    FLAGS.m_flag  = 0;
-end
-if ~isfield(FLAGS,'ID_flag')
-    FLAGS.ID_flag  = 0;
-end
-if ~isfield(FLAGS,'T_flag')
-    FLAGS.T_flag  = 0;
-end
-if ~isfield(FLAGS,'P_flag')
-    FLAGS.P_flag  = 0;
-end
-if ~isfield(FLAGS,'Outline_flag')
-    FLAGS.Outline_flag  = 1;
-end
-if ~isfield(FLAGS,'e_flag')
-    FLAGS.e_flag  = 0;
-end
-if ~isfield(FLAGS,'f_flag')
-    FLAGS.f_flag  = 0;
-end
-if ~isfield(FLAGS,'p_flag')
-    FLAGS.p_flag  = 0;
-end
-
-if ~isfield(FLAGS,'s_flag')
-    FLAGS.s_flag  = 1;
-end
-if ~isfield(FLAGS,'c_flag')
-    FLAGS.c_flag  = 1;
-end
-
-if ~isfield(FLAGS,'P_val')
-    FLAGS.P_val  = 0.2;
-end
-
-if ~isfield(FLAGS,'filt')
-    FLAGS.filt  = 1;
-end
-
-if ~isfield(FLAGS,'lyse_flag')
-    FLAGS.lyse_flag  = 0;
-end
-
-if ~isfield(FLAGS,'regionScores')
-    FLAGS.regionScores  = 0;
-end
-
-end
-
-function intCons(dirname0, contents_xy, setHeader, CONST)
-xyDir = [dirname0,contents_xy.name,filesep];
-dircons = [xyDir,'/consensus/']
-
-if ~exist(dircons,'dir')
-    mkdir(dircons);
-end
-
-ixy = intGetNum( contents_xy.name );
-header = ['xy',num2str(ixy),': '];
-
-if exist([dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'],'file')
-    disp('Consensus Already Calculated')
-    imColor = imread([dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif']);
-    figure(1)
-    clf
-    imshow(imColor);
-    disp('Press any key to continue')
-    pause;
-else
-    
-    disp('No Images Found.')
-    disp('Calculate New Consensus?')
-    d = input('[y/n]:','s');
-    
-    if strcmp(d,'y')
-        if isdir([dirname0,contents_xy.name,filesep,'seg_full'])
-            dirname = [dirname0,contents_xy.name,filesep,'seg_full',filesep];
+    function flagsStates = intSetStateStrings(FLAGS,CONST)
+        % intSetStateStrings : sets default flags for when the program begins
+        flagsStates.vState = '(on) ';
+        flagsStates.mState = '(on) ';
+        flagsStates.idState = '(on) ';
+        flagsStates.TState = '(on) ';
+        flagsStates.PState ='(on) ';
+        flagsStates.pState ='(off) ';
+        flagsStates.rState = '(on) ';
+        flagsStates.eState = '(on) ';
+        flagsStates.fState = '(Fluor)';
+        flagsStates.CCState ='(on) ';
+        flagsStates.PValState = '';
+        flagsStates.lyseState = '';
+        flagsStates.sState = '(on) ';
+        flagsStates.outlineState = '(on) ';
+        
+        if ~FLAGS.cell_flag
+            flagsStates.vState = '(off)';
         end
         
-        dirname_cell = [dirname0,contents_xy.name,filesep,'cell',filesep];
-        disp( ['Doing ',num2str(ixy)] );
-        skip = 1;
-        mag = 4;
-        [dataImArray] = makeConsensusArray( [dirname_cell], CONST, skip, mag, [] );
-        [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST,skip,mag,0);
-        
-        figure(1)
-        clf
-        imshow(imColor)
-        
-        if ~isempty( imMosaic10 )
-            disp('Save consensus images?')
-            d = input('[y/n]:','s');
-            % this just saves the consensus images.
-            if strcmp(d,'y')
-                save([dircons,'consensus'],'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
-                imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-            end
-        else
-            disp( ['Found no cells in ', dirname_cell, '.'] );
+        if ~FLAGS.Outline_flag
+            flagsStates.vState = '(off)';
         end
         
-    else
+        if ~FLAGS.m_flag
+            flagsStates.mState = '(off)';
+        end
         
-        return
+        if ~FLAGS.ID_flag
+            flagsStates.idState = '(off)';
+        end
+        
+        if ~FLAGS.T_flag
+            flagsStates.TState = '(off)';
+        end
+        
+        if ~FLAGS.P_flag % regions
+            flagsStates.rState = '(off)';
+        end
+        if ~FLAGS.e_flag
+            flagsStates.eState = '(off)';
+        end
+        
+        if ~FLAGS.f_flag
+            flagsStates.fState = '(Phase)';
+        end
+        
+        if ~FLAGS.s_flag
+            flagsStates.sState = '(off)';
+        end
+        if ~FLAGS.p_flag
+            flagsStates.pState = '(off)';
+        end
+        if ~CONST.view.showFullCellCycleOnly
+            flagsStates.CCState= '(off)';
+        end
+        if ~FLAGS.lyse_flag
+            flagsStates.lyseState = '(off)';
+        end
+        flagsStates.falseColState = '(on) ';
+        if ~CONST.view.falseColorFlag
+            flagsStates.falseColState= '(off)';
+        end
+        
+        flagsStates.logState = '(on) ';
+        if ~CONST.view.LogView
+            flagsStates.logState = '(off)';
+        end
+        
+        flagsStates.filtState = '(on) ';
+        if ~FLAGS.filt
+            flagsStates.filtState = '(off)';
+        end
+        
+        flagsStates.regionScores = '(on) ';
+        if ~FLAGS.regionScores
+            flagsStates.regionScores = '(off)';
+        end
         
     end
-end
-end
+
+    function [data_cell,cell_name] = loadCellData (num,dirname_cell)
+        
+        data_cell = [];
+        cell_name = [];
+        padStr = getPadSize(dirname_cell);
+        
+        if ~isempty( padStr )
+            data_cell = [];
+            filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
+            filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
+        else
+            return;
+        end
+        
+        
+        if exist(filename_cell_C, 'file' )
+            filename_cell = filename_cell_C;
+            cell_name = ['Cell',num2str(num,padStr),'.mat'];
+        elseif exist(filename_cell_c, 'file' )
+            filename_cell = filename_cell_c;
+              cell_name = ['cell',num2str(num,padStr),'.mat'];
+        else
+            disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
+            return;
+        end
+        
+        try
+            data_cell = load( filename_cell );
+        catch
+            disp(['Error loading: ', filename_cell] );
+        end
+        
+    end
+
+    function FLAGS = fixFlags(FLAGS)
+        % intSetDefaultFlags : sets default flags for when the program begins
+        if ~isfield(FLAGS,'cell_flag')
+            FLAGS.cell_flag  = 1;
+        end
+        if ~isfield(FLAGS,'m_flag')
+            FLAGS.m_flag  = 0;
+        end
+        if ~isfield(FLAGS,'ID_flag')
+            FLAGS.ID_flag  = 0;
+        end
+        if ~isfield(FLAGS,'T_flag')
+            FLAGS.T_flag  = 0;
+        end
+        if ~isfield(FLAGS,'P_flag')
+            FLAGS.P_flag  = 0;
+        end
+        if ~isfield(FLAGS,'Outline_flag')
+            FLAGS.Outline_flag  = 1;
+        end
+        if ~isfield(FLAGS,'e_flag')
+            FLAGS.e_flag  = 0;
+        end
+        if ~isfield(FLAGS,'f_flag')
+            FLAGS.f_flag  = 0;
+        end
+        if ~isfield(FLAGS,'p_flag')
+            FLAGS.p_flag  = 0;
+        end
+        
+        if ~isfield(FLAGS,'s_flag')
+            FLAGS.s_flag  = 1;
+        end
+        if ~isfield(FLAGS,'c_flag')
+            FLAGS.c_flag  = 1;
+        end
+        
+        if ~isfield(FLAGS,'P_val')
+            FLAGS.P_val  = 0.2;
+        end
+        
+        if ~isfield(FLAGS,'filt')
+            FLAGS.filt  = 1;
+        end
+        
+        if ~isfield(FLAGS,'lyse_flag')
+            FLAGS.lyse_flag  = 0;
+        end
+        
+        if ~isfield(FLAGS,'regionScores')
+            FLAGS.regionScores  = 0;
+        end
+        
+    end
+
+    function intCons(dirname0, contents_xy, setHeader, CONST)
+        xyDir = [dirname0,contents_xy.name,filesep];
+        dircons = [xyDir,'/consensus/']
+        
+        if ~exist(dircons,'dir')
+            mkdir(dircons);
+        end
+        
+        ixy = intGetNum( contents_xy.name );
+        header = ['xy',num2str(ixy),': '];
+        
+        if exist([dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'],'file')
+            disp('Consensus Already Calculated')
+            imColor = imread([dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif']);
+            figure(1)
+            clf
+            imshow(imColor);
+            disp('Press any key to continue')
+            pause;
+        else
+            
+            disp('No Images Found.')
+            disp('Calculate New Consensus?')
+            d = input('[y/n]:','s');
+            
+            if strcmp(d,'y')
+                if isdir([dirname0,contents_xy.name,filesep,'seg_full'])
+                    dirname = [dirname0,contents_xy.name,filesep,'seg_full',filesep];
+                end
+                
+                dirname_cell = [dirname0,contents_xy.name,filesep,'cell',filesep];
+                disp( ['Doing ',num2str(ixy)] );
+                skip = 1;
+                mag = 4;
+                [dataImArray] = makeConsensusArray( [dirname_cell], CONST, skip, mag, [] );
+                [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST,skip,mag,0);
+                
+                figure(1)
+                clf
+                imshow(imColor)
+                
+                if ~isempty( imMosaic10 )
+                    disp('Save consensus images?')
+                    d = input('[y/n]:','s');
+                    % this just saves the consensus images.
+                    if strcmp(d,'y')
+                        save([dircons,'consensus'],'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+                        imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                        imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                        imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                        imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                    end
+                else
+                    disp( ['Found no cells in ', dirname_cell, '.'] );
+                end
+                
+            else
+                
+                return
+                
+            end
+        end
+    end
