@@ -84,12 +84,16 @@ A               = CONST.superSeggerOpti.A;
 
 
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
-if ~exist('crop_box')
+if ~exist('crop_box','var')
     crop_box = [];
+end
+
+if ~exist('adapt_flag','var')
+    adapt_flag = 1;
 end
 
 
