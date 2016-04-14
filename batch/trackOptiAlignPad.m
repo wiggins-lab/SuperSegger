@@ -1,16 +1,17 @@
 function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
-% trackOptiAlignPad : aligns phase images to correct for microscope drift
-% To keep as much data as possible, instead of cropping the resulting 
-% images it builds a larger image that encompases all drift positions.  
+% trackOptiAlignPad : aligns phase images to correct for microscope drift.
+% To keep as much data as possible, instead of cropping the resulting
+% images it builds a larger image that encompases all drift positions.
 % It saves the alignment information in an array called crop_box and saves
-% the aligned imagesin a directory called dirname/align.
+% the aligned images in a directory called dirname/align.
 % If the images are out of focused or have a high error they are skipped
-% in alignment.
+% in alignment. Images can be aligned to any channel (fluorescence or phase)
+% by setting CONST.imAlign.AlignChannel (default is 1).
 %
 % INPUT :
 %       dirname_ : folder were .tif image files in NIS format are contained
 %       workers : number of workers for parallel computation
-%       CONST : segmentation constantsS
+%       CONST : segmentation constants
 % OUTPUT :
 %       crop_box : information about alignement
 %
@@ -22,7 +23,7 @@ if ~exist('workers', 'var') || isempty( workers )
     workers = 0;
 end
 
-% Upsampling factor used for image alignment. 
+% Upsampling factor used for image alignment.
 % Images will be registered to within 1/precision of a pixel
 precision = 100;
 
@@ -31,50 +32,64 @@ if dirname_ == '.'
 end
 dirname_ = fixDir(dirname_);
 
-if ~isempty(dirname_)
-    file_filter = '*.tif';
-    contents=dir([dirname_ file_filter]);
-    num_im = numel( contents );
-    
-    nt  = [];
-    nc  = [];
-    nxy = [];
-    nz  = [];
-    
-    % extract name information for each image
-    for i = 1:num_im        
-        nameInfo = ReadFileName(contents(i).name);               
-        nt  = [nt, nameInfo.npos(1,1)];
-        nc  = [nc, nameInfo.npos(2,1)];
-        nxy = [nxy,nameInfo.npos(3,1)];
-        nz  = [nz, nameInfo.npos(4,1)];               
-    end
-    
-    nt  = sort(unique(nt));
-    nc  = sort(unique(nc));
-    nxy = sort(unique(nxy));
-    nz  = sort(unique(nz));
-    
-    targetd = [dirname_,'align',filesep];
-    mkdir(targetd);    
-    num_xy = numel(nxy);
-    
-    if (workers>0) && (num_xy>1)
-        SHOW_FLAG = false;
-    else
-        SHOW_FLAG = true;
-        workers = 0;
-    end
-    
-    
-    crop_box = cell(1, num_xy);
-    
-    % parallelized alignemnt for each xy
-    parfor(jj=1:num_xy, workers)
-        crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
-            dirname_, targetd, nameInfo, precision, CONST );
-    end
+
+file_filter = '*.tif';
+contents=dir([dirname_ file_filter]);
+num_im = numel( contents );
+
+nt  = [];
+nc  = [];
+nxy = [];
+nz  = [];
+
+% extract name information for each image
+for i = 1:num_im
+    nameInfo = ReadFileName(contents(i).name);
+    nt  = [nt, nameInfo.npos(1,1)];
+    nc  = [nc, nameInfo.npos(2,1)];
+    nxy = [nxy,nameInfo.npos(3,1)];
+    nz  = [nz, nameInfo.npos(4,1)];
 end
+
+nt  = sort(unique(nt));
+nc  = sort(unique(nc));
+nxy = sort(unique(nxy));
+nz  = sort(unique(nz));
+
+
+
+% set the align channel to be first, default is 1 (bright field)
+if isfield(CONST, 'imAlign') && isfield(CONST.imAlign, 'AlignChannel') && ...
+        any(CONST.imAlign.AlignChannel == nc)
+    nc = [CONST.imAlign.AlignChannel, ...
+        nc(nc~=CONST.imAlign.AlignChannel)];
+else
+    CONST.imAlign.AlignChannel = 1;
+    CONST.imAlign.medFilt      = false;
+end
+
+
+
+targetd = [dirname_,'align',filesep];
+mkdir(targetd);
+num_xy = numel(nxy);
+
+if (workers>0) && (num_xy>1)
+    SHOW_FLAG = false;
+else
+    SHOW_FLAG = true;
+    workers = 0;
+end
+
+
+crop_box = cell(1, num_xy);
+
+% parallelized alignemnt for each xy
+parfor(jj=1:num_xy, workers)
+    crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
+        dirname_, targetd, nameInfo, precision, CONST );
+end
+
 end
 
 
@@ -85,7 +100,7 @@ function crop_box = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, ...
 %
 % INPUT :
 %       SHOW_FLAG : to display the waitbar
-%       nt : array with numbers of time frames 
+%       nt : array with numbers of time frames
 %       nz : array with numbers of z frames
 %       nc : array with numbers of channels
 %       nnxy : xy directory number
@@ -128,23 +143,33 @@ for it = nt;
     countt = countt+1;
     
     for iz = nz
-        for ic = nc            
+        for ic = nc
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
             disp(['Image name: ',in_name]);
             im = imread(in_name);
-                        
+            
             if numel(size(im)) > 2
                 disp('Images are color - they need to be black and white.');
-                im = squeeze(im(:,:,1));               
+                im = squeeze(im(:,:,1));
             end
             
-            if (ic == nc(1)) && (iz == nnz2 | iz == -1) 
+            if (ic == nc(1)) && (iz == nnz2 | iz == -1)
                 % align phase image at half the z axis
                 if ~initFlag % first time through, or high error
                     phaseBef = im;
                 end
-                [out,errNum,focusNum] = intAlignIm(im, phaseBef, precision );
+                
+                % applies a median filter to the phase image
+                if CONST.imAlign.medFilt
+                    im_     = medfilt2( im,     [3,3], 'symmetric' );
+                    phaseBef_ = medfilt2( phaseBef, [3,3], 'symmetric' );
+                else
+                    im_     = im;
+                    phaseBef_ = phaseB;
+                end
+                
+                [out,errNum,focusNum] = intAlignIm(im_, phaseBef_, precision );
                 disp(['focusNum: ',num2str(focusNum),' errNum: ',num2str(errNum)]);
                 
                 FOCUS_FLAG = (focusNum > FOCUS_NUM_LIM) & (errNum < ERR_LIM);
@@ -182,12 +207,12 @@ for it = nt;
                 end
                 drawnow;
             end
-                        
+            
             if FOCUS_FLAG
                 if ic == nc(1)
                     phaseBef = im; % set the previous image to current
-                end                
-                out_name = [targetd, MakeFileName(nameInfo)];                 
+                end
+                out_name = [targetd, MakeFileName(nameInfo)];
             else % non focused or high alignment error
                 disp( ['Skipping frame: ', in_name] );
             end
@@ -258,14 +283,14 @@ for it = nt;
                         imshow( cat( 3, backer+fluor, backer0, backer0));
                     end
                 end
-                drawnow;               
+                drawnow;
                 hold on;
                 xxxx = [crop_box(countt,2),crop_box(countt,2),...
                     crop_box(countt,4),crop_box(countt,4),...
                     crop_box(countt,2)];
                 yyyy = [crop_box(countt,1),crop_box(countt,3),...
                     crop_box(countt,3), crop_box(countt,1),...
-                    crop_box(countt,1)];                
+                    crop_box(countt,1)];
                 plot( xxxx,yyyy,'y');
             end
             
@@ -290,52 +315,5 @@ end
 if SHOW_FLAG
     close(h);
 end
-
-% cropping part : deprecated
-% 
-% mins = min(-OutArray);
-% maxs = max(-OutArray);
-% 
-% ss = size(im);
-% 
-% if CROP_FLAG
-%     cropper = [ceil(1+maxs(1)),ceil(1+maxs(2)),...
-%         floor(ss(1)+mins(1)),floor(ss(2)+mins(2))];
-% else
-%     cropper = [1,1,ss(1),ss(2)];
-% end
-% 
-% if SHOW_FLAG
-%     h = waitbar(0,'cropping frames: ');
-% end
-% 
-% tt = 1;
-% countt   = 0;
-% 
-% for it = nt;
-%     if SHOW_FLAG
-%         waitbar(countt/nnt,h);
-%     end
-%     
-%     countt = countt+1;
-%     
-%     for iz = nz;
-%         for ic = nc;
-%             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
-%             out_name = [targetd, MakeFileName(nameInfo)];
-%             
-%             if exist( out_name, 'file' );
-%                 im = imread( out_name );
-%                 imwrite(im(cropper(1):cropper(3),cropper(2):cropper(4)),...
-%                     [out_name] ,'tif','Compression', 'none');
-%             end
-%         end
-%         
-%     end
-% end
-% 
-% if SHOW_FLAG
-%     close(h);
-% end
 
 end

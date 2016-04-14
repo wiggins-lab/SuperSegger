@@ -1,4 +1,4 @@
-function trackOptiSkipMerge(dirname_xy,skip,CONST,header)
+function trackOptiSkipMergeMap(dirname_seg,skip,CONST,header)
 % trackOptiSkipMerge : adds skipped frames back into the time series.
 % It makes the _err.mat files with the fluor images corresponding 
 % to the current time step. The new _err files are placed in seg_full.
@@ -22,63 +22,61 @@ if nargin < 2 || isempty( skip )
     skip = 1; % don't skip frames
 end
 
-file_filter = '*.tif';
-if dirname_xy(end) ~= filesep
-    dirname_xy = [dirname_xy, filesep];
-end
+file_filter = '*err.mat';
+dirname_seg = fixDir(dirname_seg)
 
-% Reset n values in case directories have already been made.
-contents = dir([dirname_xy,'fluor*']);
-num_dir_tmp = numel(contents);
-nc = 1;
-num_c = 1;
-
-% reset values for nc
-for i = 1:num_dir_tmp
-    if (contents(i).isdir) && (numel(contents(i).name) > numel('fluor'))
-        num_c = num_c+1;
-        nc = [nc, str2double(contents(i).name(numel('fluor')+1:end))+1];
-    end
-end
-
-% Process data....
-
-contents=dir([dirname_xy,'phase',filesep,file_filter]);
+% get error files from seg_fill
+contents=dir([dirname_seg,file_filter]);
 num_im = numel(contents);
-
-nz = zeros(1, num_im);
 nt = zeros(1, num_im);
 
 % reset nz values
 for i = 1:num_im;
-    nameInfo = ReadFileName( contents(i).name );    
+    nameInfo = ReadFileName(contents(i).name);    
     nt(i) = nameInfo.npos(1,1);
-    nz(i) = nameInfo.npos(4,1);
 end
 
 nt = sort(unique(nt));
-nz = sort(unique(nz));
 num_t = numel(nt);
-num_z = numel(nz);
-
-if nz(1)==-1
-    nz = 1;
-end
-
-if ~exist([dirname_xy,'seg_full'],'dir')
-    mkdir( [dirname_xy,'seg_full'] );
-end
 
 if CONST.parallel.show_status
-    h = waitbar( 0, ['Merging Skipped frames xy: 0/',num2str(num_t)] );
+    h = waitbar( 0, ['Mapping merged skipped frames xy: 0/',num2str(num_t)] );
 else
     h=[];
 end
 
-parfor i=1:num_t;
-%for i=1:num_t;
-    intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z);
-    if CONST.parallel.show_status
+% go through the reference frames frames
+% mapping is already copied from trackOptiSkipMerge, all we have to do 
+% is copy the ids, divide etc..?
+
+for i=1:num_t;
+    % get reference mapping
+    
+    
+    if ~mod(i-1,skip) % first one
+        % keep births, but not deaths, and divisions..?
+   divide
+   
+    % loads the data reference for the min merge of z phase, sets tha name and
+    % nameInfo, and the fluorescence field from the image to be merged.
+    if mod(i-1,skip)
+        data.phase = phase;
+        data.basename = name;
+        nameInfo_tmp = nameInfo;
+        for k = 2:num_c
+            % load fluor image for each channel X and put it in data.fluorX
+            nameInfo_tmp.npos(1,1) = nt(i);
+            nameInfo_tmp.npos(2,1) = nc(k);
+            nameInfo_tmp.npos(4,1) = 1;
+            name = MakeFileName( nameInfo_tmp );
+            fluorImage = imread( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name]);
+            data.(['fluor',num2str(nc(k)-1)]) = fluorImage;
+        end    
+    end
+
+
+ 
+    if CONST.parallel.show_status && ~CONST.parallel.PARALLEL_FLAG
         waitbar(i/num_t,h,...
             ['Merging Skipped frames t: ',num2str(i),'/',num2str(num_t)]);
     else
@@ -87,13 +85,15 @@ parfor i=1:num_t;
     end
     
 end
-if CONST.parallel.show_status
+
+if CONST.parallel.show_status && ~CONST.parallel.PARALLEL_FLAG
     close(h);
 end
+
 end
 
 
-function intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z)
+function intSkipMapPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z)
 % intSkipPar : makes the _err files for the frames skipped for each xy.
 %
 % INPUT :
