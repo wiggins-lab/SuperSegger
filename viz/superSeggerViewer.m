@@ -54,6 +54,7 @@ function superSeggerViewer(dirname)
 
 %% Load Constants and Initialize Flags
 
+global canUseErr;
 hf = figure(1);
 clf;
 mov = struct;
@@ -170,7 +171,7 @@ while runFlag
     num_im = max(num_segs, num_errs);
     
     %Use region IDs if cells IDs unavailable
-    if nn > num_errs
+    if nn > num_errs || FLAGS.useSegs
         canUseErr = 0;
         contents=dir([dirname_seg, '*seg.mat']);
     else
@@ -182,7 +183,7 @@ while runFlag
     if resetFlag
         resetFlag = false;
         [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
-            contents, nn, num_im, clist);
+            contents, nn, num_im, clist, FLAGS);
     end
     
     
@@ -194,7 +195,7 @@ while runFlag
     
     %Force flags to required values when data is unavailable
     forcedFlags = FLAGS;
-    forcedFlags.cell_flag = forcedFlags.cell_flag & canUseErr; %Force cell flag to 0 when err files not present
+    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS); %Force cell flag to 0 when err files not present
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);
@@ -212,16 +213,22 @@ while runFlag
     disp(['x# : Switch xy directory from ', num2str(ixy), '               #  : Go to Frame Number #']);
     disp('----------------------------------Display Options-----------------------------------------');
     disp(['    Region info: ', num2str(num_segs), ' frames.   Cell info: ', num2str(num_errs), ' frames.   Current frame: ', num2str(nn)]);
-    if ~canUseErr
+    if ~FLAGS.cell_flag
+        fprintf(2, 'Displaying region data.\n');
+    end
+    if FLAGS.useSegs
+        fprintf(2, 'Using seg files. Displaying region IDs instead of cell IDs.\n');
+    elseif ~canUseErr
         fprintf(2, 'No cell info for this frame. Displaying region IDs instead.\n');
     end
     disp(' ');
-    disp(['id  : Show Cell Numbers ', [flagsStates.idState],'                 F# : Find Cell Number #']);
+    disp(['id  : Show/Hide Cell Numbers ', [flagsStates.idState],'            seg : Use seg files ', flagsStates.useSegs]);
     disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          R  : Show/Hide Region scores ', [flagsStates.regionScores]]);
-    disp(['p  : Show/Hide Cell Poles ', flagsStates.pState,'               outline  : Outline cells ', flagsStates.outlineState]);
+    disp(['p  : Show/Hide Cell Poles ', flagsStates.pState,'               outline  : Outline cells ', flagsStates.vState]);
     disp(['f#  : Change channel ', [flagsStates.fState],'                  s  : Show Fluor Foci Scores ', [flagsStates.sState]]);
     disp(['filter : Filtered fluorescence ',flagsStates.filtState,'          CC : Use Complete Cell Cycles ', flagsStates.CCState] );
     disp(['falseCol : False Color ', flagsStates.falseColState,'                  log : Log View ', flagsStates.logState ]);
+    disp(['F# : Find Cell Number #']);
     disp('-------------------------------------Link Options-----------------------------------------');
     disp('-----------------------------------Output Options-----------------------------------------');
     disp(['con  : Show Consensus                         cK : Show consensus kymograph  ']);
@@ -318,7 +325,7 @@ while runFlag
     elseif c(1) == 'F' % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
         if numel(c) > 1
             find_num = floor(str2num(c(2:end)));
-            if FLAGS.cell_flag && canUseErr
+            if FLAGS.cell_flag && shouldUseErrorFiles(FLAGS)
                 regnum = find( data_c.regs.ID == find_num);
                 
                 if ~isempty( regnum )
@@ -628,8 +635,8 @@ while runFlag
         
         for nn = 1:num_im
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
-                contents, nn, num_im, clist);
-            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
+                contents, nn, num_im, clist, FLAGS);
+            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
             drawnow;
             disp( ['Frame number: ', num2str(nn)] );
             imwrite( tmp_im, [movdir,filesep,'mov',sprintf(file_tmp,nn),'.tif'], 'TIFF', 'Compression', 'none' );
@@ -650,7 +657,15 @@ while runFlag
             FLAGS.ID_flag = 0;
         end
         
-        %% DEVELOPER FUNCTIONS : Use at your own risk
+    elseif strcmp(c,'seg') % Toggle display of region scores
+        FLAGS.useSegs = ~FLAGS.useSegs;
+        resetFlag = true;
+        
+    %% DEVELOPER FUNCTIONS : Use at your own risk
+    elseif strcmp(c,'link')  % Show links
+        FLAGS.showLinks = ~FLAGS.showLinks;
+        resetFlag = true;
+        
     elseif strcmp(c,'editSegs')  % Edit Segments, allows to turn on and off segments
         disp('Are you sure you want to edit the segments?')
         d = input('[y/n]:','s');
@@ -900,7 +915,7 @@ ixy = str2num(str_xy(ismember(str_xy, '0123456789' )));
 end
 
 
-function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist)
+function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist, FLAGS)
 % intLoadData : loads current, reverse and forward data.
 % INPUT :
 %       dirname : seg directory
@@ -915,7 +930,17 @@ data_c = loaderInternal([dirname,contents(nn).name], clist);
 data_r = [];
 data_f = [];
 
-%
+if shouldLoadNeighborFrames(FLAGS)
+    if nn > 1
+        data_r = loaderInternal([dirname,contents(nn-1).name], clist);
+    end
+    
+    if nn < num_im-1
+        data_f = loaderInternal([dirname,contents(nn+1).name], clist);
+    end
+end
+
+
 % if (nn ==1) && (1 == num_im) % 1 frame only
 %     data_r = [];
 %     data_c = loaderInternal([dirname,contents(nn).name], clist);
@@ -945,7 +970,7 @@ for kk = 1:data_c.regs.num_regs
             isfield(data_c.regs, 'error') && ...
             isfield(data_c.regs.error,'label') && ...
             ~isempty( data_c.regs.error.label{kk} )
-        if FLAGS.cell_flag && canUseErr && isfield( data_c.regs, 'ID' )
+        if FLAGS.cell_flag && shouldUseErrorFiles(FLAGS) && isfield( data_c.regs, 'ID' )
             disp(  ['Cell: ', num2str(data_c.regs.ID(kk)), ', ', ...
                 data_c.regs.error.label{kk}] );
         else
@@ -971,7 +996,6 @@ flagsStates.CCState ='(on) ';
 flagsStates.PValState = '';
 flagsStates.lyseState = '';
 flagsStates.sState = '(on) ';
-flagsStates.outlineState = '(on) ';
 
 if ~FLAGS.cell_flag
     flagsStates.vState = '(off)';
@@ -1034,6 +1058,17 @@ end
 flagsStates.regionScores = '(on) ';
 if ~FLAGS.regionScores
     flagsStates.regionScores = '(off)';
+end
+
+flagsStates.useSegs = '(on) ';
+if ~FLAGS.useSegs 
+    flagsStates.useSegs = '(off)';
+end
+
+
+flagsStates.showLinks = '(on) ';
+if ~FLAGS.showLinks 
+    flagsStates.showLinks = '(off)';
 end
 
 end
@@ -1125,6 +1160,14 @@ if ~isfield(FLAGS,'regionScores')
     FLAGS.regionScores  = 0;
 end
 
+if ~isfield(FLAGS,'useSegs')
+FLAGS.useSegs  = 0;
+end
+
+if ~isfield(FLAGS,'showLinks')
+FLAGS.showLinks  = 0;
+end
+
 end
 
 function intCons(dirname0, contents_xy, setHeader, CONST)
@@ -1189,4 +1232,15 @@ else
         
     end
 end
+end
+
+
+function value = shouldUseErrorFiles(FLAGS)
+    global canUseErr;
+    
+    value = canUseErr == 1 && FLAGS.useSegs == 0;
+end
+
+function value = shouldLoadNeighborFrames(FLAGS)
+    value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
 end
