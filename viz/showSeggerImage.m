@@ -25,6 +25,7 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
 %         s_flag : shows the foci and their score
 %         T_flag : ? something related to regions
 %         p_flag : shows pole positions and connects daughter cells to each other
+%         regionScores : shows scores of regions
 %
 % OUTPUT :
 %         im : trackOptiView outlined image
@@ -95,6 +96,11 @@ end
 imshow(im);
 hold on;
 
+% Displays linking information
+if FLAGS.showLinks
+    intPlotLinks(data, data_r, data_f, -xx(1)+1, -yy(1)+1, FLAGS, clist, CONST );
+end
+
 % annotates spots, cell numbers and poles
 if ~FLAGS.m_flag
     doAnnotation( data, -xx(1)+1, -yy(1)+1 );
@@ -110,10 +116,11 @@ end
         if ~isempty(data_)
             
             % plots cell numbers
-            if FLAGS.ID_flag
+            if FLAGS.ID_flag == 1 
                 intPlotNum( data_ , x_, y_, FLAGS, ID_LIST );
-            end
-            
+            elseif FLAGS.regionScores
+                intPlotScores( data_ , x_, y_, FLAGS );
+            end            
             
             % plots spots, only if we are at fluorescence view
             if FLAGS.f_flag && FLAGS.s_flag && isfield(data_,'CellA')
@@ -386,6 +393,47 @@ end
 
 end
 
+
+function intPlotScores( data, x_, y_ , FLAGS )
+% intPlotNum : Plot cell number or region numbers
+
+counter = 200; % max amount of cell numbers to be plotted
+kk = 0; % counter for regions
+while (counter > 0 && kk < data.regs.num_regs)
+   % disp(counter)
+    kk = kk + 1;
+    rr = data.regs.props(kk).Centroid;
+    
+    if isfield( data.regs, 'ignoreError' )
+        ignoreError = data.regs.ignoreError(kk);
+    else
+        ignoreError = 0;
+    end
+    
+    score = 1 - (data.regs.scoreRaw(kk) + 50) / 100;
+    
+    colorMap = redgreencmap(256, 'Interpolation', 'linear');
+    colorIndex = floor(min(score, 1) * 255) + 1;
+    
+    xpos = rr(1)+x_;
+    ypos = rr(2)+y_;
+    
+    if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
+            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
+        
+        counter = counter - 1;
+        
+        text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.scoreRaw(kk), 2)],...
+                'Color', [colorMap(colorIndex, 1), colorMap(colorIndex, 2), colorMap(colorIndex, 3)],...
+                'FontWeight', 'normal',...
+                'HorizontalAlignment','Center',...
+                'VerticalAlignment','Middle');
+            title('Region Scores');
+    end
+    
+end
+end
+
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
 % intPlotNum : Plot cell number or region numbers
 
@@ -440,8 +488,6 @@ while (counter > 0 && kk < data.regs.num_regs)
     
 end
 end
-
-
 
 function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )
 % intPlotSpot : plots each foci in the cells
@@ -505,6 +551,65 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
         end
     end
 end
+end
+
+function intPlotLinks( data, data_r, data_f, x_, y_, FLAGS, clist, CONST )
+% intPlotLinks : plots the links to the next and previous frames
+
+    %Plot reverse links
+    if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && isfield( data_r, 'CellA' ) && ~isempty( data_r.CellA )
+        colorMap = hsv(10);
+        
+        counter = 0;
+        maxCounter = 500;
+
+        for kk = 1:data.regs.num_regs
+            % only plot links in the cell that are gated.
+            if ~FLAGS.cell_flag || ismember(data.regs.ID(kk), clist.data(:,1))
+                previousRegion = find(data_r.regs.ID == data.regs.ID(kk));
+                nextRegion = find(data_f.regs.ID == data.regs.ID(kk));
+                
+                color = colorMap(mod(kk, 10) + 1, :);
+                
+                if ~isempty(previousRegion)
+                    X = [data_r.CellA{previousRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
+                    Y = [data_r.CellA{previousRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
+
+                    plot(X, Y, 'Color', color);
+                    plot(X(2), Y(2), 'o', 'Color', color);
+                else
+                    if data.regs.age(kk) == 1
+                        motherRegion = find(data_r.regs.ID == data.regs.motherID(kk));
+                        
+                        X = [data_r.CellA{motherRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
+                        Y = [data_r.CellA{motherRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
+
+                        plot(X, Y, 'Color', color);
+                        plot(X(2), Y(2), 'o', 'Color', color);
+                    else
+                        X = data.CellA{kk}.coord.r_center(1) + x_;
+                        Y =  data.CellA{kk}.coord.r_center(2) + y_;
+
+                        plot(X, Y, 'x', 'Color', color);
+                    end
+                end
+                
+                if ~isempty(nextRegion)
+                    X = [data.CellA{kk}.coord.r_center(1) + x_, data_f.CellA{nextRegion}.coord.r_center(1) + x_];
+                    Y = [data.CellA{kk}.coord.r_center(2) + y_, data_f.CellA{nextRegion}.coord.r_center(2) + y_];
+
+                    
+                    plot(X, Y, 'Color', color);
+                    plot(X(2), Y(2), 's', 'Color', color);
+                end
+            end
+            
+            counter = counter + 1;
+            if counter >= maxCounter
+                break;
+            end
+        end
+    end
 end
 
 function intPlotLink( data, x_, y_ )
