@@ -300,7 +300,8 @@ if FLAGS.f_flag > 0
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
-elseif FLAGS.Outline_flag  % it just outlines the cells
+end
+if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
     else
@@ -611,12 +612,16 @@ if dataHasIds
                     end
                     
                     if ~isempty(motherRegion)
-                        X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
-                        Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
-                        
-                        plot(X, Y, 'Color', color);
+                        if FLAGS.showMothers == 1
+                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+
+                            plot(X, Y, 'Color', color);
+                        end
                         
                         valid = 1;
+                    else
+                        valid = 0;
                     end
                 end
             end            
@@ -631,7 +636,7 @@ if dataHasIds
                     daughterRegions = [];
                     
                     if dataFHasIds && data.regs.ID(kk) ~= 0
-                        daughterRegions = find(data_f.regs.motherID(kk) == data.regs.ID);
+                        daughterRegions = find(data_f.regs.motherID == data.regs.ID(kk));
                         
                         if min(daughterRegions) == 0
                             daughterRegions = [];
@@ -639,15 +644,20 @@ if dataHasIds
                     end
                     
                     if ~isempty(daughterRegions)
+                        if FLAGS.showDaughters == 1
                             for i = 1:numel(daughterRegions)
-                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
-                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                                X = [data_f.regs.props(daughterRegions(i)).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                                Y = [data_f.regs.props(daughterRegions(i)).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
 
-                            plot(X, Y, 'Color', color);
+                                plot(X, Y, 'Color', color);
+                                plot(X(1), Y(1), 's', 'Color', color);
+                            end
                         end
+                    else
+                        valid = 0;
                     end
                 else
-                    valid = 1;
+                    valid = 0;
                 end
             end
             

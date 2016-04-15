@@ -300,7 +300,8 @@ if FLAGS.f_flag > 0
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
-elseif FLAGS.Outline_flag  % it just outlines the cells
+end
+if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
     else
