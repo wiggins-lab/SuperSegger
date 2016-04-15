@@ -1,4 +1,4 @@
-function showSegDataPhase( data, im_flag )
+function showSegDataPhase( data )
 % showSegDataPhase draws the outlines for a region
 %
 % INPUT :

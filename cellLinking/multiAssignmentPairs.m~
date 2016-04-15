@@ -130,15 +130,14 @@ if ~isempty(data_c)
                 
                 
                 % colony it belongs to
-                colOverlap = colony_labels(maskC);
-                if sum(colOverlap(:)) == 0
-                    disp ('No colony found');               
-                    distFromColony = [0 ,0];
-                    distFromColn (ii) = [0 ,0];
-                else
-                    colonyId =  max(colOverlap);
-                    distFromColony = centroidC - colony_props(colonyId).Centroid;
+                col = colony_labels(maskC);
+                if sum(col(:)) == 0
+                    distFromColony = 0;
                     distFromColn (ii) = sqrt(sum(distFromColony.^2));
+                else
+                    colonyId =  max(colony_labels(maskC));
+                distFromColony = centroidC - colony_props(colonyId).Centroid;
+                distFromColn (ii) = sqrt(sum(distFromColony.^2));
                 end
                 
                 % dilate mask and get adjacent regions within dilated area

@@ -37,7 +37,7 @@ if nargin < 2 || isempty(disp_flag);
     disp_flag = 1;
 end
 
-debug_flag = 0;
+debug_flag = 1;
 
 segsLabelAll = data.segs.segs_label;
 segs_3n    = data.segs.segs_3n;

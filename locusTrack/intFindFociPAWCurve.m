@@ -38,9 +38,9 @@ if debug_flag
 end
 
 
-[~,~,images] = curveFilter( image0 );
-data.(['flour',num2str(numc),'_filtered']) = images;
-im_rel = images/dI0;
+[~,~,flourFiltered] = curveFilter( image0 );
+data.(['flour',num2str(numc),'_filtered']) = flourFiltered;
+im_rel = flourFiltered/dI0;
 
 rad = 3;
 A   = pi*rad^2;
@@ -61,7 +61,6 @@ imsize = size( image );
 
 focus0.r               = [nan,nan];
 focus0.score           = nan;
-focus0.intensity_score = nan;
 focus0.intensity       = nan;
 focus0.b               = 1;
 focus0.error           = nan;
@@ -80,7 +79,7 @@ for ii = 1:num_regs
     [xx,yy] = getBBpad( props(ii).BoundingBox, imsize, 3 );
     [XX_ii,YY_ii] = meshgrid(xx,yy);
     
-    ims_ii  = images(yy,xx);
+    ims_ii  = flourFiltered(yy,xx);
     imd_ii  = imaged(yy,xx);
     
     mask_ii = (fr_label(yy,xx)==ii);
@@ -187,11 +186,9 @@ for ii = 1:data.regs.num_regs
         score = Iten/(Istd_B);
         focus(jj).r               = [x_ii__(jj),y_ii__(jj)];
         focus(jj).score           = score;
-        focus(jj).intensity_score = Iten;
         focus(jj).intensity       = Iten;
         focus(jj).b               = 1;
-        focus(jj).error           = nan;
-        
+        focus(jj).error           = nan;       
         focus(jj).shortaxis = ...
             (focus(jj).r-data.CellA{ii}.coord.rcm)*data.CellA{ii}.coord.e2;
         focus(jj).longaxis = ...
@@ -203,7 +200,7 @@ for ii = 1:data.regs.num_regs
     data.CellA{ii}.fieldname = focus;
     xx = data.CellA{ii}.xx;
     yy = data.CellA{ii}.yy;
-    data.CellA{ii}.(['fluor',num2str(numc),'_filtered'])=images( yy, xx );
+    data.CellA{ii}.(['fluor',num2str(numc),'_filtered'])=flourFiltered( yy, xx );
 end
 
 

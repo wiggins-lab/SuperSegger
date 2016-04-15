@@ -23,6 +23,8 @@ function [data, err_flag] = ssoSegFun( phase, CONST, header, dataname, crop_box 
 % create the masks and segments
 %data = superSeggerOpti( phase ,[], ~CONST.seg.OPTI_FLAG ,CONST, 1, header, crop_box);
 
+
+
 data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box);
 
 if numel(data.segs.score) > CONST.superSeggerOpti.MAX_SEG_NUM;
