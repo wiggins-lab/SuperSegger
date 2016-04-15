@@ -24,7 +24,6 @@ resFlags = {'60XEc','60XA','60XEcLB',...
     '60XPa','60XPaM','60XPaM2','60XBthai',...
     '100XEc','100XPa'};
 
-resFlags = {'60XEc'};
 
 % creates a printable verison of resFlgas
 resFlagsPrint = resFlags ; % work on copy
@@ -65,11 +64,21 @@ disp ('Red are correct segments, blue are incorrect segments');
 Eold = CONST.regionScoreFun.E;
 Aold = CONST.superSeggerOpti.A;
 
-% 4) user sets good and bad segments
 segDir = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
 segDirMod = [segTrainingDir,filesep,'xy1',filesep,'segMod',filesep];
 mkdir(segDirMod);
 segData = dir([segDir,'*seg.mat']);
+
+% kill bad regions
+
+for i = 1 : numel(segData)
+        data = load([segDir,segData(i).name]);
+        data = killRegions (data,CONST)
+        save([segDirMod,segData(i).name],'-STRUCT','data');
+end
+
+% 4) user sets good and bad segments
+
 FLAGS.im_flag = 1;
 FLAGS.S_flag = 0;
 FLAGS.t_flag = 0;

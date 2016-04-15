@@ -166,7 +166,7 @@ for it = nt;
                     phaseBef_ = medfilt2( phaseBef, [3,3], 'symmetric' );
                 else
                     im_     = im;
-                    phaseBef_ = phaseB;
+                    phaseBef_ = phaseBef;
                 end
                 
                 [out,errNum,focusNum] = intAlignIm(im_, phaseBef_, precision );

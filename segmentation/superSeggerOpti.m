@@ -128,6 +128,8 @@ phase = imfilter(phase, f,'replicate');
 % We use one threshold to remove the background, and another to remove
 % the smaller background regions between cells.
 
+% TEMP 
+
 if nargin < 2 || isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
