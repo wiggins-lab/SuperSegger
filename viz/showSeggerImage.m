@@ -566,61 +566,71 @@ function intPlotLinks( data, data_r, data_f, x_, y_, FLAGS, clist, CONST )
         for kk = 1:data.regs.num_regs
             % only plot links in the cell that are gated.
             if ~FLAGS.cell_flag || ismember(data.regs.ID(kk), clist.data(:,1))
-                previousRegion = [];
-                nextRegion = [];
-                
-                if isfield( data_r, 'CellA' ) && ~isempty( data_r.CellA )
-                    previousRegion = find(data_r.regs.ID == data.regs.ID(kk));
-                end
-                if isfield( data_f, 'CellA' ) && ~isempty( data_f.CellA )
-                    nextRegion = find(data_f.regs.ID == data.regs.ID(kk));
-                end
-                
-                color = colorMap(mod(kk, 10) + 1, :);
-                drawn = 0;
-                
-                if ~isempty(previousRegion)
-                    X = [data_r.CellA{previousRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
-                    Y = [data_r.CellA{previousRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
+                if data.regs.motherID(kk) ~= 0
+                    previousRegion = [];
+                    nextRegion = [];
 
-                    plot(X, Y, 'Color', color);
-                    plot(X(2), Y(2), 'o', 'Color', color);
-                    
-                    drawn = 1;
-                else
-                    if data.regs.age(kk) == 1
-                        motherRegion = [];
+                    if isfield( data_r, 'CellA' ) && ~isempty( data_r.CellA )
+                        previousRegion = find(data_r.regs.ID == data.regs.ID(kk));
                         
-                        if isfield( data_r, 'CellA' ) && ~isempty( data_r.CellA )
-                            motherRegion = find(data_r.regs.ID == data.regs.motherID(kk));
-                        end
-                        
-                        if ~isempty(motherRegion) 
-                            X = [data_r.CellA{motherRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
-                            Y = [data_r.CellA{motherRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
-
-                            plot(X, Y, 'Color', color);
-                            plot(X(2), Y(2), 'o', 'Color', color);
-
-                            drawn = 1;
+                        if previousRegion == 0
+                            previousRegion = [];
                         end
                     end
-                end
-                
-                if drawn == 0
-                    X = data.CellA{kk}.coord.r_center(1) + x_;
-                    Y =  data.CellA{kk}.coord.r_center(2) + y_;
+                    if isfield( data_f, 'CellA' ) && ~isempty( data_f.CellA )
+                        nextRegion = find(data_f.regs.ID == data.regs.ID(kk));
+                        
+                        if nextRegion == 0
+                            nextRegion = [];
+                        end
+                    end
 
-                    plot(X, Y, 'x', 'Color', color);
-                end
-                
-                if ~isempty(nextRegion)
-                    X = [data.CellA{kk}.coord.r_center(1) + x_, data_f.CellA{nextRegion}.coord.r_center(1) + x_];
-                    Y = [data.CellA{kk}.coord.r_center(2) + y_, data_f.CellA{nextRegion}.coord.r_center(2) + y_];
+                    color = colorMap(mod(kk, 10) + 1, :);
+                    drawn = 0;
 
-                    
-                    plot(X, Y, 'Color', color);
-                    plot(X(2), Y(2), 's', 'Color', color);
+                    if ~isempty(previousRegion)
+                        X = [data_r.CellA{previousRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
+                        Y = [data_r.CellA{previousRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
+
+                        plot(X, Y, 'Color', color);
+                        plot(X(2), Y(2), 'o', 'Color', color);
+
+                        drawn = 1;
+                    else
+                        if data.regs.age(kk) == 1
+                            motherRegion = [];
+
+                            if isfield( data_r, 'CellA' ) && ~isempty( data_r.CellA )
+                                motherRegion = find(data_r.regs.ID == data.regs.motherID(kk));
+                            end
+
+                            if ~isempty(motherRegion) 
+                                X = [data_r.CellA{motherRegion}.coord.r_center(1) + x_, data.CellA{kk}.coord.r_center(1) + x_];
+                                Y = [data_r.CellA{motherRegion}.coord.r_center(2) + y_, data.CellA{kk}.coord.r_center(2) + y_];
+
+                                plot(X, Y, 'Color', color);
+                                plot(X(2), Y(2), 'o', 'Color', color);
+
+                                drawn = 1;
+                            end
+                        end
+                    end
+
+                    if drawn == 0
+                        X = data.CellA{kk}.coord.r_center(1) + x_;
+                        Y =  data.CellA{kk}.coord.r_center(2) + y_;
+
+                        plot(X, Y, 'x', 'Color', color);
+                    end
+
+                    if ~isempty(nextRegion)
+                        X = [data.CellA{kk}.coord.r_center(1) + x_, data_f.CellA{nextRegion}.coord.r_center(1) + x_];
+                        Y = [data.CellA{kk}.coord.r_center(2) + y_, data_f.CellA{nextRegion}.coord.r_center(2) + y_];
+
+
+                        plot(X, Y, 'Color', color);
+                        plot(X(2), Y(2), 's', 'Color', color);
+                    end
                 end
             end
             
