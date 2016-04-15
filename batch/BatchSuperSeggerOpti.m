@@ -96,6 +96,12 @@ if exist( dirname_, 'dir' )
             crop_box_array = cell(1,10000);
         end
     else 
+        % check naming convention
+        if ~numel(dir([dirname_,filesep,'*t*c*.tif']))
+            disp('images in incorrect naming format. Using convertImageNames to convert names.')
+            convertImageNames(dirname_)
+        end
+        
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             crop_box_array = trackOptiAlignPad( dirname_,...

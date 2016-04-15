@@ -3,6 +3,8 @@ function tryDifferentConstants(dirname,resFlags)
 % different constants set in resFlags. It only does the initial
 % segmentation (only the doSeg part) and not the regions decisions,
 % linking and error resolution that come after.
+% Images need to have the right naming convention - if they don't use 
+% renameImages before this script.
 %
 % INPUT :
 %       dirname : directory with images
@@ -28,10 +30,16 @@ end
 
 dirname = fixDir(dirname);
 images = dir([dirname,'*c1*.tif']);
+
+
+if isempty (images)
+    disp('no images found in the directory with c1.tif.Select an image');
+    [lastPhaseImage,dirname , ~] = uigetfile('*.tif', 'Pick an image file');
+else
 lastPhaseImage = images(end).name;
+end
+
 phase = intCropImage (imread([dirname,lastPhaseImage]));
-
-
 numFlags = numel(resFlags);
 numCols = 3;
 numRows = ceil(numFlags / numCols);
@@ -45,6 +53,7 @@ for i = 1:numFlags
     data.res{i} = res{1};
 end
 
+close all;
 figure(5);
 clf;
 ha = tight_subplot(numRows,numCols,[.05 .02],[.05],[.05]);

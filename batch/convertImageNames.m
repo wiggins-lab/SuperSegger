@@ -29,6 +29,27 @@ function convertImageNames(dirname, basename, timeFilterBefore, ...
 
 
 
+
+if ~exist('basename','var') || isempty(basename)
+    basename = input('Please type the basename:','s');
+end
+if ~exist('timeFilterBefore','var') ||  isempty(timeFilterBefore)
+    timeFilterBefore = input('Please type the prefix for the number of the time frame, press enter if none:','s');
+end
+if ~exist('timeFilterAfter','var') ||  isempty(timeFilterAfter)
+    timeFilterAfter = input('Please type the suffix for the number of the time frame, press enter if none:','s');
+end
+if ~exist('xyFilterBefore','var') || isempty(xyFilterBefore)
+    xyFilterBefore = input('Please type the prefix for the number of the xy position, press enter if none:','s');
+end
+if ~exist('xyFilterAfter','var') || isempty(xyFilterAfter)
+    xyFilterAfter = input('Please type the suffix for the number of the xy position, press enter if none:','s');
+end
+if ~exist('channelNames','var') ||isempty(channelNames)
+    channelNames = input('Please type the names of the channels as {''BF'',GFP''}:');
+end
+
+
 images = dir([dirname,filesep,'*.tif']);
 
 % directory to move original images
@@ -88,7 +109,7 @@ else
             return;
         end
         
-        newFileName = [basename,elementsTime,sprintf('%05d',currentTime),elementsXY,sprintf('%02d',currentXY),elementsPhase,num2str(c)];
+        newFileName = [basename,elementsTime,sprintf('%05d',currentTime),elementsXY,sprintf('%03d',currentXY),elementsPhase,num2str(c)];
         copyfile([dirOriginal,filesep,images(j).name],[ newFileName,'.tif']);
         
     end
@@ -103,18 +124,21 @@ is_num_mask = ismember( fileName,'01234567890'); % 1 where there are numbers
 timeStart = 0 ;
 timeEnd = 0 ;
 
+
+% both empty set numbers to 1
+if strcmp(patternBefore,'') && strcmp(patternAfter, '') ||...
+        isempty(patternBefore) &&  isempty(patternAfter)
+    numbers = 1;
+    return
+end
+
 % return []  if not found at all
 if isempty(regexp(fileName,[patternBefore,'[0123456789]+',patternAfter], 'once'))
     numbers=[];
     return;
 end
 
-% both empty set numbers to 1
-if strcmp(patternBefore, '') && strcmp(patternAfter, '') ||...
-    isempty(patternBefore) &&  isempty(patternAfter)
-    numbers = 1;
-    return
-end
+
 
 % find starting and ending number
 [timeStart,timeEnd] =  regexp(fileName,[patternBefore,'[0123456789]+',patternAfter]);
