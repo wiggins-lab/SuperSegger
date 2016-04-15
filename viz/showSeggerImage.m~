@@ -611,16 +611,12 @@ if dataHasIds
                     end
                     
                     if ~isempty(motherRegion)
-                        if FLAGS.showMothers == 1
-                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
-                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
-
-                            plot(X, Y, 'Color', color);
-                        end
+                        X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                        Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                        
+                        plot(X, Y, 'Color', color);
                         
                         valid = 1;
-                    else
-                        valid = 0;
                     end
                 end
             end            
@@ -635,7 +631,7 @@ if dataHasIds
                     daughterRegions = [];
                     
                     if dataFHasIds && data.regs.ID(kk) ~= 0
-                        daughterRegions = find(data_f.regs.motherID == data.regs.ID(kk));
+                        daughterRegions = find(data_f.regs.motherID(kk) == data.regs.ID);
                         
                         if min(daughterRegions) == 0
                             daughterRegions = [];
@@ -643,20 +639,15 @@ if dataHasIds
                     end
                     
                     if ~isempty(daughterRegions)
-                        if FLAGS.showDaughters == 1
                             for i = 1:numel(daughterRegions)
-                                X = [data_f.regs.props(daughterRegions(i)).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
-                                Y = [data_f.regs.props(daughterRegions(i)).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
 
-                                plot(X, Y, 'Color', color);
-                                plot(X(1), Y(1), 's', 'Color', color);
-                            end
+                            plot(X, Y, 'Color', color);
                         end
-                    else
-                        valid = 0;
                     end
                 else
-                    valid = 0;
+                    valid = 1;
                 end
             end
             

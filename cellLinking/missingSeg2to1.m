@@ -154,9 +154,14 @@ segs_close = segs_list(dist_segs_c<DIST_CUT);
 % turn on each segment until the regions become more than 1
 num_segs = numel( segs_close );
 
-%num_segs = numel(segs_list);
-num_comb = 2^num_segs;
+if num_segs == 0
+    num_comb = 0;
+else
+    num_comb = 2^num_segs;
+end
+
 disp (['Finding missing segment from ', num2str(num_segs),' segments, ', num2str(num_comb), ' combinations']);
+
 for i = 1  : num_comb
     
     vect = makeVector(i-1,num_segs); % systematic
@@ -206,8 +211,7 @@ for i = 1  : num_comb
     end
     
     
-    % needs another part where it just comes up with a line..
-    
+    % needs another part where it just comes up with a line..    
 end
 
 
