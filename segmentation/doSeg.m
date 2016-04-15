@@ -38,7 +38,7 @@ name = name( 1:max(nameInfo_tmp.npos(:,3))); % has format imagename-tXX
 
 data.basename = name;
 
-if ~exists([dirname_xy,'seg',filesep])
+if ~exist([dirname_xy,'seg',filesep])
     mkdir([dirname_xy,'seg',filesep]);
 end
 
