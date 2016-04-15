@@ -220,7 +220,8 @@ while runFlag
         touch_list;
     end
     
-    disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);   
+    disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);
+    pause;
     c = input(':','s');
     
     % LIST OF COMMANDS
