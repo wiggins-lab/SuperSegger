@@ -37,6 +37,11 @@ nameInfo_tmp = ReadFileName(name);
 name = name( 1:max(nameInfo_tmp.npos(:,3))); % has format imagename-tXX
 
 data.basename = name;
+
+if ~exist([dirname_xy,'seg',filesep])
+    mkdir([dirname_xy,'seg',filesep]);
+end
+
 dataname=[dirname_xy,'seg',filesep,name,'_seg.mat'];
 
 if ~exist(dataname,'file') || clean_flag 

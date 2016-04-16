@@ -230,6 +230,17 @@ while runFlag
     disp(['falseCol : False Color ', flagsStates.falseColState,'                  log : Log View ', flagsStates.logState ]);
     disp(['F# : Find Cell Number #']);
     disp('-------------------------------------Link Options-----------------------------------------');
+    if ~canUseErr || FLAGS.useSegs
+        fprintf(2, 'Cell information must be availble to use this feature.\n');
+    end
+    if ~canUseErr
+        fprintf(2, 'Please complete the linking phase of superSegger\n');
+    end
+    if FLAGS.useSegs
+        fprintf(2, 'Please enable use of err files (seg command)\n');
+    end
+    disp(['link  : Show Linking Information               mother : Show mothers ', flagsStates.showMothers]);
+    disp(['daughter  : Show daughters ', flagsStates.showDaughters]);
     disp('-----------------------------------Output Options-----------------------------------------');
     disp(['con  : Show Consensus                         cK : Show consensus kymograph  ']);
     disp(['K  : Mosaic Kymograph of all cells            kym# : Show Kymograph for Cell #']);
@@ -666,6 +677,12 @@ while runFlag
         FLAGS.showLinks = ~FLAGS.showLinks;
         resetFlag = true;
         
+    elseif strcmp(c,'mother')  % Show links
+        FLAGS.showMothers = ~FLAGS.showMothers;
+        
+    elseif strcmp(c,'daughter')  % Show links
+        FLAGS.showDaughters = ~FLAGS.showDaughters;
+        
     elseif strcmp(c,'editSegs')  % Edit Segments, allows to turn on and off segments
         disp('Are you sure you want to edit the segments?')
         d = input('[y/n]:','s');
@@ -1071,6 +1088,16 @@ if ~FLAGS.showLinks
     flagsStates.showLinks = '(off)';
 end
 
+flagsStates.showDaughters = '(on) ';
+if ~FLAGS.showDaughters 
+    flagsStates.showDaughters = '(off)';
+end
+
+flagsStates.showMothers = '(on) ';
+if ~FLAGS.showMothers 
+    flagsStates.showMothers = '(off)';
+end
+
 end
 
 function [data_cell,cell_name] = loadCellData (num,dirname_cell)
@@ -1166,6 +1193,14 @@ end
 
 if ~isfield(FLAGS,'showLinks')
 FLAGS.showLinks  = 0;
+end
+
+if ~isfield(FLAGS,'showMothers')
+FLAGS.showMothers  = 0;
+end
+
+if ~isfield(FLAGS,'showDaughters')
+FLAGS.showDaughters  = 0;
 end
 
 end
