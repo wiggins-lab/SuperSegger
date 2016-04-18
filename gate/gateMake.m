@@ -1,8 +1,8 @@
 function [clist] = gateMake( clist, ind, x0 )
-% gate : used to create a gate field in the clist (list of cells).
+% gate : used to create a gate field in the clist.
 %
 % INPUT :
-%       clist : list of cells with time-independent info
+%       clist : table of cells with time-independent variables
 %       ind : index to gate on, from clist definitions
 %       x0 : value to gate on, if it doesn't exist you can choose from the
 %       plot
@@ -28,22 +28,16 @@ if  nind == 1
     disp( 'click on the max and min value');
     
     if ~exist( 'x0', 'var' ) || isempty( x0 )
-        for i = 1:2
-            
+        for i = 1:2            
             tmp = ginput(1);
-            
             if ~isempty(tmp)
-                gxx(i,:) = tmp;
-                
+                gxx(i,:) = tmp;                
                 plot( gxx(i,1)+[0,0], [min(y(y>0)),max(y)], 'r--' );
             end
-        end
-        
+        end        
         gxx(:,1)
     else
-        
-        gxx(:,1) = x0;
-        
+        gxx(:,1) = x0;        
     end
     
     if isfield( clist, 'gate' )
@@ -52,16 +46,16 @@ if  nind == 1
         ngate = 1;
         clist.gate = [];
     end
+    
     clist.gate(ngate).x = gxx(:,1);
     clist.gate(ngate).ind = ind;
     gateHist( clist, ind, xx, 'r' );
-    
     plot( gxx(1)+[0,0], [min(y(y>0)),max(y)], 'r--' );
     plot( gxx(2)+[0,0], [min(y(y>0)),max(y)], 'r--' );
     
 elseif nind == 2
-    clf;
     
+    clf;
     HIST_LIM = 1e3;
     
     if ncell < HIST_LIM
@@ -85,11 +79,8 @@ elseif nind == 2
         var(tmp1(~isnan(tmp2)))];
     
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
+
     % do polygon gate
-    %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     c_flag = 1;
     disp('Draw polygon. Finish by pressing return' );
     i = 0;

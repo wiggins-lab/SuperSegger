@@ -413,7 +413,7 @@ while (counter > 0 && kk < data.regs.num_regs)
     
     score = 1 - (data.regs.scoreRaw(kk) + 50) / 100;
     
-    colorMap = jet(256);
+    colorMap = spring(256);
     colorIndex = floor(min(score, 1) * 255) + 1;
     
     xpos = rr(1)+x_;
