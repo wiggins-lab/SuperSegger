@@ -200,7 +200,7 @@ while runFlag
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);
     
-    if FLAGS.c_flag && ~first_flag
+    if ~first_flag
         axis( tmp_axis );
     end
     
@@ -388,7 +388,7 @@ while runFlag
     elseif strcmp(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
     elseif strcmp(c,'Reset') % Reset Plot to Default View
-        FLAGS.c_flag = ~FLAGS.c_flag;
+        FLAGS.first_flag = 1;
         clf;
         resetFlag = 1;
     elseif numel(c) == 2 && c(1) == 'f' && isnum(c(2)) % Toggle Between Fluorescence and Phase Images
@@ -570,12 +570,9 @@ while runFlag
                     end
                     
                     if ~isempty( data_cell )
-                        tmp_axis = axis;
+                        figure(2);
                         clf;
                         im_tmp = makeFrameMosaic(data_cell, CONST, xdim__);
-                        disp('Press enter to continue');
-                        pause;
-                        axis(tmp_axis);
                     end
                     
                 end
@@ -591,16 +588,13 @@ while runFlag
             data_cell = loadCellData(num,dirname_cell);
             
             if ~isempty( data_cell )
-                tmp_axis = axis;
+                figure(2);
                 clf;
                 makeKymographC(data_cell, 1, CONST,[],FLAGS.filt);
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');
-                pause;
-                axis(tmp_axis);
-            end
-            
+            end            
         else
             disp ('Please enter a number next to kym');
         end

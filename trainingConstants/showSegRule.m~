@@ -63,11 +63,11 @@ segs_Include   = segs_good;
 num_segs = numel( data.segs.score(:) );
 
 sz = size(segs_good);
-backer = 0.7*ag(data.phase);
+backer = 0*ag(data.segs.phaseMagic);
 
 if im_flag == 1
     
-    isnan_score = isnan(data.segs.scoreRaw);
+    isnan_score = isnan(data.segs.score);
     data.segs.score(isnan_score) = 1;
     
     if ~isfield(data.segs, 'Include' )
@@ -75,15 +75,11 @@ if im_flag == 1
     end
     
     segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
-   
-    segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
-    segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
-%     
-%     segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
-%     segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
-%     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
-%     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
-%     
+    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
+    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
+    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
+    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
+    
     segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
     segsGoodFailag = ag(segs_good_fail);
@@ -95,7 +91,7 @@ if im_flag == 1
     if FLAGS.phase
         phaseBackag = uint8(ag(data.segs.phaseMagic));
     else
-        phaseBackag = uint8(ag(~data.mask_cell));
+        phaseBackag = uint8(ag(data.mask_cell));
     end
     
     imshow( uint8(cat(3,...
@@ -144,6 +140,7 @@ if im_flag == 1
     
 elseif im_flag == 2 % region view
     
+    backer = 0.7*ag(data.phase);
     if ~isfield(data,'regs')
         data = updateRegionFields (data,CONST)
     end
