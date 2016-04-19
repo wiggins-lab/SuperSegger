@@ -195,8 +195,9 @@ while runFlag
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);
-       
+
     axis(tmp_axis);
+
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
@@ -262,6 +263,8 @@ while runFlag
     end
     
     disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);
+
+    pause;
     c = input(':','s');
     
     % LIST OF COMMANDS
@@ -392,6 +395,7 @@ while runFlag
         
     elseif strcmp(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
+
     elseif strcmp(c,'reset') % Reset axis to default
         first_flag = true;
         resetFlag = 1;
@@ -555,12 +559,9 @@ while runFlag
                     end
                     
                     if ~isempty( data_cell )
-                        tmp_axis = axis;
+                        figure(2);
                         clf;
                         im_tmp = makeFrameMosaic(data_cell, CONST, xdim__);
-                        disp('Press enter to continue');
-                        pause;
-                        axis(tmp_axis);
                     end
                     
                 end
@@ -576,16 +577,13 @@ while runFlag
             data_cell = loadCellData(num,dirname_cell);
             
             if ~isempty( data_cell )
-                tmp_axis = axis;
+                figure(2);
                 clf;
                 makeKymographC(data_cell, 1, CONST,[],FLAGS.filt);
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');
-                pause;
-                axis(tmp_axis);
-            end
-            
+            end            
         else
             disp ('Please enter a number next to kym');
         end

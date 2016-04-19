@@ -40,7 +40,7 @@ removeOptiSkipMerge = 0;
 removeOptiCellMaker = 0;
 removeOptiFluor = 0;
 removeOptiMakeCell = 0;
-removeOptiFindFoci = 1;
+removeOptiFindFoci = 0;
 removeOptiClist = 1;
 removeOptiCellFiles = 1;
 

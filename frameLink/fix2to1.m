@@ -19,7 +19,8 @@ function [ data_new, ind ] = fix2to1( data_c, ii_c, data_r, list_r )
 
 DIST_CUT = 5;
 
-[xx,yy] = getBB(data_c.regs.props(ii_c).BoundingBox);
+bb_c    = data_c.regs.props(ii_c).BoundingBox;
+[xx,yy] = getBB(bb_c);
 regs_r = data_r.regs.regs_label(yy,xx);
 regs_c = (data_c.regs.regs_label(yy,xx)==ii_c);
 segs_c = data_c.segs.segs_label(yy,xx);

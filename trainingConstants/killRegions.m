@@ -13,12 +13,17 @@ while selectMode
     xy = ginput(2);
     
     if ~isempty(xy) && numel(xy)==4
+
         
         xy = floor(xy);
         xmin = min(xy(:,1));
+        xmin = max(xmin,1);
         xmax = max(xy(:,1));
+        xmax = min(xmax,size(data.phase,2));
         ymin = min(xy(:,2));
+        ymin = max(ymin,1);
         ymax = max(xy(:,2));
+        ymax = min(ymax,size(data.phase,1));
         xx = xmin:xmax;
         yy = ymin:ymax;
         hold on

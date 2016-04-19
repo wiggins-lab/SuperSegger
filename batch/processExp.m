@@ -62,6 +62,7 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '60XPaM','60XPaM2' : for 60X, Pseudomonas Minimal
 % '60XBthai' : 60X Thailandensis
 
+
 res = '60XEcLB';
 
 %% Paralell Processing Mode
@@ -76,6 +77,7 @@ CONST = loadConstantsNN(res,parallel_flag) ;
 %% Calculation Options
 % after you load the constants you can modify them according to your needs
 % for more options, looks at the loadConstants file.
+
 
 CONST.trackLoci.numSpots = [5 0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
 CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (default = true)

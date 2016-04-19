@@ -53,7 +53,7 @@ else
     h = [];
 end
 
-parfor i = 1:num_im; % Parallelizing find loci through each image
+parfor i = 1:num_im; % finding loci through every image
     intDoFoci( i, dirname, contents, nc, CONST);
     if CONST.parallel.show_status
         waitbar(i/num_im,h,['Find Loci--Frame: ',num2str(i),'/',num2str(num_im)]);
@@ -71,7 +71,7 @@ end
 end
 
 function data = loaderInternal( filename )
-data = load( filename );
+data = load(filename);
 end
 
 function intDoFoci( i, dirname, contents, nc, CONST)

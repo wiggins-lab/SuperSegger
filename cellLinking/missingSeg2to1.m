@@ -143,6 +143,9 @@ minimumScore = inf;
 DIST_CUT = 5;
 dist_segs_c = inf*segs_list;
 nsegs = numel(segs_list);
+minIndex = [];
+minRegEScore = [];
+minDA = [];
 
 for jj = 1:nsegs
     dist_segs_c(jj) = min(dist(segsLabel ==segs_list(jj)));

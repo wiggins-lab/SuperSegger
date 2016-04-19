@@ -161,7 +161,7 @@ for it = nt;
                 end
                 
                 % applies a median filter to the phase image
-                if CONST.imAlign.medFilt
+                if isfield(CONST.imAlign,'medFilt') && CONST.imAlign.medFilt
                     im_     = medfilt2( im,     [3,3], 'symmetric' );
                     phaseBef_ = medfilt2( phaseBef, [3,3], 'symmetric' );
                 else

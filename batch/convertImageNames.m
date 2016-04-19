@@ -30,6 +30,36 @@ function convertImageNames(dirname, basename, timeFilterBefore, ...
 
 
 
+
+images = dir([dirname,filesep,'*.tif']);
+
+% directory to move original images
+dirOriginal  = [dirname,filesep,'original',filesep] ;
+imagesInOrig = dir([dirOriginal,filesep,'*.tif']);
+
+elementsTime='t';
+elementsXY ='xy';
+elementsPhase = 'c';
+
+if exist([dirname,filesep,'raw_im'],'dir') && ~isempty(dir([dirname,filesep,'raw_im',filesep,'*tif*']))
+    disp('Files already aligned');
+    return;
+end
+
+if numel(dir([dirname,filesep,'*t*c*.tif']))
+    disp('File names in NIS-Elements format')
+    disp('Procede to segmentation')
+    return;
+end
+
+if isempty(images) && isempty(imagesInOrig)
+    error('No image files found, please check directory');
+    return ;
+end
+
+
+disp('File names not in Elements format : Converting..')
+
 if ~exist('basename','var') || isempty(basename)
     basename = input('Please type the basename:','s');
 end
@@ -49,71 +79,50 @@ if ~exist('channelNames','var') ||isempty(channelNames)
     channelNames = input('Please type the names of the channels as {''BF'',GFP''}:');
 end
 
-
-images = dir([dirname,filesep,'*.tif']);
-
-% directory to move original images
-dirOriginal  = [dirname,filesep,'original',filesep] ;
-imagesInOrig = dir([dirOriginal,filesep,'*.tif']);
-
-elementsTime='t';
-elementsXY ='xy';
-elementsPhase = 'c';
-
-if exist([dirname,filesep,'raw_im'],'dir') && ~isempty(dir([dirname,filesep,'raw_im',filesep,'*tif*']))
-    disp('Files already aligned');
-elseif numel(dir([dirname,filesep,'*t*c*.tif']))
-    disp('File names in NIS-Elements format')
-    disp('Procede to segmentation')
-elseif isempty(images) && isempty(imagesInOrig)
-    error('No image files found, please check directory');
-else
-    disp('File names not in Elements format : Converting..')
-    
-    if ~exist(dirOriginal,'dir') % make original directory
-        mkdir(dirOriginal) ;
-    end
-    
-    if isempty(imagesInOrig) % move original images
-        movefile('*.tif',dirOriginal); % move all images to dir original
-    end
-    
-    images = dir([dirOriginal,filesep,'*.tif']);
-    
-    % go through every image
-    for j = 1: numel (images)
-        fileName = images(j).name;
-        %disp(fileName);
-        
-        currentTime = findNumbers (fileName, timeFilterBefore, timeFilterAfter); % find out time
-        if isempty(currentTime)
-            disp (['time expression incorrect for filename', fileName, '- aborting']);
-            return;
-        end
-        
-        currentXY = findNumbers (fileName, xyFilterBefore, xyFilterAfter); % find out xy
-        if isempty(currentXY)
-            disp (['time expression incorrect for filename', fileName, '- aborting']);
-            return;
-        end
-        
-        channelPos = [];
-        c = 0;
-        while isempty(channelPos)
-            c = c +1;
-            channelPos = strfind(fileName, channelNames {c}); % find out channel
-        end
-        
-        if isempty(channelPos)
-            disp (['channel expression incorrect for filename', fileName, '- aborting']);
-            return;
-        end
-        
-        newFileName = [basename,elementsTime,sprintf('%05d',currentTime),elementsXY,sprintf('%03d',currentXY),elementsPhase,num2str(c)];
-        copyfile([dirOriginal,filesep,images(j).name],[ newFileName,'.tif']);
-        
-    end
+if ~exist(dirOriginal,'dir') % make original directory
+    mkdir(dirOriginal) ;
 end
+
+if isempty(imagesInOrig) % move original images
+    movefile('*.tif',dirOriginal); % move all images to dir original
+end
+
+images = dir([dirOriginal,filesep,'*.tif']);
+
+% go through every image
+for j = 1: numel (images)
+    fileName = images(j).name;
+    %disp(fileName);
+    
+    currentTime = findNumbers (fileName, timeFilterBefore, timeFilterAfter); % find out time
+    if isempty(currentTime)
+        disp (['time expression incorrect for filename', fileName, '- aborting']);
+        return;
+    end
+    
+    currentXY = findNumbers (fileName, xyFilterBefore, xyFilterAfter); % find out xy
+    if isempty(currentXY)
+        disp (['time expression incorrect for filename', fileName, '- aborting']);
+        return;
+    end
+    
+    channelPos = [];
+    c = 0;
+    while isempty(channelPos)
+        c = c +1;
+        channelPos = strfind(fileName, channelNames {c}); % find out channel
+    end
+    
+    if isempty(channelPos)
+        disp (['channel expression incorrect for filename', fileName, '- aborting']);
+        return;
+    end
+    
+    newFileName = [basename,elementsTime,sprintf('%05d',currentTime),elementsXY,sprintf('%03d',currentXY),elementsPhase,num2str(c)];
+    copyfile([dirOriginal,filesep,images(j).name],[ newFileName,'.tif']);
+    
+end
+
 end
 
 
