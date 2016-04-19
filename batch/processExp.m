@@ -55,7 +55,7 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '100XEc': loadConstants 100X Ecoli
 
 % other possible constants are :
-%'100XPa' : 100X Pseudemonas
+% '100XPa' : 100X Pseudemonas
 % '60XPa' : 60X Pseudemonas
 %' 60XA' : 60X E.coli Aska
 % '60XEcLB' : E.coli LB
@@ -78,9 +78,10 @@ CONST = loadConstantsNN(res,parallel_flag) ;
 % after you load the constants you can modify them according to your needs
 % for more options, looks at the loadConstants file.
 
-CONST.trackLoci.numSpots = [5]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
-CONST.trackLoci.fluorFlag = true ;    % compute integrated fluorescence (default = true)
-CONST.trackOpti.NEIGHBOR_FLAG = true; % calculate number of neighbors (default = false)
+
+CONST.trackLoci.numSpots = [5 0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
+CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (default = true)
+CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
 CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
 CONST.imAlign.AlignChannel = 1; % change this if you want the images to be aligned to fluorescence channel
 
