@@ -180,13 +180,10 @@ while runFlag
     
     clean_axis = [0 , 1 , 0  ,1];
     
-    if ~first_flag && all(axis~=clean_axis)
+    if ~first_flag && clean_axis 
         tmp_axis = axis;
     else % if first time - load image to get the axis
-        clf;
         imshow(data_c.phase);
-        tmp_axis = axis;
-        first_flag = false;
     end
     
     %Force flags to required values when data is unavailable
@@ -195,9 +192,12 @@ while runFlag
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);
-
-    axis(tmp_axis);
-
+    
+    if FLAGS.c_flag && ~first_flag
+        axis( tmp_axis );
+    end
+    
+    first_flag = false;
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
@@ -263,8 +263,6 @@ while runFlag
     end
     
     disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);
-
-    pause;
     c = input(':','s');
     
     % LIST OF COMMANDS
@@ -395,7 +393,6 @@ while runFlag
         
     elseif strcmp(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
-
     elseif strcmp(c,'reset') % Reset Plot to Default View
         first_flag = true;
         FLAGS = [];
@@ -561,9 +558,12 @@ while runFlag
                     end
                     
                     if ~isempty( data_cell )
-                        figure(2);
+                        tmp_axis = axis;
                         clf;
                         im_tmp = makeFrameMosaic(data_cell, CONST, xdim__);
+                        disp('Press enter to continue');
+                        pause;
+                        axis(tmp_axis);
                     end
                     
                 end
@@ -579,13 +579,16 @@ while runFlag
             data_cell = loadCellData(num,dirname_cell);
             
             if ~isempty( data_cell )
-                figure(2);
+                tmp_axis = axis;
                 clf;
                 makeKymographC(data_cell, 1, CONST,[],FLAGS.filt);
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');
-            end            
+                pause;
+                axis(tmp_axis);
+            end
+            
         else
             disp ('Please enter a number next to kym');
         end

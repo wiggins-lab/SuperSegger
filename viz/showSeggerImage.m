@@ -300,7 +300,8 @@ if FLAGS.f_flag > 0
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
-elseif FLAGS.Outline_flag  % it just outlines the cells
+end
+if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
     else
@@ -412,7 +413,7 @@ while (counter > 0 && kk < data.regs.num_regs)
     
     score = 1 - (data.regs.scoreRaw(kk) + 50) / 100;
     
-    colorMap = jet(256);
+    colorMap = spring(256);
     colorIndex = floor(min(score, 1) * 255) + 1;
     
     xpos = rr(1)+x_;
@@ -569,59 +570,103 @@ if dataHasIds
     
     for kk = 1:data.regs.num_regs
         % only plot links in the cell that are gated.
-        if ~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST)
+        if data.regs.ID(kk) ~= 0 && (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
             previousRegion = [];
             nextRegion = [];
             
-            if dataRHasIds
+            if dataRHasIds && data.regs.ID(kk) ~= 0
                 previousRegion = find(data_r.regs.ID == data.regs.ID(kk));
+                
+                if previousRegion == 0
+                    previousRegion = [];
+                end
             end
-            if dataFHasIds
+            if dataFHasIds && data.regs.ID(kk) ~= 0
                 nextRegion = find(data_f.regs.ID == data.regs.ID(kk));
+                
+                if nextRegion == 0
+                    nextRegion = [];
+                end
             end
             
             color = colorMap(mod(kk, 10) + 1, :);
-            drawn = 0;
+            valid = 0;
             
             if ~isempty(previousRegion)
                 X = [data_r.regs.props(previousRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
                 Y = [data_r.regs.props(previousRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
                 
                 plot(X, Y, 'Color', color);
-                plot(X(2), Y(2), 'o', 'Color', color);
                 
-                drawn = 1;
+                valid = 1;
             else
                 if data.regs.age(kk) == 1
                     motherRegion = [];
                     
-                    if dataRHasIds
+                    if dataRHasIds && data.regs.motherID(kk) ~= 0
                         motherRegion = find(data_r.regs.ID == data.regs.motherID(kk));
+                        
+                        if motherRegion == 0
+                            motherRegion = [];
+                        end
                     end
                     
                     if ~isempty(motherRegion)
-                        X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
-                        Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                        if FLAGS.showMothers == 1
+                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+
+                            plot(X, Y, 'Color', color);
+                        end
                         
-                        plot(X, Y, 'Color', color);
-                        plot(X(2), Y(2), 'o', 'Color', color);
-                        
-                        drawn = 1;
+                        valid = 1;
+                    else
+                        valid = 0;
                     end
                 end
-            end
-            
-            if drawn == 0
-                X =  data.regs.props(kk).Centroid(1) + x_;
-                Y =  data.regs.props(kk).Centroid(2) + y_;
-                plot(X, Y, 'x', 'Color', color);
-            end
+            end            
             
             if ~isempty(nextRegion)
                 X = [data_f.regs.props(nextRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
                 Y = [data_f.regs.props(nextRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
                 plot(X, Y, 'Color', color);
                 plot(X(1), Y(1), 's', 'Color', color);
+            else
+                if data.regs.deathF(kk)
+                    daughterRegions = [];
+                    
+                    if dataFHasIds && data.regs.ID(kk) ~= 0
+                        daughterRegions = find(data_f.regs.motherID == data.regs.ID(kk));
+                        
+                        if min(daughterRegions) == 0
+                            daughterRegions = [];
+                        end
+                    end
+                    
+                    if ~isempty(daughterRegions)
+                        if FLAGS.showDaughters == 1
+                            for i = 1:numel(daughterRegions)
+                                X = [data_f.regs.props(daughterRegions(i)).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                                Y = [data_f.regs.props(daughterRegions(i)).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+
+                                plot(X, Y, 'Color', color);
+                                plot(X(1), Y(1), 's', 'Color', color);
+                            end
+                        end
+                    else
+                        valid = 0;
+                    end
+                else
+                    valid = 0;
+                end
+            end
+            
+            X =  data.regs.props(kk).Centroid(1) + x_;
+            Y =  data.regs.props(kk).Centroid(2) + y_;
+            if valid == 0
+                plot(X, Y, 'x', 'Color', color);
+            else
+                plot(X, Y, 'o', 'Color', color);
             end
         end
         

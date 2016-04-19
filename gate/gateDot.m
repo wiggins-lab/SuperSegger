@@ -1,6 +1,6 @@
 function gateDot(clist, ind, cc)
 % gateDot : used to make a dot plot of the list of cells for the given indices.
-% it first gate the list if there is a gate field in clist. 
+% It first gates the list if there is a gate field in clist. 
 %
 % INPUT :
 %   clist : list of cells with time-independent info
@@ -14,7 +14,7 @@ function gateDot(clist, ind, cc)
 clist = gate(clist);
 
 if ~exist( 'cc', 'var' )
-    cc = 'c';
+    cc = 'b';
 end
 
 
