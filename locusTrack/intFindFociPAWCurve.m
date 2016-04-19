@@ -129,7 +129,6 @@ end
 for ii = 1:data.regs.num_regs
 
     list_ind = find(cell_ii == ii);
-    
     max_med_ii_  = max_med_ii(list_ind);
     max_disk_ii_ = max_disk_ii(list_ind);
     x_ii_        = x_ii(list_ind);
@@ -156,13 +155,11 @@ for ii = 1:data.regs.num_regs
     mask = data.CellA{ii}.mask;
     xx   = data.CellA{ii}.xx; 
     yy   = data.CellA{ii}.yy; 
-
     mask_mod = zeros( size( mask) );
 
     for jj = 1:nfocus        
         yp = y_ii__(jj)+1-yy(1);
         xp = x_ii__(jj)+1-xx(1);
-
         if (xp>0) && (xp<numel(xx)+1) && (yp>0) && (yp<numel(yy)+1)
             mask_mod(yp, xp) = 1;
         end
@@ -196,8 +193,8 @@ for ii = 1:data.regs.num_regs
     end
 
     sc = [focus(:).score];
-    focus = focus( ~isnan(sc) );   
-    data.CellA{ii}.fieldname = focus;
+    focus = focus(~isnan(sc));   
+    data.CellA{ii}.(fieldname) = focus;
     xx = data.CellA{ii}.xx;
     yy = data.CellA{ii}.yy;
     data.CellA{ii}.(['fluor',num2str(numc),'_filtered'])=flourFiltered( yy, xx );

@@ -1,9 +1,8 @@
 function showSegDataPhase( data )
-% showSegDataPhase draws the outlines for a region
+% showSegDataPhase draws the outlines for the regions in the data file.
 %
 % INPUT :
-%   data : data (region/cell) file
-%   im_flag : ? does not do anything
+%   data : data (seg.mat) file with permanent, good and bad segments
 %
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
@@ -17,8 +16,6 @@ try
     mask_bg   = data.mask_bg;
     segs_3n   = data.segs.segs_3n;
     cell_mask = (mask_bg .* ~segs_good .* ~segs_3n);
-    outline = imdilate( cell_mask, strel( 'square',3) );
-    outline = ag(outline-cell_mask);
     outline = imdilate( cell_mask, strel( 'square',3) );
     outline = ag(outline-cell_mask);
     imshow(uint8(cat(3,back + 1.00*double(outline),...

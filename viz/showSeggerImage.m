@@ -222,13 +222,13 @@ if FLAGS.f_flag > 0
     im = 0.3*im;
     im = FLAGS.P_val*im;
     
-    if FLAGS.P_flag  % if P_flag is true, it outlines the cells
-        if FLAGS.cell_flag
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
-        else
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
-        end
-    end
+%         if FLAGS.P_flag  % if P_flag is true, it outlines the cells
+%         if FLAGS.cell_flag && isfield(data,'cell_outline')
+%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+%         else
+%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+%         end
+%     end
     
     % make the background subtracted fluor
     if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
@@ -276,13 +276,6 @@ if FLAGS.f_flag > 0
         minner = min( minner(:));
         if CONST.view.falseColorFlag
             im = doColorMap( ag(fluor1,minner,maxxer), uint8(255*jet(256)) );
-            if FLAGS.P_flag
-                if FLAGS.cell_flag
-                    im = im + 0.2*cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
-                else
-                    im = im + 0.2*cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
-                end
-            end
         else
             im(:,:,2) = 0.8*ag(fluor1,minner,maxxer) + im(:,:,2);
         end
@@ -301,11 +294,12 @@ if FLAGS.f_flag > 0
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
 end
+
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
-        im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+        im(:,:,:) = im(:,:,:) + cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
     else
-        im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+        im(:,:,:) = im(:,:,:) + cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
     end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
@@ -360,7 +354,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
         
         % outline the ones that were just born with stat0 == 1
-        map_stat0_1O_ind = find(and(cells_In_Frame,data.regs.stat0==1));
+        map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
         map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
         
         

@@ -201,7 +201,7 @@ while runFlag
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
     disp('-------------------------------------Main Menu--------------------------------------------');
-    disp(['q  : To quit                                  reset : Reset Plot to Default View   ']);
+    disp(['q  : To quit                                  reset : Reset axis to default   ']);
     disp(['x# : Switch xy directory from ', num2str(ixy), '               #  : Go to Frame Number #']);
     disp('----------------------------------Display Options-----------------------------------------');
     disp(['    Region info: ', num2str(num_segs), ' frames.   Cell info: ', num2str(num_errs), ' frames.   Current frame: ', num2str(nn)]);
@@ -392,10 +392,8 @@ while runFlag
         
     elseif strcmp(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
-    elseif strcmp(c,'reset') % Reset Plot to Default View
+    elseif strcmp(c,'reset') % Reset axis to default
         first_flag = true;
-        FLAGS = [];
-        FLAGS = fixFlags(FLAGS)
         resetFlag = 1;
         
     elseif numel(c) == 2 && c(1) == 'f' && isnum(c(2)) % Toggle Between Fluorescence and Phase Images
@@ -836,14 +834,13 @@ if isfield( data, 'mask_cell' )
     data.outline =  xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
 end
 
-if ~isempty( clist )
+if ~isempty(clist)
     clist = gate(clist);
     data.cell_outline = false(ss);
     if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
         ind = find(ismember(data.regs.ID,clist.data(:,1))); % get ids of cells in clist
         mask_tmp = ismember( data.regs.regs_label, ind ); % get the masks of cells in clist
-        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
-        
+        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);       
     end
 end
 

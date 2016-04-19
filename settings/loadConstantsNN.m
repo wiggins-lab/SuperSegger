@@ -23,7 +23,7 @@ if nargin < 1 || isempty( res )
 end
 
 if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
-    PARALLEL_FLAG = true;
+    PARALLEL_FLAG = false;
 end
 
 
