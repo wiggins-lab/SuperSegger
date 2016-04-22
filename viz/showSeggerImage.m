@@ -1,4 +1,4 @@
-function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
+function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
 % showSeggerImage : produces the superSeggerViewer image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
@@ -45,7 +45,6 @@ if nargin<4
 end
 
 FLAGS.axis = axis;
-clf;
 
 % fix are any missing flags
 FLAGS = intFixFlags( FLAGS );
@@ -92,7 +91,7 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
         0.5*autogain(mask_full_f(yy,xx)>0))];
 end
 
-imshow(im);
+imshow(im, 'Parent', gui_fig);
 hold on;
 
 % annotates spots, cell numbers and poles

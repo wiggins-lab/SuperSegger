@@ -198,4 +198,5 @@ if isempty (handles.directory.String)
      errordlg ('Please select a directory');
      return
 end
-superSeggerViewer(handles.directory.String);
+setappdata(0, 'dirname', handles.directory.String);
+viewer();
