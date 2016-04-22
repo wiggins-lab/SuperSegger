@@ -87,7 +87,7 @@ function intDoFoci( i, dirname, contents, nc, CONST)
 data_c = loaderInternal([dirname,contents(i).name]);
 gf  = fspecial( 'gaussian', 21, 3 );
 
-% make filtered images to fit
+% make filtered images to fit - looks useless
 im_filt = cell([1,nc]);
 Istd = zeros(1,nc);
 for j = 1:nc

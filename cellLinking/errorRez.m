@@ -12,8 +12,6 @@ resetRegions = false;
 for regNum =  1 : data_c.regs.num_regs;
     
     mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
-    %mapRC = find(cell2mat(data_r.regs.map.f )==regNum)
-    % nothing maps to it?
     
     %%% maps to 0
     if numel(mapCR) == 0 % maps to 0 in the previous frame - stray
@@ -35,14 +33,11 @@ for regNum =  1 : data_c.regs.num_regs;
         end
         
         
-        
-        
     elseif numel(mapCR) == 1 &&  all(data_r.regs.map.f{mapCR} == regNum)
-        % MAPS TO ONE AND AGREES maps to one and agrees
+        % MAPS TO ONE AND AGREES 
         % sets cell ID from mapped reg, updates death in data_r
         [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
-        
-        
+                
     elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1
         %% one to one but disagreement
         mapRC = data_r.regs.map.f{mapCR};
@@ -55,19 +50,20 @@ for regNum =  1 : data_c.regs.num_regs;
         
         % cellC maps to c
         if isempty(data_c.regs.map.r (cellRmapsTo))
-            % check cost - if not so bad, map and mark division?
+            % FIX : check cost - if not so bad, map and mark division?
             idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
             costC = data_c.regs.cost.r(idC,cellR);
             costBef = data_c.regs.cost.r(cellC,cellR);
+       
         elseif all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR)
-            % mark division
-            sister2 = mapRC;
-            
+            % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
+            % mark division anyway.
+            sister2 = mapRC;            
             sister1 = regNum;
             mother = mapCR;
             [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
         else
-            % one to one mapping but disagreement between current and
+            % FIX : one to one mapping but disagreement between current and
             % reverse
             % NEEDS TO BE FIXED
             
@@ -124,7 +120,7 @@ for regNum =  1 : data_c.regs.num_regs;
             imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                 ag((data_c.regs.regs_label == mapRC(1)) + ...
                 (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
-            keyboard;
+            %keyboard;
             % assignments from rev to forward mismatch
         else
             

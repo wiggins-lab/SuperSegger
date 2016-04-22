@@ -1,4 +1,4 @@
-function showSegDataPhase( data )
+function showSegDataPhase2( data )
 % showSegDataPhase draws the outlines for the regions in the data file.
 %
 % INPUT :
