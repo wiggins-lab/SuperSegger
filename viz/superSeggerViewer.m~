@@ -610,20 +610,22 @@ while runFlag
         
     elseif strcmp(c,'Movie')  % Make Time-Lapse Images for Movies
         
-        tmp_axis = axis;
-        
-        clear mov;
+%         movdir = 'mov';
+%         if ~exist( movdir, 'dir' )
+%             mkdir( movdir );
+%         end
+        %file_tmp = ['%0',num2str(z_pad),'d'];
         mov.cdata = [];
         mov.colormap = [];
        
-       for ii = 1:num_im
+            for ii = 1:num_im
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
-            axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
             disp( ['Frame number: ', num2str(ii)] );
+            %imwrite( tmp_im, [movdir,filesep,'mov',sprintf(file_tmp,ii),'.tif'], 'TIFF', 'Compression', 'none' );
         end
         
         
@@ -634,7 +636,6 @@ while runFlag
             saveFilename = [dirSave,name,'.avi'];
             disp (['Saving movie at ',saveFilename]);
             v = VideoWriter(saveFilename);
-            v.FrameRate = 2; % frames per second
             open(v)
             writeVideo(v,mov)
             close(v)

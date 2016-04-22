@@ -51,21 +51,21 @@ elseif strcmp(cl,'double' )  && res == 100
     disp('loadConstants:  100X');
     resFlag = '100XEc';
 elseif strcmp(cl, 'char' );
-    if strcmp(res,'60XEc') % 1
+    if strcmpi(res,'60XEc') % 1
         resFlag = '60XEc';
-    elseif strcmp(res,'100XEc') % 2
+    elseif strcmpi(res,'100XEc') % 2
         disp('loadConstants:  100X Ecoli');
         resFlag = '100XEc';
-    elseif strcmp(res,'60XEcLB') % 2
+    elseif strcmpi(res,'60XEcLB') % 2
         disp('loadConstants:  60X LB Ecoli');
         resFlag = '60XEcLB';
-    elseif strcmp(res,'60XBay') % 2
+    elseif strcmpi(res,'60XBay') % 2
         disp('loadConstants:  60X Baylyi');
         resFlag = '60XBay';
-     elseif strcmp(res,'60XPa') % 2
+     elseif strcmpi(res,'60XPa') % 2
         disp('loadConstants:  60X Pseudemonas');
         resFlag = '60XPa';
-    elseif strcmp(res,'100XPa') % 2
+    elseif strcmpi(res,'100XPa') % 2
         disp('loadConstants:  100X Pseudemonas');
         resFlag = '100XPa';
     end

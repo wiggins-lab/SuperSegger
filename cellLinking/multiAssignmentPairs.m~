@@ -18,9 +18,6 @@ totCost=[];
 allC=[];
 allF=[];
 noOverlap = 0.0001;
-centroidWeight = 5;
-areaFactor = 20;
-areaChangeFactor = 100;
 
 if ~isempty(data_c)
     if ~isfield(data_c,'regs')
@@ -35,7 +32,10 @@ if ~isempty(data_c)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
         end
-                
+        
+        areaFactor = 20;
+        areaChangeFactor = 100;
+        
         numRegs2 = data_f.regs.num_regs;
         regsInC = 1:data_c.regs.num_regs;
         regsInF = 1:data_f.regs.num_regs;
@@ -145,6 +145,7 @@ if ~isempty(data_c)
                 possibleMapInd = unique(tmpregs2);
                 possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
                 
+
                 for uu = 1:numel(possibleMapInd)                   
                     % one to one mapping
                     idF = possibleMapInd(uu);
@@ -163,6 +164,7 @@ if ~isempty(data_c)
                     areaChange(ii,idF) = (areaF - areaC)/(areaC);
                     
                     % moved area
+                    
                     offset = round(displacement);
                     maskOut = imtranslate(maskF,offset);
                     maskOut = maskOut(maskC);
@@ -249,14 +251,14 @@ if ~isempty(data_c)
             areaChangePenalty((areaChange) > 0.1) = 100;
         end
         
-        %  penalty for big area changes
+        % delete big area changes
         areaChangePenalty(abs(areaChange) > 0.6) = 50;
-        areaChangePenalty(abs(areaChange) > 0.2) = 1000;
+        = 1000;
         distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
         
         totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + ...
             areaFactor * distFromColonyMat * 1./areaOverlapCost +...
-            centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange);
+            5 * centroidCost +  areaChangeFactor * abs(areaChange);
         
         costMat = totCost;
         

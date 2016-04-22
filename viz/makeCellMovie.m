@@ -24,7 +24,13 @@ end
 for ii = 1:num_im
     clf;
     back  = autogain(data.CellA{ii}.phase);
-    fluo  = autogain(data.CellA{ii}.fluor1);
+    
+    if isfield( data, 'fluor1' )        
+        fluo  = autogain(data.CellA{ii}.fluor1);
+    else
+        fluo = back*0;
+    end;
+    
     
     if isfield( data, 'fluor2' )        
         fluo2 = autogain(data.CellA{ii}.fluor2);
@@ -90,7 +96,6 @@ for ii = 1:num_im
         end
     end
     
-    '';
     drawnow;
     mov(ii) = getframe;
     

@@ -31,8 +31,7 @@ for regNum =  1 : data_c.regs.num_regs;
             disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
             [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
         end
-        
-        
+             
     elseif numel(mapCR) == 1 &&  all(data_r.regs.map.f{mapCR} == regNum)
         % MAPS TO ONE AND AGREES 
         % sets cell ID from mapped reg, updates death in data_r
@@ -48,29 +47,33 @@ for regNum =  1 : data_c.regs.num_regs;
         cellRmapsTo = mapRC;
         imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum),ag(data_r.regs.regs_label == mapCR),ag(data_c.regs.regs_label==mapRC)));
         
-        % cellC maps to c
-        if isempty(data_c.regs.map.r (cellRmapsTo))
-            % FIX : check cost - if not so bad, map and mark division?
-            idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
-            costC = data_c.regs.cost.r(idC,cellR);
-            costBef = data_c.regs.cost.r(cellC,cellR);
-       
-        elseif all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR)
-            % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
-            % mark division anyway.
-            sister2 = mapRC;            
-            sister1 = regNum;
-            mother = mapCR;
-            [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
+        % check costs for division
+        idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
+        costC = data_c.regs.cost.r(idC,cellR); % cost for both
+        costBef = data_c.regs.cost.r(cellC,cellR); % cost for one
+        costChangeValue = 200;
+        
+        % maprRC maps to nothing and cost to map both is low
+        markDivEmptyLowCost = isempty(data_c.regs.map.r (cellRmapsTo)) && (costC + costChangeValue < costBef);
+        
+        % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
+        % mark division anyway.
+        markDiv1RCagree = all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR);
+
+        
+        % mark division
+        if markDivEmptyLowCost && markDiv1RCagree        
+                sister2 = mapRC;            
+                sister1 = regNum;
+                mother = mapCR;
+                [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
+
         else
-            % FIX : one to one mapping but disagreement between current and
-            % reverse
-            % NEEDS TO BE FIXED
-            
-            % continue anyway and put an error..
+            % Error not fixed : one to one mapping but disagreement between current and
+            % reverse 
+            % continue the cell line anyway and put an error..
             errorStat = 1;
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
-            
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);          
             data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
                 ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
             data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
@@ -92,8 +95,8 @@ for regNum =  1 : data_c.regs.num_regs;
         mapRC = data_r.regs.map.f{mother};
         
         if  ~any(mapRC==regNum)
-            % mapCR maps to mother. but mother maps to two other cells..
-            % FIX THIS :
+            % ERROR NOT FIXED :  mapCR maps to mother. but mother maps to
+            % two other cells..
             
             % POSSIBLE RESOLUTIONS :
             % 1 : merging missing, cell divided but piece fell out - check
@@ -120,19 +123,16 @@ for regNum =  1 : data_c.regs.num_regs;
             imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                 ag((data_c.regs.regs_label == mapRC(1)) + ...
                 (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
-            %keyboard;
-            % assignments from rev to forward mismatch
         else
             
             sister1 = regNum;
-            sister2 = mapRC(mapRC~=sister1);
-            
+            sister2 = mapRC(mapRC~=sister1);           
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
             
             % r: one has no forward mapping, or both map to the same in forwa
             if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
-                % wrong division atempt to merge
+                % wrong division merge cells
                 [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2);
             else
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
@@ -142,8 +142,7 @@ for regNum =  1 : data_c.regs.num_regs;
             numel(data_r.regs.map.f{mapCR(2)}) == 1 && data_r.regs.map.f{mapCR(2)}==regNum
         % 1 in current maps to two in reverse
         % try to find a segment that should be turned on in current
-        % frame, exit regNum loop, make time - 1 and relink - dont
-        % save anything?
+        % frame, exit regNum loop, make time - 1 and relink 
         
         if debug_flag
             imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
@@ -162,8 +161,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 ag(data_r.regs.regs_label == mapCR(2))));
             resetRegions = true;
         else
-            % link to the one with the best score
-            % and keep error..
+            % ERROR NOT FIXED : link to the one with the best score
             cost1 = data_c.regs.cost.r(regNum,mapCR(1));
             cost2 = data_c.regs.cost.r(regNum,mapCR(2));
             
@@ -186,46 +184,6 @@ for regNum =  1 : data_c.regs.num_regs;
                 
             end
             
-            %             % if one region in r is tiny remove it! / or connect it to the
-            %             % other one
-            %             areaR1 = data_r.regs.props(mapCR(1)).Area;
-            %             areaR2 = data_r.regs.props(mapCR(2)).Area;
-            %             [~,i] = min ([areaR1,areaR2]);
-            %             areaMin = 50;
-            %             if i == 1 && areaR1 < areaMin
-            %                 data_c.regs.error.r(regNum) = 0;
-            %                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-            %                     ', reg: ', num2str(regNum),'. Smallest cell deleted'];
-            %                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-            %
-            %                 [data_r] = deleteRegions(data_r, mapCR(1));
-            %                 % deletes region from labels and mask
-            %                 resetRegions = true;
-            %             elseif i == 2 && areaR2 < areaMin
-            %                 data_c.regs.error.r(regNum) = 0;
-            %                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-            %                     ', reg: ', num2str(regNum),'. Smallest cell deleted'];
-            %                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-            %
-            %                 [data_r] = deleteRegions(data_r, mapCR(2));
-            %                 resetRegions = true;
-            %             else
-            %
-            %                 % link to the max possible one?
-            %                 imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
-            %                     ag(data_r.regs.regs_label == mapCR(1)),...
-            %                     ag(data_r.regs.regs_label == mapCR(2))));
-            %
-            %                 data_c.regs.error.r(regNum) = 1; % keep error?
-            %                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-            %                     ', reg: ', num2str(regNum),'. 2 -> 1 error, link the one with the most area overlap'];
-            %                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-            %
-            %                 % choosing randomly one..
-            %                 [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, 0);
-            %
-            
-            % end
         end
     else
         if debug_flag
