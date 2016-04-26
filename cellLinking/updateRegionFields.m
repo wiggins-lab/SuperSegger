@@ -64,7 +64,7 @@ for ii = 1:data.regs.num_regs
             data.regs.neighbors{ii} = trackOptiNeighbors(data,ii);
             data.regs.contact(ii)  = numel(data.regs.neighbors{ii});
         catch
-            disp('Error in neighbor calculation in trackOptiIntDiskNR.m');
+            disp('Error in neighbor calculation in updateRegionFields.m');
         end
     end
 end

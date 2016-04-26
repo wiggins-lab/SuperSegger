@@ -1,8 +1,8 @@
 function [assignments,errorR,totCost,allC,allF]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
-% each row is assigned to one column only - starting by the minimum
+% multiAssignmentPairs : Assigns regions in data_c to regions in data_f.
+% Each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
-% works only c - > f (r -> c) not backwards. attempts to map candidates to
-% one or two cells, but not the other way around.
+
 
 if ~exist('debug_flag','var') || isempty(debug_flag)
     debug_flag = 0;

@@ -134,7 +134,7 @@ end
             
             % plots poles
             if FLAGS.p_flag
-                intPlotLink( data_, x_, y_ );
+                intPlotPole( data_, x_, y_ );
             end
         end
     end
@@ -677,8 +677,8 @@ if dataHasIds
 end
 end
 
-function intPlotLink( data, x_, y_ )
-% intPlotLink shows pole positions and connects daughter cells to each other
+function intPlotPole( data, x_, y_ )
+% intPlotPole shows pole positions and connects daughter cells to each other
 if ~isfield(data,'CellA')
     disp ('Showing poles is not supported in this mode');
     return;
@@ -706,23 +706,23 @@ else
                 xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
                 yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
                 yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
-                old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
-                un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
+                                
+                if tmp.pole.op_ori
+                    old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                    new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                else
+                    old_pole = r + tmp.length(1)*tmp.coord.e1/2;
+                    new_pole = r - tmp.length(1)*tmp.coord.e1/2;
+                end
             catch ME
                 printError(ME);
             end
             
-            plot([r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
-            
-            if tmp.pole.op_ori
-                plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
-                plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
-            else
-                plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
-                plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
-            end
+            plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
+
+            plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
+            plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
+
             
             if ~isempty(ind) && ID && tmp.pole.op_ori
                 if ID < sisterID
@@ -785,63 +785,69 @@ function FLAGS = intFixFlags( FLAGS )
 % intFixFlags :  sets default flag values if the value is missing.
 
 if ~isfield(FLAGS, 'Outline_flag');
-    disp('there is no filed Outline_flag');
+    disp('there is no field Outline_flag');
     FLAGS.Outline_flag = 0;
 end
 if ~isfield(FLAGS, 'ID_flag');
-    disp('there is no filed ID_flag');
+    disp('there is no field ID_flag');
     FLAGS.ID_flag = 1;
 end
 
 if ~isfield(FLAGS, 'lyse_flag');
-    disp('there is no filed lyse_flag')
+    disp('there is no field lyse_flag')
     FLAGS.lyse_flag = 0;
 end
 
 if ~isfield(FLAGS,'m_flag');
-    disp('there is no filed m_flag')
+    disp('there is no field m_flag')
     FLAGS.m_flag = 0;
 end
 
 if ~isfield(FLAGS, 'c_flag');
-    disp('there is no filed c_flag')
+    disp('there is no field c_flag')
     FLAGS.c_flag = 0;
 end
 
 if ~isfield(FLAGS, 'P_flag');
-    disp('there is no filed P_flag')
+    disp('there is no field P_flag')
     FLAGS.P_flag = 0;
 end
 
 if ~isfield(FLAGS, 'cell_flag' );
-    disp('there is no filed cell_flag')
+    disp('there is no field cell_flag')
     FLAGS.cell_flag = 0;
 end
 
 if ~isfield(FLAGS, 'f_flag');
-    disp('there is no filed f_flag')
+    disp('there is no field f_flag')
     FLAGS.f_flag = 0;
 end
 
 if ~isfield(FLAGS, 's_flag');
-    disp('there is no filed s_flag')
+    disp('there is no field s_flag')
     FLAGS.s_flag = 0;
 end
 
 if ~isfield(FLAGS, 'T_flag');
-    disp('there is no filed T_flag')
+    disp('there is no field T_flag')
     FLAGS.T_flag = 0;
 end
 
 if ~isfield(FLAGS, 'filt')
-    disp('there is not filed filt_flag')
+    disp('there is not field filt_flag')
     FLAGS.filt = [0,0,0];
 end
 
 if ~isfield(FLAGS, 'p_flag');
-    disp('there is not file p_flag')
+    disp('there is not field p_flag')
     FLAGS.p_flag = 0;
 end
+
+if ~isfield(FLAGS, 'showLinks');
+    disp('there is not field showLinks')
+    FLAGS.showLinks = 0;
+end
+
 FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
 
 end

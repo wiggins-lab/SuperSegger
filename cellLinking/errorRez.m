@@ -11,6 +11,8 @@ resetRegions = false;
 
 for regNum =  1 : data_c.regs.num_regs;
     
+    
+    
     mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
     
     %%% maps to 0
@@ -31,12 +33,12 @@ for regNum =  1 : data_c.regs.num_regs;
             disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
             [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
         end
-             
+        
     elseif numel(mapCR) == 1 &&  all(data_r.regs.map.f{mapCR} == regNum)
-        % MAPS TO ONE AND AGREES 
+        % MAPS TO ONE AND AGREES
         % sets cell ID from mapped reg, updates death in data_r
         [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
-                
+        
     elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1
         %% one to one but disagreement
         mapRC = data_r.regs.map.f{mapCR};
@@ -59,33 +61,38 @@ for regNum =  1 : data_c.regs.num_regs;
         % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
         % mark division anyway.
         markDiv1RCagree = all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR);
-
+        
         
         % mark division
-        if markDivEmptyLowCost && markDiv1RCagree        
-                sister2 = mapRC;            
-                sister1 = regNum;
-                mother = mapCR;
-                [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
-
+        if markDivEmptyLowCost && markDiv1RCagree
+            sister2 = mapRC;
+            sister1 = regNum;
+            mother = mapCR;
+            [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
+            
         else
             % Error not fixed : one to one mapping but disagreement between current and
-            % reverse 
+            % reverse
             % continue the cell line anyway and put an error..
+            if debug_flag
+                keyboard;
+            end
             errorStat = 1;
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);          
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
             data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
             data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
             data_r.regs.error.label{mapRC} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in apping cur -> rev & rev -> cur ].']);
+                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
             
             
             disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );
             
             data_c.regs.error.r(regNum) = 1;
             data_r.regs.error.f(mapCR) = 1;
+            
+            
         end
         
         
@@ -117,7 +124,6 @@ for regNum =  1 : data_c.regs.num_regs;
                 ', reg: ', num2str(regNum),'. Incorrect Mapping 1 to 2 - making a new cell'];
             disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
             
-            
             % red is regNum, green is the ones mother maps to, blue is
             % mother
             imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
@@ -126,7 +132,7 @@ for regNum =  1 : data_c.regs.num_regs;
         else
             
             sister1 = regNum;
-            sister2 = mapRC(mapRC~=sister1);           
+            sister2 = mapRC(mapRC~=sister1);
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
             
@@ -138,19 +144,27 @@ for regNum =  1 : data_c.regs.num_regs;
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
             end
         end
-    elseif numel(mapCR) == 2 && numel(data_r.regs.map.f{mapCR(1)}) == 1 && data_r.regs.map.f{mapCR(1)}==regNum && ...
-            numel(data_r.regs.map.f{mapCR(2)}) == 1 && data_r.regs.map.f{mapCR(2)}==regNum
+    elseif numel(mapCR) == 2
         % 1 in current maps to two in reverse
         % try to find a segment that should be turned on in current
-        % frame, exit regNum loop, make time - 1 and relink 
+        % frame, exit regNum loop, make time - 1 and relink
+        
+        
+        twoInRMapToCOnly = numel(data_r.regs.map.f{mapCR(1)}) == 1 && data_r.regs.map.f{mapCR(1)}==regNum && ...
+            numel(data_r.regs.map.f{mapCR(2)}) == 1 && data_r.regs.map.f{mapCR(2)}==regNum;
         
         if debug_flag
             imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                 ag((data_r.regs.regs_label==mapCR(1)) + (data_r.regs.regs_label==mapCR(2)))));
-            keyboard
+            
         end
         
-        [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,mapCR,CONST);
+        success = false;
+        
+        if twoInRMapToCOnly
+            [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,mapCR,CONST);
+        end
+        
         if success % segment found
             data_c.regs.error.r(regNum) = 0;
             data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
@@ -186,15 +200,23 @@ for regNum =  1 : data_c.regs.num_regs;
             
         end
     else
+        data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+            ', reg: ', num2str(regNum),'. Error not fixed'];
         if debug_flag
-            disp ('not sure what to do with you');
             imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
-                data_c.phase));
+                ag(data_c.phase)));
             keyboard;
         end
         
     end
     
+%     if data_c.regs.error.r(regNum) ~=0 || data_c.regs.error.f(regNum) ~=0
+%         imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
+%             ag(data_c.phase)));
+%         disp (data_c.regs.error.r(regNum));
+%         disp (data_c.regs.error.f(regNum));
+%         '';
+%     end
 end
 end
 
@@ -232,7 +254,8 @@ if ~(errorM || errorD1 || errorD2)
 else
     % bad scores for mother or daughters
     % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
-    data_c.regs.error.r(sister1) = 1;
+    errorStat = 1;
+    %data_c.regs.error.r(sister1) = 1;
     data_c.regs.error.label{sister1} = ['Frame: ', num2str(time),...
         ', reg: ', num2str(sister1),...
         '. 1 -> 2 mapping, but not good cell [sm,sd1,sd2,slim] = ['...
@@ -241,7 +264,7 @@ else
         num2str(data_c.regs.scoreRaw(sister2),2),'].'];
     disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
     [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, 1, sister2, cell_count);
+        data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
     
 end
 end

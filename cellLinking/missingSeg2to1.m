@@ -30,8 +30,8 @@ comboMaskR = maskR1+maskR2;
 
 comboMaskR = comboMaskR(yy,xx);
 % find segment between them in data_r
-comboMaskRdil = imdilate(comboMaskR, strel('square',2));
-comboMaskRerod = imerode(comboMaskRdil, strel('square',2));
+comboMaskRdil = imdilate(comboMaskR, strel('square',3));
+comboMaskRerod = imerode(comboMaskRdil, strel('square',3));
 separatingSegment = ~comboMaskR.*comboMaskRerod;
 
 dist = bwdist(separatingSegment);

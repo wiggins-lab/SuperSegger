@@ -59,8 +59,6 @@ elseif ~isempty(contents2)
     end
 end
 
-resetRegions  = 0;
-
 while time <= numIm
     
     if (time == 1)
@@ -87,7 +85,7 @@ while time <= numIm
     
     
     disp (['Calculating maping for frame ', num2str(time)])
-    if ~isempty(data_r) && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
+    if ~isempty(data_r) && ~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')
         [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f] = assignmentFun (data_r, data_c,CONST,1,0);
     end
     [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r]  = assignmentFun (data_c, data_r,CONST,0,0);
