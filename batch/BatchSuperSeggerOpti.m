@@ -220,14 +220,15 @@ else
             dirname_xy = dirname_list{ii};
             dirname_cell = [dirname_xy,filesep,'cell',filesep];
             
-            [imTot, imColor, imBW, imInv, kymo, kymoMask, I, jjunk, jjunk, imTot10 ] = ...
-                makeConsIm( [dirname_cell], CONST, [], [], false );
-            
-            if ~isempty( imTot )
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST);
+            [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST);
+      
+   
+            if ~isempty( imMosaic )
                 imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imTot10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
             else              
                 disp( ['Found no cells in ', dirname_cell, '.'] );

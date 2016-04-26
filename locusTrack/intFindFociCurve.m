@@ -8,21 +8,27 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 %       data : cell/regions file (err file)
 %       CONST : segmentation constants
 %       channelID : fluorescence channel number
+%
 % OUTPUT : 
 %       data : updated data with sub-pixel fluorescence model
-%
-%       fitPosition(1) - Sub-pixel resolution of foci position X
-%       fitPosition(2) - Sub-pixel resolution of foci position Y
-%       fitIntensity - Intensity of the gaussian
-%       fitSigma - sigma of gaussian   
+%       a locus[channelID] field is added with the following structure :
+%              r : sub-pixel global coordinates for foci location (x y)
+%              fitSigma : sigma of gaussian fit
+%              intensity : maximum intensity of gaussian fit
+%              fitScore : score of gaussian fitting to the foci (0 - 1)
+%              normIntensity : normalized intensity (divided by std(cell
+%              fluor)
+%              score : locus intensity / std(cell fluorescence) *  gaussian fit score;
+%              shortaxis : sub-pixel local coordinates for foci location (x y)
+%              longaxis : sub-pixel local coordinates for foci location (x y)
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
 DEBUG_FLAG = false;
-fieldname = ['locus', num2str(channelID)];
 
+fieldname = ['locus', num2str(channelID)];
 options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
 
 % Get images out of the structures.
@@ -60,19 +66,18 @@ focusInit.intensity = nan;
 focusInit.normIntensity = nan;
 focusInit.shortaxis = nan;
 focusInit.longaxis = nan;
-%focusInit.fitIntensity = nan;
-%focusInit.fitPosition = [nan, nan];
 focusInit.fitSigma = nan;
 focusInit.fitScore = nan;
-
-fociData = [];
-cellIDs = [];
+focusData = zeros(1,numFociRegions);
+cellIDs = zeros(1,numFociRegions);
 
 if DEBUG_FLAG
     figure(2);
     clf;
 end
 
+% go through every foci region, calculate foci properties and assign to
+% cells
 for ii = 1:numFociRegions
     tempData = focusInit;
     
@@ -96,8 +101,7 @@ for ii = 1:numFociRegions
 
     % figure out which cell the focus belongs to
     maskSize = [numel(yPad),numel(xPad)];
-
-    
+   
     [~, maxIndex] = max(imageToFit(maskToFit));
     cellsLabel = data.regs.regs_label(yPad,xPad);
     cellsMask = logical(cellsLabel);
@@ -121,7 +125,6 @@ for ii = 1:numFociRegions
         parameters(2) = fociY;
         parameters(3) = gaussianIntensity;
         parameters(4) = sigmaValue;
-        %parameters(5) = backgroundIntensity;
 
         [parameters] = fminsearch( @doFit, parameters, options);
 
@@ -148,16 +151,12 @@ for ii = 1:numFociRegions
             imshow(gaussianApproximation, []);   
             subplot(2, 2, 4);          
             title(['Score: ', num2str(fitScore)]);
-
             keyboard;
         end
 
         tempData.r(1) = parameters(1);
         tempData.r(2) = parameters(2);
-        %tempData.fitPosition(1) = parameters(1);
-        %tempData.fitPosition(2) = parameters(2);
         tempData.fitSigma = parameters(4);
-        %tempData.fitIntensity = parameters(3);
         tempData.intensity = parameters(3);
         tempData.fitScore = fitScore;
     
@@ -174,7 +173,7 @@ for ii = 1:numFociRegions
             (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e1;
 
         
-        %Assign to array
+        %Assign to a focus region
         cellIDs(ii) = bestCellID;  
         focusData(ii) = tempData;
         if DEBUG_FLAG
@@ -187,7 +186,7 @@ for ii = 1:numFociRegions
 end
 
 
-% assign to cells
+% sort the foci for each cells
 for ii = 1:data.regs.num_regs
 
     fociIndex = find(cellIDs == ii);
@@ -210,7 +209,7 @@ for ii = 1:data.regs.num_regs
         end 
     end
     
-    scores = [focus(:).score]
+    scores = [focus(:).score];
     focus = focus(~isnan(scores));  
     data.CellA{ii}.(fieldname) = focus;
     
@@ -220,15 +219,19 @@ for ii = 1:data.regs.num_regs
     data.CellA{ii}.(['fluor',num2str(channelID),'_filtered'])=flourFiltered( yPad, xPad );
 end
 
-    %parameters store the values to optimize.
-    %parameter(1) - Sub-pixel resolution of foci position X
-    %parameter(2) - Sub-pixel resolution of foci position Y
-    %parameter(3) - Intensity of the gaussian
-    %parameter(4) - sigma of gaussian    
-    %parameter(5) - background intensity    
+
+
+  
     function error = doFit(parameters )
-        gaussian = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));
-        
+    % doFit : calculates the error of fitting a gaussian to a foci. 
+    % parameters store the values to optimize.
+    % parameter(1) - Sub-pixel resolution of foci position X
+    % parameter(2) - Sub-pixel resolution of foci position Y
+    % parameter(3) - Intensity of the gaussian
+    % parameter(4) - sigma of gaussian    
+    % parameter(5) - background intensity
+    
+        gaussian = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));        
         tempImage = (double(imageToFit) - gaussian);
         error = sum(sum(tempImage.^2));
     end

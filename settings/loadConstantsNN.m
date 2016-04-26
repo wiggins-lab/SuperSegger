@@ -87,6 +87,11 @@ else
     error('Constants not loaded : no match found. Aborting.');
 end
 
+% temp until they are put in the constants
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+CONST.trackOpti.DA_MIN = -0.1;
+CONST.trackOpti.DA_MAX = 0.3;
+CONST.regionScoreFun.names = getRegNames3;
 
 % Settings for alignment in differnt channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
@@ -97,13 +102,9 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
     CONST.imAlign.GFP};        % c3 channel name
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-% Parallel processing on multiple cores :
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                       
 
-% PARALLEL FOR MATLAB 2015
+% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
     poolobj = gcp('nocreate'); % If no pool, do not create new one.
     if isempty(poolobj)

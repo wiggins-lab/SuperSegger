@@ -7,8 +7,8 @@ function [assignments,errorR,totCost,allC,allF,DA]  = multiAssignmentFastOnlyOve
 
 
 
-DA_MIN = -0.1; %CONST.trackOpti.DA_MIN;
-DA_MAX = 0.3;% CONST.trackOpti.DA_MAX;
+DA_MIN = CONST.trackOpti.DA_MIN;
+DA_MAX =  CONST.trackOpti.DA_MAX;
 OVERLAP_LIMIT_MIN = CONST.trackOpti.OVERLAP_LIMIT_MIN;
 
 

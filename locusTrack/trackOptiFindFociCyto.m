@@ -85,20 +85,6 @@ function intDoFoci( i, dirname, contents, nc, CONST)
 %       CONST : segmentation parameters
 
 data_c = loaderInternal([dirname,contents(i).name]);
-gf  = fspecial( 'gaussian', 21, 3 );
-
-% make filtered images to fit - looks useless
-im_filt = cell([1,nc]);
-Istd = zeros(1,nc);
-for j = 1:nc
-    fl_im = data_c.(['fluor',num2str(j)]);
-    fl_im = medfilt2( double(fl_im), [3,3], 'symmetric' );
-    Istd(j)  = std(fl_im(data_c.mask_bg));
-    tmp = (fl_im-imfilter( fl_im, gf, 'replicate' ))/Istd(j);
-    tmp(tmp<0) = 0;
-    im_filt{j} = tmp;
-end
-
 
 % Loop through the different fluorescence channels
 for channel_number = 1:nc
@@ -106,7 +92,7 @@ for channel_number = 1:nc
         if CONST.trackLoci.numSpots(channel_number) 
             % only runs if non zero number of foci are set in constants
             % Fits the foci
-            data_c = intFindFociPAWCurve( data_c, CONST, channel_number );
+            data_c = intFindFociCurve( data_c, CONST, channel_number );
         end
     end
 end

@@ -8,11 +8,11 @@ function [M_, G_, C1_, C2_, M, G, C1, C2] = curveFilter( im, filterWidth )
 %       M_ : Mean curvature of the image without negative values
 %       G_ : Gaussian curvature of the image without negative values
 %       C1_ : Principal curvature 1 of the image without negative values
-%       C1_ : Principal curvature 2 of the image without negative values
+%       C2_ : Principal curvature 2 of the image without negative values
 %       M : Mean curvature of the image
 %       G : Gaussian curvature of the image
 %       C1 : Principal curvature 1 of the image
-%       C1 : Principal curvature 2 of the image
+%       C2 : Principal curvature 2 of the image
 %
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016

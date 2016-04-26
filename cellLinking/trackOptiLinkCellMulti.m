@@ -40,7 +40,7 @@ filt2 = 'err.mat'; % name of final files
 
 %multiAssignmentPairs
    
-assignmentFun = @multiAssignmentFastOnlyOverlap
+assignmentFun = CONST.trackOpti.linkFun;
 contents=dir([dirname,filt]);
 numIm = length(contents);
 cell_count = 0;

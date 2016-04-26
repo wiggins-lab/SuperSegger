@@ -1,4 +1,4 @@
-function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box )
+function [data,A]  = superSeggerOpti(phaseOrig, mask, disp_flag, CONST, adapt_flag, header, crop_box )
 % superSeggerOpti generates the initial segmentation of rod-shaped cells.
 % It uses a local minimum filter (similar to a median filter) to enhance
 % contrast and then uses Matlab's WATERSHED command to generate
@@ -10,7 +10,7 @@ function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag,
 % boundaries.
 %
 % INPUT :
-%       phase_ : phase image
+%       phaseOrig : phase image
 %       mask : cell mask, given externally or calculated with band-pass filter
 %       disp_flag : display flag
 %       CONST : segmentation constants
@@ -102,9 +102,9 @@ end
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
 if all(ismember('100X',CONST.ResFlag))
-    phase = imfilter(phase_,fspecial('disk',1),'replicate');
+    phase = imfilter(phaseOrig,fspecial('disk',1),'replicate');
 else
-    phase = phase_;
+    phase = phaseOrig;
 end
 
 
@@ -128,8 +128,6 @@ phase = imfilter(phase, f,'replicate');
 % We use one threshold to remove the background, and another to remove
 % the smaller background regions between cells.
 
-% TEMP 
-
 if nargin < 2 || isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
@@ -147,16 +145,13 @@ if nargin < 5 || isempty(adapt_flag)
     adapt_flag=1;
 end
 
-% Enhance inter-cellular image contrast
-%this filter enhances the contrast of the phase image by subtracting from
-%each pixel the minimum intensity in its neighborhood. It
-%forces the interior of the cells closer to zero intensity.
+% Minimum constrast filter to enhance inter-cellular image contrast
 phase = ag(phase);
-magicPhase_ = magicContrastFast2(phase, MAGIC_RADIUS);
-phase = double(uint16(magicPhase_-MAGIC_THRESHOLD));
-
-% this is to remove small object - it keeps only objects with bright halos 
-filled_halos = fillHolesAround(phase,CONST,crop_box);
+magicPhase = magicContrastFast2(phase, MAGIC_RADIUS);
+%phase_mg = double(uint16(magicPhase_-MAGIC_THRESHOLD));
+ 
+% % this is to remove small object - it keeps only objects with bright halos 
+filled_halos = fillHolesAround(magicPhase,CONST,crop_box);
 
 % make sure that not too much was discarded
 if sum(phase(:)>0) < 1.5 * sum(filled_halos(:))
@@ -164,22 +159,27 @@ if sum(phase(:)>0) < 1.5 * sum(filled_halos(:))
     mask_bg_ = filled_halos & mask_bg_;
 end
 
-% cuts out bright halos from the mask
-mask_mod = (phase>CUT_INT);
-mask_bg = logical((mask_bg_-mask_mod)>0);
+% remove bright halos from the mask
+mask_halos = (magicPhase>CUT_INT);
+mask_bg = logical((mask_bg_-mask_halos)>0);
 
 
-% Use matlab's standard watershed algorithm to watershed just the
-% cell-filled regions of the image.
-phaseMask = uint8(agd(phase) + 255*(1-(mask_bg)));
+% C2phase is the Principal curvature 2 of the image without negative values
+% it also enhances subcellular contrast. We subtract the magic threshold 
+% to remove the variation in intesnity within a cell region.
+[~,~,~,C2phase] = curveFilter (double(phase),1);
+C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
+
+% watershed just the cell mask to identify segments
+phaseMask = uint8(agd(C2phaseThresh) + 255*(1-(mask_bg)));
 ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
 
 
 if adapt_flag
-    % If the adapt_flag is set to true (on by default) it breaks regions 
-    % that are too big to be cells. This function slows the code down, AND 
-    % it significantly slows down the regionOpti code since there are many
-    % more marginal segments to consider.
+    % If the adapt_flag is set to true (on by default) it watersheds the C2phase
+    % without using the thershold to identify more segments. It atempts to 
+    % breaks regions that are too big to be cells. This function slows the 
+    % code down, AND slows down the regionOpti code.
 
     wsc = 1- ws;
     regs_label = bwlabel( wsc );
@@ -191,17 +191,17 @@ if adapt_flag
     
     for ii = 1:num_wsc
         [xx,yy] = getBB(props(ii).BoundingBox);
-        [L1(ii),L2(ii)] = makeRegionSizeProjectionBBint2( (regs_label(yy,xx)==ii), props(ii) );
+        [L1(ii),L2(ii)] = makeRegionSizeProjectionBBint2((regs_label(yy,xx)==ii), props(ii));
         
         if L2(ii) > MAX_WIDTH;
 
             [xx,yy] = getBB( props(ii).BoundingBox );                        
             mask_reg = (regs_label(yy,xx)==ii);          
             
-            pp = double(magicPhase_(yy,xx)).*mask_reg;
-            mm = 1-mask_reg;
-            ppp = pp+max(pp(:))*mm;
-            wsl = double(watershed( ppp )>0);
+            c2PhaseReg = double(C2phase(yy,xx)).*mask_reg;
+            invC2PhaseReg = 1-mask_reg;
+            ppp = c2PhaseReg+max(c2PhaseReg(:))*invC2PhaseReg;
+            wsl = double(watershed(ppp)>0);
             wsl = (1-wsl).*mask_reg;
             
             % prune added segs by adding just enough to fix the cell width problem
@@ -212,7 +212,7 @@ if adapt_flag
             num_wsl_label = max(wsl_label(:));
             wsl_mins = zeros(1,num_wsl_label);
             for ff = 1:num_wsl_label
-                wsl_mins(ff) = min(pp(ff==wsl_label));
+                wsl_mins(ff) = min(c2PhaseReg(ff==wsl_label));
             end
             [wsl_mins, sort_ord] = sort(wsl_mins,'descend');
             
@@ -232,12 +232,14 @@ end
 
 
 % Determine the "good" and "bad" segments
-[data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A,CONST);
-data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
-data.phase = phase_;
+[data] = defineGoodSegs(ws,C2phaseThresh,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A,CONST);
 
 
 % Calculate and return the final cell mask
+data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+data.phase = phaseOrig;
+
+
 if disp_flag
     figure(1)
     clf;
@@ -250,7 +252,7 @@ end
 end
 
 
-function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A,CONST)
+function [data] = defineGoodSegs(ws,phase_mg,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A,CONST)
 % defineGoodSegs is a sub function that uses intensity thresholds to
 % segregate the set of segments produced by the watershed algorithm
 % into "good" segments (segs_good) which lie along a real cellular
@@ -262,7 +264,7 @@ function [data] = defineGoodSegs(ws,phase,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A
 
 
 
-sim = size( phase );
+sim = size( phase_mg );
 
 % Create labeled image of the segments
 %here we obtain the cell-background boundary, which we know is correct.
@@ -339,7 +341,7 @@ for ii = 1:numSegs
     
     % here we get the cropped segment mask and corresponding phase image
     mask_ii  = (segs_label(yy, xx) == ii);
-    phase_ii = phase(yy, xx);
+    phase_ii = phase_mg(yy, xx);
     sim_ii   = size(phase_ii);
     regs_label_ii = regs_label(yy,xx);
     %and its length
@@ -491,7 +493,7 @@ end
 
 
 data = [];
-data.segs.phaseMagic  = phase;
+data.segs.phaseMagic  = phase_mg;
 data.mask_bg          = mask_bg;
 data.segs.segs_good   = segs_good;
 data.segs.segs_bad    = segs_bad;
