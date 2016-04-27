@@ -215,7 +215,7 @@ for ii = 1:data.regs.num_regs
         end 
     end
     
-    scores = [focus(:).score]
+    scores = [focus(:).score];
     focus = focus(~isnan(scores));  
     data.CellA{ii}.(fieldname) = focus;
     
