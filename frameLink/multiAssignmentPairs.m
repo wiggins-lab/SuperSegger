@@ -1,4 +1,4 @@
-function [assignments,errorR,totCost,allC,allF]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
+function [assignments,errorR,totCost,allC,allF,revAssign]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
 % multiAssignmentPairs : links regions in data_c to regions in data_f. 
 % Each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
@@ -372,6 +372,16 @@ if ~isempty(data_c)
             end
             
             
+        end
+        
+        
+        % make list of revAssign
+        revAssign = cell( 1, numRegs2);
+        for ll = 1 : numRegs1
+            tmpAss =  assignments{ll};
+            for uu = tmpAss
+                revAssign{uu} = [revAssign{uu},ll];
+            end
         end
         
         
