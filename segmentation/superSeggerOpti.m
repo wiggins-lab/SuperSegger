@@ -1,4 +1,4 @@
-function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box )
+function [data,A]  = superSeggerOpti(phase_, mask, disp_flag, CONST, adapt_flag, header, crop_box, verbose)
 % superSeggerOpti generates the initial segmentation of rod-shaped cells.
 % It uses a local minimum filter (similar to a median filter) to enhance
 % contrast and then uses Matlab's WATERSHED command to generate
@@ -83,6 +83,9 @@ MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
 
 
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
 
 if ~exist('header','var')
     header = [];
@@ -160,7 +163,9 @@ filled_halos = fillHolesAround(phase,CONST,crop_box);
 
 % make sure that not too much was discarded
 if sum(phase(:)>0) < 1.5 * sum(filled_halos(:))
+    if verbose
     disp('keeping only objects with bright halos');
+    end
     mask_bg_ = filled_halos & mask_bg_;
 end
 

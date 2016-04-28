@@ -21,6 +21,7 @@ function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 guidata(hObject, handles);
 
+
 function varargout = superSeggerGui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 

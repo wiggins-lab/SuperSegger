@@ -1,4 +1,4 @@
-function [data] = perRegionOpti( data, disp_flag, CONST,header)
+function [data] = perRegionOpti( data, disp_flag, CONST,header, verbose)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
 % anneal, according to the nudmber of segments to be considered.
@@ -18,6 +18,8 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+
+
 MAX_LENGTH = CONST.regionOpti.MAX_LENGTH;
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 MAX_NUM_RESOLVE  = CONST.regionOpti.MAX_NUM_RESOLVE;
@@ -28,6 +30,10 @@ E = CONST.regionScoreFun.E;
 
 minGoodRegScore = CONST.regionOpti.minGoodRegScore ; 
 neighMaxScore = CONST.regionOpti.neighMaxScore;
+
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
 
 if ~exist('header','var')
     header = [];
@@ -70,9 +76,10 @@ for ii = 1:data.regs.num_regs
     data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
 end
 
+if verbose
 
 disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
-
+end
 
 % get regions with bad scores
 regs_label = data.regs.regs_label;
@@ -84,9 +91,11 @@ small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
 badReg = badReg(ismember(badReg,small));
 
 numBadRegions = size(badReg,1);
+if verbose
+
 disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
 disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
-
+end
 
 % list of already tweaked segments
 goodSegList = [];
@@ -201,14 +210,20 @@ while ~isempty(badReg)
     if isempty(segs_list)
         [vect] = [];
     elseif numel(segs_list) > MAX_NUM_RESOLVE % use raw score
+        if verbose
         disp([header, 'rO: Too many regions to analyze (',num2str(num_segs),').']);
+        end
         [vect] = data.segs.scoreRaw(segs_list)>0;
         Emin = -100;
     elseif numel(segs_list) > MAX_NUM_SYSTEMATIC % use simulated anneal
+         if verbose
         disp([header, 'rO: Simulated Anneal : (',num2str(num_segs),' segments).']);
+         end
         [vect,regEmin] = simAnnealMap( segs_list, data, combMask, xx, yy, CONST, 0);
     else % use systematic
+          if verbose
         disp([header, 'rO: Systematic : (',num2str(num_segs),' segments).']);
+          end
         [vect,regEmin] = systematic( segs_list, data, combMask, xx, yy, CONST);
     end
         

@@ -1,4 +1,4 @@
-function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
+function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST, verbose)
 % trackOptiAlignPad : aligns phase images to correct for microscope drift.
 % To keep as much data as possible, instead of cropping the resulting
 % images it builds a larger image that encompases all drift positions.
@@ -32,6 +32,10 @@ if dirname_ == '.'
 end
 dirname_ = fixDir(dirname_);
 
+
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
 
 file_filter = '*.tif';
 contents=dir([dirname_ file_filter]);
@@ -87,7 +91,7 @@ crop_box = cell(1, num_xy);
 % parallelized alignemnt for each xy
 parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
-        dirname_, targetd, nameInfo, precision, CONST );
+        dirname_, targetd, nameInfo, precision, CONST,  verbose);
 end
 
 end
@@ -95,7 +99,7 @@ end
 
 
 function crop_box = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, ...
-    nnxy, dirname, targetd, nameInfo, precision, CONST )
+    nnxy, dirname, targetd, nameInfo, precision, CONST,  verbose)
 % intFrameAlignXY : Frame alignment for one xy directory
 %
 % INPUT :
@@ -146,7 +150,9 @@ for it = nt;
         for ic = nc
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
-            disp(['Image name: ',in_name]);
+            if verbose
+                disp(['Image name: ',in_name]);
+            end
             im = imread(in_name);
             
             if numel(size(im)) > 2
@@ -170,8 +176,9 @@ for it = nt;
                 end
                 
                 [out,errNum,focusNum] = intAlignIm(im_, phaseBef_, precision );
-                disp(['focusNum: ',num2str(focusNum),' errNum: ',num2str(errNum)]);
-                
+                if verbose
+                    disp(['focusNum: ',num2str(focusNum),' errNum: ',num2str(errNum)]);
+                end
                 FOCUS_FLAG = (focusNum > FOCUS_NUM_LIM) & (errNum < ERR_LIM);
                 
                 if FOCUS_FLAG % focused, with low alignment error
@@ -250,7 +257,9 @@ for it = nt;
         for ic = nc % go through each channel
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
-            disp(['Image name: ',in_name]);
+            if verbose
+                disp(['Image name: ',in_name]);
+            end
             im_ = imread( in_name );
             im = zeros(sspad, class(im_) ) + mean( im_(:));
             im((1-miny):(ss(1)-miny),(1-minx):(ss(2)-minx)) = im_;

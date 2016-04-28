@@ -1,4 +1,4 @@
-function [data] = regionOpti( data, disp_flag, CONST,header)
+function [data] = regionOpti( data, disp_flag, CONST,header, verbose)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
 % anneal, according to the number of segments to be considered.
@@ -28,6 +28,10 @@ MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
 CONST.regionOpti.Emin          = .2;
 
 DE_norm          = CONST.regionOpti.DE_norm;
+
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
 
 if ~exist('header')
     header = [];
@@ -63,8 +67,9 @@ regs_label = (bwlabel( mask_regs, 4 ));
 regs_props = regionprops( regs_label, 'BoundingBox','Orientation' );
 num_regs   = max(regs_label(:));
 segs_added = [];
+if verbose
 disp([header, 'rO: Got ',num2str(num_regs),' regions.']);
-
+end
 % Find short regions and add surrounding segments to segs_added
 for ii = 1:num_regs
     
@@ -156,14 +161,20 @@ for ii = 1:num_regs
     if isempty(segs_list)
         [vect] = [];
     elseif numel(segs_list) > MAX_NUM_RESOLVE % use raw score
+        if verbose
         disp([header, 'rO: Too many regions to analyze (',num2str(numel(segs_list)),').']);
+        end
         [vect] = data.segs.scoreRaw(segs_list)>0;
     elseif numel(segs_list) > MAX_NUM_SYSTEMATIC % use simulated anneal
+         if verbose
         disp([header, 'rO: Simulated Anneal : (',num2str(numel(segs_list)),' segments).']);
+         end
         debug_flag = 0;
         [vect] = simAnnealMap( segs_list, data, cell_mask, xx, yy, CONST, debug_flag);
     else % use systematic
-         disp([header, 'rO: Systematic : (',num2str(numel(segs_list)),' segments).']);    
+        if verbose 
+        disp([header, 'rO: Systematic : (',num2str(numel(segs_list)),' segments).']);    
+        end
         %tic;
         [vect] = systematic( segs_list, data, cell_mask, xx, yy, CONST);
        % toc;

@@ -1,4 +1,4 @@
-function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,verbose,SEGMENT_FLAG,ONLY_SEG)
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -29,7 +29,9 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 %            : new segs if they don't yet exist.
 % res       : is a string that is passed to loadConstants(Mine).m to load
 %           : the right constants for processing.
+% verbose : 1 to print in the console all the steps, 0 to not display only the basic information.
 % SEGMENT_FLAG : to segment cells
+% ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
 %
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016
@@ -53,6 +55,11 @@ end
 if nargin < 4 || isempty( res )
     res = []; 
 end
+
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
+
 
 if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
     SEGMENT_FLAG = 1;
@@ -180,7 +187,7 @@ else
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG )
+            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG, verbose)
         
         if workers
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
@@ -242,7 +249,7 @@ end
 end
 
 function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG )
+    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG, verbose)
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
@@ -253,6 +260,7 @@ file_filter = '*.tif';
 % get header to show xy position
 tmp1 = strfind( dirname_xy, 'xy');
 tmp2 = strfind( dirname_xy,[filesep]);
+
 if ~isempty(tmp1) && ~isempty(tmp2)
     header = [dirname_xy(tmp1(end):(tmp2(end)-1)),': '];
 else
@@ -314,11 +322,13 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
         end
         
         doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, ...
-            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp );
+            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp,verbose);
         
         if ~CONST.parallel.show_status
-            disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
+            if verbose
+                disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
                 ' of ', num2str(num_t),'.']);
+            end
         else
             waitbar( i/num_t, h,...
                 ['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
