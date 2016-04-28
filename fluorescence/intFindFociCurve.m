@@ -1,4 +1,5 @@
 function [ data ] = intFindFociCurve( data, CONST, channelID )
+function [ data ] = intFindFociCurve( data, CONST, channelID )
 % intFindFociCurve: finds the foci and assigns them to the cells.
 % It fits the cytoplasmic fluorescence to cell by cell.
 % The result of the global cytofluorescence model is added to the field
@@ -8,13 +9,19 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 %       data : cell/regions file (err file)
 %       CONST : segmentation constants
 %       channelID : fluorescence channel number
+%
 % OUTPUT : 
 %       data : updated data with sub-pixel fluorescence model
-%
-%       fitPosition(1) - Sub-pixel resolution of foci position X
-%       fitPosition(2) - Sub-pixel resolution of foci position Y
-%       fitIntensity - Intensity of the gaussian
-%       fitSigma - sigma of gaussian   
+%       a locus[channelID] field is added with the following structure :
+%              r : sub-pixel global coordinates for foci location (x y)
+%              fitSigma : sigma of gaussian fit
+%              intensity : maximum intensity of gaussian fit
+%              fitScore : score of gaussian fitting to the foci (0 - 1)
+%              normIntensity : normalized intensity (divided by std(cell
+%              fluor)
+%              score : locus intensity / std(cell fluorescence) *  gaussian fit score;
+%              shortaxis : sub-pixel local coordinates for foci location (x y)
+%              longaxis : sub-pixel local coordinates for foci location (x y)
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Connor Brennan, Stella Stylianidou & Paul Wiggins.

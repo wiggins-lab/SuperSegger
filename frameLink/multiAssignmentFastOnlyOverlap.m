@@ -118,9 +118,7 @@ if ~isempty(data_c)
                 areaC = data_c.regs.props(ii).Area;
                 tmpdA = (totAreaF-areaC)./totAreaF;
                 tmpError = setError(tmpdA,minDA,maxDA);
-                
-                intDisplay (data_c,data_f,tmpAssign,ii)
-                
+              
                 
                 if numel(tmpError) > 0 && tmpError(1) == 0
                     assignments{ii} = tmpAssign(1);
