@@ -1,11 +1,12 @@
 function  imData = makeTowerCons( data, CONST, xdim, ...
     disp_flag, skip, mag, fnum )
-% makeTowerCons : Makes Times-Lapse Tower with normalized time and cell shape
+% makeTowerCons : Makes normalized time and shape tower for a single cell.
+% It normalizes for time and cell shape.
 %
 % INPUT:
 %        data : (struct) Cell data to construct the Time-Lapse Tower
 %       CONST :  segmentation constants
-%        xdim :
+%        xdim : dimensions of image along x axis
 %   disp_flag : 0 or 1 value to show imagesa and progess
 %        skip : number of frames to be skipped when generating the tower
 %         mag : rescale image by mag
@@ -31,9 +32,25 @@ function  imData = makeTowerCons( data, CONST, xdim, ...
 %           .intWeightS :
 %
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
 
 
 % set the color map here for the colored tower
@@ -114,17 +131,17 @@ for ii = 1:numframe
     % set the max and min fluor values
     if isempty(f1mm)
         if isfield( data.CellA{ii}, mm_name )  % fluor1mm field
-            f1mm = getfield( data.CellA{ii}, mm_name) ;
+            f1mm = data.CellA{ii}.(mm_name) ;
         else % fluor field
-            tmp_fluor = getfield( data.CellA{ii}, f_name );
-            f1mm = [ min( tmp_fluor(:)), max(tmp_fluor(:))];
+            tmp_fluor = data.CellA{ii}.(f_name);
+            f1mm = [min(tmp_fluor(:)), max(tmp_fluor(:))];
         end
     else
         if isfield( data.CellA{ii}, mm_name )
-            tmp_fluor = getfield( data.CellA{ii}, mm_name );
+            tmp_fluor = data.CellA{ii}.(mm_name) ;
             f1mm = [ min([tmp_fluor,f1mm(1)]), max([tmp_fluor(2),f1mm(2)]) ];
         else
-            tmp_fluor = getfield( data.CellA{ii}, f_name ); 
+            tmp_fluor = data.CellA{ii}.(f_name); 
             f1mm = [ min([f1mm(1),min( tmp_fluor(:))]), max([f1mm(2),max(tmp_fluor(:))])];
         end
     end
@@ -139,7 +156,7 @@ end
 [ imColorCons, imBWCons, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
     towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST );
 
-% Merge the images from the arrays into a single image
+% Merge the normalized images from the arrays into a single image
 [ imColorConsNorm, imBWConsNorm, towerImNorm, maskCons, nx, ny, max_x, max_y ] = ...
     towerMergeImages( imCellNorm, maskCell, ssCell, xdim, skip, mag, CONST );
 
@@ -173,8 +190,8 @@ end
 
 
 function intDoDraw( im, T0, nx, ny, max_x, max_y, TimeStep, CONST )
-
-imshow( im );
+% intDoDraw : draws the image.
+imshow(im);
 
 if CONST.view.falseColorFlag
     cc = 'w';
@@ -206,7 +223,7 @@ end
 end
 
 function [fluor1, mask_rot, alpha, ss, xx, yy] = intDoCellOri( celld, W0, mag, fnum )
-% intDoCellOri : orients the cell
+% intDoCellOri : orients the cell.
 
 persistent strel1;
 if isempty( strel1 )
@@ -226,14 +243,14 @@ mask = logical(imdilate(mask,strel1));
 
 % get the background fluorescence
 if isfield( celld, fl_name) && ...
-        isfield( getfield( celld, fl_name), 'bg' ) && ...
-        ~isnan( getfield( getfield(celld, fl_name), 'bg'))
-    bg_fluor =  double( getfield( getfield( celld, fl_name), 'bg' ));
+        isfield( celld.(fl_name), 'bg' ) && ...
+        ~isnan( getfield( celld.(fl_name), 'bg'))
+    bg_fluor =  double( getfield( celld.(fl_name)), 'bg' ));
 else
     bg_fluor = 0;
 end
 
-fluor1   = imrotate( double(getfield(celld,f_name))-bg_fluor, alpha, 'bilinear');
+fluor1   = imrotate( double(celld.(fl_name))-bg_fluor, alpha, 'bilinear');
 mask_rot = imresize( mask,   mag );
 fluor1   = imresize( fluor1, mag );
 
@@ -289,7 +306,7 @@ ss = size( mask_rot );
 end
 
 function [X] = intDoFit( x, ysum )
-% intDoFit : fitS to the theoretical shape of the cell
+% intDoFit : fits to the theoretical shape of the cell
 
 debug = 0;
 

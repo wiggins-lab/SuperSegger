@@ -12,9 +12,23 @@ function tryDifferentConstants(dirname,resFlags)
 %       data.SegFile: _seg file from segmentation
 %            .res: constants resolution for each seg file
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % modify this accoding to the constants you want to try
 if nargin < 1 || isempty( dirname ) || strcmp(dirname,'.')
@@ -22,8 +36,9 @@ if nargin < 1 || isempty( dirname ) || strcmp(dirname,'.')
 end
 
 if ~exist('resFlags','var') || isempty(resFlags)
-resFlags = {'60XEc','60XA','60XEcLB',...
-    '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
+%resFlags = {'60XEc','60XA','60XEcLB',...
+ %   '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
+resFlags = {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'};
 end
 
 
@@ -35,8 +50,11 @@ images = dir([dirname,'*c1*.tif']);
 if isempty (images)
     disp('no images found in the directory with c1.tif.Select an image');
     [lastPhaseImage,dirname , ~] = uigetfile('*.tif', 'Pick an image file');
+    if lastPhaseImage == 0
+        return;
+    end
 else
-lastPhaseImage = images(end).name;
+    lastPhaseImage = images(end).name;
 end
 
 phase = intCropImage (imread([dirname,lastPhaseImage]));
@@ -47,7 +65,7 @@ numRows = ceil(numFlags / numCols);
 for i = 1:numFlags
     res = resFlags(i);
     disp(['trying ', res]);
-    CONST = loadConstants( res{1}, 0 );
+    CONST = loadConstantsNN( res{1}, 0 );
     dataname = 'test';
     data.SegFile {i} = CONST.seg.segFun( phase, CONST, 'TryingConstants : ', dataname, [] );
     data.res{i} = res{1};

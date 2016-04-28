@@ -1,6 +1,35 @@
 function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
     regNumR, time, errorStat)
-    
+% continueCellLine : continues a cell line with the same id.
+%
+% INPUT :
+%       data_c : data file (err/seg file) in current frame
+%       regNumC : region number in current frame
+%       data_r : data file (err/seg file) in reverse frame
+%       regNumR : region number in reverse frame
+%       time : current time frame
+%       errorStat : error flag
+%
+% OUTPUT :
+%       data_c : updated data file (err/seg file
+%       data_r : updated data file (err/seg file
+%
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou, Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+
     disp (['Frame ', num2str(time), ' continue reg ', num2str(regNumC), ' from reg ' , num2str(regNumR),...
         ' with cell ID ', num2str(data_r.regs.ID(regNumR))]); 
     % set the death/deathF to current time. They are reset when cell is

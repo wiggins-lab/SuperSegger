@@ -43,7 +43,7 @@ debug = false;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Orientation = props.Orientation;
 
-imRot = (fast_rotate_loose_double( mask, -Orientation+90 ));
+imRot = (imrotate( mask, -Orientation+90 ));
 ss = size(imRot);
 
 

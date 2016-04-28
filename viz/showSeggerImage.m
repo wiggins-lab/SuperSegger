@@ -23,19 +23,39 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
 %         v_flag : shows cells outlines
 %         f_flag : shows flurescence image
 %         s_flag : shows the foci and their score
-%         T_flag : ? something related to regions
+%         T_flag : tight flag, locks it so that regions/links can not be edited.
 %         p_flag : shows pole positions and connects daughter cells to each other
 %         regionScores : shows scores of regions
 %
 % OUTPUT :
 %         im : trackOptiView outlined image
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou, Paul Wiggins, Connor Brennan.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 iptsetpref('imshowborder','tight');
 iptsetpref('ImshowInitialMagnification','fit');
+
+if ~exist('CONST','var') || isempty(CONST)
+    disp ('No constants loaded - loading 60XEcLb');
+    CONST = loadConstantsNN(60,0);
+end
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -88,9 +108,9 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
     end
     
     im =  [im_r(yy,xx,:),im(yy,xx,:); im_f(yy,xx,:), ...
-        cat(3, 0.5*autogain(mask_full_r(yy,xx)>0),...
-        0.5*autogain(mask_full(yy,xx)>0),...
-        0.5*autogain(mask_full_f(yy,xx)>0))];
+        cat(3, 0.5*ag(mask_full_r(yy,xx)>0),...
+        0.5*ag(mask_full(yy,xx)>0),...
+        0.5*ag(mask_full_f(yy,xx)>0))];
 end
 
 imshow(im);
@@ -129,7 +149,7 @@ end
             
             % plots poles
             if FLAGS.p_flag
-                intPlotLink( data_, x_, y_ );
+                intPlotPole( data_, x_, y_ );
             end
         end
     end
@@ -195,13 +215,13 @@ ss = size(data.phase);
 % if the phase image exists use this as the background, else use the cell
 % masks
 if isfield(data,'phase');
-    back = autogain(data.phase);
+    back = ag(data.phase);
     im = cat(3,back,back,back);
 else
     im = 0*cat(3, ...
-        autogain(data.mask_cell),...
-        autogain(data.mask_cell),...
-        autogain(data.mask_cell));
+        ag(data.mask_cell),...
+        ag(data.mask_cell),...
+        ag(data.mask_cell));
 end
 
 
@@ -508,8 +528,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                     mm = mm + 1;
                     r = data.CellA{kk}.locus1(mm).r;
                     text_ = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE && ...
-                            data.CellA{kk}.locus1(mm).b < 3
+                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
@@ -672,8 +691,8 @@ if dataHasIds
 end
 end
 
-function intPlotLink( data, x_, y_ )
-% intPlotLink shows pole positions and connects daughter cells to each other
+function intPlotPole( data, x_, y_ )
+% intPlotPole shows pole positions and connects daughter cells to each other
 if ~isfield(data,'CellA')
     disp ('Showing poles is not supported in this mode');
     return;
@@ -701,23 +720,23 @@ else
                 xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
                 yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
                 yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
-                old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-                un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
-                un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
+                                
+                if tmp.pole.op_ori
+                    old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                    new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                else
+                    old_pole = r + tmp.length(1)*tmp.coord.e1/2;
+                    new_pole = r - tmp.length(1)*tmp.coord.e1/2;
+                end
             catch ME
                 printError(ME);
             end
             
-            plot([r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
-            
-            if tmp.pole.op_ori
-                plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
-                plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
-            else
-                plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
-                plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
-            end
+            plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
+
+            plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
+            plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
+
             
             if ~isempty(ind) && ID && tmp.pole.op_ori
                 if ID < sisterID
@@ -778,65 +797,76 @@ end
 
 function FLAGS = intFixFlags( FLAGS )
 % intFixFlags :  sets default flag values if the value is missing.
+% Outline_flag
+% ID_flag
+% lyse_flag
+% m_flag
+% c_flag
 
 if ~isfield(FLAGS, 'Outline_flag');
-    disp('there is no filed Outline_flag');
+    disp('there is no field Outline_flag');
     FLAGS.Outline_flag = 0;
 end
 if ~isfield(FLAGS, 'ID_flag');
-    disp('there is no filed ID_flag');
+    disp('there is no field ID_flag');
     FLAGS.ID_flag = 1;
 end
 
 if ~isfield(FLAGS, 'lyse_flag');
-    disp('there is no filed lyse_flag')
+    disp('there is no field lyse_flag')
     FLAGS.lyse_flag = 0;
 end
 
 if ~isfield(FLAGS,'m_flag');
-    disp('there is no filed m_flag')
+    disp('there is no field m_flag')
     FLAGS.m_flag = 0;
 end
 
 if ~isfield(FLAGS, 'c_flag');
-    disp('there is no filed c_flag')
+    disp('there is no field c_flag')
     FLAGS.c_flag = 0;
 end
 
 if ~isfield(FLAGS, 'P_flag');
-    disp('there is no filed P_flag')
-    FLAGS.P_flag = 0;
+    disp('there is no field P_flag')
+    FLAGS.P_flag = 1;
 end
 
 if ~isfield(FLAGS, 'cell_flag' );
-    disp('there is no filed cell_flag')
+    disp('there is no field cell_flag')
     FLAGS.cell_flag = 0;
 end
 
 if ~isfield(FLAGS, 'f_flag');
-    disp('there is no filed f_flag')
+    disp('there is no field f_flag')
     FLAGS.f_flag = 0;
 end
 
 if ~isfield(FLAGS, 's_flag');
-    disp('there is no filed s_flag')
+    disp('there is no field s_flag')
     FLAGS.s_flag = 0;
 end
 
 if ~isfield(FLAGS, 'T_flag');
-    disp('there is no filed T_flag')
+    disp('there is no field T_flag')
     FLAGS.T_flag = 0;
 end
 
 if ~isfield(FLAGS, 'filt')
-    disp('there is not filed filt_flag')
+    disp('there is not field filt_flag')
     FLAGS.filt = [0,0,0];
 end
 
 if ~isfield(FLAGS, 'p_flag');
-    disp('there is not file p_flag')
+    disp('there is not field p_flag')
     FLAGS.p_flag = 0;
 end
+
+if ~isfield(FLAGS, 'showLinks');
+    disp('there is not field showLinks')
+    FLAGS.showLinks = 0;
+end
+
 FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
 
 end

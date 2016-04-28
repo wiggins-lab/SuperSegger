@@ -16,7 +16,7 @@ Orientation = props.Orientation;
 debug = false;
 dr  = 5;
 dr2 = 3;
-imRot = (fast_rotate_loose_double( uint8(mask), -Orientation+90 ));
+imRot = double(imrotate( uint8(mask), -Orientation+90 ));
 ss = size(imRot);
 
 if debug

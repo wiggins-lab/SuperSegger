@@ -1,7 +1,41 @@
 function [data_new,success] = missingSeg2to1 (data_c,regC,data_r,regR,CONST)
-% finds missing segment
-% adds it to the segs good, removes it from seg bad
-% removes it from the regions and remakes the mask_cell
+% missingSeg2to1 : finds missing segment in regC.
+% Segments in regC are used that are close to the segment
+% between the two regions regR(1) and regR(2) in data_r.
+% if a segment is found that fits the requirements data_new is made with
+% the new cell_mask and success is returned as true. Else the same data is
+% returned and success is false.
+%
+% INPUT : 
+%      data_c :
+%      regC :
+%      data_r
+%      regR :
+%      CONST : 
+%   
+% OUTPUT :
+%      data_new : data with new segment in good_segs and modified cell mask
+%      success : true if segment was found succesfully.
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
 
 minimumInfo = [];
 minIndex = [] ;
@@ -16,8 +50,8 @@ shortAxis = data_c.regs.info(regC,2);
 [xx,yy] = getBBpad(data_c.regs.props(regC).BoundingBox,size(data_c.phase),4);
 mask = (data_c.regs.regs_label(yy,xx) == regC);
 mask = (mask - data_c.segs.segs_3n(yy,xx))>0;
-% turn on all segments pick best one that divides the area ~ equally?
 
+% turn on all segments pick best one that divides the area ~ equally?
 segsLabel = data_c.segs.segs_label(yy,xx).*mask;
 segs_list = unique(segsLabel);
 segs_list = segs_list(segs_list~=0);
@@ -30,8 +64,8 @@ comboMaskR = maskR1+maskR2;
 
 comboMaskR = comboMaskR(yy,xx);
 % find segment between them in data_r
-comboMaskRdil = imdilate(comboMaskR, strel('square',2));
-comboMaskRerod = imerode(comboMaskRdil, strel('square',2));
+comboMaskRdil = imdilate(comboMaskR, strel('square',3));
+comboMaskRerod = imerode(comboMaskRdil, strel('square',3));
 separatingSegment = ~comboMaskR.*comboMaskRerod;
 
 dist = bwdist(separatingSegment);
@@ -117,7 +151,7 @@ if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.
     finalMask = newmask - segsAdded + segsRemoved;
     data_new = data_c;
     mask_cell_partial = data_new.mask_cell(yy,xx);
-    mask_cell_partial(mask) = finalMask(mask);
+    mask_cell_partial((data_c.regs.regs_label(yy,xx) == regC)) = finalMask((data_c.regs.regs_label(yy,xx) == regC));
     data_new.mask_cell(yy,xx) = mask_cell_partial;
     
     % %         should probably do something to add them to the segments and
@@ -167,8 +201,7 @@ disp (['Finding missing segment from ', num2str(num_segs),' segments, ', num2str
 
 for i = 1  : num_comb
     
-    vect = makeVector(i-1,num_segs); % systematic
-    
+    vect = makeVector(i-1,num_segs); % systematic    
     cell_mask_mod = mask;
     segmentMask = mask*0;
     for kk = 1:num_segs

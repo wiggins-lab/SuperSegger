@@ -14,9 +14,24 @@ function [data] = regionOpti( data, disp_flag, CONST,header, verbose)
 % OUTPUT :
 %       data : data structure with modified segments
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Styliandou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
 
 MAX_WIDTH          = CONST.regionOpti.MAX_WIDTH;
 MAX_LENGTH         = CONST.regionOpti.MAX_LENGTH;
@@ -76,7 +91,7 @@ for ii = 1:num_regs
     [xx,yy] = getBBpad(regs_props(ii).BoundingBox,ss,2);
     tmp_mask = (regs_label(yy,xx)==ii);
     % calculates long and short axis of region
-    [L1,L2] = makeRegionSizeProjectionBBint2( tmp_mask, regs_props(ii) );
+    [L1,L2] = makeRegSize (tmp_mask, regs_props(ii));
     debug_flag = 0;
     
     if debug_flag

@@ -14,9 +14,24 @@ function CONST = loadConstantsNN( res, PARALLEL_FLAG )
 %   PARALLEL_FLAG : 1 if you want to use parallel computation
 %                   0 for single core computation
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if nargin < 1 || isempty( res )
     res = 60;
@@ -40,32 +55,32 @@ disp('loadConstants: Initializing.');
 % '60XEcLB': loadConstants 60X Ec LB Ecoli
 % '60XBay'
 % '60XPa'
-% '100XPa'
+% '100XPa' 
+% resflags : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
-cl = class(res);
 resFlag = [];
-if strcmp(cl,'double' )  && res == 60
+if isa(res,'double' )  && res == 60
     disp('loadConstants: 60X');
     resFlag = '60XEc';
-elseif strcmp(cl,'double' )  && res == 100
+elseif isa(res,'double' )    && res == 100
     disp('loadConstants:  100X');
     resFlag = '100XEc';
-elseif strcmp(cl, 'char' );
-    if strcmp(res,'60XEc') % 1
+elseif isa(res, 'char' );
+    if strcmpi(res,'60XEc')
         resFlag = '60XEc';
-    elseif strcmp(res,'100XEc') % 2
+    elseif strcmpi(res,'100XEc')
         disp('loadConstants:  100X Ecoli');
         resFlag = '100XEc';
-    elseif strcmp(res,'60XEcLB') % 2
+    elseif strcmpi(res,'60XEcLB')
         disp('loadConstants:  60X LB Ecoli');
         resFlag = '60XEcLB';
-    elseif strcmp(res,'60XBay') % 2
+    elseif strcmpi(res,'60XBay')
         disp('loadConstants:  60X Baylyi');
         resFlag = '60XBay';
-     elseif strcmp(res,'60XPa') % 2
+     elseif strcmpi(res,'60XPa')
         disp('loadConstants:  60X Pseudemonas');
         resFlag = '60XPa';
-    elseif strcmp(res,'100XPa') % 2
+    elseif strcmpi(res,'100XPa')
         disp('loadConstants:  100X Pseudemonas');
         resFlag = '100XPa';
     end
@@ -87,6 +102,14 @@ else
     error('Constants not loaded : no match found. Aborting.');
 end
 
+% temp until they are put in the constants
+
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+CONST.trackOpti.DA_MIN = -0.1;
+CONST.trackOpti.DA_MAX = 0.3;
+CONST.regionScoreFun.names = getRegNames3;
 
 % Settings for alignment in differnt channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
@@ -97,13 +120,9 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
     CONST.imAlign.GFP};        % c3 channel name
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-% Parallel processing on multiple cores :
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                       
 
-% PARALLEL FOR MATLAB 2015
+% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
     poolobj = gcp('nocreate'); % If no pool, do not create new one.
     if isempty(poolobj)

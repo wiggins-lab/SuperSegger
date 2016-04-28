@@ -1,3 +1,4 @@
+
 function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
 % trackOptiCellLink : links the cells frame-to-frame and resolves errors.
 %
@@ -38,6 +39,9 @@ filt = '*seg.mat'; % files loaded
 filt2 = 'err.mat'; % name of final files
 
 
+%multiAssignmentPairs
+   
+assignmentFun = CONST.trackOpti.linkFun;
 contents=dir([dirname,filt]);
 numIm = length(contents);
 cell_count = 0;
@@ -55,6 +59,8 @@ elseif ~isempty(contents2)
         cell_count = max(dataLast.regs.ID);
     end
 end
+
+resetRegions  = 0;
 
 while time <= numIm
     
@@ -75,26 +81,23 @@ while time <= numIm
     
     datacName = [dirname,contents(time).name];
     data_c = intDataLoader (datacName);
-    data_c = updateRegionFields (data_c,CONST);  % make regions
-    
-    
+    data_c = updateRegionFields (data_c,CONST);  % make regions      
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
     
-    % go through regions in current data   
-     
+    % go through regions in current data
+    
     
     disp (['Calculating maping for frame ', num2str(time)])
-     if ~isempty(data_r)
-        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f] = multiAssignmentPairs (data_r, data_c,CONST,1,0);
-     end    
-    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r]  = multiAssignmentPairs (data_c, data_r,CONST,0,0);
-    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f] = multiAssignmentPairs (data_c, data_f,CONST,1,0);
-  
-    
+    if ~isempty(data_r) && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
+        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f] = assignmentFun (data_r, data_c,CONST,1,0);
+    end
+    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r]  = assignmentFun (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f] = assignmentFun (data_c, data_f,CONST,1,0);
+   
     % error resolution and id assignment
-    [data_c,data_r,cell_count,resetRegions] =  errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
-
- 
+    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
+    
+    
     if resetRegions
         disp (['Frame ', num2str(time), ' : segments were reset to resolve error, repeating frame.']);
         cell_count = lastCellCount;

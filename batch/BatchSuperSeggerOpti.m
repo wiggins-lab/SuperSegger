@@ -33,9 +33,24 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,verbose,SEGMENT_FLAG,
 % SEGMENT_FLAG : to segment cells
 % ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % Init
 
@@ -84,11 +99,15 @@ end
 
 
 if clean_flag && SEGMENT_FLAG
-    disp ('Clean flag is set to true.')
-    answer=input('Do you want to continue, Y/N [Y]:','s');
-    if lower(answer) ~='y'
-        disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
-        return
+    try
+        disp ('Clean flag is set to true.')
+        answer=input('Do you want to continue, Y/N [Y]:','s');
+        if lower(answer) ~='y'
+            disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
+            return
+        end
+    catch
+       % can not use input  - in eval mode 
     end
 end
 
@@ -138,7 +157,7 @@ save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 contents = dir([dirname_,'xy*']);
 
 if isempty(contents)
-    disp('BSSO: Did not find any data.');
+    disp('BSSO: No xy directories were found.');
 else
     num_dir_tmp = numel(contents);
     nxy = [];
@@ -227,14 +246,15 @@ else
             dirname_xy = dirname_list{ii};
             dirname_cell = [dirname_xy,filesep,'cell',filesep];
             
-            [imTot, imColor, imBW, imInv, kymo, kymoMask, I, jjunk, jjunk, imTot10 ] = ...
-                makeConsIm( [dirname_cell], CONST, [], [], false );
-            
-            if ~isempty( imTot )
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST);
+            [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST);
+      
+   
+            if ~isempty( imMosaic )
                 imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imTot10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
             else              
                 disp( ['Found no cells in ', dirname_cell, '.'] );
@@ -306,7 +326,8 @@ else
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
-if clean_flag & exist(stamp_name,'file')
+
+if clean_flag && exist(stamp_name,'file')
     delete(stamp_name)
 end
 
@@ -337,15 +358,14 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
     if CONST.parallel.show_status
         close(h);
     end
-    time_stamp = clock;
+    time_stamp = clock; %#ok saved below
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
 
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-   % trackOpti(dirname_xy, skip, CONST, clean_flag, header );
-    trackOptiNewLinking(dirname_xy,skip,CONST, clean_flag, header)   
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header)   
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end

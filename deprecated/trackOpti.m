@@ -1,4 +1,4 @@
-function clist = trackOptiNewLinking(dirname,skip,CONST, CLEAN_FLAG, header)
+function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)
 % trackOpti : calls the rest of the functions for segmentation
 % After each sub-function is called, is creates a file in the seg directory
 % that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?
@@ -19,11 +19,24 @@ function clist = trackOptiNewLinking(dirname,skip,CONST, CLEAN_FLAG, header)
 % OUTPUT :
 %       clist : list of cells with time-independent information about each
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins, Stella Stylianidou
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-% init
 
 % if the CLEAN_FLAG does not exist, set it to true and remove all existing
 % files. This is the safer option.
@@ -41,32 +54,51 @@ if isempty(skip)
     skip = 1;
 end
 
-% directories' names
+
 if nargin < 1 || isempty( dirname );
     dirname = '.';
 end
 
-dirname = fixDir(dirname);
+% fix the dirname if it doesn't end in a slash.
+dirname = fixDir( dirname )
 dirname_seg  = [dirname,'seg',filesep];
-dirname_full = [dirname,'seg_full',filesep];
-dirname_cell = [dirname,'cell',filesep];
 
+dirname_cell = [dirname,'cell',filesep];
 if ~exist( dirname_cell, 'dir' )
     mkdir(  dirname_cell );
 end
 
+dirname_full = [dirname,'seg_full',filesep];
 
 
 %% Clean directories
 if CLEAN_FLAG
-    delete ([dirname,'clist.mat']); % clist
-    delete ([dirname_seg,'*err.mat']); % error files
-    delete ([dirname_cell,'*.mat']); % cell files
-    delete ([dirname_cell,'.trackOpti*']); 
-    delete ([dirname_seg,'.trackOpti*']); % stamp files
+    delete ([dirname,'clist.mat']);
+    delete ([dirname_seg,'*trk.mat']);
+    delete ([dirname_seg,'*err.mat']);
+    delete ([dirname_cell,'*.mat']);
+    delete ([dirname_cell,'.trackOpti*']);
+    delete ([dirname_seg,'.trackOpti*']);
     if skip > 1
         delete ([dirname_full,'*.mat']);
         delete ([dirname_full,'.trackOpti*']);
+    end
+else
+    % if ErRes2 has not been cleared, wipe out err.mat files
+    if skip > 1
+        stamp_name1 = [dirname_seg,'.trackOptiLink.mat'];
+        stamp_name2 = [dirname_full,'.trackOptiErRes2.mat'];
+        if exist( stamp_name1, 'file' ) && ~exist( stamp_name2, 'file' )
+            delete ([dirname_seg,'*err.mat']);
+            delete ([dirname_full,'*err.mat']);
+            
+        end
+    else
+        stamp_name1 = [dirname_seg,'.trackOptiLink.mat'];
+        stamp_name2 = [dirname_seg,'.trackOptiErRes2.mat'];
+        if exist( stamp_name1, 'file' ) && ~exist( stamp_name2, 'file' )
+            delete ([dirname_seg,'*err.mat']);
+        end
     end
 end
 
@@ -82,15 +114,38 @@ else
     disp([header, 'trackOpti: trackOptiStripSmall already run.'] );
 end
 
-%% Link frames and do error resolution
+%% Link frames
 % Calculate the overlap between cells between subsequent frames.
-stamp_name = [dirname_seg,'.trackOptiLinkCell.mat'];
+stamp_name = [dirname_seg,'.trackOptiLink.mat'];
 if ~exist( stamp_name, 'file' );
-    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+    trackOptiLink(dirname_seg, [], [], 0, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
-    disp([header, 'trackOpti: trackOptiLinkCell already run.'] );
+    disp([header, 'trackOpti: trackOptiLink already run.'] );
+end
+
+%% Er Res (1)
+% Define and resolve errors and relink if regions have changed
+stamp_name = [dirname_seg,'.trackOptiErRes1.mat'];
+if ~exist( stamp_name, 'file' );
+    list_touch = trackOptiErRes(dirname_seg, 0, CONST, header);
+    disp([header, 'trackOpti: ErRes modified ', num2str(numel(list_touch)),' frames.']);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiErRes (1) already run.']);
+end
+
+%% Set Er
+% reset errors before resolving errors for a second time
+stamp_name = [dirname_seg,'.trackOptiSetEr.mat'];
+if ~exist( stamp_name, 'file' );
+    trackOptiSetEr(dirname_seg, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiSetEr already run.']);
 end
 
 %% Skip Merge
@@ -107,16 +162,30 @@ if skip>1
         disp([header,'trackOpti: trackOptiSkipMerge already run.']);
     end
     
-    % Relink and do error resolution for the skipped files
-    stamp_name = [dirname_seg,'.trackOptiLinkCell.mat'];
+    % Relinks the new skipMerge files
+    stamp_name = [dirname_seg,'.trackOptiLink.mat'];
     if ~exist( stamp_name, 'file' );
-        trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+        trackOptiLink(dirname_seg, [], [], 1, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
     else
         disp([header,'trackOpti: trackOptiLink already run.']);
     end
     
+end
+
+%% ErRes (2)
+% The second time error resolution runs it records the errors but does not 
+% make any changes to the regions. 
+% The no change flag is passed as 1
+stamp_name = [dirname_seg,'.trackOptiErRes2.mat'];
+if ~exist( stamp_name, 'file' );
+    list_touch = trackOptiErRes(dirname_seg, 1, CONST, header);
+    disp([header,'trackOpti: ErRes: modified ', num2str(numel(list_touch)),' frames.']);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiErRes(2) already run.']);
 end
 
 
