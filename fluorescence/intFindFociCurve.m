@@ -1,5 +1,4 @@
 function [ data ] = intFindFociCurve( data, CONST, channelID )
-function [ data ] = intFindFociCurve( data, CONST, channelID )
 % intFindFociCurve: finds the foci and assigns them to the cells.
 % It fits the cytoplasmic fluorescence to cell by cell.
 % The result of the global cytofluorescence model is added to the field
