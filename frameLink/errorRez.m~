@@ -1,19 +1,55 @@
-function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, data_c, data_r, data_f, CONST, cell_count, header, debug_flag)
+function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
+    data_c, data_r, data_f, CONST, cell_count, header, debug_flag)
+% errorRez : 
+%
+% INPUT : 
+% OUTPUT : 
+
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 global SCORE_LIMIT_MOTHER
 global SCORE_LIMIT_DAUGHTER
 
+MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
 SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
 SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
+DA_MIN = CONST.trackOpti.DA_MIN;
+DA_MAX =  CONST.trackOpti.DA_MAX;
 
 resetRegions = false;
 
 for regNum =  1 : data_c.regs.num_regs;
     
     
+    if time == 3 && regNum == 71
+        '';
+        intDisplay (data_r,mapCR,data_c,regNum)
+    end
     
     mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
+    if ~isempty(mapCR)
+        revMap = data_c.regs.revmap.r{mapCR};
+    else
+        revMap = 0;
+    end
+        
     
     %%% maps to 0
     if numel(mapCR) == 0 % maps to 0 in the previous frame - stray
@@ -34,66 +70,105 @@ for regNum =  1 : data_c.regs.num_regs;
             [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
         end
         
-    elseif numel(mapCR) == 1 &&  all(data_r.regs.map.f{mapCR} == regNum)
+    elseif numel(mapCR) == 1 &&  numel (revMap) == 1 && all(data_r.regs.map.f{mapCR} == regNum)
         % MAPS TO ONE AND AGREES
         % sets cell ID from mapped reg, updates death in data_r
         [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
         
-    elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1
+    elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 &&  numel (revMap) == 2
         %% one to one but disagreement
-        mapRC = data_r.regs.map.f{mapCR};
+        
         % red in c maps to blue in r, but blue in r maps to green
         % in c
-        cellC = regNum;
-        cellR = mapCR;
-        cellRmapsTo = mapRC;
-        imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum),ag(data_r.regs.regs_label == mapCR),ag(data_c.regs.regs_label==mapRC)));
+        sister1 = regNum;
+        sister2 = revMap (revMap~=regNum);
+        mother = mapCR;
+
+        imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
+            ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
+
+        totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
+        totAreaR =  data_c.regs.props(mother).Area;
+        AreaChange = (totAreaC-totAreaR)/totAreaC;
+        divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX)
         
-        % check costs for division
-        idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
-        costC = data_c.regs.cost.r(idC,cellR); % cost for both
-        costBef = data_c.regs.cost.r(cellC,cellR); % cost for one
-        costChangeValue = 200;
-        
-        % maprRC maps to nothing and cost to map both is low
-        markDivEmptyLowCost = isempty(data_c.regs.map.r (cellRmapsTo)) && (costC + costChangeValue < costBef);
-        
-        % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
-        % mark division anyway.
-        markDiv1RCagree = all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR);
-        
-        
-        % mark division
-        if markDivEmptyLowCost && markDiv1RCagree
-            sister2 = mapRC;
-            sister1 = regNum;
-            mother = mapCR;
-            [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
-            
-        else
-            % Error not fixed : one to one mapping but disagreement between current and
-            % reverse
-            % continue the cell line anyway and put an error..
-            if debug_flag
-                keyboard;
+        if divAreaChange
+            haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
+            matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
+            oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH)  
+            % or one is small..     
+            % r: one has no forward mapping, or both map to the same in forwa
+            if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
+                % wrong division merge cells
+                [data_c] = merge2Regions (data_c, sister1, sister2);
+            else
+                [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
             end
-            errorStat = 1;
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
-            data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
-            data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
+        else
+            
+            
+            % map to best, remove mapping from second     
+            sisters = [sister1,sister2]
+            [~,minInd] = min ([data_c.regs.dA.r(sisters)]);
+            keeper = sisters(minInd)
+            remove = sisters(sisters~=keeper)
+            [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
+            
+            
+            data_c.regs.map.r{remove} = [];
+            data_c.regs.revmap.r{mapCR} = keeper;
+            
             data_r.regs.error.label{mapRC} = (['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
-            
-            
-            disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );
-            
+                ', reg: ', num2str(regNum),' Not best match for Disagreement in mapping cur -> rev & rev -> cur ].']);
+                       
+            disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );           
             data_c.regs.error.r(regNum) = 1;
             data_r.regs.error.f(mapCR) = 1;
             
-            
         end
+%         % check costs for division
+%         idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
+%         costC = data_c.regs.cost.r(idC,cellR); % cost for both
+%         costBef = data_c.regs.cost.r(cellC,cellR); % cost for one
+%         costChangeValue = 200;
+%         
+%         % maprRC maps to nothing and cost to map both is low
+%         %markDivEmptyLowCost = isempty(data_c.regs.map.r (cellRmapsTo)) && (costC + costChangeValue < costBef);
+%         
+%         % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
+%         % mark division anyway.
+%         markDiv1RCagree = all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR);
+%         
+%         
+%         % mark division
+%         if markDiv1RCagree
+%             sister2 = mapRC;
+%             sister1 = regNum;
+%             mother = mapCR;
+%             [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
+%             
+%         elseif ~data_r.regs.deathF(mapCR)
+%             % Error not fixed : one to one mapping but disagreement between current and
+%             % reverse
+%             % continue the cell line anyway and put an error..
+%             if debug_flag
+%                 keyboard;
+%             end
+%             errorStat = 1;
+%             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
+%             data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
+%                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
+%             data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
+%                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
+%             data_r.regs.error.label{mapRC} = (['Frame: ', num2str(time),...
+%                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
+%                        
+%             disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );           
+%             data_c.regs.error.r(regNum) = 1;
+%             data_r.regs.error.f(mapCR) = 1;
+%             
+%             
+%         end
         
         
     elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 2
@@ -139,7 +214,7 @@ for regNum =  1 : data_c.regs.num_regs;
             % r: one has no forward mapping, or both map to the same in forwa
             if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                 % wrong division merge cells
-                [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2);
+                [data_c] = merge2Regions (data_c, sister1, sister2);
             else
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
             end
@@ -149,7 +224,7 @@ for regNum =  1 : data_c.regs.num_regs;
         % try to find a segment that should be turned on in current
         % frame, exit regNum loop, make time - 1 and relink
         
-        
+        % The two in reverse map to regNum only
         twoInRMapToCOnly = numel(data_r.regs.map.f{mapCR(1)}) == 1 && data_r.regs.map.f{mapCR(1)}==regNum && ...
             numel(data_r.regs.map.f{mapCR(2)}) == 1 && data_r.regs.map.f{mapCR(2)}==regNum;
         
@@ -202,9 +277,10 @@ for regNum =  1 : data_c.regs.num_regs;
     else
         data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
             ', reg: ', num2str(regNum),'. Error not fixed'];
+        disp (regNum)
+        disp(mapCR)
         if debug_flag
-            imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
-                ag(data_c.phase)));
+            intDisplay (data_r,mapCR,data_c,regNum)
             keyboard;
         end
         
@@ -219,6 +295,39 @@ for regNum =  1 : data_c.regs.num_regs;
 %     end
 end
 end
+
+
+
+
+function intDisplay (data_c,regC,data_f,regF)
+% reg : maskF
+% green : maskC
+% blue : all cell masks  in c
+
+
+maskC = data_c.regs.regs_label*0;
+for c = 1 : numel(regC)
+    if ~isnan(regC(c))
+        maskC = maskC + (data_c.regs.regs_label == regC(c))>0;
+    end
+end
+
+maskF = data_f.regs.regs_label*0;
+
+if isempty(regF)
+    disp('nothing')
+    imshow (cat(3,0*ag(maskF),ag(maskC),ag(data_c.mask_cell)));
+else
+    for f = 1 : numel(regF)
+        if ~isnan(regF(f))
+            maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
+        end
+    end
+    imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
+end
+end
+
+
 
 
 function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time, header)

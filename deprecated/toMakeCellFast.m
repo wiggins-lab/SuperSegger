@@ -24,16 +24,31 @@ function celld = toMakeCellFast(celld, e1_old, props)
 % OUTPUT :
 %       celld : new cell file with calculated properties
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 theta = (-props.Orientation)*pi/180;
-A     = props.Area;
+A = props.Area;
 mask  = logical(celld.mask);
 
-imRot   = (fast_rotate_loose_double(uint8(mask), -props.Orientation));
-ss      = size(imRot);
+imRot = (imrotate(uint8(mask), -props.Orientation));
+imRot = double(imRot);
+ss = size(imRot);
 ss_mask = size(mask);
 
 xind = any(imRot);

@@ -8,9 +8,24 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
 %       header     : displayed string
 %       debug_flag  : a flag set for displaying the results
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 if(nargin<1 || isempty(dirname))
@@ -59,7 +74,7 @@ elseif ~isempty(contents2)
     end
 end
 
-resetRegions  = 0;
+%resetRegions  = 1;
 
 while time <= numIm
     
@@ -87,12 +102,15 @@ while time <= numIm
     
     
     disp (['Calculating maping for frame ', num2str(time)])
-    if ~isempty(data_r) && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
-        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f] = assignmentFun (data_r, data_c,CONST,1,0);
+    if ~isempty(data_r) % && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
+        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f,data_r.regs.revmap.f] = assignmentFun (data_r, data_c,CONST,1,0);
     end
-    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r]  = assignmentFun (data_c, data_r,CONST,0,0);
-    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f] = assignmentFun (data_c, data_f,CONST,1,0);
+    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
    
+    
+   
+    
     % error resolution and id assignment
     [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
     

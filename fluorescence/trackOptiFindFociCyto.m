@@ -4,19 +4,31 @@ function trackOptiFindFociCyto(dirname,CONST,header)
 % It runs on the err.mat files and saves the new err.mat files with the
 % found foci and cytoplasmic background.
 %
-% This is done by :
-% (1) Fits autofluor/cytoplasmic fluor background in cells, cell-by-cell
-% (2) Makes a mega region of all cells and fits foci in all cell
-%     simultaneously as opposed fitting foci cell-by-cell.
+% This is done using the curve filter to find the foci in the image and then
+% by fitting gaussians and and assigning the foci in all cells simultaneously.
 %
 % INPUT :
 %   dirname: is the seg directory in the xy directory
 %   CONST: are the segmentation constants.
 %   header : string displayed with information
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if ~exist('header')
     header = [];

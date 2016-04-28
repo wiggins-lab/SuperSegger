@@ -1,11 +1,35 @@
-function [assignments,errorR,totCost,allC,allF,DA]  = multiAssignmentFastOnlyOverlap (data_c, data_f, CONST, forward, debug_flag)
-% each row is assigned to one column only - starting by the minimum
+function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentFastOnlyOverlap (data_c, data_f, CONST, forward, debug_flag)
+% multiAssignmentPairs : links regions in data_c to regions in data_f.
+% Each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
-% works only c - > f (r -> c) not backwards. attempts to map candidates to
-% one or two cells, but not the other way around.
+%
+% INPUT :
+%    (data_c, data_f,CONST, forward, debug_flag)
+%
+% OUTPUT :
+%   [assignments,errorR,totCost,allC,allF]
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
+global minDA
+global maxDA
 
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
@@ -30,6 +54,7 @@ end
 maxDA = max(sign * DA_MIN,sign * DA_MAX);
 minDA = min(sign * DA_MIN,sign * DA_MAX);
 
+revAssign = [];
 assignments = [];
 errorR = [];
 totCost=[];
@@ -45,8 +70,9 @@ if ~isempty(data_c)
     
     numRegs1 = data_c.regs.num_regs;
     assignments = cell( 1, numRegs1);
+    
     errorR = zeros(1,numRegs1);
-    DA = zeros(1,numRegs1);
+    dA = zeros(1,numRegs1);
     
     if ~isempty(data_f)
         
@@ -54,6 +80,7 @@ if ~isempty(data_c)
             data_f = updateRegionFields (data_f,CONST);
         end
         
+        areaMat = [data_f.regs.props(:).Area];
         numRegs2 = data_f.regs.num_regs;
         allC = 1:data_c.regs.num_regs;
         allF = 1:data_f.regs.num_regs;
@@ -82,98 +109,81 @@ if ~isempty(data_c)
             
             [overlapAreaNormSort, indexesSort] = sort(overlapAreaNorm,'descend');
             indexesSort = indexesSort(overlapAreaNormSort>OVERLAP_LIMIT_MIN);
+            tmpAssign = possibleMapInd(indexesSort);
+            
+            % one - to - one mapping
+            if ~isempty(tmpAssign)
+                tmpAreaF = areaMat(tmpAssign);
+                totAreaF = cumsum(tmpAreaF);
+                areaC = data_c.regs.props(ii).Area;
+                tmpdA = (totAreaF-areaC)./totAreaF;
+                tmpError = setError(tmpdA,minDA,maxDA);
+                
+                intDisplay (data_c,data_f,tmpAssign,ii)
+                
+                if numel(tmpError) > 0 && tmpError(1) == 0
+                    assignments{ii} = tmpAssign(1);
+                    revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
 
-            totAreaF = 0;
-            
-            areaC = data_c.regs.props(ii).Area;
-            
-            for kk = possibleMapInd(indexesSort)
-                % area change calculation
-                revAssign{kk} = [revAssign{kk},ii];
-                totAreaF = totAreaF + data_f.regs.props(kk).Area;              
+                    errorR(ii) =  tmpError(1) ;
+                    dA(ii) = tmpdA(1);
+                elseif numel(tmpError) > 1 && tmpError(2) == 0
+                    assignments{ii} = tmpAssign(1:2);
+                    revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
+                    revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];
+                    errorR(ii) =  tmpError(2) ;
+                    dA(ii) = tmpdA(2);
+                else
+                    assignments{ii} = tmpAssign(1);
+                    revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
+                    errorR(ii) =  tmpError(1);
+                    dA(ii) = tmpdA(1);
+                end
             end
             
-            assignments{ii} = possibleMapInd(indexesSort);
-            DA(ii) = (totAreaF - areaC)/totAreaF;
-            errorR(ii) = setError(DA(ii),minDA,maxDA);
+            % calculate errors C -> F
+            
         end
         
-        % check area change of f -> c two to 1
-        numMapToF = cellfun('length',revAssign);
-        moreThan1 = find(numMapToF > 1);
-        
-        
-        for kk = moreThan1
-            totAreaC = 0;
-            totAreaF = data_f.regs.props(kk).Area;
-            for xx = revAssign{kk}
-                totAreaC = totAreaC + data_c.regs.props(xx).Area;
-            end
-            
-            DA(ii) = (totAreaC-totAreaF)/totAreaF;
-            
-            for xx = revAssign{kk}
-                errorR(xx) = setError(DA(ii),minDA,maxDA);
-            end
-        end   
-        
-        % any resolvable errors - take only two for now
-        % probably need to do the opposite for ~forward..
-        numMapToC = cellfun('length',assignments);
-        errors = find((errorR~=0) & numMapToC == 2);
-        for jj = errors
-            first_assgn = assignments{jj}(1);
-            second_assgn = assignments{jj}(2);
-            areaF = data_f.regs.props(first_assgn).Area;
-            areaC = data_c.regs.props(jj).Area;
-            DA_temp = (areaF - areaC)/areaF;
-            error_temp = setError(DA_temp,minDA,maxDA);
-            revAss = revAssign{second_assgn};
-            if numel(revAss) > 1 && ~error_temp
-                 revAss = revAss(revAss~=jj);
-                 revAssign{second_assgn}=revAss;
-                 assignments{jj} =  assignments{jj}(1);
-            end
-        end
         
     end
     
     
     
-end
-
-% for uu = 1:data_c.regs.num_regs
-%     if errorR(uu)
-%         intDisplay (data_c,data_f,assignments{uu},uu)
-%         pause;
-%     end
-% end
-
-if debug_flag
-    figure(1)
-    imshow(data_f.phase,[]);
-    figure(2)
-    imshow(data_c.phase,[]);   
-    figure(3);
-    % check out the assignments :)
-    for uu = 1:data_c.regs.num_regs
-        intDisplay (data_c,data_f,assignments{uu},uu)
-        pause;
+    if debug_flag
+        figure(1)
+        imshow(data_f.phase,[]);
+        figure(2)
+        imshow(data_c.phase,[]);
+        figure(3);
+        % check out the assignments :)
+        if forward
+            for uu = 1:data_c.regs.num_regs
+                intDisplay (data_c,data_f,assignments{uu},uu)
+                pause;
+            end
+        else
+            for uu = 1:numRegs2
+                intDisplay (data_c,data_f,uu,revAssign{uu})
+                pause;
+            end
+        end
     end
 end
 
 
+
+
+
+
+
 end
+
 
 function errorR = setError(DA,minDA,maxDA)
-errorR = 0;
-
-if (DA < minDA ) 
-    errorR  = 2;
-elseif (DA > maxDA)
-    errorR  = 3;
-end
-
+errorR = zeros(1, numel(DA));
+errorR (DA < minDA ) = 2;
+errorR (DA > maxDA) = 3;
 end
 
 function [comboMask,comboArea,comboCentroid] = regProperties (data_c,regNums)

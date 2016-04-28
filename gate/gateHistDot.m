@@ -15,9 +15,24 @@ function [y,xx,xarr_s,yarr_s,zvals_s] = gateHistDot(clist, ind, xx)
 %   xarr_s : array of x bin centers; x(i) is the x value corresponding zvals_s(i)
 %   yarr_s : array of y bin centers; y(i) is the y value corresponding zvals_s(i)
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Julie Cass, Stella Stylianidou, Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 ss = size( clist.data );
 NUM_BINS = round((sqrt(ss(1))));
@@ -97,7 +112,7 @@ zvals_log = log(zvals_s);
 clf;
 sameSize = false;
 if sameSize
-     scatter(yarr_s,xarr_s,20,zvals_log,'o','filled');
+     scatter (yarr_s,xarr_s,20,zvals_log,'o','filled');
 else
     scatter (yarr_s,xarr_s,10*zvals_s,zvals_log,'o','filled');
 end

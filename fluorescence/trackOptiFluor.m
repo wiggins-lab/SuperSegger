@@ -10,8 +10,22 @@ function trackOptiFluor(dirname,CONST,header)
 %   header : string displayed with information
 % 
 % Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 if ~exist('header','var')
@@ -58,8 +72,7 @@ for i = 1:num_im;
         back_mask = logical(imdilate(mask_bg,SE));        
         data_c.fl1bg = mean(fluor_tmp( ~back_mask ));
         
-        if isfield( data_c, 'fluor2' )
-            
+        if isfield( data_c, 'fluor2' )            
             if isfield( data_c, 'crop_box' );              
                 fluor_tmp = data_c.fluor2(yycb,xxcb);
                 mask_bg   = data_c.mask_bg(yycb,xxcb);
@@ -67,7 +80,7 @@ for i = 1:num_im;
                 fluor_tmp = data_c.fluor2;
                 mask_bg   = data_c.mask_bg;
             end
-            
+            back_mask = logical(imdilate(mask_bg,SE));  
             data_c.fl2bg = mean(fluor_tmp( ~back_mask ));
         end
     else

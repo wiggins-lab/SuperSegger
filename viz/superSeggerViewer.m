@@ -48,9 +48,24 @@ function superSeggerViewer(dirname)
 %       it must be the directory that has raw_im and xy1 etc folders.
 %       err_flag : if 1, displays errors found in frame, default 0
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou, Paul Wiggins, Connor Brennan.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 %% Load Constants and Initialize Flags
 
@@ -192,7 +207,8 @@ while runFlag
     
     %Force flags to required values when data is unavailable
     forcedFlags = FLAGS;
-    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS); %Force cell flag to 0 when err files not present
+    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS); 
+    %Force cell flag to 0 when err files not present
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);

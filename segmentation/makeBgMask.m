@@ -1,4 +1,4 @@
-function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)
+function mask = makeBgMask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 % make_bg_mask : makes a background mask for the phase image
 %
 % INPUT :
@@ -12,9 +12,24 @@ function mask = make_bg_mask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 % OUTPUT :
 %       mask : image masking background as black and cells as white
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 crop_box = round( crop_box );
@@ -28,7 +43,7 @@ im_filt3 = imfilter(double(phase),filt_3,'replicate');
 im_filt4 = imfilter(double(phase),filt_4,'replicate');
 
 tmp      = uint16(-(im_filt4-im_filt3));
-nnn      = autogain( tmp );
+nnn      = ag(tmp);
 
 % dilated mask for values above high threshold
 % this makes the white blobs bigger

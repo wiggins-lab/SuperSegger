@@ -1,5 +1,5 @@
 function [M_, G_, C1_, C2_, M, G, C1, C2] = curveFilter( im, filterWidth )
-% curveFilter : calculates the curvatures of an image
+% curveFilter : calculates the curvatures of an image.
 %
 % INPUT : 
 %       im : image to be filtered
@@ -14,9 +14,25 @@ function [M_, G_, C1_, C2_, M, G, C1, C2] = curveFilter( im, filterWidth )
 %       C1 : Principal curvature 1 of the image
 %       C2 : Principal curvature 2 of the image
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Connor Brennan & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+im = double(im);
 
 % Make filter 
 x = -10:10;

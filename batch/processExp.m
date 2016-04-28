@@ -21,12 +21,24 @@ function processExp( dirname )
 % INPUT :
 %       dirname : folder that contains .tif images in NIS elements format. 
 % 
-% 
 %
 % Copyright (C) 2016 Wiggins Lab 
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% Written by Paul Wiggins, Nathan Kuwada, Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 %% Converting other microscopes files
 % For example if you are using MicroManager and the file format is the 
@@ -61,13 +73,13 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '60XPaM','60XPaM2' : for 60X, Pseudomonas Minimal
 % '60XBthai' : 60X Thailandensis
 
-res = '60XEcLB';
+res = '60XEc';
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
 % for convenience default is false (non-parallel)
 
-parallel_flag = true;
+parallel_flag = false;
 
 %% Load Constants
 CONST = loadConstantsNN(res,parallel_flag) ;

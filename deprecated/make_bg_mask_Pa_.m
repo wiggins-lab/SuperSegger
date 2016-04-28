@@ -33,7 +33,7 @@ im_filt3 = imfilter(double(phase),filt_3,'replicate');
 im_filt4 = imfilter(double(phase),filt_4,'replicate');
 
 tmp      = uint16(-(im_filt4-im_filt3));
-nnn      = autogain( tmp );
+nnn      = ag(tmp);
 
 fmask    = imdilate(nnn>THRESH1,strel('disk',5));
 fmask    = fill_max_area( fmask, Amax );

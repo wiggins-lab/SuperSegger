@@ -1,7 +1,7 @@
 function [ data ] = newRegionFeatures ( data ,mask_bad_regs, keepScores)
 %NEWREGIONFEATURES Summary of this function goes here
 %   Detailed explanation goes here
-
+% not used.
 % intMakeRegs : creates info for bad regions or makes new regions
 
 if ~exist('keepScores','var')
@@ -31,7 +31,7 @@ for ii = 1:data.regs.num_regs
     maskedPhase = (double(mask_cell).*double(data.phase));
     maskedPhase = maskedPhase(yy,xx);
     Orientation = data.regs.props(ii).Orientation;
-    maskRot = (fast_rotate_loose_double( mask, -Orientation+90 ));
+    maskRot = (imrotate( mask, -Orientation+90 ));
     maskedPhaseRot = imrotate((maskedPhase), -Orientation+90, 'bilinear');
     
     gclm_maskedPhase = graycomatrix(maskedPhaseRot);

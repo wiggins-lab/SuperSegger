@@ -1,16 +1,16 @@
-function [clist] = gateStrip( clist, ind )
-% gate : removes the gate field from clist, or the gate for index ind.
+function [L1,L2] = makeRegionSizeProjectionBBint2( mask, props )
+% makeRegionSizeProjectionBBint2 : THIS IS EXACTLY THE SAME AS makeRegSize,
+% needs to be replaced in the code with that and deleted!
 %
 % INPUT :
-%       clist : table of cells with time-independent variables
-%       ind : index to be removed from gate, if none given strips the whole gate
-%
-% OUTPUT :
-%       clist : updated clist with stripped gate
-%
+%       mask : masked region of interest
+%       props : contains information about the orientation of the region
+% OUTPUT:
+%       L1 : projection length of region on the major axis
+%       L2 : projection length of region on the minor axis
 %
 % Copyright (C) 2016 Wiggins Lab 
-% Written by Stella Stylianidou & Paul Wiggins.
+% Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
 % 
@@ -27,16 +27,8 @@ function [clist] = gateStrip( clist, ind )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if ~exist('ind','var') || isempty(ind)
-    clist.gate = [];
-else
-   loc = find( cellfun(@(x)isequal(x,ind),{clist.gate.ind}) ); 
-   if isempty (loc)
-       disp (['index : ', num2str(ind), ' not found in the gate']);
-   else
-        disp (['removing : ', num2str(ind), ' from gate']);
-        clist.gate(loc) = [];
-   end
-end
+imRot = logical(imrotate( uint8(mask), -props.Orientation+90 ));
+L1 = max(sum(imRot));
+L2 = max(sum(imRot,2));
 
 end

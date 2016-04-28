@@ -1,4 +1,4 @@
-function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
+function doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
     dirname_xy, clean_flag, skip, CONST, header, crop_box)
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
 % If the seg files are already found it does not repeat the segmentation.
@@ -23,6 +23,24 @@ function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
 %         CONST : segmentation constants
 %         header : information string
 %         crop_box : alignment information
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 % Init
@@ -87,6 +105,5 @@ if ~exist(dataname,'file') || clean_flag
 else
     disp([dataname, ' already exists.']);
 end
-err_flag = false;
 
 end

@@ -13,9 +13,23 @@ function showSegRule( data, FLAGS, figNum,CONST )
 %           .Sj_flag = shows disagreeing segments scores (S_flag must be on
 %           too)
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if (~exist('FLAGS','var') || isempty(FLAGS)) || ~isfield( FLAGS, 'im_flag' )
     FLAGS.im_flag=2;
@@ -24,13 +38,13 @@ end
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 1;
+    FLAGS.S_flag = 0;
 end
 
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 0;
+    FLAGS.t_flag = 1;
 end
 
 t_flag = FLAGS.t_flag;

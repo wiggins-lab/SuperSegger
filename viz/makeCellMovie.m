@@ -5,10 +5,24 @@ function mov = makeCellMovie(data)
 % OUTPUT : 
 %       mov : movie file
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 figure(1);
 num_im = numel(data.CellA);
@@ -23,17 +37,17 @@ end
 
 for ii = 1:num_im
     clf;
-    back  = autogain(data.CellA{ii}.phase);
+    back  = ag(data.CellA{ii}.phase);
     
     if isfield( data, 'fluor1' )        
-        fluo  = autogain(data.CellA{ii}.fluor1);
+        fluo  = ag(data.CellA{ii}.fluor1);
     else
         fluo = back*0;
     end;
     
     
     if isfield( data, 'fluor2' )        
-        fluo2 = autogain(data.CellA{ii}.fluor2);
+        fluo2 = ag(data.CellA{ii}.fluor2);
     else
         fluo2 = fluo*0;
     end;
@@ -42,7 +56,7 @@ for ii = 1:num_im
     mask_ = imdilate(data.CellA{ii}.mask,strel('square',3));
     mask  = data.CellA{ii}.mask;
     outline= mask_-mask;
-    maski = autogain(outline);
+    maski = ag(outline);
     
     if exist( 'fluo2', 'var' );
         fluo2_thresh = fluo2(logical(mask));
@@ -51,11 +65,11 @@ for ii = 1:num_im
     
     fluo_thresh = fluo(logical(mask));
     fluo_thresh = mean(fluo_thresh);
-    gChan = fixIm(0.6*autogain(double(uint8(fluo-0*fluo_thresh)).*(0.3+double(mask)*0.6))+0.3*back,ss);
+    gChan = fixIm(0.6*ag(double(uint8(fluo-0*fluo_thresh)).*(0.3+double(mask)*0.6))+0.3*back,ss);
     [bChan,roffset] = fixIm(0.3*maski+0.3*back,ss);
     
     if exist( 'fluo2', 'var' );
-        rChan = fixIm(0.6*autogain(double(uint8(fluo2-0*fluo2_thresh)).*(0.3+double(mask)*0.6))+0.3*back,ss);
+        rChan = fixIm(0.6*ag(double(uint8(fluo2-0*fluo2_thresh)).*(0.3+double(mask)*0.6))+0.3*back,ss);
     else
         rChan = fixIm(0.3*back,ss);
     end

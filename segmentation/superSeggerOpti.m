@@ -64,11 +64,23 @@ function [data,A]  = superSeggerOpti(phaseOrig, mask, disp_flag, CONST, adapt_fl
 % The output images are related by
 % mask_cell = mask_bg .* (~segs_good) .* (~segs_3n);
 %
-%
-% Written by Paul Wiggins and Keith Cheveralls
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % Load the constants from the package settings file
 
@@ -122,17 +134,15 @@ f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phase = imfilter(phase, f,'replicate');
 
 
-% Create a Background mask
-% we create the background mask MASK_BG by globally thresholding the band-pass
+% creates initial background mask by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
 % We use one threshold to remove the background, and another to remove
 % the smaller background regions between cells.
-
 if nargin < 2 || isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
     filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_bg_ = make_bg_mask(phase,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    mask_bg_ = makeBgMask(phase,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
 else
     mask_bg_ = mask;
 end
@@ -147,7 +157,7 @@ end
 
 % Minimum constrast filter to enhance inter-cellular image contrast
 phase = ag(phase);
-magicPhase = magicContrastFast2(phase, MAGIC_RADIUS);
+magicPhase = magicContrast(phase, MAGIC_RADIUS);
 %phase_mg = double(uint16(magicPhase_-MAGIC_THRESHOLD));
  
 % % this is to remove small object - it keeps only objects with bright halos 
@@ -191,7 +201,7 @@ if adapt_flag
     
     for ii = 1:num_wsc
         [xx,yy] = getBB(props(ii).BoundingBox);
-        [L1(ii),L2(ii)] = makeRegionSizeProjectionBBint2((regs_label(yy,xx)==ii), props(ii));
+        [L1(ii),L2(ii)] = makeRegSize((regs_label(yy,xx)==ii), props(ii));
         
         if L2(ii) > MAX_WIDTH;
 
@@ -514,7 +524,7 @@ num_regs = max(mask_label(:));
 Lmax = 0;
 
 for ii = 1:num_regs
-    [L1,L2] = makeRegionSizeProjectionBBint2( (mask_label==ii), props(ii) );
+    [L1,L2] = makeRegSize ((mask_label==ii), props(ii));
     Lmax = max([Lmax,L2]);
 end
 end

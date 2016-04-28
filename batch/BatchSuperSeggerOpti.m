@@ -31,9 +31,24 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 %           : the right constants for processing.
 % SEGMENT_FLAG : to segment cells
 %
-% Copyright (C) 2016 Wiggins Lab
-% Unviersity of Washington, 2016
-% This file is part of SuperSeggerOpti.
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % Init
 
@@ -299,7 +314,8 @@ else
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
-if clean_flag & exist(stamp_name,'file')
+
+if clean_flag && exist(stamp_name,'file')
     delete(stamp_name)
 end
 
@@ -335,8 +351,7 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-   % trackOpti(dirname_xy, skip, CONST, clean_flag, header );
-    trackOptiNewLinking(dirname_xy,skip,CONST, clean_flag, header)   
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header)   
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end

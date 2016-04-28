@@ -9,6 +9,7 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       CONST : segmentation parameters
 %       which_channel :
 %       filt_channel :
+%
 % OUTPUT :
 %       Kymo: Kymo has images at .r .g and .b fields. The combination of
 %       which produces the kymgraph.
@@ -16,9 +17,24 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       f1mm: is a two value array with the max and min value of channel 1
 %       f2mm: is a two value array with the max and min value of channel 2
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
 
 Kymo = [];
 ll1=[];
@@ -132,7 +148,7 @@ for ii = 1:num_im
     mask  = data.CellA{ii}.mask;
     outline= mask_dilated-mask;
     
-    %maski = autogain(outline);
+    %maski = ag(outline);
     
     % Make all the images the same sizes
     [rChan,roffset] = (fixIm(double(fluor2).*double(mask),ss));
@@ -194,10 +210,10 @@ if disp_flag
         imagesc( im.*backer3+.6*(1-backer3) );
     else
         clf;
-        backer = autogain(Kymo.b);
+        backer = ag(Kymo.b);
         backer = 0.3*(max(backer(:))-backer);
-        imagesc(cat(3, autogain(Kymo.r)+backer, ...
-            autogain(Kymo.g)+backer,...
+        imagesc(cat(3, ag(Kymo.r)+backer, ...
+            ag(Kymo.g)+backer,...
             backer));
     end
 end
