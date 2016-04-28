@@ -159,6 +159,7 @@ for i = 1:num_im;
         PAD_SIZE = 5;
         ss = size(data_c.phase);
         
+        celld.cellLength = [data_c.regs.L1(ii),data_c.regs.L2(ii)];
         [xx,yy]  = getBBpad( data_c.regs.props(ii).BoundingBox, ss, PAD_SIZE);
         celld.xx = xx;
         celld.yy = yy;
@@ -208,8 +209,8 @@ for i = 1:num_im;
             elseif data_c.regs.birthF(ii) && ( data_c.regs.sisterID(ii) ) && ~isempty(find( data_c.regs.sisterID(ii) == data_c.regs.ID ))
                 
                 cell_old = data_r.CellA{data_c.regs.map.r{ii}(1)};                
-                celld             = toMakeCell(celld, cell_old.pole.e1,data_c.regs.props(ii));
-                celld.pole.e1     = celld.coord.e1;
+                celld  = toMakeCell(celld, cell_old.pole.e1,data_c.regs.props(ii));
+                celld.pole.e1 = celld.coord.e1;
                 e1 = celld.pole.e1;
                 op_ori = cell_old.pole.op_ori;
 

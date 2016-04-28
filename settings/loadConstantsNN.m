@@ -56,19 +56,16 @@ disp('loadConstants: Initializing.');
 % '60XBay'
 % '60XPa'
 % '100XPa' 
-% {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
+% resflags : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
-
-
-cl = class(res);
 resFlag = [];
-if strcmp(cl,'double' )  && res == 60
+if isa(res,'double' )  && res == 60
     disp('loadConstants: 60X');
     resFlag = '60XEc';
-elseif strcmp(cl,'double' )  && res == 100
+elseif isa(res,'double' )    && res == 100
     disp('loadConstants:  100X');
     resFlag = '100XEc';
-elseif strcmp(cl, 'char' );
+elseif isa(res, 'char' );
     if strcmpi(res,'60XEc') % 1
         resFlag = '60XEc';
     elseif strcmpi(res,'100XEc') % 2
@@ -106,6 +103,9 @@ else
 end
 
 % temp until they are put in the constants
+
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+
 CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
 CONST.trackOpti.DA_MIN = -0.1;
 CONST.trackOpti.DA_MAX = 0.3;

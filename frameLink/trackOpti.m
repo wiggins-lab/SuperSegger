@@ -87,8 +87,9 @@ end
 
 %% trackOptiStripSmall
 % removes small regions that are probably not real (bubbles, dust, or minicells)
-stamp_name = [dirname_seg,'.trackOptiStripSmall.mat'];
+stamp_name = [dirname_seg,'.trackOptiStripSmall-Step1.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 1: Running trackOptiStripSmall.']);
     trackOptiStripSmall(dirname_seg, CONST);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
@@ -98,8 +99,9 @@ end
 
 %% Link frames and do error resolution
 % Calculate the overlap between cells between subsequent frames.
-stamp_name = [dirname_seg,'.trackOptiLinkCell.mat'];
+stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 2: Running trackOptiLinkCell.']);
     trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
@@ -111,9 +113,11 @@ end
 % If skip is bigger than 1, it takes care of merging all the frames skipped.
 % the merged skipped frames are placed in the seg_full dir
 if skip>1
+    
     dirname_seg  = dirname_full; % change dirname_seg to seg_all directory
-    stamp_name = [dirname_seg,'.trackOptiSkipMerge.mat'];
+    stamp_name = [dirname_seg,'.trackOptiSkipMerge-Step2merge.mat'];
     if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 2, merge: Running trackOptiSkipMerge.']);
         trackOptiSkipMerge(dirname,skip,CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
@@ -122,8 +126,9 @@ if skip>1
     end
     
     % Relink and do error resolution for the skipped files
-    stamp_name = [dirname_seg,'.trackOptiLinkCell.mat'];
+    stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2merge.mat'];
     if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 2, merge: Running trackOptiLinkCell.']);        
         trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
@@ -137,8 +142,9 @@ end
 %% Cell Marker
 % trackOptiCellMarker marks complete cells cycles. clist contains a
 % list of cell statistics etc.
-stamp_name = [dirname_seg,'.trackOptiCellMarker.mat'];
+stamp_name = [dirname_seg,'.trackOptiCellMarker-Step3.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 3, merge: Running trackOptiCellMarker.']);        
     trackOptiCellMarker(dirname_seg, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
@@ -148,8 +154,9 @@ end
 
 %% Fluor
 % Calculates Fluorescence Background
-stamp_name = [dirname_seg,'.trackOptiFluor.mat'];
+stamp_name = [dirname_seg,'.trackOptiFluor-Step4.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 4, merge: Running trackOptiFluor.']);  
     trackOptiFluor(dirname_seg,CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
@@ -160,8 +167,9 @@ end
 
 %% Make Cell
 % Computes cell characteristics and puts them in *err files under CellA{}
-stamp_name = [dirname_seg,'.trackOptiMakeCell.mat'];
+stamp_name = [dirname_seg,'.trackOptiMakeCell-Step5.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 5, merge: Running trackOptiMakeCell.']); 
     trackOptiMakeCell(dirname_seg, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
@@ -172,8 +180,9 @@ end
 
 %% Finds loci in each fluorescent channel
 if sum(CONST.trackLoci.numSpots(:))
-    stamp_name = [dirname_seg,'.trackOptiFindFociCyto.mat'];
+    stamp_name = [dirname_seg,'.trackOptiFindFociCyto-Step6.mat'];
     if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 6, merge: Running trackOptiFindFociCyto.']); 
         trackOptiFindFociCyto(dirname_seg, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
@@ -184,8 +193,10 @@ end
 
 
 %% Computes cell characteristics in make cells
-stamp_name = [dirname_seg,'.trackOptiClist.mat'];
+stamp_name = [dirname_seg,'.trackOptiClist-Step7.mat'];
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 7, merge: Running trackOptiClist.']);  
+    
     [clist] = trackOptiClist(dirname_seg, CONST, header);
     
     if isfield( CONST, 'gate' )
@@ -207,9 +218,10 @@ end
 %% cell files
 % Organize data into cell files that contain all the time lapse data
 % for a single cell.
-stamp_name = [dirname_seg,'.trackOptiCellFiles.mat'];
+stamp_name = [dirname_seg,'.trackOptiCellFiles-Step8.mat'];
 
 if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 8, merge: Running trackOptiCellFiles.']);  
     clist = load([dirname,'clist.mat']);
     if isfield( CONST, 'gate' )
         clist.gate = CONST.gate;

@@ -150,7 +150,7 @@ save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 contents = dir([dirname_,'xy*']);
 
 if isempty(contents)
-    disp('BSSO: Did not find any data.');
+    disp('BSSO: No xy directories were found.');
 else
     num_dir_tmp = numel(contents);
     nxy = [];
@@ -348,7 +348,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
     if CONST.parallel.show_status
         close(h);
     end
-    time_stamp = clock;
+    time_stamp = clock; %#ok saved below
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
 

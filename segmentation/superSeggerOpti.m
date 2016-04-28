@@ -114,24 +114,24 @@ end
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
 if all(ismember('100X',CONST.ResFlag))
-    phase = imfilter(phaseOrig,fspecial('disk',1),'replicate');
+    phaseNormFilt = imfilter(phaseOrig,fspecial('disk',1),'replicate');
 else
-    phase = phaseOrig;
+    phaseNormFilt = phaseOrig;
 end
 
 
 % fix the range, set the max and min value of the phase image
 mult_max = 2.5;
 mult_min = 0.3;
-mp       = mean(phase(:));
-phase( phase > (mult_max*mp) ) = mult_max*mp;
-phase( phase < (mult_min*mp) ) = mult_min*mp;
+mp = mean(phaseNormFilt(:));
+phaseNormFilt(phaseNormFilt > (mult_max*mp)) = mult_max*mp;
+phaseNormFilt(phaseNormFilt < (mult_min*mp)) = mult_min*mp;
 
 
 % if the size of the matrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
 f = fspecial('gaussian', 11, SMOOTH_WIDTH);
-phase = imfilter(phase, f,'replicate');
+phaseNormFilt = imfilter(phaseNormFilt, f,'replicate');
 
 
 % creates initial background mask by globally thresholding the band-pass
@@ -142,7 +142,7 @@ if nargin < 2 || isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
     filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_bg_ = makeBgMask(phase,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    mask_bg_ = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
 else
     mask_bg_ = mask;
 end
@@ -156,15 +156,15 @@ if nargin < 5 || isempty(adapt_flag)
 end
 
 % Minimum constrast filter to enhance inter-cellular image contrast
-phase = ag(phase);
-magicPhase = magicContrast(phase, MAGIC_RADIUS);
+phaseNormFilt = ag(phaseNormFilt);
+magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
 %phase_mg = double(uint16(magicPhase_-MAGIC_THRESHOLD));
  
 % % this is to remove small object - it keeps only objects with bright halos 
 filled_halos = fillHolesAround(magicPhase,CONST,crop_box);
 
 % make sure that not too much was discarded
-if sum(phase(:)>0) < 1.5 * sum(filled_halos(:))
+if sum(phaseNormFilt(:)>0) < 1.5 * sum(filled_halos(:))
     disp('keeping only objects with bright halos');
     mask_bg_ = filled_halos & mask_bg_;
 end
@@ -177,7 +177,7 @@ mask_bg = logical((mask_bg_-mask_halos)>0);
 % C2phase is the Principal curvature 2 of the image without negative values
 % it also enhances subcellular contrast. We subtract the magic threshold 
 % to remove the variation in intesnity within a cell region.
-[~,~,~,C2phase] = curveFilter (double(phase),1);
+[~,~,~,C2phase] = curveFilter (double(phaseNormFilt),1);
 C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
 
 % watershed just the cell mask to identify segments
