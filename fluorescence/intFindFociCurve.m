@@ -8,19 +8,13 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 %       data : cell/regions file (err file)
 %       CONST : segmentation constants
 %       channelID : fluorescence channel number
-%
 % OUTPUT : 
 %       data : updated data with sub-pixel fluorescence model
-%       a locus[channelID] field is added with the following structure :
-%              r : sub-pixel global coordinates for foci location (x y)
-%              fitSigma : sigma of gaussian fit
-%              intensity : maximum intensity of gaussian fit
-%              fitScore : score of gaussian fitting to the foci (0 - 1)
-%              normIntensity : normalized intensity (divided by std(cell
-%              fluor)
-%              score : locus intensity / std(cell fluorescence) *  gaussian fit score;
-%              shortaxis : sub-pixel local coordinates for foci location (x y)
-%              longaxis : sub-pixel local coordinates for foci location (x y)
+%
+%       fitPosition(1) - Sub-pixel resolution of foci position X
+%       fitPosition(2) - Sub-pixel resolution of foci position Y
+%       fitIntensity - Intensity of the gaussian
+%       fitSigma - sigma of gaussian   
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Connor Brennan, Stella Stylianidou & Paul Wiggins.
@@ -41,8 +35,10 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 DEBUG_FLAG = false;
-
 fieldname = ['locus', num2str(channelID)];
+
+MIN_SCORE_CUTOFF = getfield(CONST.getLocusTracks, ['FLUOR', num2str(channelID), '_MIN_SCORE']);
+
 options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
 
 % Get images out of the structures.
@@ -80,18 +76,19 @@ focusInit.intensity = nan;
 focusInit.normIntensity = nan;
 focusInit.shortaxis = nan;
 focusInit.longaxis = nan;
+%focusInit.fitIntensity = nan;
+%focusInit.fitPosition = [nan, nan];
 focusInit.fitSigma = nan;
 focusInit.fitScore = nan;
-focusData = zeros(1,numFociRegions);
-cellIDs = zeros(1,numFociRegions);
+
+fociData = [];
+cellIDs = [];
 
 if DEBUG_FLAG
     figure(2);
     clf;
 end
 
-% go through every foci region, calculate foci properties and assign to
-% cells
 for ii = 1:numFociRegions
     tempData = focusInit;
     
@@ -101,6 +98,8 @@ for ii = 1:numFociRegions
     maskToFit = (fociRegionLabels(yPad, xPad) == ii); % foci region
     imageToFit  = flourFiltered(yPad, xPad);  % filtered image 
     imageToFit = imageToFit .* double(maskToFit);
+    
+    [~, maxIndex] = max(imageToFit(maskToFit));
     
     tempImage = imageToFit(maskToFit);
     tempData.intensity = tempImage(maxIndex);
@@ -115,8 +114,8 @@ for ii = 1:numFociRegions
 
     % figure out which cell the focus belongs to
     maskSize = [numel(yPad),numel(xPad)];
+
    
-    [~, maxIndex] = max(imageToFit(maskToFit));
     cellsLabel = data.regs.regs_label(yPad,xPad);
     cellsMask = logical(cellsLabel);
     tempMask = zeros(maskSize);
@@ -129,77 +128,84 @@ for ii = 1:numFociRegions
     bestCellID = cellIDList(minDistanceIndex);
     
     if ~isempty( bestCellID )
-        %Initialize parameters
-        backgroundIntensity = 0;
-        gaussianIntensity = flourFiltered(fociY, fociX) - backgroundIntensity;
-        sigmaValue = 1;
-
-        parameters(1) = fociX;
-        parameters(2) = fociY;
-        parameters(3) = gaussianIntensity;
-        parameters(4) = sigmaValue;
-
-        [parameters] = fminsearch( @doFit, parameters, options);
-
-        gaussianApproximation = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));
-
-        %Crop out fit gaussian from original image
-        croppedImage = imageToFit;
-        croppedImage(gaussianApproximation < 0.1 * max(max(gaussianApproximation))) = 0;
-
-        imageTotal = sqrt(sum(sum(croppedImage)));
-        guassianTotal = sqrt(sum(sum(gaussianApproximation)));
-    
-        
-        fitScore = sum(sum(sqrt(croppedImage) .* sqrt(gaussianApproximation))) / (imageTotal * guassianTotal);
-
-        if DEBUG_FLAG
-            figure(1);
-            clf;
-            subplot(2, 2, 1);
-            imshow(imageToFit, []);
-            subplot(2, 2, 2);        
-            imshow(croppedImage, []);    
-            subplot(2, 2, 3);        
-            imshow(gaussianApproximation, []);   
-            subplot(2, 2, 4);          
-            title(['Score: ', num2str(fitScore)]);
-            keyboard;
-        end
-
-        tempData.r(1) = parameters(1);
-        tempData.r(2) = parameters(2);
-        tempData.fitSigma = parameters(4);
-        tempData.intensity = parameters(3);
-        tempData.fitScore = fitScore;
-    
-        %Calculate scores
         croppedImage = highPassImage(data.CellA{bestCellID}.yy, data.CellA{bestCellID}.xx);
-        cellFlouresenseSTD = std(croppedImage(data.CellA{bestCellID}.mask));   
+        cellFlouresenseSTD = std(croppedImage(data.CellA{bestCellID}.mask));  
         
-        tempData.normIntensity = tempData.intensity / cellFlouresenseSTD;
-        tempData.score = tempData.intensity / cellFlouresenseSTD * tempData.fitScore;
-        
-        tempData.shortaxis = ...
-            (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
-        tempData.longaxis = ...
-            (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e1;
+        if tempData.intensity / cellFlouresenseSTD > MIN_SCORE_CUTOFF
+            %Initialize parameters
+            backgroundIntensity = 0;
+            gaussianIntensity = flourFiltered(fociY, fociX) - backgroundIntensity;
+            sigmaValue = 1;
 
-        
-        %Assign to a focus region
-        cellIDs(ii) = bestCellID;  
-        focusData(ii) = tempData;
-        if DEBUG_FLAG
-           figure(2);
-           hold on;
-           plot(fociX, fociY, '.r' );
-           text(fociX, fociY, num2str( tempData.intensity, '%1.2g' ));
+            parameters(1) = fociX;
+            parameters(2) = fociY;
+            parameters(3) = gaussianIntensity;
+            parameters(4) = sigmaValue;
+            %parameters(5) = backgroundIntensity;
+
+            [parameters] = fminsearch( @doFit, parameters, options);
+
+            gaussianApproximation = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));
+
+            %Crop out fit gaussian from original image
+            croppedImage = imageToFit;
+            croppedImage(gaussianApproximation < 0.1 * max(max(gaussianApproximation))) = 0;
+
+            imageTotal = sqrt(sum(sum(croppedImage)));
+            guassianTotal = sqrt(sum(sum(gaussianApproximation)));
+
+
+            fitScore = sum(sum(sqrt(croppedImage) .* sqrt(gaussianApproximation))) / (imageTotal * guassianTotal);
+
+            if DEBUG_FLAG
+                figure(1);
+                clf;
+                subplot(2, 2, 1);
+                imshow(imageToFit, []);
+                subplot(2, 2, 2);        
+                imshow(croppedImage, []);    
+                subplot(2, 2, 3);        
+                imshow(gaussianApproximation, []);   
+                subplot(2, 2, 4);          
+                title(['Score: ', num2str(fitScore)]);
+
+                keyboard;
+            end
+
+            tempData.r(1) = parameters(1);
+            tempData.r(2) = parameters(2);
+            %tempData.fitPosition(1) = parameters(1);
+            %tempData.fitPosition(2) = parameters(2);
+            tempData.fitSigma = parameters(4);
+            %tempData.fitIntensity = parameters(3);
+            tempData.intensity = parameters(3);
+            tempData.fitScore = fitScore;
+
+            %Calculate scores        
+            tempData.normIntensity = tempData.intensity / cellFlouresenseSTD;
+            tempData.score = tempData.intensity / cellFlouresenseSTD * tempData.fitScore;
+
+            tempData.shortaxis = ...
+                (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
+            tempData.longaxis = ...
+                (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e1;
+
+
+            %Assign to array
+            cellIDs(ii) = bestCellID;  
+            focusData(ii) = tempData;
+            if DEBUG_FLAG
+               figure(2);
+               hold on;
+               plot(fociX, fociY, '.r' );
+               text(fociX, fociY, num2str( tempData.intensity, '%1.2g' ));
+            end
         end
     end
 end
 
 
-% sort the foci for each cells
+% assign to cells
 for ii = 1:data.regs.num_regs
 
     fociIndex = find(cellIDs == ii);
@@ -232,19 +238,15 @@ for ii = 1:data.regs.num_regs
     data.CellA{ii}.(['fluor',num2str(channelID),'_filtered'])=flourFiltered( yPad, xPad );
 end
 
-
-
-  
+    %parameters store the values to optimize.
+    %parameter(1) - Sub-pixel resolution of foci position X
+    %parameter(2) - Sub-pixel resolution of foci position Y
+    %parameter(3) - Intensity of the gaussian
+    %parameter(4) - sigma of gaussian    
+    %parameter(5) - background intensity    
     function error = doFit(parameters )
-    % doFit : calculates the error of fitting a gaussian to a foci. 
-    % parameters store the values to optimize.
-    % parameter(1) - Sub-pixel resolution of foci position X
-    % parameter(2) - Sub-pixel resolution of foci position Y
-    % parameter(3) - Intensity of the gaussian
-    % parameter(4) - sigma of gaussian    
-    % parameter(5) - background intensity
-    
-        gaussian = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));        
+        gaussian = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));
+        
         tempImage = (double(imageToFit) - gaussian);
         error = sum(sum(tempImage.^2));
     end
