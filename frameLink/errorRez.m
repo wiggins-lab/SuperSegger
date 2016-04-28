@@ -40,6 +40,9 @@ data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 
 for regNum =  1 : data_c.regs.num_regs;
     
+    if regNum == 6 ||regNum == 8
+        '';
+    end
     if data_c.regs.ID(regNum) == 0
         mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
         
@@ -100,6 +103,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                     % wrong division merge cells
                     [data_c] = merge2Regions (data_c, sister1, sister2);
+                    resetRegions = true;
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
                 end
@@ -215,6 +219,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
                     [data_c] = merge2Regions (data_c, sister1, sister2);
+                    resetRegions = true;
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
                 end
@@ -287,7 +292,7 @@ for regNum =  1 : data_c.regs.num_regs;
         end
         
     else
-        disp('already have an id')
+        disp([num2str(regNum),'already have an id'])
        
         
     end
@@ -347,7 +352,7 @@ if ~(errorM || errorD1 || errorD2)
     % good scores for mother and daughters
     % sets ehist to 0 (no error) and stat0 to 1 (successful division)
     data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),'. good cell division. [L1,L2,Sc] = [',...
+        ', reg: ', num2str(sister1),' and ', num2str(sister2),' . good cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
         num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
         ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
     disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
@@ -362,12 +367,15 @@ else
     % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
     errorStat = 1;
     %data_c.regs.error.r(sister1) = 1;
-    data_c.regs.error.label{sister1} = ['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),...
-        '. 1 -> 2 mapping, but not good cell [sm,sd1,sd2,slim] = ['...
+    data_r.regs.error.r(mother) = 0;
+    data_c.regs.error.r(sister1) = 0;
+    data_c.regs.error.r(sister2) = 0;
+    data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
+        ', reg: ', num2str(sister1),' and ', num2str(sister2),...
+        '. 1 -> 2 mapping  from mother reg', num2str(mother),', but not good cell [sm,sd1,sd2,slim] = [',...
         num2str(data_r.regs.scoreRaw(mother),2),', ',...
         num2str(data_c.regs.scoreRaw(sister1),2),', ',...
-        num2str(data_c.regs.scoreRaw(sister2),2),'].'];
+        num2str(data_c.regs.scoreRaw(sister2),2)]);
     disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
     [data_c, data_r, cell_count] = markDivisionEvent( ...
         data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);

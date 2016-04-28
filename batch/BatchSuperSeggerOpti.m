@@ -92,11 +92,15 @@ end
 
 
 if clean_flag && SEGMENT_FLAG
-    disp ('Clean flag is set to true.')
-    answer=input('Do you want to continue, Y/N [Y]:','s');
-    if lower(answer) ~='y'
-        disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
-        return
+    try
+        disp ('Clean flag is set to true.')
+        answer=input('Do you want to continue, Y/N [Y]:','s');
+        if lower(answer) ~='y'
+            disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
+            return
+        end
+    catch
+       % can not use input  - in eval mode 
     end
 end
 

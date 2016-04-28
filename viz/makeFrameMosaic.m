@@ -172,7 +172,7 @@ for ii = 1:skip:numframe
         im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;        
         FLAG1 = true;
     else
-        im1_ = 0*mask_;
+        im1_ = 0*mask_mosaic;
         FLAG1 = false;
         f1mm = [0,1];
     end
@@ -204,7 +204,7 @@ for ii = 1:skip:numframe
         im2_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor2;
         FLAG2 = true;
     else
-        im2_ = uint8(0*mask_d);
+        im2_ = uint8(0*mask_mosaic);
         FLAG2 = false;
         f2mm = [0,1];
     end

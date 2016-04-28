@@ -528,8 +528,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                     mm = mm + 1;
                     r = data.CellA{kk}.locus1(mm).r;
                     text_ = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE && ...
-                            data.CellA{kk}.locus1(mm).b < 3
+                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
@@ -825,7 +824,7 @@ end
 
 if ~isfield(FLAGS, 'P_flag');
     disp('there is no field P_flag')
-    FLAGS.P_flag = 0;
+    FLAGS.P_flag = 1;
 end
 
 if ~isfield(FLAGS, 'cell_flag' );

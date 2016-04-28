@@ -55,5 +55,4 @@ out = cell2mat(tmp_array);
 ss  = size(dataA);
 out = reshape(out, ss);
 
-
 end

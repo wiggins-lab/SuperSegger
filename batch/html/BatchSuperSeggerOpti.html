@@ -1,0 +1,803 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>BatchSuperSeggerOpti</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-28"><meta name="DC.source" content="BatchSuperSeggerOpti.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
+<span class="comment">% BatchSuperSeggerOpti runs everything from start to finish,</span>
+<span class="comment">% including alignment, building the directory structure,</span>
+<span class="comment">%single image segmentation, error resolution, cell linking,</span>
+<span class="comment">% fluorescence analysis, and cell files.</span>
+<span class="comment">%</span>
+<span class="comment">% Processes a raw data set by</span>
+<span class="comment">% (1) Aligning and cropping time series</span>
+<span class="comment">% (2) Organizing files into directories</span>
+<span class="comment">%        xy points are put in their own dir's</span>
+<span class="comment">%        phase, fluor files put in their own dir's</span>
+<span class="comment">%        makes seg and cell directories</span>
+<span class="comment">% (3) Segmenting the frames into cell regions</span>
+<span class="comment">% (4) Linking the regions between time steps</span>
+<span class="comment">% (5) finding loci and calculating fluor statistics</span>
+<span class="comment">% (6) Putting complete cells into the cell dir.</span>
+<span class="comment">%</span>
+<span class="comment">% INPUT :</span>
+<span class="comment">% dirname_ : dir containing raw tif files</span>
+<span class="comment">% skip     : The segmentation is performed every skip files</span>
+<span class="comment">%          : this skip is very useful for high frequency timelapse where</span>
+<span class="comment">%          : cells would switch back and forth between one and two</span>
+<span class="comment">%          : segments leading to errors that are difficult to resolve.</span>
+<span class="comment">%          : This segments every skip files, then copies the segments into</span>
+<span class="comment">%          : the intermediate frames.</span>
+<span class="comment">% clean_flag : Set this to be true to start from scratch and reseg all the</span>
+<span class="comment">%            : files regardless of whether any seg files exist. If this</span>
+<span class="comment">%            : flag is false, use existing segments, if they exist and</span>
+<span class="comment">%            : new segs if they don't yet exist.</span>
+<span class="comment">% res       : is a string that is passed to loadConstants(Mine).m to load</span>
+<span class="comment">%           : the right constants for processing.</span>
+<span class="comment">% SEGMENT_FLAG : to segment cells</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+<span class="comment">% Written by Paul Wiggins &amp; Stella Stylianidou.</span>
+<span class="comment">% University of Washington, 2016</span>
+<span class="comment">% This file is part of SuperSegger.</span>
+<span class="comment">%</span>
+<span class="comment">% SuperSegger is free software: you can redistribute it and/or modify</span>
+<span class="comment">% it under the terms of the GNU General Public License as published by</span>
+<span class="comment">% the Free Software Foundation, either version 3 of the License, or</span>
+<span class="comment">% (at your option) any later version.</span>
+<span class="comment">%</span>
+<span class="comment">% SuperSegger is distributed in the hope that it will be useful,</span>
+<span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="comment">% GNU General Public License for more details.</span>
+<span class="comment">%</span>
+<span class="comment">% You should have received a copy of the GNU General Public License</span>
+<span class="comment">% along with SuperSegger.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="comment">% Init</span>
+
+<span class="keyword">if</span> (nargin &lt; 1) || isempty( dirname_ ) || strcmp(dirname_ ,<span class="string">'.'</span>)
+    dirname_ = pwd;
+<span class="keyword">end</span>
+dirname_ = fixDir(dirname_);
+
+<span class="keyword">if</span> nargin &lt; 2 || isempty( skip )
+    skip = 1; <span class="comment">% default : don't skip frames</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> nargin &lt; 3 || isempty( clean_flag )
+    clean_flag = 0; <span class="comment">% default : don't resegment frames if segmented.</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> nargin &lt; 4 || isempty( res )
+    res = [];
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist( <span class="string">'SEGMENT_FLAG'</span>, <span class="string">'var'</span> ) || isempty( SEGMENT_FLAG )
+    SEGMENT_FLAG = 1;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist( <span class="string">'ONLY_SEG'</span>, <span class="string">'var'</span> ) || isempty( ONLY_SEG )
+    ONLY_SEG = 0;
+<span class="keyword">end</span>
+
+<span class="comment">%if you pass a res value, write over CONST values. If it isn't passed,</span>
+<span class="comment">% use existing values, if they exist. If not, load the default values.</span>
+<span class="keyword">if</span> isstruct(res)
+    CONST = res;
+<span class="keyword">else</span>
+    disp ([<span class="string">'BatchSuperSeggerOpti : Loading constants file '</span>, res]);
+    <span class="keyword">if</span> exist(<span class="string">'loadConstantsMine'</span>,<span class="string">'file'</span>);
+        CONST = loadConstantsMine(res);
+    <span class="keyword">else</span>
+        CONST = loadConstants(res,0);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+
+<span class="keyword">if</span> clean_flag &amp;&amp; SEGMENT_FLAG
+    <span class="keyword">try</span>
+        disp (<span class="string">'Clean flag is set to true.'</span>)
+        answer=input(<span class="string">'Do you want to continue, Y/N [Y]:'</span>,<span class="string">'s'</span>);
+        <span class="keyword">if</span> lower(answer) ~=<span class="string">'y'</span>
+            disp (<span class="string">'Exiting BatchSuperSegger. Reset clean flag and rerun'</span>);
+            <span class="keyword">return</span>
+        <span class="keyword">end</span>
+    <span class="keyword">catch</span>
+       <span class="comment">% can not use input  - in eval mode</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% align frames</span>
+<span class="keyword">if</span> exist( dirname_, <span class="string">'dir'</span> )
+    <span class="keyword">if</span> exist( [dirname_,filesep,<span class="string">'raw_im'</span>] ,<span class="string">'dir'</span>) &amp;&amp; numel(dir ([dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'*.tif'</span>]))
+        disp(<span class="string">'BatchSuperSeggerOpti : images already aligned'</span>);
+        <span class="keyword">if</span> exist([dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>],<span class="string">'file'</span>)
+            tmp = load( [dirname_,filesep,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>] );
+            crop_box_array = tmp.crop_box_array;
+        <span class="keyword">else</span>
+            crop_box_array = cell(1,10000);
+        <span class="keyword">end</span>
+    <span class="keyword">elseif</span> numel(dir ([dirname_,filesep,<span class="string">'*.tif'</span>]))
+        <span class="comment">% check naming convention</span>
+        <span class="keyword">if</span> ~numel(dir([dirname_,filesep,<span class="string">'*t*c*.tif'</span>]))
+            disp(<span class="string">'images in incorrect naming format. Using convertImageNames to convert names.'</span>)
+            convertImageNames(dirname_)
+        <span class="keyword">end</span>
+
+        mkdir( [dirname_,filesep,<span class="string">'raw_im'</span>] );
+        <span class="keyword">if</span> CONST.align.ALIGN_FLAG
+            crop_box_array = trackOptiAlignPad( dirname_,<span class="keyword">...</span>
+                CONST.parallel.parallel_pool_num, CONST);
+            movefile( [dirname_,filesep,<span class="string">'*.tif'</span>], [dirname_,filesep,<span class="string">'raw_im'</span>] ) <span class="comment">% moves images to raw_im</span>
+            movefile( [dirname_,<span class="string">'align'</span>,filesep,<span class="string">'*.tif'</span>], [dirname_,filesep]); <span class="comment">% moves aligned back to main folder</span>
+            rmdir( [dirname_,<span class="string">'align'</span>] ); <span class="comment">% removes _align directory</span>
+        <span class="keyword">else</span>
+            crop_box_array = cell(1,10000);
+        <span class="keyword">end</span>
+    <span class="keyword">else</span>
+        error(<span class="string">'No images found'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">else</span>
+    error([<span class="string">'BatchSuperSeggerOpti : Can''t find directory '''</span>,dirname_,<span class="string">'''. Exiting.'</span>] );
+<span class="keyword">end</span>
+
+
+<span class="comment">% setups the dir structure for analysis.</span>
+trackOptiPD(dirname_, CONST);
+save( [dirname_,<span class="string">'CONST.mat'</span>],<span class="string">'-STRUCT'</span>, <span class="string">'CONST'</span> ); <span class="comment">% Saves CONST set you used.</span>
+save( [dirname_,<span class="string">'raw_im'</span>,filesep,<span class="string">'cropbox.mat'</span>], <span class="string">'crop_box_array'</span> );
+
+<span class="comment">% Loop through xy directories</span>
+<span class="comment">% Reset n values in case directories have already been made.</span>
+<span class="comment">% setup nxy values</span>
+contents = dir([dirname_,<span class="string">'xy*'</span>]);
+
+<span class="keyword">if</span> isempty(contents)
+    disp(<span class="string">'BSSO: Did not find any data.'</span>);
+<span class="keyword">else</span>
+    num_dir_tmp = numel(contents);
+    nxy = [];
+    num_xy = 0;
+
+    <span class="keyword">for</span> i = 1:num_dir_tmp
+        <span class="keyword">if</span> (contents(i).isdir) &amp;&amp; (numel(contents(i).name) &gt; 2)
+            num_xy = num_xy+1;
+            nxy = [nxy, str2num(contents(i).name(3:end))];
+            dirname_list{i} = [dirname_,contents(i).name,filesep];
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% set values for nc (array of channels (phase and fluorescent))</span>
+    contents = dir([dirname_list{1},<span class="string">'fluor*'</span>]);
+    num_dir_tmp = numel(contents);
+    nc = 1;
+    num_c = 1;
+
+    <span class="keyword">for</span> i = 1:num_dir_tmp
+        <span class="keyword">if</span> (contents(i).isdir) &amp;&amp; (numel(contents(i).name) &gt; numel(<span class="string">'fluor'</span>))
+            num_c = num_c+1;
+            nc = [nc, str2num(contents(i).name(numel(<span class="string">'fluor'</span>)+1:end))+1];
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+    <span class="comment">% Set up parallel loop for each xy point if more than one xy position</span>
+    <span class="comment">% exists. If not more than one xy, we will parallelize inner loops</span>
+    <span class="keyword">if</span> (num_xy&gt;1) &amp;&amp; (CONST.parallel.parallel_pool_num&gt;0)
+        workers = CONST.parallel.parallel_pool_num;
+        CONST.parallel.parallel_pool_num = 0;
+    <span class="keyword">else</span>
+        workers=0;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> workers
+        h = [];
+    <span class="keyword">else</span>
+        h = waitbar( 0, [<span class="string">'Data segmentation xy: 0/'</span>,num2str(num_xy)] );
+        cleanup = onCleanup( @()( delete( h ) ) );
+    <span class="keyword">end</span>
+
+    <span class="comment">%parfor(j = 1:num_xy,workers)</span>
+       <span class="keyword">for</span> j = 1:num_xy
+
+        dirname_xy = dirname_list{j};
+        intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, <span class="keyword">...</span>
+            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG )
+
+        <span class="keyword">if</span> workers
+            disp( [<span class="string">'BatchSuperSeggerOpti: No status bar. xy '</span>,num2str(j), <span class="keyword">...</span>
+                <span class="string">' of '</span>, num2str(num_xy),<span class="string">'.'</span>]);
+        <span class="keyword">else</span>
+            waitbar( j/num_xy,h,<span class="keyword">...</span>
+                [<span class="string">'Data segmentation xy: '</span>,num2str(j),<span class="keyword">...</span>
+                <span class="string">'/'</span>,num2str(num_xy)]);
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> workers <span class="comment">% shutting down parallel pool</span>
+        poolobj = gcp(<span class="string">'nocreate'</span>);
+        delete(poolobj);
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">if</span> ~workers
+        close(h);
+    <span class="keyword">end</span>
+
+
+    <span class="comment">% Compute Consensus Images</span>
+    <span class="keyword">if</span> CONST.consensus
+        h =  waitbar(0,[<span class="string">'Computing Consensus Images'</span>]);
+        dircons = [dirname_,<span class="string">'consensus'</span>,filesep];
+        mkdir( dircons );
+        setHeader = <span class="string">'xy'</span> ;
+
+        <span class="keyword">for</span> ii = 1:num_xy
+
+            waitbar(ii/num_xy,h) ;
+            ixy = ii ;
+
+            dirname_xy = dirname_list{ii};
+            dirname_cell = [dirname_xy,filesep,<span class="string">'cell'</span>,filesep];
+
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST);
+            [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST);
+
+
+            <span class="keyword">if</span> ~isempty( imMosaic )
+                imwrite( imBW,    [dircons, <span class="string">'consBW_'</span>,    setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+                imwrite( imColor, [dircons, <span class="string">'consColor_'</span>, setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+                imwrite( imInv,   [dircons, <span class="string">'consInv_'</span>,   setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+                imwrite( imMosaic10,   [dircons, <span class="string">'typical_'</span>,   setHeader, <span class="string">'_'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.tif'</span>], <span class="string">'tif'</span> );
+                save( [dircons, <span class="string">'fits'</span>, num2str(ixy,<span class="string">'%02d'</span>), <span class="string">'.mat'</span>], <span class="string">'I'</span> );
+            <span class="keyword">else</span>
+                disp( [<span class="string">'Found no cells in '</span>, dirname_cell, <span class="string">'.'</span>] );
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+        close(h)
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% done!</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, <span class="keyword">...</span>
+    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG )
+<span class="comment">% intProcessXY : the details of running the code in parallel.</span>
+<span class="comment">% Essentially for parallel processing to work, you have to hand each</span>
+<span class="comment">% processor all the information it needs to process the images..</span>
+
+<span class="comment">% Initialization</span>
+file_filter = <span class="string">'*.tif'</span>;
+
+<span class="comment">% get header to show xy position</span>
+tmp1 = strfind( dirname_xy, <span class="string">'xy'</span>);
+tmp2 = strfind( dirname_xy,[filesep]);
+<span class="keyword">if</span> ~isempty(tmp1) &amp;&amp; ~isempty(tmp2)
+    header = [dirname_xy(tmp1(end):(tmp2(end)-1)),<span class="string">': '</span>];
+<span class="keyword">else</span>
+    header = [dirname_xy];
+<span class="keyword">end</span>
+
+<span class="comment">% reset nz values</span>
+contents=dir([dirname_xy,<span class="string">'phase'</span>,filesep,file_filter]);
+num_im = numel(contents);
+
+nz = []; <span class="comment">% array of numbers of z frames</span>
+nt = []; <span class="comment">% array of frame numbers</span>
+
+<span class="keyword">for</span> i = 1:num_im;
+    nameInfo = ReadFileName( contents(i).name );
+    nt = [nt, nameInfo.npos(1,1)];
+    nz = [nz, nameInfo.npos(4,1)];
+<span class="keyword">end</span>
+
+nt = sort(unique(nt));
+nz = sort(unique(nz));
+
+num_t = numel(nt);
+num_z = numel(nz);
+
+<span class="keyword">if</span>  isempty(nz) || nz(1)==-1 <span class="comment">% no z frames</span>
+    nz = 1;
+<span class="keyword">end</span>
+
+
+disp([header <span class="string">'BatchSuperSeggerOpti : Segmentation starts...'</span>]);
+
+<span class="keyword">if</span> (CONST.parallel.parallel_pool_num&gt;0)
+    workers = CONST.parallel.parallel_pool_num; <span class="comment">% number of workers</span>
+<span class="keyword">else</span>
+    workers=0;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~CONST.parallel.show_status
+    h = [];
+<span class="keyword">else</span>
+    h = waitbar( 0, [<span class="string">'BatchSuperSeggerOpti : Frame 0/'</span>,num2str(num_t)] );
+<span class="keyword">end</span>
+
+stamp_name = [dirname_xy,<span class="string">'seg'</span>,filesep,<span class="string">'.doSegFull'</span>];
+
+<span class="keyword">if</span> clean_flag &amp;&amp; exist(stamp_name,<span class="string">'file'</span>)
+    delete(stamp_name)
+<span class="keyword">end</span>
+
+
+<span class="comment">% does the segmentations for all the frames in parallel</span>
+<span class="keyword">if</span> SEGMENT_FLAG &amp;&amp; ~exist( stamp_name, <span class="string">'file'</span> )
+    <span class="keyword">parfor</span>(i=1:num_t,workers) <span class="comment">% through all frames</span>
+    <span class="comment">%for i = 1:num_t</span>
+        <span class="keyword">if</span> isempty( crop_box )
+            crop_box_tmp = [];
+        <span class="keyword">else</span>
+            crop_box_tmp = crop_box(i,:);
+        <span class="keyword">end</span>
+
+        doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, <span class="keyword">...</span>
+            clean_flag, skip, CONST, [header,<span class="string">'t'</span>,num2str(i),<span class="string">': '</span>], crop_box_tmp );
+
+        <span class="keyword">if</span> ~CONST.parallel.show_status
+            disp( [header, <span class="string">'BatchSuperSeggerOpti : Segment. Frame '</span>,num2str(i), <span class="keyword">...</span>
+                <span class="string">' of '</span>, num2str(num_t),<span class="string">'.'</span>]);
+        <span class="keyword">else</span>
+            waitbar( i/num_t, h,<span class="keyword">...</span>
+                [<span class="string">'Data segmentation t: '</span>,num2str(i),<span class="string">'/'</span>,num2str(num_t)]);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> CONST.parallel.show_status
+        close(h);
+    <span class="keyword">end</span>
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>); <span class="comment">% saves that xydir was full segmented</span>
+<span class="keyword">end</span>
+
+
+<span class="comment">% trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc</span>
+<span class="keyword">if</span> ~ONLY_SEG
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header)
+<span class="keyword">else</span>
+    disp (<span class="string">'Only segmentation was set to true - Linking and cell files were not made'</span>);
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">BatchSuperSeggerOpti : Loading constants file 
+loadConstants: Initializing.
+loadConstants: 60X
+</pre><pre class="codeoutput error">Error using BatchSuperSeggerOpti (line 135)
+No images found
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
+% BatchSuperSeggerOpti runs everything from start to finish,
+% including alignment, building the directory structure,
+%single image segmentation, error resolution, cell linking,
+% fluorescence analysis, and cell files.
+%
+% Processes a raw data set by
+% (1) Aligning and cropping time series
+% (2) Organizing files into directories
+%        xy points are put in their own dir's
+%        phase, fluor files put in their own dir's
+%        makes seg and cell directories
+% (3) Segmenting the frames into cell regions
+% (4) Linking the regions between time steps
+% (5) finding loci and calculating fluor statistics
+% (6) Putting complete cells into the cell dir.
+%
+% INPUT :
+% dirname_ : dir containing raw tif files
+% skip     : The segmentation is performed every skip files
+%          : this skip is very useful for high frequency timelapse where
+%          : cells would switch back and forth between one and two
+%          : segments leading to errors that are difficult to resolve.
+%          : This segments every skip files, then copies the segments into
+%          : the intermediate frames.
+% clean_flag : Set this to be true to start from scratch and reseg all the
+%            : files regardless of whether any seg files exist. If this
+%            : flag is false, use existing segments, if they exist and
+%            : new segs if they don't yet exist.
+% res       : is a string that is passed to loadConstants(Mine).m to load
+%           : the right constants for processing.
+% SEGMENT_FLAG : to segment cells
+%
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+% Init
+
+if (nargin < 1) || isempty( dirname_ ) || strcmp(dirname_ ,'.')
+    dirname_ = pwd;
+end
+dirname_ = fixDir(dirname_);
+
+if nargin < 2 || isempty( skip )
+    skip = 1; % default : don't skip frames
+end
+
+if nargin < 3 || isempty( clean_flag )
+    clean_flag = 0; % default : don't resegment frames if segmented.
+end
+
+if nargin < 4 || isempty( res )
+    res = []; 
+end
+
+if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
+    SEGMENT_FLAG = 1;
+end
+
+if ~exist( 'ONLY_SEG', 'var' ) || isempty( ONLY_SEG )
+    ONLY_SEG = 0;
+end
+
+%if you pass a res value, write over CONST values. If it isn't passed,
+% use existing values, if they exist. If not, load the default values.
+if isstruct(res)
+    CONST = res;
+else
+    disp (['BatchSuperSeggerOpti : Loading constants file ', res]);
+    if exist('loadConstantsMine','file');
+        CONST = loadConstantsMine(res);
+    else
+        CONST = loadConstants(res,0);
+    end
+end
+
+
+if clean_flag && SEGMENT_FLAG
+    try
+        disp ('Clean flag is set to true.')
+        answer=input('Do you want to continue, Y/N [Y]:','s');
+        if lower(answer) ~='y'
+            disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
+            return
+        end
+    catch
+       % can not use input  - in eval mode 
+    end
+end
+
+% align frames
+if exist( dirname_, 'dir' )    
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
+        disp('BatchSuperSeggerOpti : images already aligned');
+        if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
+            tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
+            crop_box_array = tmp.crop_box_array;
+        else
+            crop_box_array = cell(1,10000);
+        end
+    elseif numel(dir ([dirname_,filesep,'*.tif']))
+        % check naming convention
+        if ~numel(dir([dirname_,filesep,'*t*c*.tif']))
+            disp('images in incorrect naming format. Using convertImageNames to convert names.')
+            convertImageNames(dirname_)
+        end
+        
+        mkdir( [dirname_,filesep,'raw_im'] );
+        if CONST.align.ALIGN_FLAG           
+            crop_box_array = trackOptiAlignPad( dirname_,...
+                CONST.parallel.parallel_pool_num, CONST);
+            movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
+            movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
+            rmdir( [dirname_,'align'] ); % removes _align directory
+        else
+            crop_box_array = cell(1,10000);
+        end
+    else
+        error('No images found');       
+    end
+else
+    error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );    
+end
+
+
+% setups the dir structure for analysis.
+trackOptiPD(dirname_, CONST);
+save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Saves CONST set you used.
+save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
+
+% Loop through xy directories
+% Reset n values in case directories have already been made.
+% setup nxy values
+contents = dir([dirname_,'xy*']);
+
+if isempty(contents)
+    disp('BSSO: Did not find any data.');
+else
+    num_dir_tmp = numel(contents);
+    nxy = [];
+    num_xy = 0;
+
+    for i = 1:num_dir_tmp
+        if (contents(i).isdir) && (numel(contents(i).name) > 2)
+            num_xy = num_xy+1;
+            nxy = [nxy, str2num(contents(i).name(3:end))];
+            dirname_list{i} = [dirname_,contents(i).name,filesep];
+        end
+    end
+    
+    % set values for nc (array of channels (phase and fluorescent))
+    contents = dir([dirname_list{1},'fluor*']);
+    num_dir_tmp = numel(contents);
+    nc = 1; 
+    num_c = 1;
+    
+    for i = 1:num_dir_tmp
+        if (contents(i).isdir) && (numel(contents(i).name) > numel('fluor'))
+            num_c = num_c+1;
+            nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1]; 
+        end
+    end
+    
+    
+    % Set up parallel loop for each xy point if more than one xy position
+    % exists. If not more than one xy, we will parallelize inner loops
+    if (num_xy>1) && (CONST.parallel.parallel_pool_num>0)
+        workers = CONST.parallel.parallel_pool_num;
+        CONST.parallel.parallel_pool_num = 0;
+    else
+        workers=0;
+    end
+    
+    if workers
+        h = [];
+    else
+        h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
+        cleanup = onCleanup( @()( delete( h ) ) );
+    end
+    
+    %parfor(j = 1:num_xy,workers)
+       for j = 1:num_xy
+        
+        dirname_xy = dirname_list{j};
+        intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
+            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG )
+        
+        if workers
+            disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
+                ' of ', num2str(num_xy),'.']);
+        else
+            waitbar( j/num_xy,h,...
+                ['Data segmentation xy: ',num2str(j),...
+                '/',num2str(num_xy)]);
+        end
+        
+        
+    end
+    
+    if workers % shutting down parallel pool
+        poolobj = gcp('nocreate');
+        delete(poolobj);
+    end
+        
+    
+    if ~workers
+        close(h);
+    end
+    
+    
+    % Compute Consensus Images   
+    if CONST.consensus
+        h =  waitbar(0,['Computing Consensus Images']);        
+        dircons = [dirname_,'consensus',filesep];
+        mkdir( dircons );       
+        setHeader = 'xy' ;
+        
+        for ii = 1:num_xy
+            
+            waitbar(ii/num_xy,h) ;          
+            ixy = ii ;
+            
+            dirname_xy = dirname_list{ii};
+            dirname_cell = [dirname_xy,filesep,'cell',filesep];
+            
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST);
+            [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST);
+      
+   
+            if ~isempty( imMosaic )
+                imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
+                save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
+            else              
+                disp( ['Found no cells in ', dirname_cell, '.'] );
+            end
+            
+        end
+        close(h)
+    end
+end
+
+% done!
+end
+
+function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
+    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG )
+% intProcessXY : the details of running the code in parallel.
+% Essentially for parallel processing to work, you have to hand each
+% processor all the information it needs to process the images..
+ 
+% Initialization
+file_filter = '*.tif';
+
+% get header to show xy position
+tmp1 = strfind( dirname_xy, 'xy');
+tmp2 = strfind( dirname_xy,[filesep]);
+if ~isempty(tmp1) && ~isempty(tmp2)
+    header = [dirname_xy(tmp1(end):(tmp2(end)-1)),': '];
+else
+    header = [dirname_xy];
+end
+
+% reset nz values
+contents=dir([dirname_xy,'phase',filesep,file_filter]);
+num_im = numel(contents);
+
+nz = []; % array of numbers of z frames
+nt = []; % array of frame numbers 
+
+for i = 1:num_im;
+    nameInfo = ReadFileName( contents(i).name );   
+    nt = [nt, nameInfo.npos(1,1)];
+    nz = [nz, nameInfo.npos(4,1)];
+end
+
+nt = sort(unique(nt));
+nz = sort(unique(nz));
+
+num_t = numel(nt);
+num_z = numel(nz);
+
+if  isempty(nz) || nz(1)==-1 % no z frames
+    nz = 1;
+end
+
+
+disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
+
+if (CONST.parallel.parallel_pool_num>0)
+    workers = CONST.parallel.parallel_pool_num; % number of workers
+else
+    workers=0;
+end
+
+if ~CONST.parallel.show_status
+    h = [];
+else
+    h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
+end
+
+stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
+
+if clean_flag && exist(stamp_name,'file')
+    delete(stamp_name)
+end
+
+
+% does the segmentations for all the frames in parallel
+if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
+    parfor(i=1:num_t,workers) % through all frames
+    %for i = 1:num_t
+        if isempty( crop_box )
+            crop_box_tmp = [];
+        else
+            crop_box_tmp = crop_box(i,:);
+        end
+        
+        doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, ...
+            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp );
+        
+        if ~CONST.parallel.show_status
+            disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
+                ' of ', num2str(num_t),'.']);
+        else
+            waitbar( i/num_t, h,...
+                ['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
+        end
+    end
+    if CONST.parallel.show_status
+        close(h);
+    end
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
+end
+
+
+% trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
+if ~ONLY_SEG
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header)   
+else
+    disp ('Only segmentation was set to true - Linking and cell files were not made');
+end
+end
+
+
+##### SOURCE END #####
+--></body></html>

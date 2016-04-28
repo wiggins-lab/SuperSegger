@@ -50,8 +50,11 @@ images = dir([dirname,'*c1*.tif']);
 if isempty (images)
     disp('no images found in the directory with c1.tif.Select an image');
     [lastPhaseImage,dirname , ~] = uigetfile('*.tif', 'Pick an image file');
+    if lastPhaseImage == 0
+        return;
+    end
 else
-lastPhaseImage = images(end).name;
+    lastPhaseImage = images(end).name;
 end
 
 phase = intCropImage (imread([dirname,lastPhaseImage]));

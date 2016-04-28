@@ -49,21 +49,21 @@ function superSeggerViewer(dirname)
 %       err_flag : if 1, displays errors found in frame, default 0
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou, Paul Wiggins, Connor Brennan.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -115,11 +115,10 @@ end
 clist = [];
 contents_xy =dir([dirname, 'xy*']);
 num_xy = numel(contents_xy);
+direct_contents = dir([dirname, '*seg.mat']);
 
-if ~num_xy
-    disp('There are no xy dirs. Choose a different directory.');
-    return;
-else
+
+if num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
     else
@@ -139,6 +138,17 @@ else
     
     ixy = intGetNum( contents_xy(dirnum).name );
     header = ['xy',num2str(ixy),': '];
+else
+    if numel(direct_contents) == 0
+        disp('There are no xy dirs. Choose a different directory.');
+        return;
+    else % loading from the seg directory directly
+        dirname_cell = dirname;
+        dirname_xy = dirname;
+        dirname_seg = dirname;
+        ixy = 1;
+        header = ['seg',num2str(ixy),': '];
+    end
 end
 
 if exist([dirname0,'CONST.mat'],'file')
@@ -207,14 +217,14 @@ while runFlag
     
     %Force flags to required values when data is unavailable
     forcedFlags = FLAGS;
-    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS); 
+    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS);
     %Force cell flag to 0 when err files not present
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
     flagsStates = intSetStateStrings(FLAGS,CONST);
-
+    
     axis(tmp_axis);
-
+    
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
@@ -280,7 +290,7 @@ while runFlag
     end
     
     disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);
-
+    
     %pause;
     c = input(':','s');
     
@@ -328,8 +338,8 @@ while runFlag
         cc = str2double(input('Characteristic [ ] :','s')) ;
         figure(2);
         clf;
-        gateHist(clist,cc)       
-
+        gateHist(clist,cc)
+        
     elseif strcmpi(c,'hist2') % choose characteristics and values to gate cells
         disp('Choose histogram characteristic')
         cc1 = str2double(input('Characteristic 1 [ ] :','s')) ;
@@ -414,7 +424,7 @@ while runFlag
         
     elseif strcmpi(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
-
+        
     elseif strcmpi(c,'reset') % Reset axis to default
         first_flag = true;
         resetFlag = 1;
@@ -434,7 +444,7 @@ while runFlag
         figure(2)
         clist = gateMake(clist,str2num(cc)) ;
         resetFlag = 1;
-            
+        
     elseif strcmpi(c,'Clear')  % Clear All Gates
         tmp_axis = axis;
         clist.gate = [] ;
@@ -602,7 +612,7 @@ while runFlag
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');
-            end            
+            end
         else
             disp ('Please enter a number next to kym');
         end
@@ -633,11 +643,11 @@ while runFlag
         clear mov;
         mov.cdata = [];
         mov.colormap = [];
-       
-       for ii = 1:num_im
+        
+        for ii = 1:num_im
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
-            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);  
+            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
             axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
@@ -657,7 +667,7 @@ while runFlag
             writeVideo(v,mov)
             close(v)
         end
-
+        
         resetFlag = true;
         
     elseif strcmpi(c,'e')
@@ -674,7 +684,7 @@ while runFlag
         FLAGS.useSegs = ~FLAGS.useSegs;
         resetFlag = true;
         
-    %% DEVELOPER FUNCTIONS : Use at your own risk
+        %% DEVELOPER FUNCTIONS : Use at your own risk
     elseif strcmpi(c,'link')  % Show links
         FLAGS.showLinks = ~FLAGS.showLinks;
         resetFlag = true;
@@ -866,7 +876,7 @@ if ~isempty(clist)
     if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
         ind = find(ismember(data.regs.ID,clist.data(:,1))); % get ids of cells in clist
         mask_tmp = ismember( data.regs.regs_label, ind ); % get the masks of cells in clist
-        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);       
+        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
     end
 end
 
@@ -1079,23 +1089,23 @@ if ~FLAGS.regionScores
 end
 
 flagsStates.useSegs = '(on) ';
-if ~FLAGS.useSegs 
+if ~FLAGS.useSegs
     flagsStates.useSegs = '(off)';
 end
 
 
 flagsStates.showLinks = '(on) ';
-if ~FLAGS.showLinks 
+if ~FLAGS.showLinks
     flagsStates.showLinks = '(off)';
 end
 
 flagsStates.showDaughters = '(on) ';
-if ~FLAGS.showDaughters 
+if ~FLAGS.showDaughters
     flagsStates.showDaughters = '(off)';
 end
 
 flagsStates.showMothers = '(on) ';
-if ~FLAGS.showMothers 
+if ~FLAGS.showMothers
     flagsStates.showMothers = '(off)';
 end
 
@@ -1190,19 +1200,19 @@ if ~isfield(FLAGS,'regionScores')
 end
 
 if ~isfield(FLAGS,'useSegs')
-FLAGS.useSegs  = 0;
+    FLAGS.useSegs  = 0;
 end
 
 if ~isfield(FLAGS,'showLinks')
-FLAGS.showLinks  = 0;
+    FLAGS.showLinks  = 0;
 end
 
 if ~isfield(FLAGS,'showMothers')
-FLAGS.showMothers  = 0;
+    FLAGS.showMothers  = 0;
 end
 
 if ~isfield(FLAGS,'showDaughters')
-FLAGS.showDaughters  = 0;
+    FLAGS.showDaughters  = 0;
 end
 
 end
@@ -1273,11 +1283,11 @@ end
 
 
 function value = shouldUseErrorFiles(FLAGS)
-    global canUseErr;
-    
-    value = canUseErr == 1 && FLAGS.useSegs == 0;
+global canUseErr;
+
+value = canUseErr == 1 && FLAGS.useSegs == 0;
 end
 
 function value = shouldLoadNeighborFrames(FLAGS)
-    value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
+value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
 end

@@ -1,4 +1,4 @@
-function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
+function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,startFrom)
 % trackOptiCellLink : links the cells frame-to-frame and resolves errors.
 %
 % INPUT :
@@ -48,6 +48,9 @@ if ~exist('header','var')
 end
 
 
+if ~exist('startFrom','var') || isempty(startFrom)
+    startFrom = 0;
+end
 
 filt = '*seg.mat'; % files loaded
 filt2 = 'err.mat'; % name of final files
@@ -64,6 +67,14 @@ contents2=dir([dirname,'*',filt2]);
 
 if clean_flag
     delete([dirname,'*err.mat'])
+elseif startFrom~=0 && numel(contents2)>startFrom
+    time = startFrom;
+    dataLast = load([dirname,contents2(time).name]);
+    cell_count = max(dataLast.regs.ID);    
+    for xx = startFrom+1:numel(contents2)
+        delete([dirname,contents2(xx).name])
+    end
+    disp (['starting from time : ', num2str(time)]);
 elseif ~isempty(contents2)
     time = numel(contents2);
     if time > 1
@@ -74,6 +85,7 @@ elseif ~isempty(contents2)
     end
 end
 
+   
 %resetRegions  = 1;
 
 while time <= numIm

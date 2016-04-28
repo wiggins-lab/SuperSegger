@@ -121,32 +121,30 @@ if ~isempty(data_c)
                 
                 intDisplay (data_c,data_f,tmpAssign,ii)
                 
+                
                 if numel(tmpError) > 0 && tmpError(1) == 0
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
-
                     errorR(ii) =  tmpError(1) ;
                     dA(ii) = tmpdA(1);
+                    
                 elseif numel(tmpError) > 1 && tmpError(2) == 0
                     assignments{ii} = tmpAssign(1:2);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
                     revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];
                     errorR(ii) =  tmpError(2) ;
                     dA(ii) = tmpdA(2);
+                    
                 else
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
                     errorR(ii) =  tmpError(1);
-                    dA(ii) = tmpdA(1);
+                    dA(ii) = tmpdA(1);                
                 end
             end
-            
-            % calculate errors C -> F
-            
         end
-        
-        
     end
+    
     
     
     
@@ -170,10 +168,6 @@ if ~isempty(data_c)
         end
     end
 end
-
-
-
-
 
 
 

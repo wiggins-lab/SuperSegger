@@ -73,7 +73,7 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '60XPaM','60XPaM2' : for 60X, Pseudomonas Minimal
 % '60XBthai' : 60X Thailandensis
 
-res = '60XEc';
+res = '60XEcLB';
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
