@@ -49,19 +49,22 @@ originalImage = double(data.(['fluor',num2str(channelID)]));
 hg = fspecial( 'gaussian' , 210, 30 );
 highPassImage = originalImage - imfilter( originalImage, hg, 'replicate' );
 cytoplasmicFlourescenceSTD = std(double(highPassImage(data.mask_bg)));
+normalizedImage = originalImage/cytoplasmicFlourescenceSTD; % normalization so that intensities;
 
+%Take only pixels above 1 std (noise reduction?)
+normalizedImage = normalizedImage - 1;
+normalizedImage(normalizedImage < 0) = 0; % logical mask of foci found
 
-[~,~,flourFiltered] = curveFilter(originalImage);
+[~,~,flourFiltered] = curveFilter(normalizedImage);
 data.(['flour',num2str(channelID),'_filtered']) = flourFiltered;
-normalizedImage = flourFiltered/cytoplasmicFlourescenceSTD; % normalization so that intensities
+%normalizedImage = flourFiltered/cytoplasmicFlourescenceSTD; % normalization so that intensities
 % so that 
 
 mask_mod = bwmorph (data.mask_bg, 'dilate', 1);
 
-%Take only pixels above 1 std (noise reduction?)
-tempImage = normalizedImage - 1;
-tempImage(tempImage < 0) = 0; % logical mask of foci found
-fociWatershed = watershed(-tempImage); % watershed to identify foci
+
+
+fociWatershed = watershed(-flourFiltered); % watershed to identify foci
 maskedFociWatershed = logical(double(fociWatershed).*double(mask_mod));
 
 fociRegionLabels = bwlabel(maskedFociWatershed);
@@ -131,7 +134,7 @@ for ii = 1:numFociRegions
         croppedImage = highPassImage(data.CellA{bestCellID}.yy, data.CellA{bestCellID}.xx);
         cellFlouresenseSTD = std(croppedImage(data.CellA{bestCellID}.mask));  
         
-        if tempData.intensity / cellFlouresenseSTD > MIN_SCORE_CUTOFF
+        if tempData.intensity >0%/ cellFlouresenseSTD > MIN_SCORE_CUTOFF
             %Initialize parameters
             backgroundIntensity = 0;
             gaussianIntensity = flourFiltered(fociY, fociX) - backgroundIntensity;
@@ -182,8 +185,8 @@ for ii = 1:numFociRegions
             tempData.fitScore = fitScore;
 
             %Calculate scores        
-            tempData.normIntensity = tempData.intensity / cellFlouresenseSTD;
-            tempData.score = tempData.intensity / cellFlouresenseSTD * tempData.fitScore;
+            tempData.normIntensity = tempData.intensity;
+            tempData.score = tempData.intensity / (sqrt(pi)*tempData.fitSigma) * tempData.fitScore;
 
             tempData.shortaxis = ...
                 (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
