@@ -66,21 +66,21 @@ elseif isa(res,'double' )    && res == 100
     disp('loadConstants:  100X');
     resFlag = '100XEc';
 elseif isa(res, 'char' );
-    if strcmpi(res,'60XEc') % 1
+    if strcmpi(res,'60XEc')
         resFlag = '60XEc';
-    elseif strcmpi(res,'100XEc') % 2
+    elseif strcmpi(res,'100XEc')
         disp('loadConstants:  100X Ecoli');
         resFlag = '100XEc';
-    elseif strcmpi(res,'60XEcLB') % 2
+    elseif strcmpi(res,'60XEcLB')
         disp('loadConstants:  60X LB Ecoli');
         resFlag = '60XEcLB';
-    elseif strcmpi(res,'60XBay') % 2
+    elseif strcmpi(res,'60XBay')
         disp('loadConstants:  60X Baylyi');
         resFlag = '60XBay';
-     elseif strcmpi(res,'60XPa') % 2
+     elseif strcmpi(res,'60XPa')
         disp('loadConstants:  60X Pseudemonas');
         resFlag = '60XPa';
-    elseif strcmpi(res,'100XPa') % 2
+    elseif strcmpi(res,'100XPa')
         disp('loadConstants:  100X Pseudemonas');
         resFlag = '100XPa';
     end

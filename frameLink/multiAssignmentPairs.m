@@ -1,4 +1,4 @@
-function [assignments,errorR,totCost,allC,allF,revAssign]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
+function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
 % multiAssignmentPairs : links regions in data_c to regions in data_f. 
 % Each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
@@ -37,6 +37,7 @@ if ~exist('forward','var') || isempty(forward)
     forward = 1;
 end
 
+revAssign = [];
 assignments = [];
 errorR = [];
 totCost=[];
@@ -46,7 +47,7 @@ noOverlap = 0.0001;
 centroidWeight = 5;
 areaFactor = 20;
 areaChangeFactor = 100;
-
+dA = [];
 if ~isempty(data_c)
     if ~isfield(data_c,'regs')
         data_c = updateRegionFields (data_c,CONST);
@@ -55,7 +56,7 @@ if ~isempty(data_c)
     numRegs1 = data_c.regs.num_regs;
     assignments  = cell( 1, numRegs1);
     errorR = zeros(1,numRegs1);
-    
+    dA = nan*zeros(1,numRegs1);
     if ~isempty(data_f)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
@@ -293,12 +294,12 @@ if ~isempty(data_c)
             setError = false;
             [minCost,ind] = min(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
-            
+            dA(asgnRow) = areaChange(asgnRow,asgnCol);
             
             % if area changes by a lot set an error
-            if forward && ((areaChange(asgnRow,asgnCol)) < -0.1 || (areaChange(asgnRow,asgnCol)) > 0.3)
+            if forward && (dA(asgnRow) < -0.1 ||   dA(asgnRow) > 0.3)
                 setError = true;
-            elseif ((areaChange(asgnRow,asgnCol)) > 0.1 || (areaChange(asgnRow,asgnCol)) > -0.3)
+            elseif ~forward && (dA(asgnRow) > 0.1 ||   dA(asgnRow) > -0.3)
                 setError = true;
             end
             

@@ -82,7 +82,7 @@ segDirMod = [segTrainingDir,filesep,'xy1',filesep,'segMod',filesep];
 mkdir(segDirMod);
 segData = dir([segDir,'*seg.mat']);
 
-% kill bad regions
+% 4) kill bad regions
 
 for i = 1 : numel(segData)
         data = load([segDir,segData(i).name]);
@@ -90,7 +90,7 @@ for i = 1 : numel(segData)
         save([segDirMod,segData(i).name],'-STRUCT','data');
 end
 
-% 4) user sets good and bad segments
+% 5) user sets good and bad segments
 
 FLAGS.im_flag = 1;
 FLAGS.S_flag = 0;
@@ -189,7 +189,7 @@ CONST.regionOpti.minGoodRegScore = 10;
 CONST.regionOpti.neighMaxScore = 10;
 
 save([dirname,constname,'_FULLCONST'],'-STRUCT','CONST');
-save([dirname,constname],'A','E');
+save([dirname,constname,'_AE'],'A','E');
 disp ('new constants saved');
 end
 
