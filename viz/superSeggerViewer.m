@@ -1,52 +1,22 @@
 function superSeggerViewer(dirname)
 % trackOptiView provides visulization of the segmented data.
-%
-% It has a lot of options such as :
-% f : Toggle between phase and fluorescence view
-% x# :  Switch xy dir #
-% t  : Show Cell Numbers
-% r  : Show/Hide Region Outlines
-% o  : Show Consensus
-% K  : Kymograph Mosaic
-% h# : Tower for Cell #
-% g  : Make Gate
-% Clear : Clear all Gates
-% c  : Reset Plot to Default View'
-% s  : Show Fluor Foci
-% #  : Go to Frame Number #
-% CC : Use Complete Cell Cycles
-% F : Find Cell Number #
-% p  : Show/Hide Cell Poles
-% H# : Show Kymograph for Cell #
-% Z  : Cell Towers Mosaic
-% G  : Gate All Cell Files
-% Movie : Export Movie Frames
-%
+% It displays a menu from which the user can make choices and vizualize or 
+% analyze the segmented data.
+% 
 % important notes :
 % - it saves a file in the directory named .trackOptiView.mat where it
 % saves the flags from the previous launch
+% - it uses the clist which can be gated to only show cells that pass specific
+% criteria. it outlines and analyzes only cells that pass the gate, to display 
+% the full dataset the gate needs to be deleted.
 %
-%   FLAGS :
-%         FLAGS.P_val = 0.2;
-%         P_Flag : shows regions (default 1)
-%         ID_flag : shows the cell numbers (default 0)
-%         lyse_flag : outlines cell that lysed
-%         m_flag : shows mask (default 0)
-%         c_flag : ? reserts to default view
-%         cell_flag : toogles between cell and regions / using cell numbers versus region numbers
-%         f_flag : shows flurescence image
-%         s_flag : shows the foci and their score
-%         T_flag : something related to regions (default 0)
-%         p_flag : shows pole positions and connects daughter cells to each other
-%         e_flag : 0, errors displayed for this frame
-%         f_flag : 0
-%         err_flag = false; // getting rid of it
-%         D_FLAG = SD_FLAG, AD_FLAG, ND_FLAG
-
+%
+%
 % INPUT :
 %       dirname : main directory that contains files segemented by supeSegger
 %       it must be the directory that has raw_im and xy1 etc folders.
-%       err_flag : if 1, displays errors found in frame, default 0
+%       It can be run from the seg file directly but some functions that require
+%       cell files will not work.
 %
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -84,18 +54,6 @@ end
 
 dirname = fixDir(dirname);
 dirname0 = dirname;
-
-% for calculations that take time like the consensus array
-% you can save the array in a folder so that it is loaded from there
-% instead of calculated repeatedly.
-dirSave = [dirname,'superSeggerViewer',filesep];
-if ~exist(dirSave,'dir')
-    mkdir(dirSave);
-else
-    if exist([dirSave,'dataImArray.mat'],'file')
-        load ([dirSave,'dataImArray'],'dataImArray');
-    end
-end
 
 % load flags if they already exist to maintain state between launches
 filename_flags = [dirname0,'.superSeggerViewer.mat'];
@@ -167,6 +125,18 @@ num_im = length(contents);
 
 if (num_im == 0)
     error('No files found in the seg directory');
+end
+
+% for calculations that take time like the consensus array
+% you can save the array in a folder so that it is loaded from there
+% instead of calculated repeatedly.
+dirSave = [dirname,'superSeggerViewer',filesep];
+if ~exist(dirSave,'dir')
+    mkdir(dirSave);
+else
+    if exist([dirSave,'dataImArray.mat'],'file')
+        load ([dirSave,'dataImArray'],'dataImArray');
+    end
 end
 
 runFlag = (nn<=num_im);

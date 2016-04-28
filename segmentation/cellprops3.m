@@ -1,5 +1,5 @@
 function info = cellprops3( mask, props )
-% cellprops3 : Calculates the shape properties of the region or 'cell'
+% cellprops3 : Calculates the shape properties of the region or 'cell'.
 %
 % INPUT :
 %       mask : cell / region mask

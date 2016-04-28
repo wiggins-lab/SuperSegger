@@ -23,7 +23,7 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
 %         v_flag : shows cells outlines
 %         f_flag : shows flurescence image
 %         s_flag : shows the foci and their score
-%         T_flag : ? something related to regions
+%         T_flag : tight flag, locks it so that regions/links can not be edited.
 %         p_flag : shows pole positions and connects daughter cells to each other
 %         regionScores : shows scores of regions
 %
@@ -797,6 +797,11 @@ end
 
 function FLAGS = intFixFlags( FLAGS )
 % intFixFlags :  sets default flag values if the value is missing.
+% Outline_flag
+% ID_flag
+% lyse_flag
+% m_flag
+% c_flag
 
 if ~isfield(FLAGS, 'Outline_flag');
     disp('there is no field Outline_flag');

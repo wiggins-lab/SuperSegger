@@ -291,10 +291,9 @@ for regNum =  1 : data_c.regs.num_regs;
             
         end
         
-    else
-        disp([num2str(regNum),'already have an id'])
-       
-        
+    else    
+        disp (['Frame: ', num2str(time),...
+                ', reg: ', num2str(regNum),' already has an ID.']);        
     end
 end
 end
