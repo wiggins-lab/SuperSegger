@@ -1,4 +1,4 @@
-function trackOptiMakeCell(dirname,CONST,header)
+function trackOptiMakeCell(dirname,CONST,header,verbose)
 % trackOptiMakeCell : generates the CellA field indexed by the region number
 % which contains information about each cell in each region in each frame.
 %
@@ -321,7 +321,7 @@ for i = 1:num_im;
     
     if CONST.parallel.show_status
         waitbar(i/num_im,h,['Making Cells--Frame: ',num2str(i),'/',num2str(num_im)]);
-    else
+    elseif verbose
         disp([header, 'MakeCell frame: ',num2str(i),' of ',num2str(num_im)]);
     end
 end

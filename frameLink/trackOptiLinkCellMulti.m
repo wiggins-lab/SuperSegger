@@ -1,4 +1,4 @@
-function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,startFrom)
+function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,verbose,debug_flag,startFrom)
 % trackOptiCellLink : links the cells frame-to-frame and resolves errors.
 %
 % INPUT :
@@ -112,8 +112,9 @@ while time <= numIm
     
     % go through regions in current data
     
-    
+    if verbose
     disp (['Calculating maping for frame ', num2str(time)])
+    end
     if ~isempty(data_r) % && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
         [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f,data_r.regs.revmap.f] = assignmentFun (data_r, data_c,CONST,1,0);
     end
@@ -124,11 +125,13 @@ while time <= numIm
    
     
     % error resolution and id assignment
-    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
+    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag, verbose);
     
     
     if resetRegions
+         if verbose
         disp (['Frame ', num2str(time), ' : segments were reset to resolve error, repeating frame.']);
+         end
         cell_count = lastCellCount;
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
     else

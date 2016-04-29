@@ -131,7 +131,7 @@ if exist( dirname_, 'dir' )
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             crop_box_array = trackOptiAlignPad( dirname_,...
-                CONST.parallel.parallel_pool_num, CONST);
+                CONST.parallel.parallel_pool_num, CONST,verbose);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
             movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
@@ -365,7 +365,7 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-    trackOpti(dirname_xy,skip,CONST, clean_flag, header)   
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header, verbose);
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end
