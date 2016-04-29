@@ -1,4 +1,4 @@
-function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
+function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist, verbose )
 % trackOptiCellFiles : organizes the data into the final cell files that
 % contain all the time lapse data for a single cell.
 % It allows for cell gating. If a clist is passed with an already made gate t
@@ -53,6 +53,11 @@ if(nargin<2 || isempty(dirname_cell))
     dirname_cell = dirname;
 end
 
+
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
+
 dirname_cell = fixDir (dirname_cell);
 contents=dir([dirname '/*_err.mat']);
 
@@ -78,19 +83,18 @@ else
         
         if CONST.parallel.show_status
             waitbar(i/num_im,h,['Make Cell Files--Frame: ',num2str(i),'/',num2str(num_im)]);
-        else
+        elseif verbose
             disp( [header, 'Cell Files--Frame: ',num2str(i),'/',num2str(num_im)] );
         end
         
         % load data
         data_c    = loaderInternal([dirname,contents(i).name]);
         num_regs = data_c.regs.num_regs;
-        disp( [header, 'CellFiles: ','Frame: ', num2str(i), '. max cell num: ', num2str( max_cell_num ) ] );
+        if verbose
+            disp( [header, 'CellFiles: ','Frame: ', num2str(i), '. max cell num: ', num2str( max_cell_num ) ] );
+        end
         
         for ii = 1:num_regs
-            
-            
-            
             cellNum = data_c.regs.ID(ii);
             max_cell_num = max([max_cell_num, cellNum]);
           
@@ -130,7 +134,9 @@ else
     % deletes and saves cells that were not saved yet
     for ii=1:MAX_NUM_CELLS
         if ~isempty(DA{ii})
+            if verbose
             disp( ['Missing cell ', num2str(DA{ii}.ID)] );
+            end
             DA{ii} = intDelCell( DA{ii},dirname_cell, ii );
         end
     end

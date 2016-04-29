@@ -1,4 +1,4 @@
-function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)
+function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header, verbose)
 %  trackOptiCellMarker : puts together a list of complete cell cycles.
 %  It goes through the dirname/*err.mat files and determines which
 %  cells go through complete cell cycles (i.e. cells in which both birth and 
@@ -61,7 +61,10 @@ list_touch = [];
 
 dirseperator = filesep;
 
-
+            
+if ~exist( 'verbose', 'var' ) || isempty( verbose )
+    verbose = 1;
+end
 
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir()
@@ -111,9 +114,9 @@ for i = (num_im-1):-1:2;
                 (~data_c.regs.ehist(ii) && ...
                 (i-data_c.regs.birth(ii)) >= MIN_CELL_AGE )
             
-            
-            disp([header, 'CellMarker: Complete Cell Cycle! Frame:', num2str(i),' reg: ', num2str(ii)]);
-            
+            if verbose
+                disp([header, 'CellMarker: Complete Cell Cycle! Frame:', num2str(i),' reg: ', num2str(ii)]);
+            end
             
             % get the distance of the cell from the edge of the colony and
             % put that distance (in pixels) in cell_dist
@@ -163,8 +166,9 @@ for i = (num_im-1):-1:2;
                 num2str(i-data_c.regs.birth(ii)), ...
                 '< min age ' , num2str(MIN_CELL_AGE), '.'];
             
-            disp([header, 'CellMarker: ', data_c.regs.error.label{ii}] );
-            
+            if verbose
+                disp([header, 'CellMarker: ', data_c.regs.error.label{ii}] );
+            end
         end
         
     end
@@ -196,7 +200,7 @@ for i = (num_im-1):-1:2;
                 data_c.regs.stat0(jj) = 2;
                 
             catch
-                disp([header, 'Error is trackOptiCellMarker... FuckFuckFuck']);
+                disp([header, 'Error is trackOptiCellMarker.']);
             end
         end
     end
@@ -217,7 +221,7 @@ if ~isempty(clist)
         [tmp,ind_order] = sort( clist(:,1) );
         clist = clist(ind_order,:);
     catch
-        disp([header, 'Error is trackOptiCellMarker...']);
+        disp([header, 'Error is trackOptiCellMarker.']);
     end
 end
 
