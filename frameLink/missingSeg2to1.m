@@ -85,7 +85,7 @@ imshow(segsLabel)
 
 if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.AREA_CHANGE_LIMIT
     % a good solution
-    num_segs = numel(segs_close)
+    num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);
     segsAdded = data_c.segs.segs_label * 0;
     segsRemoved = data_c.segs.segs_label * 0;
@@ -116,7 +116,7 @@ end
 
 % resegment only that part of the image
 phase = data_c.phase(yy,xx) ;
-tmp = superSeggerOpti(phase, [], 1, CONST, 1, '', [] )
+tmp = superSeggerOpti(phase, [], 1, CONST, 1, '', []);
 maskDil =  imdilate(mask, strel('square',2));
 newmask = tmp.mask_bg;
 newmask(~maskDil) = 0;

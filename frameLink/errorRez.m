@@ -41,9 +41,6 @@ data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 
 for regNum =  1 : data_c.regs.num_regs;
     
-    if regNum == 6 ||regNum == 8
-        '';
-    end
     if data_c.regs.ID(regNum) == 0
         mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
         

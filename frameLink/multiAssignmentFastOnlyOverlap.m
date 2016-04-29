@@ -118,7 +118,7 @@ if ~isempty(data_c)
                 areaC = data_c.regs.props(ii).Area;
                 tmpdA = (totAreaF-areaC)./totAreaF;
                 tmpError = setError(tmpdA,minDA,maxDA);
-              
+                
                 
                 if numel(tmpError) > 0 && tmpError(1) == 0
                     assignments{ii} = tmpAssign(1);
@@ -137,7 +137,7 @@ if ~isempty(data_c)
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
                     errorR(ii) =  tmpError(1);
-                    dA(ii) = tmpdA(1);                
+                    dA(ii) = tmpdA(1);
                 end
             end
         end
@@ -147,23 +147,7 @@ if ~isempty(data_c)
     
     
     if debug_flag
-        figure(1)
-        imshow(data_f.phase,[]);
-        figure(2)
-        imshow(data_c.phase,[]);
-        figure(3);
-        % check out the assignments :)
-        if forward
-            for uu = 1:data_c.regs.num_regs
-                intDisplay (data_c,data_f,assignments{uu},uu)
-                pause;
-            end
-        else
-            for uu = 1:numRegs2
-                intDisplay (data_c,data_f,uu,revAssign{uu})
-                pause;
-            end
-        end
+        visualizeLinking(data_c,data_f,assignments);
     end
 end
 
@@ -171,6 +155,36 @@ end
 
 end
 
+
+function visualizeLinking(data_c,data_f,assignments)
+figure(1)
+clf;
+subplot(1,2,1)
+imshow(data_c.mask_cell);
+subplot(1,2,2)
+imshow(data_f.mask_cell);
+num_ass = numel(assignments);
+randcolor = hsv(256);
+markers = {'o','s','d','>','<','^','v','p','h'}
+
+for c = 1 : num_ass
+    assF = assignments {c};
+    if ~isempty(assF)
+        randomMarker = markers{randi(numel(markers),1)};
+        randjet = randi(256,1);
+        color = randcolor(randjet,:)
+        figure(1);
+        subplot(1,2,1)
+        hold on;
+        plot(data_c.regs.props(c).Centroid(1),data_c.regs.props(c).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
+        subplot(1,2,2)
+        for i = 1 : numel(assF)
+            hold on;
+            plot(data_f.regs.props(assF(i)).Centroid(1),data_f.regs.props(assF(i)).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
+        end
+    end
+end
+end
 
 function errorR = setError(DA,minDA,maxDA)
 errorR = zeros(1, numel(DA));
@@ -193,37 +207,3 @@ end
 comboCentroid = comboCentroid/numel(regNums); % mean centroid
 comboMask = (comboMask>0);
 end
-
-
-
-
-
-
-function intDisplay (data_c,data_f,regF,regC)
-% reg : maskF
-% green : maskC
-% blue : all cell masks  in c
-
-
-maskC = data_c.regs.regs_label*0;
-for c = 1 : numel(regC)
-    if ~isnan(regC(c))
-        maskC = maskC + (data_c.regs.regs_label == regC(c))>0;
-    end
-end
-
-maskF = data_f.regs.regs_label*0;
-
-if isempty(regF)
-    disp('nothing')
-    imshow (cat(3,0*ag(maskF),ag(maskC),ag(data_c.mask_cell)));
-else
-    for f = 1 : numel(regF)
-        if ~isnan(regF(f))
-            maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
-        end
-    end
-    imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
-end
-end
-

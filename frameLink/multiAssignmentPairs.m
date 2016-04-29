@@ -1,33 +1,47 @@
 function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
-% multiAssignmentPairs : links regions in data_c to regions in data_f. 
+% multiAssignmentPairs : links regions in data_c to regions in data_f.
 % Each row is assigned to one column only - starting by the minimum
 % possible cost and continuing to the next minimum possible cost.
 %
-% INPUT : 
+% INPUT :
 %    (data_c, data_f,CONST, forward, debug_flag)
 %
-% OUTPUT : 
+% OUTPUT :
 %   [assignments,errorR,totCost,allC,allF]
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+
+DA_MIN = CONST.trackOpti.DA_MIN;
+DA_MAX =  CONST.trackOpti.DA_MAX;
+
+
+if forward
+    sign = 1;
+else
+    sign = -1;
+end
+
+maxDA = max(sign * DA_MIN,sign * DA_MAX);
+minDA = min(sign * DA_MIN,sign * DA_MAX);
 
 if ~exist('debug_flag','var') || isempty(debug_flag)
     debug_flag = 0;
@@ -48,6 +62,7 @@ centroidWeight = 5;
 areaFactor = 20;
 areaChangeFactor = 100;
 dA = [];
+
 if ~isempty(data_c)
     if ~isfield(data_c,'regs')
         data_c = updateRegionFields (data_c,CONST);
@@ -61,7 +76,7 @@ if ~isempty(data_c)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
         end
-                
+        
         numRegs2 = data_f.regs.num_regs;
         regsInC = 1:data_c.regs.num_regs;
         regsInF = 1:data_f.regs.num_regs;
@@ -71,7 +86,7 @@ if ~isempty(data_c)
         
         idsF(1,regsInF) = regsInF;
         idsF(2,regsInF) = NaN;
-               
+        
         % colony calculation
         maskBgFill= imfill(data_c.mask_bg,'holes');
         colony_labels = bwlabel(maskBgFill);
@@ -138,7 +153,7 @@ if ~isempty(data_c)
             % condition for good one to one to mapping
             alreadyFoundOneToOne = ~isSingleRegC  && (goodOneToOne(cRegs(1)) ...
                 || goodOneToOne(cRegs(2))) ;
-                       
+            
             % check that region is still around - sometimes there are empty
             % regions in the regs.
             if isSingleRegC
@@ -152,7 +167,7 @@ if ~isempty(data_c)
             if  ~alreadyFoundOneToOne && regionExists
                 
                 [maskC,areaC,centroidC] = regProperties (data_c,cRegs);
-                             
+                
                 % colony it belongs to
                 colOverlap = colony_labels(maskC);
                 if sum(colOverlap(:)) == 0
@@ -171,7 +186,7 @@ if ~isempty(data_c)
                 possibleMapInd = unique(tmpregs2);
                 possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
                 
-                for uu = 1:numel(possibleMapInd)                   
+                for uu = 1:numel(possibleMapInd)
                     % one to one mapping
                     idF = possibleMapInd(uu);
                     [maskF,areaF,centroidF] = regProperties (data_f,idF);
@@ -291,17 +306,8 @@ if ~isempty(data_c)
         assignedInF = [];
         
         while nansum (costMat(:)) > 0
-            setError = false;
             [minCost,ind] = min(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
-            dA(asgnRow) = areaChange(asgnRow,asgnCol);
-            
-            % if area changes by a lot set an error
-            if forward && (dA(asgnRow) < -0.1 ||   dA(asgnRow) > 0.3)
-                setError = true;
-            elseif ~forward && (dA(asgnRow) > 0.1 ||   dA(asgnRow) > -0.3)
-                setError = true;
-            end
             
             
             assignTemp = allF(:,asgnCol)';
@@ -309,25 +315,13 @@ if ~isempty(data_c)
             
             regionsInC = allC (:,asgnRow);
             assignments {regionsInC(1)} = assignTemp;
-            if setError
-                errorR (regionsInC(1))  = 1;
-            end
+            dA(regionsInC(1)) = areaChange(asgnRow,asgnCol);
+            
             
             if ~isnan(regionsInC(2))
                 assignments {regionsInC(2)} = assignTemp;
-                if setError
-                    errorR (regionsInC(2))  = 1;
-                end
+                dA(regionsInC(2)) = areaChange(asgnRow,asgnCol);
             end
-            
-            if debug_flag
-                intDisplay (data_c,data_f,assignTemp,regionsInC);
-                assignTemp
-                regionsInC
-                % pause;
-            end
-            
-            
             
             assignedInC  = [assignedInC;regionsInC'];
             assignedInF = [assignedInF;assignTemp'];
@@ -343,10 +337,9 @@ if ~isempty(data_c)
         leftInC = setdiff (regsInC,assignedInC);
         leftInF = setdiff (regsInF,assignedInF);
         newleftInC = leftInC;
-        % fix assignment errors
-        % best next assignments for those
-        [~,minIndxF] = min(totCost');
-        %[~,minIndxC] = min(totCost');
+        
+        % fix assignment error - best next assignments for those
+        [~,minIndxF] = min(totCost,[],2);
         
         
         for kk = 1 : numel(leftInC)
@@ -362,19 +355,21 @@ if ~isempty(data_c)
             
             % would second option be good enough?
             totCostTemp = totCost(badC,:);
-            costBef = totCostTemp( bestF);
-            totCostTemp( bestF) = NaN;
-            [cost,badCSecond] = min(totCostTemp);
+            costBef = totCostTemp(bestF);
+            totCostTemp(bestF) = NaN;
+            [cost,badCSecondF] = min(totCostTemp);
             
-            if any(leftInF == badCSecond)
-                assignments{badC} = badCSecond;
+            if any(leftInF == badCSecondF)
+                assignments{badC} = badCSecondF;
+                dA(badC) = areaChange(badC,badCSecondF);
                 assignments{leftC} = bestF;
+                dA(leftC) = areaChange(leftC,bestF);
                 newleftInC = setdiff(newleftInC,leftC);
             end
             
-            
         end
         
+        errorR = setError(dA,minDA,maxDA);
         
         % make list of revAssign
         revAssign = cell( 1, numRegs2);
@@ -390,24 +385,21 @@ if ~isempty(data_c)
             errorR (ii) = 1;
         end
         
-        %
-        %         debug_flag = 0;
-        %         if debug_flag
-        %             figure(1)
-        %             imshow(data_f.phase,[]);
-        %             figure(2)
-        %             imshow(data_c.phase,[]);
-        %
-        %             figure(3);
-        %             % check out the assignments :)
-        %             for uu = 1:data_c.regs.num_regs
-        %                 intDisplay (data_c,data_f,assignments{uu},uu)
-        %                 pause;
-        %             end
-        %         end
-        %
+        
+        
+        if debug_flag
+            visualizeLinking(data_c,data_f,assignments);
+        end
+        
     end
 end
+end
+
+
+function errorR = setError(DA,minDA,maxDA)
+errorR = zeros(1, numel(DA));
+errorR (DA < minDA ) = 2;
+errorR (DA > maxDA) = 3;
 end
 
 function [comboMask,comboArea,comboCentroid] = regProperties (data_c,regNums)
@@ -427,27 +419,32 @@ comboMask = (comboMask>0);
 end
 
 
+function visualizeLinking(data_c,data_f,assignments)
+figure(1)
+clf;
+subplot(1,2,1)
+imshow(data_c.mask_cell);
+subplot(1,2,2)
+imshow(data_f.mask_cell);
+num_ass = numel(assignments);
+randcolor = hsv(256);
+markers = {'o','s','d','>','<','^','v','p','h'};
 
-function intDisplay (data_c,data_f,regF,regC)
-
-maskC = data_c.regs.regs_label*0;
-for c = 1 : numel(regC)
-    if ~isnan(regC(c))
-        maskC = maskC + (data_c.regs.regs_label == regC(c))>0;
-    end
-end
-
-maskF = data_f.regs.regs_label*0;
-
-if isempty(regF)
-    disp('nothing')
-    imshow (cat(3,0*ag(maskF),ag(maskC),ag(data_c.mask_cell)));
-else
-    for f = 1 : numel(regF)
-        if ~isnan(regF(f))
-            maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
+for c = 1 : num_ass
+    assF = assignments {c};
+    if ~isempty(assF)
+        randomMarker = markers{randi(numel(markers),1)};
+        randjet = randi(256,1);
+        color = randcolor(randjet,:);
+        figure(1);
+        subplot(1,2,1)
+        hold on;
+        plot(data_c.regs.props(c).Centroid(1),data_c.regs.props(c).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
+        subplot(1,2,2)
+        for i = 1 : numel(assF)
+            hold on;
+            plot(data_f.regs.props(assF(i)).Centroid(1),data_f.regs.props(assF(i)).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
         end
     end
-    imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
 end
 end
