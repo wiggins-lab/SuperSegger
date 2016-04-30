@@ -45,9 +45,12 @@ if ~exist('CLEAN_FLAG') || isempty( CLEAN_FLAG )
     CLEAN_FLAG = true;
 end
 
-if ~exist('header')
-    header = [];
+if ~exist('header','var')
     header = 'trackOpti no header: ';
+end
+
+if ~exist('verbose','var')
+    verbose = 1;
 end
 
 % turn skip off if skip isn't set.
