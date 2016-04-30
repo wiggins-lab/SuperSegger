@@ -40,6 +40,7 @@ end
 
 function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.35 0.7])
 guidata(hObject, handles);
 
 
@@ -105,8 +106,8 @@ if isempty (dirname)
 end
 
 if (handles.ec60.Value + handles.ec100.Value + handles.pa100.Value + ...
-        handles.a60.Value + handles.pa60.Value + handles.a60.Value + ...
-        handles.pam60.Value+handles.eclb60.Value) > 1
+        handles.pa60.Value + ...
+        handles.bay60.Value+handles.eclb60.Value) > 1
     errordlg ('Please select only one constant.')
     return
 end
@@ -121,20 +122,17 @@ elseif handles.pa100.Value;
     text = '100XPa';
 elseif handles.pa60.Value;
     text = '60XPa';
-elseif handles.a60.Value;
-    text = '60XA';
 elseif handles.eclb60.Value;
     text = '60XEcLB';
-elseif handles.pam60.Value;
-    text = '60XPaM';
-elseif handles.bthai60.Value;
-    text = '60XBthai';
+elseif handles.bay60.Value;
+    text = '60XBay';
 end
+
 
 % get values for constants
 parallel = handles.parallel_flag.Value;
 if ~strcmp(text,'');
-    CONST = loadConstants(text, parallel);
+    CONST = loadConstantsNN(text, parallel);
 elseif isfield(handles,'CONST') && ~isempty(handles.CONST)
     CONST = handles.CONST;
 else
@@ -181,24 +179,19 @@ end
 if handles.pa60.Value;
     resFlags{end+1} = '60XPa';
 end
-if handles.a60.Value;
-    resFlags{end+1} = '60XA';
+if handles.bay60.Value;
+    resFlags{end+1} = '60XBay';
 end
 if handles.eclb60.Value;
     resFlags{end+1} = '60XEcLB';
 end
-if handles.pam60.Value;
-    resFlags{end+1} = '60XPaM';
-end
-if handles.bthai60.Value;
-    resFlags{end+1} = '60XBthai';
-end
+
 tryDifferentConstants(handles.directory.String, resFlags);
 
 % loads constants that user selects 
 function loadConstMine_Callback(hObject, eventdata, handles)
 if get(hObject,'Value')
-[filename,path] = uigetfile('*.mat', 'Pick a superSegger constants file');;
+[filename,path] = uigetfile('*.mat', 'Pick a superSegger constants file');
 handles.CONST = load([path,'/',filename]);
 else
     handles.CONST  = [];

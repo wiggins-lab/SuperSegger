@@ -66,8 +66,8 @@ if ~isempty(dirname)
         
         nameInfo.npos(:,1) = [nt(end); nc(1); nnxy; nz(1)];
         imEnd = imread( [dirname, MakeFileName(nameInfo) ]);
+        figure(1);
         clf;
-        
         im = cat(3, ag(im1), ag(imEnd), 0*ag(imEnd));
         imshow(im)
         
@@ -97,7 +97,7 @@ if ~isempty(dirname)
         
         yy = y(1):y(2);
         xx = x(1):x(2);
-        
+        figure(1);
         clf;
         imshow(im(yy,xx,:));
         

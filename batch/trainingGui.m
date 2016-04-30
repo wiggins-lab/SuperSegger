@@ -22,7 +22,7 @@ function varargout = trainingGui(varargin)
 
 % Edit the above text to modify the response to help trainingGui
 
-% Last Modified by GUIDE v2.5 18-Apr-2016 14:53:43
+% Last Modified by GUIDE v2.5 29-Apr-2016 16:38:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,13 +51,9 @@ function trainingGui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to trainingGui (see VARARGIN)
 
-% Choose default command line output for trainingGui
 handles.output = hObject;
-
-% Update handles structure
+set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 guidata(hObject, handles);
-
-initialize_gui(hObject, handles, false);
 
 % UIWAIT makes trainingGui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -76,22 +72,37 @@ varargout{1} = handles.output;
 
 
 
-% --- Executes on button press in calculate.
-function calculate_Callback(hObject, eventdata, handles)
-% hObject    handle to calculate (see GCBO)
+% --- Executes on button press in cut_and_seg.
+function cut_and_seg_Callback(hObject, eventdata, handles)
+% hObject    handle to cut_and_seg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% set constants
+dirname = handles.directory.String;
+
+disp ('Croppping images - choose a small region with a couple of colonies');
+% only xy1
+trackOptiCropMulti(dirname,1)
+segTrainingDir = [dirname,filesep,'crop',filesep];
+resValue = get(handles.constants_list,'Value'); 
+res = handles.constants_list.String{resValue};
+CONST = loadConstantsNN (res,0);
+
+skip = 1;
+clean_flag = 1;
+handles.directory.String = segTrainingDir;
+only_seg = 1; % runs only segmentation, no linking
+BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,0,1,only_seg);
+
+
+% --- Executes on button press in try_const.
+function try_const_Callback(hObject, eventdata, handles)
+% hObject    handle to try_const (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-mass = handles.metricdata.density * handles.metricdata.volume;
-set(handles.mass, 'String', mass);
 
-% --- Executes on button press in reset.
-function reset_Callback(hObject, eventdata, handles)
-% hObject    handle to reset (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-initialize_gui(gcbf, handles, true);
+tryDifferentConstants(handles.directory.String, []);
 
 
 
@@ -118,61 +129,62 @@ function pushbutton7_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton8.
-function pushbutton8_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton8 (see GCBO)
+% --- Executes on button press in toggle_segs.
+function toggle_segs_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_segs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton9.
-function pushbutton9_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton9 (see GCBO)
+% --- Executes on button press in del_areas.
+function del_areas_Callback(hObject, eventdata, handles)
+% hObject    handle to del_areas (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton10.
-function pushbutton10_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton10 (see GCBO)
+% --- Executes on button press in train_segs.
+function train_segs_Callback(hObject, eventdata, handles)
+% hObject    handle to train_segs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton11.
-function pushbutton11_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton11 (see GCBO)
+% --- Executes on button press in toggle_regs.
+function toggle_regs_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton12.
-function pushbutton12_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton12 (see GCBO)
+% --- Executes on button press in bad_regs.
+function bad_regs_Callback(hObject, eventdata, handles)
+% hObject    handle to bad_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton13.
-function pushbutton13_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton13 (see GCBO)
+% --- Executes on button press in train_regs.
+function train_regs_Callback(hObject, eventdata, handles)
+% hObject    handle to train_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on selection change in listbox2.
-function listbox2_Callback(hObject, eventdata, handles)
-% hObject    handle to listbox2 (see GCBO)
+% --- Executes on selection change in constants_list.
+function constants_list_Callback(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns listbox2 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from listbox2
+% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from constants_list
+
 
 
 % --- Executes during object creation, after setting all properties.
-function listbox2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to listbox2 (see GCBO)
+function constants_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -181,3 +193,48 @@ function listbox2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+function directory_Callback(hObject, eventdata, handles)
+% hObject    handle to directory (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of directory as text
+%        str2double(get(hObject,'String')) returns contents of directory as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function directory_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to directory (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in save.
+function save_Callback(hObject, eventdata, handles)
+% hObject    handle to save (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over constants_list.
+function constants_list_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function image_folder_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to image_folder (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.directory.String = uigetdir;

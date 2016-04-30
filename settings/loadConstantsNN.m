@@ -42,8 +42,6 @@ if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
 end
 
 
-disp('loadConstants: Initializing.');
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 % Specify scope resolution                                                %                                                                       %                                %
@@ -86,30 +84,7 @@ elseif isa(res, 'char' );
     end
 end
 
-if strcmp (resFlag,'60XEc')
-    CONST = load('60XEcnn_FULLCONST.mat');
-elseif strcmp (resFlag,'100XEc')
-    CONST = load('100XEcnn_FULLCONST.mat');
-elseif strcmp (resFlag,'60XEcLB')
-    CONST = load('60XEcLBnn_FULLCONST.mat');
-elseif strcmp (resFlag,'60XBay')
-    CONST = load('60XBaynn_FULLCONST.mat');
-    elseif strcmp (resFlag,'100XPa')
-    CONST = load('100xPann_FULLCONST.mat');
-    elseif strcmp (resFlag,'60XPa')
-    CONST = load('60XPann_FULLCONST.mat');
-else
-    error('Constants not loaded : no match found. Aborting.');
-end
 
-% temp until they are put in the constants
-
-CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
-
-CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
-CONST.trackOpti.DA_MIN = -0.1;
-CONST.trackOpti.DA_MAX = 0.3;
-CONST.regionScoreFun.names = getRegNames3;
 
 % Settings for alignment in differnt channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
@@ -120,7 +95,7 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
     CONST.imAlign.GFP};        % c3 channel name
 
-                                       
+                                      
 
 % Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
@@ -136,8 +111,139 @@ end
 
 CONST.parallel.xy_parallel = 0;
 CONST.parallel.PARALLEL_FLAG = PARALLEL_FLAG;
-CONST.parallel.show_status   = ~(CONST.parallel.parallel_pool_num);
+CONST.parallel.show_status = ~(CONST.parallel.parallel_pool_num);
 
+
+
+CONST.align.ALIGN_FLAG = 1;
+
+% segmentation parameters
+CONST.seg.segmentScoreFun = @scoreNeuralNet
+CONST.seg.segFun= @ssoSegFunPerReg
+CONST.seg.OPTI_FLAG = 1
+CONST.seg.names = getSegInfoNames;
+
+% CONST.superSeggerOpti : need to be set separately for each constant
+
+
+% region optimization parameters
+CONST.regionOpti.MAX_NUM_RESOLVE =  5000;
+CONST.regionOpti.MAX_NUM_SYSTEMATIC =  8;
+CONST.regionOpti.CutOffScoreHi = 10;
+CONST.regionOpti.CutOffScoreLo = -10;
+CONST.regionOpti.fignum =  1;
+CONST.regionOpti.Nt = 500;
+CONST.regionOpti.minGoodRegScore = 10;
+CONST.regionOpti.neighMaxScore = 10;
+CONST.regionOpti.ADJUST_FLAG = 1;
+CONST.regionOpti.MAX_WIDTH = 20; % CHANGE : should be different for each cell type
+CONST.regionOpti.MAX_LENGTH = 25; % CHANGE : should be different for each cell type - this should be called min_length
+CONST.regionOpti.DE_norm = 0.5000;
+
+
+% region score functions
+[~,CONST.regionScoreFun.NUM_INFO] = getRegNames3;
+CONST.regionScoreFun.names = getRegNames3;
+CONST.regionScoreFun.fun = @scoreNeuralNet;
+CONST.regionScoreFun.props = @cellprops3;
+
+% trackOpti constants
+CONST.trackOpti.MIN_AREA = 20; % CHANGE : should be different for each cell type
+CONST.trackOpti.NEIGHBOR_FLAG = 0; 
+CONST.trackOpti.pole_flag = 1;
+
+
+% linking constants
+CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800
+CONST.trackOpti.DA_MAX = 0.3;     
+CONST.trackOpti.DA_MIN = -0.1;
+CONST.trackOpti.LYSE_FLAG = 0;
+CONST.trackOpti.REMOVE_STRAY = 1;
+CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30;
+CONST.trackOpti.SCORE_LIMIT_MOTHER = -30;
+CONST.trackOpti.MIN_CELL_AGE = 5;
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+
+
+% pixelsize
+if all(ismember('100X',resFlag))
+    CONST.getLocusTracks.PixelSize        = 6/60;
+elseif all(ismember('60X',resFlag))
+    CONST.getLocusTracks.PixelSize        = 6/100;
+else
+    CONST.getLocusTracks.PixelSize        = [];
+end
+
+% getLocusTracks Constants
+CONST.getLocusTracks.FLUOR1_MIN_SCORE = 3;
+CONST.getLocusTracks.FLUOR2_MIN_SCORE = 3;
+CONST.getLocusTracks.FLUOR1_REL       = 0.3;
+CONST.getLocusTracks.FLUOR2_REL       = 0.3;
+CONST.getLocusTracks.TimeStep         = 1;
+
+
+% view constants
+CONST.view.showFullCellCycleOnly = true;
+CONST.view.orientFlag            = true;
+CONST.view.falseColorFlag        = false;
+CONST.view.maxNumCell            = [];
+CONST.view.LogView         = false;
+
+
+% super resolution constants
+% Const for findFocusSR
+CONST.findFocusSR.MAX_FOCUS_NUM = 8;
+CONST.findFocusSR.crop          = 4;
+CONST.findFocusSR.gaussR        = 1;
+CONST.findFocusSR.MAX_TRACE_NUM = 1000;
+CONST.findFocusSR.WS_CUT        = 50;
+CONST.findFocusSR.MAX_OFF       = 3;
+CONST.findFocusSR.I_MIN         = 150;
+CONST.findFocusSR.mag           = 16;
+CONST.findFocusSR.MIN_TRACE_LEN = 0;
+CONST.findFocusSR.R_LINK        = 2;
+CONST.findFocusSR.R_LINK        = 2;
+CONST.findFocusSR.SED_WINDOW    = 10;
+CONST.findFocusSR.SED_P         = 10;
+CONST.findFocusSR.A_MIN         =  6;
+
+% Const for SR
+CONST.SR.opt =  optimset('MaxIter',1000,'Display','off', 'TolX', 1e-8);
+
+% Setup CONST calues for image processing
+CONST.SR.GausImgFilter_HighPass = fspecial('gaussian',141,10);
+CONST.SR.GausImgFilter_LowPass3 = fspecial('gaussian',21,3);
+CONST.SR.GausImgFilter_LowPass2 = fspecial('gaussian',21,2);
+CONST.SR.GausImgFilter_LowPass1 = fspecial('gaussian',7,1.25);
+CONST.SR.maxBlinkNum = 2;
+
+% this is the pad size for cropping regions for fitting
+CONST.SR.pad = 8;
+CONST.SR.crop = 4;
+CONST.SR.Icut = 1000;
+CONST.SR.rcut = 10; % The maximum distance between frames for two PSFs 
+% to be considered two seperate PSFs.
+
+CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis 
+
+
+
+
+if strcmp (resFlag,'60XEc')
+    CONST = load('60XEcnn_FULLCONST.mat');
+elseif strcmp (resFlag,'100XEc')
+    CONST = load('100XEcnn_FULLCONST.mat');
+elseif strcmp (resFlag,'60XEcLB')
+    CONST = load('60XEcLBnn_FULLCONST.mat');
+elseif strcmp (resFlag,'60XBay')
+    CONST = load('60XBaynn_FULLCONST.mat');
+    elseif strcmp (resFlag,'100XPa')
+    CONST = load('100xPann_FULLCONST.mat');
+    elseif strcmp (resFlag,'60XPa')
+    CONST = load('60XPann_FULLCONST.mat');
+else
+    error('loadConstants: Constants not loaded : no match found. Aborting.');
+end
 
 
 end

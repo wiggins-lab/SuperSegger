@@ -46,6 +46,9 @@ if ~exist('crop_box','var')
     crop_box = '';
 end
 
+if ~exist('verbose','var')
+    verbose = 1;
+end
 
 % create the masks and segments
 data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box, verbose);
