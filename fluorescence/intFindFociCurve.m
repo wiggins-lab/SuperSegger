@@ -43,7 +43,7 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 DEBUG_FLAG = false;
 fieldname = ['locus', num2str(channelID)];
 
-MIN_SCORE_CUTOFF = getfield(CONST.getLocusTracks, ['FLUOR', num2str(channelID), '_MIN_SCORE']);
+MIN_SCORE_CUTOFF = CONST.getLocusTracks.(['FLUOR', num2str(channelID),'_MIN_SCORE']);
 
 options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
 

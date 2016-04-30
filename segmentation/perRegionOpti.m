@@ -14,21 +14,34 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header, verbose)
 % OUTPUT :
 %       data : data structure with modified segments
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Styliandou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 MAX_LENGTH = CONST.regionOpti.MAX_LENGTH;
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 MAX_NUM_RESOLVE  = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
-CONST.regionOpti.Emin   = .2;
 NUM_INFO = CONST.regionScoreFun.NUM_INFO;
 E = CONST.regionScoreFun.E;
 
-minGoodRegScore = CONST.regionOpti.minGoodRegScore ; 
+minGoodRegScore = CONST.regionOpti.minGoodRegScore ;
 neighMaxScore = CONST.regionOpti.neighMaxScore;
 
 if ~exist( 'verbose', 'var' ) || isempty( verbose )
@@ -77,8 +90,8 @@ for ii = 1:data.regs.num_regs
 end
 
 if verbose
-
-disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
+    
+    disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
 end
 
 % get regions with bad scores
@@ -92,9 +105,9 @@ badReg = badReg(ismember(badReg,small));
 
 numBadRegions = size(badReg,1);
 if verbose
-
-disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
-disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
+    
+    disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
+    disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
 end
 
 % list of already tweaked segments
@@ -116,13 +129,13 @@ while ~isempty(badReg)
     neighbordIds = neighborIds(data.regs.scoreRaw(neighborIds) < neighMaxScore);
     cellMaskDil = imdilate(cellMask, strel('square',3));
     combinedCellMask = regs_label *0;
-
+    
     for kk = 1 : numel(neighborIds)
         combinedCellMask = combinedCellMask + (regs_label == neighborIds(kk));
     end
     
     % add all segments inside the original cell / touching neighbors
-    if  data.regs.info(ii,1) < MAX_LENGTH % for a small cell add all segments 
+    if  data.regs.info(ii,1) < MAX_LENGTH % for a small cell add all segments
         segs_list = unique(cellMaskDil.*segsLabelAll(yy_,xx_));
     else % add only segments to be considered
         segs_list = unique(cellMaskDil.*segsLabelMod(yy_,xx_));
@@ -137,9 +150,9 @@ while ~isempty(badReg)
     
     % remake regions
     regCombLabels = bwlabel(combinedCellMask);
-    combRegProps = regionprops(regCombLabels,'BoundingBox','Orientation','Centroid','Area');  
+    combRegProps = regionprops(regCombLabels,'BoundingBox','Orientation','Centroid','Area');
     
-    % find most overlapping region   
+    % find most overlapping region
     origCellMask = (regs_label == ii);
     %imshow(cat(3,0.5*ag(mask_regs),ag(origCellMask),ag(origCellMask)));
     overlapArea = zeros(1,numel(combRegProps));
@@ -211,22 +224,21 @@ while ~isempty(badReg)
         [vect] = [];
     elseif numel(segs_list) > MAX_NUM_RESOLVE % use raw score
         if verbose
-        disp([header, 'rO: Too many regions to analyze (',num2str(num_segs),').']);
+            disp([header, 'rO: Too many regions to analyze (',num2str(num_segs),').']);
         end
         [vect] = data.segs.scoreRaw(segs_list)>0;
-        Emin = -100;
     elseif numel(segs_list) > MAX_NUM_SYSTEMATIC % use simulated anneal
-         if verbose
-        disp([header, 'rO: Simulated Anneal : (',num2str(num_segs),' segments).']);
-         end
-        [vect,regEmin] = simAnnealMap( segs_list, data, combMask, xx, yy, CONST, 0);
+        if verbose
+            disp([header, 'rO: Simulated Anneal : (',num2str(num_segs),' segments).']);
+        end
+        [vect,~] = simAnnealMap( segs_list, data, combMask, xx, yy, CONST, 0);
     else % use systematic
-          if verbose
-        disp([header, 'rO: Systematic : (',num2str(num_segs),' segments).']);
-          end
-        [vect,regEmin] = systematic( segs_list, data, combMask, xx, yy, CONST);
+        if verbose
+            disp([header, 'rO: Systematic : (',num2str(num_segs),' segments).']);
+        end
+        [vect,~] = systematic( segs_list, data, combMask, xx, yy, CONST);
     end
-        
+    
     if ~isempty(segs_list)
         goodSegList = [goodSegList;segs_list(logical(vect))];
         badSegList = [badSegList;segs_list(~vect)];
@@ -234,7 +246,7 @@ while ~isempty(badReg)
     
     
     if debug_flag
-        % shows the final optimized segments for the combined mask      
+        % shows the final optimized segments for the combined mask
         mod = mask_regs*0;
         mod(yy,xx) = combMask;
         segment_mask = mask_regs*0;
@@ -242,10 +254,10 @@ while ~isempty(badReg)
         for kk = 1:num_segs
             mod = mod - vect(kk)*(segs_list(kk)==segsLabelAll);
             segment_mask = segment_mask + vect(kk)*(segs_list(kk)==segsLabelAll);
-        end        
+        end
         
         figure (2);
-        backer = 0.5*ag(mask_regs);      
+        backer = 0.5*ag(mask_regs);
         imshow(cat(3,backer+ag(segment_mask) + 0.7*ag(ismember(segsLabelAll,segs_list)),backer + ag(mod>0), ag(mod>0) + backer))
         keyboard;
     end

@@ -56,7 +56,10 @@ while ~any(ismember(resFlags,res))
 end
 disp (['Loading constants ', res]);
 
-CONST = loadConstantsNN(res,parallel);
+CONST = loadConstantsNN(res,parallel);disp ('Croppping images - choose a small region with a couple of colonies');
+% only xy1
+trackOptiCropMulti(dirname,1)
+segTrainingDir = [dirname,'crop',filesep];
 
 % 2) cuts the image series for xy1, every 5 time frames
 disp ('Croppping images - choose a small region with a couple of colonies');
@@ -69,7 +72,7 @@ dirname_seg = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
 mkdir(dirname_seg);
 
 only_seg = 1; % runs only segmentation, no linking
-BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,1,only_seg);
+BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,1,1,only_seg);
 
 disp ('Segmentation finished - optimize the segments');
 disp ('Red are correct segments, blue are incorrect segments');

@@ -1,4 +1,4 @@
-function names = getRegNames3()
+function [names,num] = getRegNames3()
 % getRegNames3 : contains the names of the parameters in the E matrix.
 % The E matrix is the coefficients used to score the regions as a 
 % constant + linear function + quadratic function of the parameters.
@@ -28,5 +28,5 @@ names = { 'long axis: ', ...
     'round end max: '};
 
     names = names';
-
+    num  = 21;
 end

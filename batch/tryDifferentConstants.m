@@ -63,15 +63,15 @@ numCols = 3;
 numRows = ceil(numFlags / numCols);
 
 for i = 1:numFlags
-    res = resFlags(i);
-    disp(['trying ', res]);
-    CONST = loadConstantsNN( res{1}, 0 );
+    res = resFlags{i};
+    disp(['Segmenting with ', res]);
+    CONST = loadConstantsNN( res, 0 );
     dataname = 'test';
-    data.SegFile {i} = CONST.seg.segFun( phase, CONST, 'TryingConstants : ', dataname, [] );
-    data.res{i} = res{1};
+    data.SegFile {i} = CONST.seg.segFun( phase, CONST, 'TryingConstants : ', dataname, [] ,0);
+    data.res{i} = res;
 end
-
-close all;
+figure(5);
+close(5);
 figure(5);
 clf;
 ha = tight_subplot(numRows,numCols,[.05 .02],[.05],[.05]);
