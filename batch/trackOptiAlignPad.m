@@ -1,4 +1,4 @@
-function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST, verbose)
+function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
 % trackOptiAlignPad : aligns phase images to correct for microscope drift.
 % To keep as much data as possible, instead of cropping the resulting
 % images it builds a larger image that encompases all drift positions.
@@ -47,11 +47,7 @@ if dirname_ == '.'
 end
 dirname_ = fixDir(dirname_);
 
-
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
-
+verbose = CONST.parallel.verbose;
 file_filter = '*.tif';
 contents=dir([dirname_ file_filter]);
 num_im = numel( contents );
@@ -106,7 +102,7 @@ crop_box = cell(1, num_xy);
 % parallelized alignemnt for each xy
 parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
-        dirname_, targetd, nameInfo, precision, CONST,  verbose);
+        dirname_, targetd, nameInfo, precision, CONST);
 end
 
 end
@@ -114,7 +110,7 @@ end
 
 
 function crop_box = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, ...
-    nnxy, dirname, targetd, nameInfo, precision, CONST,  verbose)
+    nnxy, dirname, targetd, nameInfo, precision, CONST)
 % intFrameAlignXY : Frame alignment for one xy directory
 %
 % INPUT :
@@ -139,6 +135,8 @@ ERR_LIM = 1000000;
 if SHOW_FLAG
     h = waitbar(0,'aligning frames: ');
 end
+
+verbose = CONST.parallel.verbose;
 
 nnt = numel( nt );
 OutArray   = zeros( nnt, 2);
@@ -166,7 +164,7 @@ for it = nt;
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
             if verbose
-                disp(['Image name: ',in_name]);
+                disp(['trackOptiAlignPad : Image name: ',in_name]);
             end
             im = imread(in_name);
             

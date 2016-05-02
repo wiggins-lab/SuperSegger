@@ -1,4 +1,4 @@
-function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header, verbose)
+function [clist, clist_def] = trackOptiCellMarker(dirname, CONST, header)
 %  trackOptiCellMarker : puts together a list of complete cell cycles.
 %  It goes through the dirname/*err.mat files and determines which
 %  cells go through complete cell cycles (i.e. cells in which both birth and 
@@ -34,15 +34,17 @@ function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header, verbose)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if ~exist('header')
+if ~exist('header', 'var')
     header = [];
 end
 
-MIN_CELL_AGE = CONST.trackOpti.MIN_CELL_AGE;
+dirname = fixDir(dirname);
 
+MIN_CELL_AGE = CONST.trackOpti.MIN_CELL_AGE;
+verbose = CONST.parallel.verbose;
 
 % this variable contains the label for every set in the clist variable.
-clist_def =     { 'Cell ID', ...
+clist_def =  { 'Cell ID', ...
     'Region Num Birth', ...
     'Region Num Divide', ...
     'Cell Birth Time', ...
@@ -53,25 +55,7 @@ clist_def =     { 'Cell ID', ...
     'Long Axis Birth', ...
     'Long Axis Divide'};
 
-if ~exist('disp_flag');
-    disp_flag = 0;
-end
 
-list_touch = [];
-
-dirseperator = filesep;
-
-            
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
-
-if(nargin<1 || isempty(dirname))
-    dirname=uigetdir()
-    dirname=[dirname,dirseperator];
-elseif dirname(length(dirname))~=dirseperator
-        dirname=[dirname,dirseperator];
-end
 
 contents=dir([dirname '*_err.mat']);
 num_im = length(contents);

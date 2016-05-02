@@ -1,4 +1,4 @@
-function [data] = regionOpti( data, disp_flag, CONST,header, verbose)
+function [data] = regionOpti( data, disp_flag, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
 % anneal, according to the number of segments to be considered.
@@ -32,21 +32,15 @@ function [data] = regionOpti( data, disp_flag, CONST,header, verbose)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-MAX_WIDTH          = CONST.regionOpti.MAX_WIDTH;
-MAX_LENGTH         = CONST.regionOpti.MAX_LENGTH;
-CutOffScoreHi      = CONST.regionOpti.CutOffScoreHi;
-CutOffScoreLo      = CONST.regionOpti.CutOffScoreLo;
-MAX_NUM_RESOLVE    = CONST.regionOpti.MAX_NUM_RESOLVE;
+MAX_WIDTH = CONST.regionOpti.MAX_WIDTH;
+MAX_LENGTH = CONST.regionOpti.MAX_LENGTH;
+CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
+CutOffScoreLo = CONST.regionOpti.CutOffScoreLo;
+MAX_NUM_RESOLVE = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
-
-CONST.regionOpti.Emin          = .2;
-
-DE_norm          = CONST.regionOpti.DE_norm;
-
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
+CONST.regionOpti.Emin  = .2;
+DE_norm = CONST.regionOpti.DE_norm;
+verbose = CONST.parallel.verbose;
 
 if ~exist('header')
     header = [];
@@ -59,8 +53,8 @@ end
 
 % Turn on and off segs outside the cutoff.
 segs_label = data.segs.segs_label;
-segs_3n    = data.segs.segs_3n;
-segs_bad   = 0*data.segs.segs_3n;
+segs_3n = data.segs.segs_3n;
+segs_bad = 0*data.segs.segs_3n;
 segs_good  = segs_bad;
 segs_good_off  = segs_bad;
 ss = size(segs_3n);

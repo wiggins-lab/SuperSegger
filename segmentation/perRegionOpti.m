@@ -1,4 +1,4 @@
-function [data] = perRegionOpti( data, disp_flag, CONST,header, verbose)
+function [data] = perRegionOpti( data, disp_flag, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
 % It turns off on and off segments using a systematic method, or simulated
 % anneal, according to the nudmber of segments to be considered.
@@ -15,21 +15,21 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header, verbose)
 %       data : data structure with modified segments
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Styliandou & Paul Wiggins.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -43,10 +43,7 @@ E = CONST.regionScoreFun.E;
 
 minGoodRegScore = CONST.regionOpti.minGoodRegScore ;
 neighMaxScore = CONST.regionOpti.neighMaxScore;
-
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
+verbose = CONST.parallel.verbose;
 
 if ~exist('header','var')
     header = [];
@@ -90,7 +87,6 @@ for ii = 1:data.regs.num_regs
 end
 
 if verbose
-    
     disp([header, 'rO: Got ',num2str(data.regs.num_regs),' regions.']);
 end
 
@@ -104,8 +100,7 @@ small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
 badReg = badReg(ismember(badReg,small));
 
 numBadRegions = size(badReg,1);
-if verbose
-    
+if verbose    
     disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
     disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
 end

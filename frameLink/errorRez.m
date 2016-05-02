@@ -1,10 +1,26 @@
 function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
-    data_c, data_r, data_f, CONST, cell_count, header, debug_flag, verbose)
-% errorRez :
+    data_c, data_r, data_f, CONST, cell_count, header, debug_flag)
+% errorRez : links cells from the frame before to the current and attempts to
+% resolve segmentation errors if the linking is inconsistent.
 %
 % INPUT :
+%   time : current frame number
+%   data_c : current time frame data (seg/err) file.
+%   data_r : reverse time frame data (seg/err) file.
+%   data_f : forward time frame data (seg/err) file.
+%   CONST : segmentation parameters.
+%   cell_count : last cell id used.
+%   header : last cell id used.
+%   debug_flag : 1 to display figures for debugging
+%
 % OUTPUT :
-
+%   data_c : updated current time frame data (seg/err) file.
+%   data_r : updated reverse time frame data (seg/err) file.
+%   cell_count : last cell id used.
+%   resetRegions : if true, regions were modified and this frame needs to
+%   be relinked.
+%
+%
 % Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou
 % University of Washington, 2016
@@ -26,7 +42,7 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 global SCORE_LIMIT_MOTHER
 global SCORE_LIMIT_DAUGHTER
 
-
+verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
 SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
@@ -71,13 +87,13 @@ for regNum =  1 : data_c.regs.num_regs;
                 if verbose
                     disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
                 end
-                [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count,verbose);
+                [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
             end
             
         elseif numel(mapCR) == 1 &&  numel (revMap) == 1 && all(data_r.regs.map.f{mapCR} == regNum)
             % MAPS TO ONE AND AGREES
             % sets cell ID from mapped reg, updates death in data_r
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0, verbose);
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 &&  numel (revMap) == 2
             %% one to one but disagreement
@@ -88,8 +104,10 @@ for regNum =  1 : data_c.regs.num_regs;
             sister2 = revMap (revMap~=regNum);
             mother = mapCR;
             
-            imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
-                ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
+            if debug_flag
+                imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
+                    ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
+            end
             
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
             totAreaR =  data_c.regs.props(mother).Area;
@@ -104,7 +122,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % r: one has no forward mapping, or both map to the same in forwa
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                     % wrong division merge cells
-                    [data_c] = merge2Regions (data_c, sister1, sister2);
+                    [data_c] = merge2Regions (data_c, sister1, sister2, CONST);
                     resetRegions = true;
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
@@ -117,7 +135,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 [~,minInd] = min ([data_c.regs.dA.r(sisters)]);
                 keeper = sisters(minInd);
                 remove = sisters(sisters~=keeper);
-                [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0, verbose);
+                [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
                 
                 
                 data_c.regs.map.r{remove} = [];
@@ -130,53 +148,10 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
                 
                 data_c.regs.error.r(remove) = 1;
-                [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count, verbose);
+                [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
                 % make it stray..
                 
             end
-            %         % check costs for division
-            %         idC = find(all(ismember(data_c.regs.idsC.r,[regNum,mapRC])));
-            %         costC = data_c.regs.cost.r(idC,cellR); % cost for both
-            %         costBef = data_c.regs.cost.r(cellC,cellR); % cost for one
-            %         costChangeValue = 200;
-            %
-            %         % maprRC maps to nothing and cost to map both is low
-            %         %markDivEmptyLowCost = isempty(data_c.regs.map.r (cellRmapsTo)) && (costC + costChangeValue < costBef);
-            %
-            %         % both cell C and cellRmapsTo map to cellR - but cellR maps to only one of them.
-            %         % mark division anyway.
-            %         markDiv1RCagree = all(data_c.regs.map.r {cellRmapsTo} == cellR) && all(data_c.regs.map.r {regNum} == cellR);
-            %
-            %
-            %         % mark division
-            %         if markDiv1RCagree
-            %             sister2 = mapRC;
-            %             sister1 = regNum;
-            %             mother = mapCR;
-            %             [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header);
-            %
-            %         elseif ~data_r.regs.deathF(mapCR)
-            %             % Error not fixed : one to one mapping but disagreement between current and
-            %             % reverse
-            %             % continue the cell line anyway and put an error..
-            %             if debug_flag
-            %                 keyboard;
-            %             end
-            %             errorStat = 1;
-            %             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, errorStat);
-            %             data_c.regs.error.label{regNum} = (['Frame: ', num2str(time),...
-            %                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
-            %             data_r.regs.error.label{mapCR} = (['Frame: ', num2str(time),...
-            %                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
-            %             data_r.regs.error.label{mapRC} = (['Frame: ', num2str(time),...
-            %                 ', reg: ', num2str(regNum),' Disagreement in mapping cur -> rev & rev -> cur ].']);
-            %
-            %             disp([header, 'ErRes: ', data_c.regs.error.label{regNum}] );
-            %             data_c.regs.error.r(regNum) = 1;
-            %             data_r.regs.error.f(mapCR) = 1;
-            %
-            %
-            %         end
             
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 2
@@ -188,7 +163,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % ERROR NOT FIXED :  mapCR maps to mother. but mother maps to
                 % two other cells..
                 
-                % POSSIBLE RESOLUTIONS :
+                % OTHER POSSIBLE RESOLUTIONS.. :
                 % 1 : merging missing, cell divided but piece fell out - check
                 % if all three should be mapped
                 % 2 : get the best two couples of the three
@@ -201,7 +176,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 sister3 = mapRC(2);
                 
                 % make a new cell for regNum with error...
-                [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count,verbose);
+                [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
                 data_c.regs.error.r(regNum) = 1;
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                     ', reg: ', num2str(regNum),'. Incorrect Mapping 1 to 2 - making a new cell'];
@@ -211,9 +186,11 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
                 % red is regNum, green is the ones mother maps to, blue is
                 % mother
-                imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
-                    ag((data_c.regs.regs_label == mapRC(1)) + ...
-                    (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
+                if debug_flag
+                    imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
+                        ag((data_c.regs.regs_label == mapRC(1)) + ...
+                        (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
+                end
             else
                 
                 sister1 = regNum;
@@ -224,7 +201,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % r: one has no forward mapping, or both map to the same in forwa
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
-                    [data_c] = merge2Regions (data_c, sister1, sister2);
+                    [data_c] = merge2Regions (data_c, sister1, sister2, CONST);
                     resetRegions = true;
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
@@ -242,7 +219,6 @@ for regNum =  1 : data_c.regs.num_regs;
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==mapCR(1)) + (data_r.regs.regs_label==mapCR(2)))));
-                
             end
             
             success = false;
@@ -259,9 +235,11 @@ for regNum =  1 : data_c.regs.num_regs;
                 if verbose
                     disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
                 end
-                imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
-                    ag(data_r.regs.regs_label == mapCR(1)),...
-                    ag(data_r.regs.regs_label == mapCR(2))));
+                if debug_flag
+                    imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
+                        ag(data_r.regs.regs_label == mapCR(1)),...
+                        ag(data_r.regs.regs_label == mapCR(2))));
+                end
                 resetRegions = true;
             else
                 % ERROR NOT FIXED : link to the one with the best score
@@ -278,7 +256,7 @@ for regNum =  1 : data_c.regs.num_regs;
                     if verbose
                         disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
                     end
-                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, errorStat, verbose);
+                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, errorStat);
                     
                 else
                     errorStat = 1;
@@ -289,7 +267,7 @@ for regNum =  1 : data_c.regs.num_regs;
                     if verbose
                         disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
                     end
-                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat, verbose);
+                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
                     
                 end
                 

@@ -1,4 +1,4 @@
-function trackOptiMakeCell(dirname,CONST,header,verbose)
+function trackOptiMakeCell(dirname,CONST,header)
 % trackOptiMakeCell : generates the CellA field indexed by the region number
 % which contains information about each cell in each region in each frame.
 %
@@ -98,6 +98,8 @@ if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
 dirname = fixDir(dirname);
+
+verbose = CONST.parallel.verbose;
 
 % Get the track/error file names
 contents=dir([dirname '*_err.mat']);
