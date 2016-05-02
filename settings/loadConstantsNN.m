@@ -15,21 +15,21 @@ function CONST = loadConstantsNN( res, PARALLEL_FLAG )
 %                   0 for single core computation
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -42,19 +42,16 @@ if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-% Specify scope resolution                                                %                                                                       %                                %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                                                     %
+%% Specify scope resolution                                                %                                                                       %                                %
 % Values for setting res
-% '60XEc' : loadConstants 60X Ecoli
-% '100XEc': loadConstants 100X Ecoli
-% '60XEcLB': loadConstants 60X Ec LB Ecoli
-% '60XBay'
-% '60XPa'
-% '100XPa' 
-% resflags : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
+% '60XEc' : constants for 60X Ecoli
+% '100XEc': constants for 100X Ecoli
+% '60XEcLB': constants for 60X LB Ecoli
+% '60XBay' : constants for 60X Baylyi
+% '60XPa': constants for 60X Pseudemonas
+% '100XPa': constants for 100X Pseudemonas
+% res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
 resFlag = [];
 if isa(res,'double' )  && res == 60
@@ -75,7 +72,7 @@ elseif isa(res, 'char' );
     elseif strcmpi(res,'60XBay')
         disp('loadConstants:  60X Baylyi');
         resFlag = '60XBay';
-     elseif strcmpi(res,'60XPa')
+    elseif strcmpi(res,'60XPa')
         disp('loadConstants:  60X Pseudemonas');
         resFlag = '60XPa';
     elseif strcmpi(res,'100XPa')
@@ -95,40 +92,18 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
     CONST.imAlign.GFP};        % c3 channel name
 
-                                      
-
-% Parallel processing on multiple cores settings :
-if PARALLEL_FLAG
-    poolobj = gcp('nocreate'); % If no pool, do not create new one.
-    if isempty(poolobj)
-        poolobj = parpool('local');
-    end
-    poolobj.IdleTimeout = 360; % close after idle for 3 hours
-    CONST.parallel.parallel_pool_num = poolobj.NumWorkers;
-else
-    CONST.parallel.parallel_pool_num = 0;
-end
-
-CONST.parallel.xy_parallel = 0;
-CONST.parallel.PARALLEL_FLAG = PARALLEL_FLAG;
-CONST.parallel.show_status = ~(CONST.parallel.parallel_pool_num);
-
-
-
 CONST.align.ALIGN_FLAG = 1;
 
 % segmentation parameters
-CONST.seg.segmentScoreFun = @scoreNeuralNet
-CONST.seg.segFun= @ssoSegFunPerReg
-CONST.seg.OPTI_FLAG = 1
-CONST.seg.names = getSegInfoNames;
-
-% CONST.superSeggerOpti : need to be set separately for each constant
+% CONST.seg.segmentScoreFun = @scoreNeuralNet
+% CONST.seg.segFun= @ssoSegFunPerReg;
+% CONST.seg.OPTI_FLAG = 1;
+% CONST.seg.names = getSegInfoNames;
 
 
 % region optimization parameters
-CONST.regionOpti.MAX_NUM_RESOLVE =  5000;
-CONST.regionOpti.MAX_NUM_SYSTEMATIC =  8;
+CONST.regionOpti.MAX_NUM_RESOLVE = 5000;
+CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8;
 CONST.regionOpti.CutOffScoreHi = 10;
 CONST.regionOpti.CutOffScoreLo = -10;
 CONST.regionOpti.fignum =  1;
@@ -136,26 +111,21 @@ CONST.regionOpti.Nt = 500;
 CONST.regionOpti.minGoodRegScore = 10;
 CONST.regionOpti.neighMaxScore = 10;
 CONST.regionOpti.ADJUST_FLAG = 1;
-CONST.regionOpti.MAX_WIDTH = 20; % CHANGE : should be different for each cell type
-CONST.regionOpti.MAX_LENGTH = 25; % CHANGE : should be different for each cell type - this should be called min_length
 CONST.regionOpti.DE_norm = 0.5000;
 
-
 % region score functions
-[~,CONST.regionScoreFun.NUM_INFO] = getRegNames3;
-CONST.regionScoreFun.names = getRegNames3;
-CONST.regionScoreFun.fun = @scoreNeuralNet;
-CONST.regionScoreFun.props = @cellprops3;
+% [~,CONST.regionScoreFun.NUM_INFO] = getRegNames3;
+% CONST.regionScoreFun.names = getRegNames3;
+% CONST.regionScoreFun.fun = @scoreNeuralNet;
+% CONST.regionScoreFun.props = @cellprops3;
 
-% trackOpti constants
-CONST.trackOpti.MIN_AREA = 20; % CHANGE : should be different for each cell type
-CONST.trackOpti.NEIGHBOR_FLAG = 0; 
+% trackOpti : general constants
+CONST.trackOpti.NEIGHBOR_FLAG = 0;
 CONST.trackOpti.pole_flag = 1;
 
-
-% linking constants
-CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800
-CONST.trackOpti.DA_MAX = 0.3;     
+% trackOpti : linking constants
+CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
+CONST.trackOpti.DA_MAX = 0.3;
 CONST.trackOpti.DA_MIN = -0.1;
 CONST.trackOpti.LYSE_FLAG = 0;
 CONST.trackOpti.REMOVE_STRAY = 1;
@@ -163,6 +133,14 @@ CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30;
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30;
 CONST.trackOpti.MIN_CELL_AGE = 5;
 CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+
+
+% Fluorescence calculations : locates foci and caclulates fluorescence
+% statistics.
+CONST.trackLoci.crop = 4;
+CONST.trackLoci.numSpots = [];
+CONST.trackLoci.fluorFlag = 1;
+CONST.trackLoci.gate = [];
 
 
 % pixelsize
@@ -181,13 +159,12 @@ CONST.getLocusTracks.FLUOR1_REL       = 0.3;
 CONST.getLocusTracks.FLUOR2_REL       = 0.3;
 CONST.getLocusTracks.TimeStep         = 1;
 
-
 % view constants
-CONST.view.showFullCellCycleOnly = true;
-CONST.view.orientFlag            = true;
-CONST.view.falseColorFlag        = false;
-CONST.view.maxNumCell            = [];
-CONST.view.LogView         = false;
+CONST.view.showFullCellCycleOnly = false;
+CONST.view.orientFlag = true;
+CONST.view.falseColorFlag = false;
+CONST.view.LogView = false;
+CONST.view.maxNumCell = [];
 
 
 % super resolution constants
@@ -221,29 +198,62 @@ CONST.SR.maxBlinkNum = 2;
 CONST.SR.pad = 8;
 CONST.SR.crop = 4;
 CONST.SR.Icut = 1000;
-CONST.SR.rcut = 10; % The maximum distance between frames for two PSFs 
+CONST.SR.rcut = 10; % maximum distance between frames for two PSFs
 % to be considered two seperate PSFs.
 
-CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis 
+CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis
 
 
 
-
+% loading the different values for each constant
 if strcmp (resFlag,'60XEc')
-    CONST = load('60XEcnn_FULLCONST.mat');
+    ConstLoaded = load('60XEcnn_FULLCONST.mat');
 elseif strcmp (resFlag,'100XEc')
-    CONST = load('100XEcnn_FULLCONST.mat');
+    ConstLoaded = load('100XEcnn_FULLCONST.mat');
 elseif strcmp (resFlag,'60XEcLB')
-    CONST = load('60XEcLBnn_FULLCONST.mat');
+    ConstLoaded = load('60XEcLBnn_FULLCONST.mat');
 elseif strcmp (resFlag,'60XBay')
-    CONST = load('60XBaynn_FULLCONST.mat');
-    elseif strcmp (resFlag,'100XPa')
-    CONST = load('100xPann_FULLCONST.mat');
-    elseif strcmp (resFlag,'60XPa')
-    CONST = load('60XPann_FULLCONST.mat');
+    ConstLoaded = load('60XBaynn_FULLCONST.mat');
+elseif strcmp (resFlag,'100XPa')
+    ConstLoaded = load('100xPann_FULLCONST.mat');
+elseif strcmp (resFlag,'60XPa')
+    ConstLoaded = load('60XPann_FULLCONST.mat');
 else
     error('loadConstants: Constants not loaded : no match found. Aborting.');
 end
 
+
+% different values from each constant
+CONST.superSeggerOpti = ConstLoaded.superSeggerOpti;
+CONST.seg = ConstLoaded.seg;
+CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
+CONST.regionOpti.MAX_LENGTH =  ConstLoaded.regionOpti.MAX_LENGTH ;
+CONST.regionScoreFun.names = ConstLoaded.regionScoreFun.names;
+CONST.regionScoreFun.fun =ConstLoaded.regionScoreFun.fun;
+CONST.regionScoreFun.props = ConstLoaded.regionScoreFun.props;
+CONST.regionScoreFun = ConstLoaded.regionScoreFun;
+CONST.ResFlag = resFlag;
+CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
+
+
+% Parallel processing on multiple cores settings :
+if PARALLEL_FLAG
+    poolobj = gcp('nocreate'); % If no pool, do not create new one.
+    if isempty(poolobj)
+        poolobj = parpool('local');
+    end
+    poolobj.IdleTimeout = 360; % close after idle for 3 hours
+    CONST.parallel.parallel_pool_num = poolobj.NumWorkers;
+else
+    CONST.parallel.parallel_pool_num = 0;
+end
+
+CONST.parallel.xy_parallel = 0;
+CONST.parallel.PARALLEL_FLAG = PARALLEL_FLAG;
+CONST.parallel.show_status = ~(CONST.parallel.parallel_pool_num);
+CONST.parallel.verbose = 1;
+
+% orders the fields alphabetically
+CONST = orderfields(CONST);
 
 end

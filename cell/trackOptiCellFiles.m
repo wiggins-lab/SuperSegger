@@ -1,4 +1,4 @@
-function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist, verbose )
+function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
 % trackOptiCellFiles : organizes the data into the final cell files that
 % contain all the time lapse data for a single cell.
 % It allows for cell gating. If a clist is passed with an already made gate t
@@ -54,12 +54,9 @@ if(nargin<2 || isempty(dirname_cell))
 end
 
 
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
-
 dirname_cell = fixDir (dirname_cell);
 contents=dir([dirname '/*_err.mat']);
+verbose = CONST.parallel.verbose;
 
 % check to make sure that there are err.mat files to work from. If not,
 % return.

@@ -1,4 +1,4 @@
-function [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count, verbose)
+function [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count)
 
 cell_count = cell_count+1;
 
@@ -26,8 +26,5 @@ if isfield( data_c.regs, 'lyse' )
     data_c.regs.lyse.errorShapeCum(regNum)  = time*double(logical(data_c.regs.lyse.errorShape(regNum)));
 end
 
-if verbose
-    disp (['Frame ', num2str(time),': Created new cell with ID : ', num2str(cell_count), ' from region ', num2str(regNum)]);
-end
 
 end

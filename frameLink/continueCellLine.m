@@ -1,5 +1,5 @@
 function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
-    regNumR, time, errorStat,verbose)
+    regNumR, time, errorStat)
 % continueCellLine : continues a cell line with the same id.
 %
 % INPUT :
@@ -30,10 +30,6 @@ function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
 
-% if verbose
-%     disp (['Frame ', num2str(time), ' continue reg ', num2str(regNumC), ' from reg ' , num2str(regNumR),...
-%         ' with cell ID ', num2str(data_r.regs.ID(regNumR))]);
-% end
 
 % set the death/deathF to current time. They are reset when cell is
 % visited again.

@@ -1,5 +1,5 @@
 function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
-    dirname_xy, clean_flag, skip, CONST, header, crop_box, verbose)
+    dirname_xy, clean_flag, skip, CONST, header, crop_box)
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
 % If the seg files are already found it does not repeat the segmentation.
 % It calls the segmentation function found in CONST.seg.segFun to achieve
@@ -62,9 +62,7 @@ end
 
 dataname=[dirname_xy,'seg',filesep,name,'_seg.mat'];
 
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
+verbose = CONST.parallel.verbose;
 
 
 if ~exist(dataname,'file') || clean_flag 
@@ -89,7 +87,7 @@ if ~exist(dataname,'file') || clean_flag
     
     if ~mod(i-1,skip)
         % do the segmentation here
-        [data, ~] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box, verbose);
+        [data, ~] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box);
         if ~isempty( crop_box )
             data.crop_box = crop_box;
         end

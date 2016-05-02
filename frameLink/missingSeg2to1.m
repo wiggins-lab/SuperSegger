@@ -6,43 +6,38 @@ function [data_new,success] = missingSeg2to1 (data_c,regC,data_r,regR,CONST)
 % the new cell_mask and success is returned as true. Else the same data is
 % returned and success is false.
 %
-% INPUT : 
-%      data_c :
-%      regC :
-%      data_r
-%      regR :
-%      CONST : 
-%   
+% INPUT :
+%      data_c : current data (seg/err) file.
+%      regC : numbers of region in current data that needs to be separated
+%      data_r : reverse data (seg/err) file.
+%      regR : numbers of regions in reverse data file
+%      CONST : segmentation parameters
+%
 % OUTPUT :
-%      data_new : data with new segment in good_segs and modified cell mask
+%      data_new : data_c with new segment in good_segs and modified cell mask
 %      success : true if segment was found succesfully.
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-minimumInfo = [];
-minIndex = [] ;
-minRegProps = [];
-minRegsLabel = [];
 success = false;
 data_new = data_c;
+debug_flag = 0;
 
 % need some checks to see if this should happen
 longAxis = data_c.regs.info(regC,1);
@@ -70,7 +65,10 @@ separatingSegment = ~comboMaskR.*comboMaskRerod;
 
 dist = bwdist(separatingSegment);
 
-imshow(cat(3,0.5*ag(data_c.phase) + ag(data_c.regs.regs_label==regC),ag(data_r.regs.regs_label==regR(1)),ag(data_r.regs.regs_label==regR(2))));
+if debug_flag
+    imshow(cat(3,0.5*ag(data_c.phase) + ag(data_c.regs.regs_label==regC),...
+        ag(data_r.regs.regs_label==regR(1)),ag(data_r.regs.regs_label==regR(2))));
+end
 
 % add the long axis thing as a constant..
 % if this thing are not true don't even try to segment this again.
@@ -78,12 +76,14 @@ imshow(cat(3,0.5*ag(data_c.phase) + ag(data_c.regs.regs_label==regC),ag(data_r.r
 if numel(segs_list) == 0  || (longAxis < 30 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
     return
 end
-imshow(segsLabel)
+if debug_flag
+    imshow(segsLabel)
+end
 
 % keep only segments of interest
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (segsLabel,segs_list,dist,mask,CONST,areaR1,areaR2,data_c.segs.scoreRaw);
 
-if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.AREA_CHANGE_LIMIT
+if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
     % a good solution
     num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);
@@ -109,7 +109,9 @@ if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.
     
     data_new.regs.regs_label(segsAdded>0) = 0; % removes segment from regs_label
     data_new.mask_cell(segsAdded>0) = 0;
-    imshow(cat(3,ag(data_new.mask_cell),ag(data_c.mask_cell),ag(data_c.mask_cell)))
+    if debug_flag
+        imshow(cat(3,ag(data_new.mask_cell),ag(data_c.mask_cell),ag(data_c.mask_cell)))
+    end
     success = true;
     return;
 end
@@ -120,7 +122,9 @@ tmp = superSeggerOpti(phase, [], 1, CONST, 1, '', []);
 maskDil =  imdilate(mask, strel('square',2));
 newmask = tmp.mask_bg;
 newmask(~maskDil) = 0;
-imshow(newmask-tmp.segs.segs_3n-tmp.segs.segs_good-tmp.segs.segs_bad)
+if debug_flag
+    imshow(newmask-tmp.segs.segs_3n-tmp.segs.segs_good-tmp.segs.segs_bad);
+end
 newmask = (newmask - tmp.segs.segs_3n)>0;
 
 TmpSegsLabel = tmp.segs.segs_label.*newmask;
@@ -128,9 +132,6 @@ segs_list = unique(TmpSegsLabel);
 segs_list = segs_list(segs_list~=0);
 
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (TmpSegsLabel,segs_list,dist,newmask,CONST,areaR1,areaR2,tmp.segs.scoreRaw);
-
-% get best segments..
-% how to extend segment - horiz/diag/or wtv?
 
 % check if a good solution was found
 if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.AREA_CHANGE_LIMIT
@@ -153,19 +154,6 @@ if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.
     mask_cell_partial = data_new.mask_cell(yy,xx);
     mask_cell_partial((data_c.regs.regs_label(yy,xx) == regC)) = finalMask((data_c.regs.regs_label(yy,xx) == regC));
     data_new.mask_cell(yy,xx) = mask_cell_partial;
-    
-    % %         should probably do something to add them to the segments and
-    % %         reset the labels.. but seems complicated right now :S
-    %         partialGoodSegs = data_new.segs.segs_good(yy,xx);
-    %         partialGoodSegs(logical(finalMask))= 0;
-    %         data_new.segs.segs_good(yy,xx) = partialGoodSegs+segsAdded;
-    %         data_new.segs.segs_good(yy,xx) = data_new.segs.segs_good(yy,xx)-segsRemoved;
-    %         data_new.segs.segs_bad(yy,xx) = data_new.segs.segs_bad(yy,xx)+segsRemoved;
-    %         data_new.segs.segs_bad(yy,xx) = data_new.segs.segs_bad(yy,xx)-segsAdded;
-    %         data_new.segs.segs_bad = (data_new.segs.segs_bad>0);
-    %         data_new.segs.segs_good = (data_new.segs.segs_good>0);
-    
-    
     success = true;
     return;
 end
@@ -173,6 +161,7 @@ end
 end
 
 function [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (segsLabel,segs_list,dist,mask,CONST,areaR1,areaR2,rawScores)
+verbose = CONST.parallel.verbose;
 minimumScore = inf;
 DIST_CUT = 5;
 dist_segs_c = inf*segs_list;
@@ -197,11 +186,13 @@ else
     num_comb = 2^num_segs;
 end
 
-disp (['Finding missing segment from ', num2str(num_segs),' segments, ', num2str(num_comb), ' combinations']);
+if verbose
+    disp (['Finding missing segment from ', num2str(num_segs),' segments, ', num2str(num_comb), ' combinations']);
+end
 
 for i = 1  : num_comb
     
-    vect = makeVector(i-1,num_segs); % systematic    
+    vect = makeVector(i-1,num_segs); % systematic
     cell_mask_mod = mask;
     segmentMask = mask*0;
     for kk = 1:num_segs
@@ -245,9 +236,6 @@ for i = 1  : num_comb
             minDA = min(areaChange1,areaChange2)/2; % for two regions..
         end
     end
-    
-    
-    % needs another part where it just comes up with a line..    
 end
 
 

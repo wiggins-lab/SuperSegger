@@ -1,4 +1,4 @@
-function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header, verbose) 
+function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header) 
 % trackOpti : calls the rest of the functions for segmentation
 % After each sub-function is called, is creates a file in the seg directory
 % that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?
@@ -45,8 +45,7 @@ if ~exist('CLEAN_FLAG') || isempty( CLEAN_FLAG )
     CLEAN_FLAG = true;
 end
 
-if ~exist('header')
-    header = [];
+if ~exist('header','var')
     header = 'trackOpti no header: ';
 end
 
@@ -104,7 +103,7 @@ end
 stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2.mat'];
 if ~exist( stamp_name, 'file' );
     disp([header,'trackOpti - Step 2: Running trackOptiLinkCell.']);
-    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header, verbose);
+    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
@@ -131,7 +130,7 @@ if skip>1
     stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2merge.mat'];
     if ~exist( stamp_name, 'file' );
         disp([header,'trackOpti - Step 2, merge: Running trackOptiLinkCell.']);        
-        trackOptiLinkCellMulti(dirname_seg, 0, CONST, header, verbose);
+        trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
     else
@@ -147,7 +146,7 @@ end
 stamp_name = [dirname_seg,'.trackOptiCellMarker-Step3.mat'];
 if ~exist( stamp_name, 'file' );
     disp([header,'trackOpti - Step 3: Running trackOptiCellMarker.']);        
-    trackOptiCellMarker(dirname_seg, CONST, header, verbose);
+    trackOptiCellMarker(dirname_seg, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
@@ -172,7 +171,7 @@ end
 stamp_name = [dirname_seg,'.trackOptiMakeCell-Step5.mat'];
 if ~exist( stamp_name, 'file' );
     disp([header,'trackOpti - Step 5: Running trackOptiMakeCell.']); 
-    trackOptiMakeCell(dirname_seg, CONST, header, verbose);
+    trackOptiMakeCell(dirname_seg, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
@@ -231,7 +230,7 @@ if ~exist( stamp_name, 'file' );
     % delete old cell files
     delete ([dirname_cell,'cell*.mat']);
     delete ([dirname_cell,'Cell*.mat']);   
-    trackOptiCellFiles(dirname_seg,dirname_cell,CONST, header, clist, verbose);
+    trackOptiCellFiles(dirname_seg,dirname_cell,CONST, header, clist);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else

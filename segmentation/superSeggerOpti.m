@@ -1,4 +1,4 @@
-function [data,A]  = superSeggerOpti(phaseOrig, mask, disp_flag, CONST, adapt_flag, header, crop_box, verbose)
+function [data,A]  = superSeggerOpti(phaseOrig, mask, disp_flag, CONST, adapt_flag, header, crop_box)
 % superSeggerOpti generates the initial segmentation of rod-shaped cells.
 % It uses a local minimum filter (similar to a median filter) to enhance
 % contrast and then uses Matlab's WATERSHED command to generate
@@ -95,9 +95,7 @@ MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
 
 
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
-end
+verbose = CONST.parallel.verbose;
 
 if ~exist('header','var')
     header = [];

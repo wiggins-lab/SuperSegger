@@ -1,4 +1,4 @@
-function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,verbose,SEGMENT_FLAG,ONLY_SEG)
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -29,7 +29,6 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,verbose,SEGMENT_FLAG,
 %            : new segs if they don't yet exist.
 % res       : is a string that is passed to loadConstants(Mine).m to load
 %           : the right constants for processing.
-% verbose : 1 to print in the console all the steps, 0 to not display only the basic information.
 % SEGMENT_FLAG : to segment cells
 % ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
 %
@@ -69,10 +68,6 @@ end
 
 if nargin < 4 || isempty( res )
     res = []; 
-end
-
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
 end
 
 
@@ -124,14 +119,14 @@ if exist( dirname_, 'dir' )
     elseif numel(dir ([dirname_,filesep,'*.tif']))
         % check naming convention
         if ~numel(dir([dirname_,filesep,'*t*c*.tif']))
-            disp('images in incorrect naming format. Using convertImageNames to convert names.')
+            disp('Images in incorrect naming format. Using convertImageNames to convert names.')
             convertImageNames(dirname_)
         end
         
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             crop_box_array = trackOptiAlignPad( dirname_,...
-                CONST.parallel.parallel_pool_num, CONST,verbose);
+                CONST.parallel.parallel_pool_num, CONST);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
             movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
@@ -206,7 +201,7 @@ else
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG, verbose)
+            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG)
         
         if workers
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
@@ -218,8 +213,6 @@ else
                 '/',num2str(num_xy)]);
             end
         end
-        
-        
     end
     
     if workers % shutting down parallel pool
@@ -232,52 +225,20 @@ else
         close(h);
     end
     
-    
-    % Compute Consensus Images   
-    if CONST.consensus
-        h =  waitbar(0,['Computing Consensus Images']);        
-        dircons = [dirname_,'consensus',filesep];
-        mkdir( dircons );       
-        setHeader = 'xy' ;
-        
-        for ii = 1:num_xy
-            
-            waitbar(ii/num_xy,h) ;          
-            ixy = ii ;
-            
-            dirname_xy = dirname_list{ii};
-            dirname_cell = [dirname_xy,filesep,'cell',filesep];
-            
-            [dataImArray] = makeConsensusArray( dirname_cell, CONST);
-            [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST);
-      
-   
-            if ~isempty( imMosaic )
-                imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imInv,   [dircons, 'consInv_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                imwrite( imMosaic10,   [dircons, 'typical_',   setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
-                save( [dircons, 'fits', num2str(ixy,'%02d'), '.mat'], 'I' );
-            else              
-                disp( ['Found no cells in ', dirname_cell, '.'] );
-            end
-            
-        end
-        close(h)
-    end
 end
 
 % done!
 end
 
 function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG, verbose)
+    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG)
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
  
 % Initialization
 file_filter = '*.tif';
+verbose = CONST.parallel.verbose;
 
 % get header to show xy position
 tmp1 = strfind( dirname_xy, 'xy');
@@ -313,7 +274,7 @@ if  isempty(nz) || nz(1)==-1 % no z frames
 end
 
 
-disp([header 'BatchSuperSeggerOpti : Segmentation starts...']);
+disp([header 'BatchSuperSeggerOpti : Segmenting Cells']);
 
 if (CONST.parallel.parallel_pool_num>0)
     workers = CONST.parallel.parallel_pool_num; % number of workers
@@ -345,7 +306,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
         end
         
         doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, ...
-            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp,verbose);
+            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp);
         
         if ~CONST.parallel.show_status
             if verbose
@@ -367,7 +328,7 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-    trackOpti(dirname_xy,skip,CONST, clean_flag, header, verbose);
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header);
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end

@@ -46,12 +46,9 @@ if ~exist('crop_box','var')
     crop_box = '';
 end
 
-if ~exist('verbose','var')
-    verbose = 1;
-end
 
 % create the masks and segments
-data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box, verbose);
+data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box);
 
 if numel(data.segs.score) > CONST.superSeggerOpti.MAX_SEG_NUM;
     err_flag = true;
@@ -64,7 +61,7 @@ end
 
 % optimize the regions with bad scores
 if CONST.seg.OPTI_FLAG
-    data = perRegionOpti( data, 1, CONST,header, verbose);
+    data = perRegionOpti( data, 1, CONST,header);
     drawnow;
 end
 

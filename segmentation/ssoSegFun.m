@@ -1,4 +1,4 @@
-function [data, err_flag] = ssoSegFun( phase, CONST, header, dataname, crop_box, verbose)
+function [data, err_flag] = ssoSegFun( phase, CONST, header, dataname, crop_box)
 % ssoSegFun : starts segmentation of phase image and sets error flags
 % It creates the first set of good, bad and permanent segments and if
 % CONST.seg.OPTI_FLAG is set to true it optimizes the region sizes.
@@ -34,14 +34,21 @@ function [data, err_flag] = ssoSegFun( phase, CONST, header, dataname, crop_box,
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-if ~exist( 'verbose', 'var' ) || isempty( verbose )
-    verbose = 1;
+if ~exist('header','var')
+    header = '';
 end
 
+if ~exist('dataname','var')
+    dataname = '';
+end
+
+if ~exist('crop_box','var')
+    crop_box = '';
+end
+
+
 % create the masks and segments
-data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box, verbose);
+data = superSeggerOpti( phase ,[], 1 ,CONST, 1, header, crop_box);
 
 
 if numel(data.segs.score) > CONST.superSeggerOpti.MAX_SEG_NUM;
@@ -55,7 +62,7 @@ end
 
 % optimize the regions 
 if CONST.seg.OPTI_FLAG
-    data = regionOpti( data, 1, CONST,header, verbose);
+    data = regionOpti( data, 1, CONST,header);
     drawnow;
 end
 

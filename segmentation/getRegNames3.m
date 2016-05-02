@@ -1,10 +1,24 @@
 function [names,num] = getRegNames3()
-% getRegNames3 : contains the names of the parameters in the E matrix.
-% The E matrix is the coefficients used to score the regions as a 
-% constant + linear function + quadratic function of the parameters.
-% There are 21 parameters but the E matrix has 22 because the first column
-% of the parameters is 1 to account for linear + constant.
-
+% getRegNames3 : contains the names of the parameters used for scoring regions.
+% The parameters are calculates in cellprops3.m
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 names = { 'long axis: ', ...
     'short axis mean: ', ...
     'neck width: ', ...
