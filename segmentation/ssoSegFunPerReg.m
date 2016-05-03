@@ -1,7 +1,8 @@
 function [data, err_flag] = ssoSegFunPerReg( phase, CONST, header, dataname, crop_box, verbose)
-% ssoSegFun : starts segmentation of phase image and sets error flags
+% ssoSegFunPerReg : starts segmentation of phase image and sets error flags
 % It creates the first set of good, bad and permanent segments and if
 % CONST.seg.OPTI_FLAG is set to true it optimizes the region sizes.
+% It uses perRegionOpti to optimize the regions.
 % 
 % INPUT :
 %       phase_ : phase image

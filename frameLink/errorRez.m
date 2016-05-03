@@ -359,7 +359,7 @@ if ~(errorM || errorD1 || errorD2)
     data_c.regs.error.r(sister1) = 0;
     data_c.regs.error.r(sister2) = 0;
     [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, 0, sister2, cell_count, verbose);
+        data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
     
 else
     % bad scores for mother or daughters
@@ -381,7 +381,7 @@ else
         disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
     end
     [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count, verbose);
+        data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
     
 end
 end

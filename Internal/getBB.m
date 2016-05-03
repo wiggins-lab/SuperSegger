@@ -7,8 +7,7 @@ function [xx,yy] = getBB( bb1 )
 % OUTPUT :
 %       xx : array from start to end of bounding box along x
 %       yy : array from start to end of bounding box along y
-%
-%
+
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Paul Wiggins.
 % University of Washington, 2016

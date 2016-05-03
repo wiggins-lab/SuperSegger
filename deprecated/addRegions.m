@@ -35,7 +35,7 @@ if numel(list);
         BB = addBB(BB, data2.regs.props(mm).BoundingBox);
     end
     
-    [xx,yy] = getBB( BB );
+    [xx,yy] = getBB(BB);
     
     data_c.regs.regs_label(yy,xx) = data_c.regs.regs_label(yy,xx) + ...
         new_regs_label(yy,xx);

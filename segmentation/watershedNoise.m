@@ -1,12 +1,12 @@
 function [ws,num] = watershedNoise( im, minStep )
-% watershedNoise uses watershed on an image and adds noise
+% watershedNoise : uses watershed on an image and adds noise
 %
 % INPUT :
-%       im : image
-%       minStep : 
+%       im : input image.
+%       minStep : thershold value.
 % OUTPUT :
 %       ws : black and white watershed image
-%       num : max value if ws
+%       num : max value in ws image
 %
 %
 % Copyright (C) 2016 Wiggins Lab 

@@ -1,7 +1,9 @@
-%% set the directory name
+% Script to display the different superSegger methods
+
+%% Set the directory name
 dirname = '60mrnaCropped';
 
-%% show a phase and a fluorescence image
+%% Sample phase and a fluorescence image
 imageFolder = [dirname,filesep,'raw_im',filesep];
 
 % finds all phase and fluorescence images
@@ -20,11 +22,14 @@ figure(2);
 clf;
 imshow(fluor,[])
 
-%% try different constants to select the most appropriate one
-tryDifferentConstants([dirname,'/raw_im/']);
+%% Different segmentation parameters
+% Try different constants to select the most appropriate one
+ tryDifferentConstants([dirname,'/raw_im/']);
 
 
-%% Load the constants and set the desired values
+%% Set constants
+% Load the constants and set the desired values
+
 CONST = loadConstantsNN ('60XEclb',0);
 
 % fit up to 5 foci in each cell
@@ -37,7 +42,7 @@ CONST.trackOpti.NEIGHBOR_FLAG = true;
 CONST.parallel.verbose = 0;
 
 %% Segment the data 
-% setting clean flag to true to resgment data
+% Setting clean flag to true to resgment data
 clean_flag = 1;
 close all; % close all figures
 BatchSuperSeggerOpti (dirname,1,clean_flag,CONST);
@@ -47,30 +52,53 @@ cell_dir = [dirname,filesep,'xy1',filesep,'cell',filesep];
 cellData = dir([cell_dir,'Cell*.mat']);
 data = load([cell_dir,cellData(2).name]);
 
-%% Show the cell mask for frame 1
+
+%% Cell phase image
+% Show the phase image for frame 1
+
+figure;
+clf;
+imshow(data.CellA{timeFrame}.phase,[]);
+
+%% Cell Mask
+% Show the cell mask for frame 1
 timeFrame = 1;
 mask = data.CellA{timeFrame}.mask;
 figure;
 clf;
-imshow(mask)
+imshow(mask);
 
-%% Show the phase image for frame 1
+%% Fluorescence image
+% Show the fluorescence image for frame 1
 figure;
 clf;
-imshow(data.CellA{timeFrame}.phase,[])
+imshow(cat(3,mask*0,ag(data.CellA{timeFrame}.fluor1),mask*0),[]);
 
-%% Show the fluorescence image for frame 1
-figure;
-clf;
-imshow(cat(3,mask*0,ag(data.CellA{timeFrame}.fluor1),mask*0),[])
-
-%% Make a cell tower 
-figure;
-clf;
+%% Cell tower
+% create a cell tower for the loaded cell.
 im_tmp = makeFrameMosaic(data, CONST,2,1,3);
 
-%% Make a kymograph
-figure;
-clf;
-makeKymographC(data,1,CONST,1)
+%% Kymograph
+% create a kymograph for the loaded cell.
+makeKymographC(data,1,CONST,1);
 
+%% Clist
+% Load the clist
+clist = load('60mrnaCropped/xy1/clist.mat');
+
+%% Histogram
+% Plot the long axis at birth
+clf;
+gateHist(clist,9);
+
+%% Gate and re-plot the histogram
+% Take only cells for which the birth was observed and display the long
+% axis at birth.
+
+% Gate on quantity (4) which is the birth frame 
+% and take only values from 2 - 100, i.e. discard cells that were born 
+% in the first frame.
+clistGated = gateMake(clist,4,[2 100]);
+
+% plotting for the gated clist the long axis at birth
+gateHist(clistGated,9);

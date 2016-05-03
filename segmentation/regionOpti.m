@@ -1,14 +1,13 @@
 function [data] = regionOpti( data, disp_flag, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
-% It turns off on and off segments using a systematic method, or simulated
-% anneal, according to the number of segments to be considered.
-% if the number of segments > MAX_NUM_RESOLVE : uses the rawScore.
-% if the number of segments > MAX_NUM_SYSTEMATIC : uses simulated anneal.
-% and if it is below that it uses a systematic function.
+% It turns off on and off segments that have scores between two values in the
+% constants (CONST.regionOpti.CutOffScoreHi and CONST.regionOpti.CutOffScoreLo)
+% And uses systematic method, or simulated anneal, to find the optimal segments 
+% configuration.
 %
 % INPUT :
 %       data : data with segs field (.err data or .trk data)
-%       dissp : display flag
+%       disp_flag : display flag
 %       CONST : segmentation constants
 %       header : information string
 % OUTPUT :

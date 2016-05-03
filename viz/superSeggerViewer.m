@@ -1,5 +1,5 @@
 function superSeggerViewer(dirname)
-% trackOptiView provides visulization of the segmented data.
+% superSeggerViewer : interactive visulization of the segmented data.
 % It displays a menu from which the user can make choices and vizualize or 
 % analyze the segmented data.
 % 
@@ -687,120 +687,7 @@ while runFlag
             header = 'trackOptiView: ';
             trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
         end
-    elseif strcmpi(c,'n'); % pick region and ignore error
-        if FLAGS.T_flag
-            disp( 'Tight flag must be off');
-        else
-            x = floor(ginput(1));
-            
-            if ~isempty(x)
-                ii = data_c.regs.regs_label(x(2),x(1));
-                tmp_axis = axis();
-                
-                if ~ii
-                    disp('missed region');
-                else
-                    if isfield( data_c.regs, 'ignoreError' )
-                        disp(['Picked region ',num2str(ii)]);
-                        data_c.regs.ignoreError(ii) = 1;
-                        save([dirname,contents(nn).name],'-STRUCT','data_c');
-                    else
-                        disp( 'Ignore error not implemented for your version of trackOpti.');
-                    end
-                end
-            end
-        end
-        
-    elseif strcmpi(c,'link'); % Does not work ? - Reset Linking in Current Frame
-        if FLAGS.T_flag
-            disp( 'Tight flag must be off');
-        else
-            disp('pick region to reset linking in the current frame');
-            x = floor(ginput(1));
-            
-            if ~isempty(x)
-                ii = data_c.regs.regs_label(x(2),x(1));
-                tmp_axis = axis();
-                
-                if ~ii
-                    disp('missed region');
-                else
-                    disp(['Picked region ',num2str(ii)]);
-                    showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
-                    axis(tmp_axis);
-                    disp('Click on linked cell(s). press enter to return');
-                    x = floor(ginput());
-                    ss = size(x);
-                    list_of_regs = [];
-                    
-                    for hh = 1:ss(1);
-                        jj = data_f.regs.regs_label(x(hh,2),x(hh,1));
-                        if jj
-                            list_of_regs = [list_of_regs, jj];
-                        end
-                    end
-                    
-                    if ~isempty(list_of_regs)
-                        
-                        %list_of_regs
-                        data_c.regs.ol.f{ii}    = zeros(2, 5);
-                        nnn = min([5,numel(list_of_regs)]);
-                        data_c.regs.ol.f{ii}(1,1:nnn) = 1;
-                        data_c.regs.ol.f{ii}(2,1:nnn) = list_of_regs(1:nnn);
-                        data_c.regs.map.f{ii}   = list_of_regs;
-                        data_c.regs.error.f(ii) = double(numel(list_of_regs)>1);
-                        data_c.regs.ignoreError(ii) = 1;
-                        
-                        for kk = list_of_regs
-                            
-                            data_f.regs.ol.r{kk}     = zeros(2,5);
-                            data_f.regs.ol.r{kk}(1,1)= 1/numel(list_of_regs);
-                            data_f.regs.ol.r{kk}(2,1)= ii;
-                            data_f.regs.dA.r(kk)     = 1/numel(list_of_regs);
-                            data_f.regs.map.r{kk}    = ii;
-                            data_f.regs.error.r(kk)  = double(numel(list_of_regs)>1);
-                            data_f.regs.ignoreError(kk) = 1;
-                        end
-                        
-                        % Save files....
-                        
-                        save([dirname,contents(nn).name],'-STRUCT','data_c');
-                        save([dirname,contents(nn+1).name],'-STRUCT','data_f');
-                        
-                    end
-                end
-            end
-        end
-        
-    elseif strcmpi(c,'errRez'); % ReRun Error Resolution 2 and  cell making file
-        ctmp = input('Are you sure you want to re-run error resolution 2 and cell making? (y/n): ','s');
-        
-        if ismember(ctmp(1),'yY')
-            % Erase all stamp files after .trackOptiSetEr.mat
-            contents_stamp = dir( [dirname,filesep,'.trackOpti*'] );
-            num_stamp = numel( contents_stamp );
-            
-            for iii = 1:num_stamp
-                if isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiLink.mat')) && ...
-                        isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiErRes1.mat')) && ...
-                        isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiSetEr.mat'))
-                    delete ([dirname,filesep,contents_stamp(iii).name]);
-                end
-            end
-            
-            delete ([dirname_cell,'*.mat']);
-            delete ([dirname_cell,'clist.mat']);
-            
-            % Re-Run trackOpti
-            skip = 1;
-            CLEAN_FLAG = false;
-            header = 'trackOptiView: ';
-            trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
-        end
-        
+
     else % we assume that it is a number for a frame change.
         tmp_nn = str2num(c);
         if ~isempty(tmp_nn)
@@ -937,25 +824,6 @@ if shouldLoadNeighborFrames(FLAGS)
         data_f = loaderInternal([dirname,contents(nn+1).name], clist);
     end
 end
-
-
-% if (nn ==1) && (1 == num_im) % 1 frame only
-%     data_r = [];
-%     data_c = loaderInternal([dirname,contents(nn).name], clist);
-%     data_f = [];
-% elseif nn == 1;  % first frame
-%     data_r = [];
-%     data_c = loaderInternal([dirname,contents(nn).name], clist);
-%     data_f = [];
-% elseif nn == num_im ||  nn == num_im-1 % last or before last frame
-%     data_r = [];
-%     data_c = loaderInternal([dirname,contents(nn).name], clist);
-%     data_f = [];
-% else
-%     data_r = loaderInternal([dirname,contents(nn-1).name], clist);
-%     data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-%     data_c = loaderInternal([dirname,contents(nn).name], clist);
-% end
 
 
 end

@@ -94,6 +94,13 @@ CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default 
 CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
 CONST.imAlign.AlignChannel = 1; % change this if you want the images to be aligned to fluorescence channel
 
+% Linking method : 
+% @multiAssignmentPairs : (slower) better for linking cells that are pushed outwards at the edges of a colony
+% @multiAssignmentFastOnlyOverlap : (faster), for high frame rate, cells
+% with high area overlap from frame-to-frame
+CONST.trackOpti.linkFun =  @multiAssignmentFastOnlyOverlap;
+
+
 %% Skip Frames for Segmentation
 % For fast time-lapse or slow growth you can skip phase image frames 
 % during segmentation to increase processing speed. Fluorescence images 

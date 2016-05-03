@@ -1,5 +1,5 @@
 function [clist] = gateStrip( clist, ind )
-% gate : removes the gate field from clist, or the gate for index ind.
+% gateStrip : removes the gate field from clist, or the gate for index ind.
 %
 % INPUT :
 %       clist : table of cells with time-independent variables

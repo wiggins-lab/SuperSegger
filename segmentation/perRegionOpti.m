@@ -1,10 +1,8 @@
 function [data] = perRegionOpti( data, disp_flag, CONST,header)
-% regionOpti : Segmentaion optimization using region characteristics.
-% It turns off on and off segments using a systematic method, or simulated
+% perRegionOpti : Segmentaion optimization using region characteristics.
+% It attempts to improve the region score by turning off on and off segments 
+% of regions with bad scores. It uses systematic method, or simulated
 % anneal, according to the nudmber of segments to be considered.
-% if the number of segments > MAX_NUM_RESOLVE : uses the rawScore.
-% if the number of segments > MAX_NUM_SYSTEMATIC : uses simulated anneal.
-% and if it is below that it uses a systematic function.
 %
 % INPUT :
 %       data : data with segs field (.err data or .trk data)

@@ -1,4 +1,32 @@
 function [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count)
+% createNewCell : creates a new cell for regNum with region id cell_count + 1
+%
+% INPUT :
+%       data_c : data file (err/seg file) in current frame
+%       regNumC : region number in current frame
+%       time : current time frame
+%       cell_count : last cell id used
+%
+% OUTPUT :
+%       data_c : updated data file (err/seg file).
+%       cell_count : last cell id used.
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou, Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+
+
 
 cell_count = cell_count+1;
 

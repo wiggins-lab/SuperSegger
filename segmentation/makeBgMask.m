@@ -1,5 +1,5 @@
 function mask = makeBgMask(phase, filt_3, filt_4, AREA, CONST, crop_box)
-% make_bg_mask : makes a background mask for the phase image
+% makeBgMask : makes a background mask for the phase image
 %
 % INPUT :
 %       phase : phase image

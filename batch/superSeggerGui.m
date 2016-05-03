@@ -143,15 +143,25 @@ end
 % set constants
 CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
 CONST.trackLoci.fluorFlag = handles.fluor_flag.Value;
-CONST.consensus = handles.consensus.Value;
+CONST.parallel.verbose = handles.verbose.Value;
 CONST.trackOpti.pole_flag = handles.pole_snapshot.Value;
-skip = str2double(handles.skip.String);
 CONST.imAlign.AlignChannel = str2double(handles.alignChan.String);
 CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
+
+
+linkVal = get(handles.link_list,'Value'); 
+if linkVal == 1
+    CONST.trackOpti.linkFun =  @multiAssignmentFastOnlyOverlap;
+else
+    CONST.trackOpti.linkFun =  @multiAssignmentPairs;
+end
+
+
 clean_flag = handles.clean_flag.Value;
+skip = str2double(handles.skip.String);
 
 BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST);
 
@@ -222,7 +232,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 function remove_stray_Callback(hObject, eventdata, handles)
-function consensus_Callback(hObject, eventdata, handles)
+function verbose_Callback(hObject, eventdata, handles)
 function clean_flag_Callback(hObject, eventdata, handles)
 function fluor_flag_Callback(hObject, eventdata, handles)
 function neighbor_flag_Callback(hObject, eventdata, handles)
@@ -235,6 +245,32 @@ end
 
 function cell_age_Callback(hObject, eventdata, handles)
 function cell_age_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+
+% --- Executes on selection change in constants_list.
+function link_list_Callback(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from constants_list
+
+
+
+% --- Executes during object creation, after setting all properties.
+function link_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

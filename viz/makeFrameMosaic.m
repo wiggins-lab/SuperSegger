@@ -55,7 +55,6 @@ if ~isfield( CONST.view, 'background' );
 end
 
 
-clf;
 numframe = numel( data.CellA );
 TimeStep = CONST.getLocusTracks.TimeStep; % used when plotting the numbers
 imCell = cell( 1, numel(data.CellA) );
@@ -262,6 +261,8 @@ inv_flag = 0;
 frameNumbers = 1:skip:numframe;
 
 if disp_flag
+    figure(2);
+    clf;
     if inv_flag
         imshow(255-im);
     else

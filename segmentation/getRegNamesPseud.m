@@ -1,5 +1,5 @@
 function [names,num] = getRegNamesPseud()
-% getRegNames3 : contains the names of the parameters used for scoring regions.
+% getRegNamesPseud : contains the names of the parameters used for scoring regions.
 % The parameters are calculates in cellpropsPseud.m
 %
 % Copyright (C) 2016 Wiggins Lab

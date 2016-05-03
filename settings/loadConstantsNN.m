@@ -94,52 +94,40 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
 
 CONST.align.ALIGN_FLAG = 1;
 
-% segmentation parameters
-% CONST.seg.segmentScoreFun = @scoreNeuralNet
-% CONST.seg.segFun= @ssoSegFunPerReg;
-% CONST.seg.OPTI_FLAG = 1;
-% CONST.seg.names = getSegInfoNames;
-
 
 % region optimization parameters
-CONST.regionOpti.MAX_NUM_RESOLVE = 5000;
-CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8;
-CONST.regionOpti.CutOffScoreHi = 10;
-CONST.regionOpti.CutOffScoreLo = -10;
+CONST.regionOpti.MAX_NUM_RESOLVE = 5000; % no further optimization above this number of segments 
+CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8; % max number of segments for systematic
+CONST.regionOpti.CutOffScoreHi = 10; % cut off score for segments
+CONST.regionOpti.CutOffScoreLo = -10; % cut off score for segments
 CONST.regionOpti.fignum =  1;
-CONST.regionOpti.Nt = 500;
-CONST.regionOpti.minGoodRegScore = 10;
-CONST.regionOpti.neighMaxScore = 10;
-CONST.regionOpti.ADJUST_FLAG = 1;
-CONST.regionOpti.DE_norm = 0.5000;
-
-% region score functions
-% [~,CONST.regionScoreFun.NUM_INFO] = getRegNames3;
-% CONST.regionScoreFun.names = getRegNames3;
-% CONST.regionScoreFun.fun = @scoreNeuralNet;
-% CONST.regionScoreFun.props = @cellprops3;
+CONST.regionOpti.Nt = 500; % max number of steps in simulated anneal
+CONST.regionOpti.minGoodRegScore = 10; % minimum score for region to not be optimized.
+CONST.regionOpti.neighMaxScore = 10; % max score for neighbor to be optimized with a bad region
+CONST.regionOpti.ADJUST_FLAG = 1; % adjusts simulated anneal with number of segs
+CONST.regionOpti.DE_norm = 0.5000; % segments' weight for global region opti scoring 
 
 % trackOpti : general constants
-CONST.trackOpti.NEIGHBOR_FLAG = 0;
-CONST.trackOpti.pole_flag = 1;
+CONST.trackOpti.NEIGHBOR_FLAG = 0; % finds cell neighbors
+CONST.trackOpti.pole_flag = 1; % guesses old and new pole in snapshots
 
 % trackOpti : linking constants
 CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
-CONST.trackOpti.DA_MAX = 0.3;
-CONST.trackOpti.DA_MIN = -0.1;
+CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
+CONST.trackOpti.DA_MIN = -0.1; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0;
-CONST.trackOpti.REMOVE_STRAY = 1;
-CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30;
-CONST.trackOpti.SCORE_LIMIT_MOTHER = -30;
-CONST.trackOpti.MIN_CELL_AGE = 5;
-CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap;
+CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
+CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
+CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
+CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
+CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap; % function used for linking cells
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
 CONST.trackLoci.crop = 4;
-CONST.trackLoci.numSpots = [];
-CONST.trackLoci.fluorFlag = 1;
+CONST.trackLoci.numSpots = []; % number of spots per channel per cell
+CONST.trackLoci.fluorFlag = 0; % to calculate statistics
 CONST.trackLoci.gate = [];
 
 
@@ -227,7 +215,7 @@ end
 CONST.superSeggerOpti = ConstLoaded.superSeggerOpti;
 CONST.seg = ConstLoaded.seg;
 CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
-CONST.regionOpti.MAX_LENGTH =  ConstLoaded.regionOpti.MAX_LENGTH ;
+CONST.regionOpti.MAX_LENGTH = ConstLoaded.regionOpti.MAX_LENGTH ;
 CONST.regionScoreFun.names = ConstLoaded.regionScoreFun.names;
 CONST.regionScoreFun.fun =ConstLoaded.regionScoreFun.fun;
 CONST.regionScoreFun.props = ConstLoaded.regionScoreFun.props;

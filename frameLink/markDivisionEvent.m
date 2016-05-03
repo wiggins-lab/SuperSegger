@@ -1,5 +1,38 @@
 function [data_c, data_r, cell_count] = markDivisionEvent( ...
-    data_c, sister1, data_r, regR, time, errorStat, sister2, cell_count, verbose)
+    data_c, sister1, data_r, regR, time, errorStat, sister2, cell_count)
+% markDivisionEvent : marks a division event from regR to sister 1 and 2.
+%
+% INPUT :
+%       data_c : data file (err/seg file) in current frame
+%       sister1 : region number of first daughter in current frame
+%       sister2 : region number of second daughter in current frame
+%       data_r : data file (err/seg file) in reverse frame
+%       regR : region number of mother cell in reverse frame
+%       time : current time frame
+%       errorStat : error flag
+%       cell_count : last cell id used
+%
+% OUTPUT :
+%       data_c : updated data file (err/seg file
+%       data_r : updated data file (err/seg file
+%
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou, Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+
+
 
 if ~data_c.regs.ID(sister1)
     cell_count = cell_count+1;
@@ -34,10 +67,7 @@ if ~data_c.regs.ID(sister1)
     data_c.regs.daughterID{sister2} = [];   % daughter cell ID
     data_c.regs.ID(sister2) = cell_count; % cell ID number
     data_c.regs.ID_{sister2} = cell_count; % cell ID number.
-    
-    if verbose
-        disp (['Frame : ',num2str(time),' daughers from regions ', num2str(sister1) ,' ', num2str(sister2) ,'  with IDs', num2str(cell_count-1), ' & ',num2str(cell_count)]);
-    end
+
     % put the daughters' ids at the mother
     data_r.regs.divide(regR)     = ~errorStat;    % succesful divide in this
     data_r.regs.daughterID{regR} = [cell_count-1,cell_count];   % daughter cell ID
@@ -63,10 +93,6 @@ if ~data_c.regs.ID(sister1)
             time*double(logical(data_c.regs.lyse.errorColor1b(sister1)));
         data_c.regs.lyse.errorColor2bCum(sister1) = ...
             time*double(logical(data_c.regs.lyse.errorColor2b(sister1)));
-    end
-else
-    if verbose
-        disp (['Frame ', num2str(time), ': ' , num2str(sister1),' already has an ID from division event.']);
     end
 end
 end

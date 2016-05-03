@@ -1,5 +1,5 @@
 function [y,xx] = gateHist(clist, ind, xx, cc)
-% getHist : makes a histogram for the list of cells
+% gateHist : makes a histogram for the list of cells
 % in the clist table for the given clist index.
 % It first gates the list if there is a gate field in clist.
 %
@@ -64,7 +64,7 @@ elseif nind == 1
     else
         [y,xx] = hist( clist.data(:,ind), xx );
     end
-    
+    clf;
     semilogy( xx, y, '.-', 'Color', cc );
     
     tmp = ishold;

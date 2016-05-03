@@ -1,5 +1,5 @@
 function [clist] = gateMake( clist, ind, x0 )
-% gate : used to create a gate field in the clist.
+% gateMake : used to create a gate field in the clist.
 %
 % INPUT :
 %       clist : table of cells with time-independent variables
@@ -40,9 +40,9 @@ if  nind == 1
   
     c_flag = 1;
     gxx = zeros( 2, 2 );
-    disp( 'click on the max and min value');
-    
+       
     if ~exist( 'x0', 'var' ) || isempty( x0 )
+        disp( 'Click on the max and min value to make a gate.');
         for i = 1:2            
             tmp = ginput(1);
             if ~isempty(tmp)
