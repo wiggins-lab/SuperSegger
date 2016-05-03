@@ -10,6 +10,7 @@ function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
 %       skip : skip frame
 %       mag : used to set up the image dimensions
 %       CONST : Constants file that was used.
+%
 % OUTPUT :
 %         imColor : rescaled color (jet) consensus image
 %         imBW : rescaled bw consesus image
