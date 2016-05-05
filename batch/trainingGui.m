@@ -583,7 +583,7 @@ global settings;
 shouldCancel = 0;
 
 if exist(settings.saveFolder, 'dir')
-    if numel(dir(settings.saveFolder)) > 0
+    if numel(dir(settings.saveFolder)) > 2
         answer = questdlg('You have unsaved changes.', 'Save changes?', 'Save', 'Ignore', 'Cancel', 'Save');
         
         if strcmp(answer, 'Save')
@@ -653,7 +653,7 @@ function saveData_Callback(hObject, eventdata, handles)
 global settings;
 
 try
-    if numel(dir(settings.saveFolder)) > 0
+    if numel(dir(settings.saveFolder)) > 2
         movefile([settings.saveFolder, '*'], settings.loadDirectory)
     end
 catch ME
