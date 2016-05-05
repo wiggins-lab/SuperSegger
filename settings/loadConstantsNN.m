@@ -1,4 +1,4 @@
-function CONST = loadConstantsNN( res, PARALLEL_FLAG )
+function CONST = loadConstantsNN( res, PARALLEL_FLAG, dispText )
 % loadConstants loads the parameters for the superSegger/trackOpti package.
 % If you want to customize the constants DO NOT CHANGE
 % THIS FILE! Rename this file loadConstantsMine.m and
@@ -13,6 +13,7 @@ function CONST = loadConstantsNN( res, PARALLEL_FLAG )
 %         or use a string as shown below
 %   PARALLEL_FLAG : 1 if you want to use parallel computation
 %                   0 for single core computation
+%   dispText : to display the name of the constants that are loaded.
 %
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -39,6 +40,10 @@ end
 
 if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
     PARALLEL_FLAG = false;
+end
+
+if ~exist('dispText','var') || isempty( dispText )
+    dispText = true;
 end
 
 
@@ -179,7 +184,10 @@ if ~isempty(indexConst)
      constFilename = possibleConstants(indexConst).name;
      ConstLoaded = load (constFilename);
      CONST.ResFlag = constFilename(1:end-4);
-     disp(['loading Constants : ', constFilename]);
+     if dispText
+        disp(['loading Constants : ', constFilename]);
+     end
+     
 else
     error('loadConstants: Constants not loaded : no match found. Aborting.');
 end

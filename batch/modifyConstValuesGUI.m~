@@ -26,7 +26,7 @@ function varargout = modifyConstValuesGUI(varargin)
 global settings;
 
 gui_Singleton = 1;
-gui_State = struct('gui_Name',mfilename, ...
+gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
     'gui_OpeningFcn', @modifyConstValuesGUI_OpeningFcn, ...
     'gui_OutputFcn',  @modifyConstValuesGUI_OutputFcn, ...
@@ -123,7 +123,7 @@ function getValuesFromConst(handles)
 global settings;
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
+CONST = loadConstantsNN (res,0);
 handles.cut_intensity.Value = CONST.superSeggerOpti.CUT_INT;
 handles.max_wid.Value = CONST.superSeggerOpti.MAX_WIDTH ;
 handles.mask_th2.Value = CONST.superSeggerOpti.THRESH2;
@@ -179,7 +179,7 @@ function save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
+CONST = loadConstantsNN (res,0);
 CONST.superSeggerOpti.CUT_INT = handles.cut_intensity.Value;
 CONST.superSeggerOpti.MAX_WIDTH = handles.max_wid.Value;
 CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
@@ -221,10 +221,10 @@ if ~isempty(settings.data)
         showSegDataPhase(settings.data, handles.viewport);
     elseif handles.display_flag == 2
         axes(handles.viewport);
-        imshow(settings.data.mask_bg,[])
+        imshow(settings.data.mask_bg)
     elseif handles.display_flag == 1
          axes(handles.viewport);
-        imshow(settings.data.phase,[])
+        imshow(settings.data.phase)
     end
 end
 if numel(handles.viewport.Children) > 0
@@ -495,6 +495,7 @@ set(handles.mask_th2,'SliderStep',[0.1 1])
 
 % maximum width
 set(handles.max_wid,'Max',30,'Min',5)
+disp(get(handles.max_wid,'Max'))
 set(handles.max_wid,'SliderStep',[0.1 1])
 
 getValuesFromConst(handles)
@@ -509,7 +510,7 @@ function run_Callback(hObject, eventdata, handles)
 global settings;
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
+CONST = loadConstantsNN (res,0);
 CONST.superSeggerOpti.CUT_INT = handles.cut_intensity.Value;
 CONST.superSeggerOpti.MAX_WIDTH = handles.max_wid.Value;
 CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
@@ -658,8 +659,6 @@ function phase_radio_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 if get(hObject,'Value') == 1
     handles.display_flag = 1;
-    handles.mask_radio.Value = 0;
-    handles.seg_radio.Value = 0;
 end
 guidata(hObject, handles);
 updateUI(handles);
@@ -673,8 +672,6 @@ function mask_radio_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 if get(hObject,'Value') == 1
     handles.display_flag = 2;
-    handles.seg_radio.Value = 0;
-    handles.phase_radio.Value = 0;
 end
 guidata(hObject, handles);
 updateUI(handles);
@@ -688,8 +685,7 @@ function seg_radio_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 if get(hObject,'Value') == 1
     handles.display_flag = 3;
-    handles.mask_radio.Value = 0;
-    handles.phase_radio.Value = 0;
+    handles.mask_radio 
 end
 guidata(hObject, handles);
 updateUI(handles);
