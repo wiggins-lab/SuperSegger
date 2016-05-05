@@ -1,4 +1,4 @@
-function showSegDataPhase( data )
+function showSegDataPhase( data, viewport )
 % showSegDataPhase draws the outlines for the regions in the data file.
 %
 % INPUT :
@@ -8,9 +8,15 @@ function showSegDataPhase( data )
 % Unviersity of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
+if isempty(data)
+    return;
+end
 
-try
-    back = double(0.7*ag( data.phase ));
+if exist('viewport','var') && ~isempty(viewport)
+    axes(viewport);
+end
+
+    back = double(ag( data.phase ));
     segs_good = data.segs.segs_good;
     segs_bad  = data.segs.segs_bad;
     mask_bg   = data.mask_bg;
@@ -19,8 +25,8 @@ try
     outline = imdilate( cell_mask, strel( 'square',3) );
     outline = ag(outline-cell_mask);
     imshow(uint8(cat(3,back + 1.00*double(outline),...
-    back + 0.4*double(ag(segs_good)) + 0.1*double(ag(segs_bad)),...
-    back + 0.6*double(ag(segs_bad)) + 0.2*double(ag(~cell_mask)-outline) )));
+    back + 0.4*double(ag(segs_good)) + 0.3*double(ag(segs_bad)),...
+    back + 0.7*double(ag(segs_bad)) + 0.2*double(ag(~cell_mask)-outline) )));
     drawnow; 
-end
+
 end

@@ -1,56 +1,41 @@
 function superSeggerViewer(dirname)
-% trackOptiView provides visulization of the segmented data.
-%
-% It has a lot of options such as :
-% f : Toggle between phase and fluorescence view
-% x# :  Switch xy dir #
-% t  : Show Cell Numbers
-% r  : Show/Hide Region Outlines
-% o  : Show Consensus
-% K  : Kymograph Mosaic
-% h# : Tower for Cell #
-% g  : Make Gate
-% Clear : Clear all Gates
-% c  : Reset Plot to Default View'
-% s  : Show Fluor Foci
-% #  : Go to Frame Number #
-% CC : Use Complete Cell Cycles
-% F : Find Cell Number #
-% p  : Show/Hide Cell Poles
-% H# : Show Kymograph for Cell #
-% Z  : Cell Towers Mosaic
-% G  : Gate All Cell Files
-% Movie : Export Movie Frames
-%
+% superSeggerViewer : interactive visulization of the segmented data.
+% It displays a menu from which the user can make choices and vizualize or 
+% analyze the segmented data.
+% 
 % important notes :
 % - it saves a file in the directory named .trackOptiView.mat where it
 % saves the flags from the previous launch
+% - it uses the clist which can be gated to only show cells that pass specific
+% criteria. it outlines and analyzes only cells that pass the gate, to display 
+% the full dataset the gate needs to be deleted.
 %
-%   FLAGS :
-%         FLAGS.P_val = 0.2;
-%         P_Flag : shows regions (default 1)
-%         ID_flag : shows the cell numbers (default 0)
-%         lyse_flag : outlines cell that lysed
-%         m_flag : shows mask (default 0)
-%         c_flag : ? reserts to default view
-%         cell_flag : toogles between cell and regions / using cell numbers versus region numbers
-%         f_flag : shows flurescence image
-%         s_flag : shows the foci and their score
-%         T_flag : something related to regions (default 0)
-%         p_flag : shows pole positions and connects daughter cells to each other
-%         e_flag : 0, errors displayed for this frame
-%         f_flag : 0
-%         err_flag = false; // getting rid of it
-%         D_FLAG = SD_FLAG, AD_FLAG, ND_FLAG
-
+%
+%
 % INPUT :
 %       dirname : main directory that contains files segemented by supeSegger
 %       it must be the directory that has raw_im and xy1 etc folders.
-%       err_flag : if 1, displays errors found in frame, default 0
+%       It can be run from the seg file directly but some functions that require
+%       cell files will not work.
+%
 %
 % Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou, Paul Wiggins, Connor Brennan.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 %% Load Constants and Initialize Flags
 
@@ -70,18 +55,6 @@ end
 dirname = fixDir(dirname);
 dirname0 = dirname;
 
-% for calculations that take time like the consensus array
-% you can save the array in a folder so that it is loaded from there
-% instead of calculated repeatedly.
-dirSave = [dirname,'superSeggerViewer',filesep];
-if ~exist(dirSave,'dir')
-    mkdir(dirSave);
-else
-    if exist([dirSave,'dataImArray.mat'],'file')
-        load ([dirSave,'dataImArray'],'dataImArray');
-    end
-end
-
 % load flags if they already exist to maintain state between launches
 filename_flags = [dirname0,'.superSeggerViewer.mat'];
 FLAGS = [];
@@ -100,11 +73,10 @@ end
 clist = [];
 contents_xy =dir([dirname, 'xy*']);
 num_xy = numel(contents_xy);
+direct_contents = dir([dirname, '*seg.mat']);
 
-if ~num_xy
-    disp('There are no xy dirs. Choose a different directory.');
-    return;
-else
+
+if num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
     else
@@ -124,6 +96,17 @@ else
     
     ixy = intGetNum( contents_xy(dirnum).name );
     header = ['xy',num2str(ixy),': '];
+else
+    if numel(direct_contents) == 0
+        disp('There are no xy dirs. Choose a different directory.');
+        return;
+    else % loading from the seg directory directly
+        dirname_cell = dirname;
+        dirname_xy = dirname;
+        dirname_seg = dirname;
+        ixy = 1;
+        header = ['seg',num2str(ixy),': '];
+    end
 end
 
 if exist([dirname0,'CONST.mat'],'file')
@@ -142,6 +125,18 @@ num_im = length(contents);
 
 if (num_im == 0)
     error('No files found in the seg directory');
+end
+
+% for calculations that take time like the consensus array
+% you can save the array in a folder so that it is loaded from there
+% instead of calculated repeatedly.
+dirSave = [dirname,'superSeggerViewer',filesep];
+if ~exist(dirSave,'dir')
+    mkdir(dirSave);
+else
+    if exist([dirSave,'dataImArray.mat'],'file')
+        load ([dirSave,'dataImArray'],'dataImArray');
+    end
 end
 
 runFlag = (nn<=num_im);
@@ -192,13 +187,14 @@ while runFlag
     
     %Force flags to required values when data is unavailable
     forcedFlags = FLAGS;
-    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS); %Force cell flag to 0 when err files not present
+    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS);
+    %Force cell flag to 0 when err files not present
     
     showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST, []);
     flagsStates = intSetStateStrings(FLAGS,CONST);
-
+    
     axis(tmp_axis);
-
+    
     
     % Main Menu
     disp('------------------------------SuperSegger Data Viewer-------------------------------------');
@@ -217,12 +213,12 @@ while runFlag
     end
     disp(' ');
     disp(['id  : Show/Hide Cell Numbers ', [flagsStates.idState],'            seg : Use seg files ', flagsStates.useSegs]);
-    disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          R  : Show/Hide Region scores ', [flagsStates.regionScores]]);
+    disp(['r  : Show/Hide Region Outlines ', [flagsStates.rState],'          rs  : Show/Hide Region scores ', [flagsStates.regionScores]]);
     disp(['p  : Show/Hide Cell Poles ', flagsStates.pState,'               outline  : Outline cells ', flagsStates.vState]);
     disp(['f#  : Change channel ', [flagsStates.fState],'                  s  : Show Fluor Foci Scores ', [flagsStates.sState]]);
     disp(['filter : Filtered fluorescence ',flagsStates.filtState,'          CC : Use Complete Cell Cycles ', flagsStates.CCState] );
     disp(['falseCol : False Color ', flagsStates.falseColState,'                  log : Log View ', flagsStates.logState ]);
-    disp(['F# : Find Cell Number #']);
+    disp(['find# : Find Cell Number #']);
     disp('-------------------------------------Link Options-----------------------------------------');
     if ~canUseErr || FLAGS.useSegs
         fprintf(2, 'Cell information must be availble to use this feature.\n');
@@ -236,10 +232,10 @@ while runFlag
     disp(['link  : Show Linking Information               mother : Show mothers ', flagsStates.showMothers]);
     disp(['daughter  : Show daughters ', flagsStates.showDaughters]);
     disp('-----------------------------------Output Options-----------------------------------------');
-    disp(['con  : Show Consensus                         cK : Show consensus kymograph  ']);
-    disp(['K  : Mosaic Kymograph of all cells            kym# : Show Kymograph for Cell #']);
-    disp(['twr# : Tower for Cell #                       Z  : Towers of all cells        ']);
-    disp(['Movie : Movie of this xy position             Movie#  : Movie of # cell     ']);
+    disp(['con  : Show Consensus                         cKym : Show consensus kymograph']);
+    disp(['kymAll : Mosaic Kymograph of all cells        kym# : Show Kymograph for Cell #']);
+    disp(['twrAll : Towers of all cells                  twr# : Tower for Cell #']);
+    disp(['movie : Movie of this xy position             movie#  : Movie of # cell']);
     disp(['save : Save Figure #']);
     disp('-------------------------------------Gate Options-----------------------------------------');
     if ~isempty(clist)
@@ -249,7 +245,7 @@ while runFlag
     end
     disp(' ');
     disp(['g  : Make Gate                                G  : Create xy-combined clist, gated.']);
-    disp(['MoveG  : Move gated cells                     Clear : Clear all Gates ']);
+    disp(['moveG  : Move gated cells                     clear : Clear all Gates ']);
     disp(['hist : Histogram of clist quantity            hist2 : Plotting two clist quantities ']);
     disp('-------------------------------------Debug Options----------------------------------------');
     disp('k : Enter debugging mode');
@@ -264,15 +260,15 @@ while runFlag
     end
     
     disp([header, 'Frame num [1...',num2str(num_im),']: ',num2str(nn)]);
-
-    pause;
+    
+    %pause;
     c = input(':','s');
     
     % LIST OF COMMANDS
     if isempty(c)
         % do nothing
         
-    elseif strcmp(c,'falseCol') % false color view
+    elseif strcmpi (c,'falseCol') % false color view
         if ~isfield( CONST,'view') || ...
                 ~isfield( CONST.view,'falseColorFlag')|| isempty( CONST.view.falseColorFlag )
             CONST.view.falseColorFlag = true;
@@ -280,7 +276,7 @@ while runFlag
             CONST.view.falseColorFlag = ~CONST.view.falseColorFlag;
         end
         
-    elseif  strcmp(c,'log') % log view
+    elseif  strcmpi(c,'log') % log view
         if ~isfield( CONST, 'view' ) || ~isfield( CONST.view, 'LogView' ) || ...
                 isempty( CONST.view.LogView )
             CONST.view.LogView = true;
@@ -288,7 +284,7 @@ while runFlag
             CONST.view.LogView = ~CONST.view.LogView;
         end
         
-    elseif (c(1) == 'Q' || c(1) == 'q' ) % Quit Command
+    elseif strcmpi(c,'q') % Quit Command
         if exist('clist','var') && ~isempty(clist)
             save( [dirname0,contents_xy(dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
         else
@@ -296,7 +292,7 @@ while runFlag
         end
         runFlag = 0  ;
         
-    elseif strcmp(c,'CC') % Toggle Between Full Cell Cycles
+    elseif strcmpi(c,'CC') % Toggle Between Full Cell Cycles
         CONST.view.showFullCellCycleOnly = ~CONST.view.showFullCellCycleOnly ;
         
         if CONST.view.showFullCellCycleOnly
@@ -306,15 +302,15 @@ while runFlag
             clist = gateStrip ( clist, 9 )
             disp('Showing incomplete Cell Cycles')
         end
-    elseif strcmp(c,'hist') % choose characteristics and values to gate cells
+    elseif strcmpi(c,'hist') % choose characteristics and values to gate cells
         disp('Choose histogram characteristic')
         disp(clist.def')
         cc = str2double(input('Characteristic [ ] :','s')) ;
         figure(2);
         clf;
-        gateHist(clist,cc)       
-
-    elseif strcmp(c,'hist2') % choose characteristics and values to gate cells
+        gateHist(clist,cc)
+        
+    elseif strcmpi(c,'hist2') % choose characteristics and values to gate cells
         disp('Choose histogram characteristic')
         cc1 = str2double(input('Characteristic 1 [ ] :','s')) ;
         cc2 = str2double(input('Characteristic 2 [ ] :','s')) ;
@@ -322,7 +318,7 @@ while runFlag
         clf;
         gateHistDot(clist, [cc1 cc2])
         
-    elseif strcmp(c,'save') % choose characteristics and values to gate cells
+    elseif strcmpi(c,'save') % choose characteristics and values to gate cells
         figNum = str2double(input('Figure number :','s')) ;
         filename = input('Filename :','s') ;
         savename = sprintf('%s/%s',dirSave,filename);
@@ -331,8 +327,8 @@ while runFlag
         saveas(figNum,(savename),'png');
         disp (['Figure ', num2str(figNum) ,' is saved in eps, fig and png format at ',savename]);
         
-    elseif c(1) == 'F' % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
-        if numel(c) > 1
+    elseif strcmpi(c, 'Find') % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
+        if numel(c) > 4
             find_num = floor(str2num(c(2:end)));
             if FLAGS.cell_flag && shouldUseErrorFiles(FLAGS)
                 regnum = find( data_c.regs.ID == find_num);
@@ -355,9 +351,11 @@ while runFlag
                 end
             end
             input('Press any key','s');
+        else
+            disp ('Please provide cell number');
         end
         
-    elseif strcmp(c(1),'x')   % Change xy positions
+    elseif strcmpi(c(1),'x')   % Change xy positions
         
         if numel(c)>1
             c = c(2:end);
@@ -390,14 +388,14 @@ while runFlag
             
         end
         
-    elseif strcmp(c,'r')  % Show/Hide Region Outlines
+    elseif strcmpi(c,'r')  % Show/Hide Region Outlines
         FLAGS.P_flag = ~FLAGS.P_flag;
         FLAGS.Outline_flag = 0;
         
-    elseif strcmp(c,'outline') % Show/Hide Region Outlines
+    elseif strcmpi(c,'outline') % Show/Hide Region Outlines
         FLAGS.Outline_flag = ~FLAGS.Outline_flag;
-
-    elseif strcmp(c,'reset') % Reset axis to default
+        
+    elseif strcmpi(c,'reset') % Reset axis to default
         first_flag = true;
         resetFlag = 1;
         
@@ -405,30 +403,30 @@ while runFlag
         disp('toggling between phase and fluorescence');
         FLAGS.f_flag = str2num(c(2));
         
-    elseif strcmp(c, 'filter') % Toggle Between filtered and unfiltered
+    elseif strcmpi(c, 'filter') % Toggle Between filtered and unfiltered
         disp('filtering');
         FLAGS.filt = ~ FLAGS.filt;
         
-    elseif c(1) == 'g' % choose characteristics and values to gate cells
+    elseif strcmpi(c,'g') % choose characteristics and values to gate cells
         disp('Choose gating characteristic')
         disp(clist.def')
         cc = input('Gate Number(s) [ ] :','s') ;
         figure(2)
         clist = gateMake(clist,str2num(cc)) ;
         resetFlag = 1;
-            
-    elseif strcmp(c,'Clear')  % Clear All Gates
+        
+    elseif strcmpi(c,'Clear')  % Clear All Gates
         tmp_axis = axis;
         clist.gate = [] ;
         clf;
         resetFlag = 1;
         axis( tmp_axis );
         
-    elseif strcmp(c,'MoveG')   % moves gated cell files to a different directory
+    elseif strcmpi(c,'MoveG')   % moves gated cell files to a different directory
         header = 'trackOptiView: ';
         trackOptiGateCellFiles( dirname_cell, clist);
         
-    elseif c(1) == 'G'
+    elseif strcmpi(c, 'Gtot')
         % creates a clist for all xy positions, gated from loaded clist.
         if ~isfield( clist, 'gate' )
             clist.gate = [];
@@ -447,13 +445,13 @@ while runFlag
         save( [dirname0,'clist_comp.mat'], '-STRUCT', 'clist_comp' );
         
         
-    elseif strcmp(c,'id') % Show Cell Numbers
+    elseif strcmpi(c,'id') % Show Cell Numbers
         FLAGS.ID_flag = ~FLAGS.ID_flag;
         if FLAGS.ID_flag
             FLAGS.regionScores = 0;
         end
         
-    elseif strcmp(c,'s') % Show Fluorescent Foci score values
+    elseif strcmpi(c,'s') % Show Fluorescent Foci score values
         FLAGS.s_flag = ~FLAGS.s_flag;
         
     elseif numel(c) > 1 && c(1) == 's' && all(isnum(c(2:end))) % Toggle Between Fluorescence and Phase Images
@@ -461,17 +459,17 @@ while runFlag
         FLAGS.s_flag = 1;
         CONST.getLocusTracks.FLUOR1_MIN_SCORE = str2double(c(2:end));
         
-    elseif strcmp(c,'p')  % Show Cell Poles
+    elseif strcmpi(c,'p')  % Show Cell Poles
         FLAGS.p_flag = ~FLAGS.p_flag;
         
-    elseif strcmp(c,'k') % Enter Debugging Mode
+    elseif strcmpi(c,'k') % Enter Debugging Mode
         tmp_axis = axis;
         disp('Press "continue" on the editor tab to exit debugging mode')
         keyboard
         clf;
         axis( tmp_axis );
         
-    elseif strcmp(c,'K') % Make Kymograph Mosaic for All Cells
+    elseif strcmpi(c,'KymAll') % Make Kymograph Mosaic for All Cells
         tmp_axis = axis;
         clf;
         makeKymoMosaic( dirname_cell, CONST );
@@ -479,7 +477,7 @@ while runFlag
         pause;
         axis(tmp_axis);
         
-    elseif strcmp(c,'Z') %  Show Cell Towers for All Cells
+    elseif strcmpi(c,'twrAll') %  Show Cell Towers for All Cells
         tmp_axis = axis;
         clf;
         
@@ -496,7 +494,7 @@ while runFlag
         pause;
         axis(tmp_axis);
         
-    elseif strcmp(c,'con') % Show existant consensus for this XY or calculate new one
+    elseif strcmpi(c,'con') % Show existant consensus for this XY or calculate new one
         if ~exist('dataImArray','var') || isempty(dataImArray)
             [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
             save ([dirSave,'dataImArray'],'dataImArray');
@@ -511,7 +509,7 @@ while runFlag
         disp('press enter to continue.');
         pause;
         
-    elseif strcmp(c,'cK') % Show existant consensus for this XY or calculate new one
+    elseif strcmpi(c,'conK') % Show existant consensus for this XY or calculate new one
         if ~exist('dataImArray','var') || isempty(dataImArray)
             [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
             save ([dirSave,'dataImArray'],'dataImArray');
@@ -521,7 +519,7 @@ while runFlag
         [kymo,kymoMask,~,~ ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
         disp('press enter to continue.');
         pause;
-    elseif numel(c)>2 && strcmp(c(1:3),'twr')' % Cell Tower for Single Cell
+    elseif numel(c)>2 && strcmpi(c(1:3),'twr') % Cell Tower for Single Cell
         
         if numel(c) > 3
             comma_pos = findstr(c,',');
@@ -571,7 +569,7 @@ while runFlag
             disp ('Please enter a number next to twr');
         end
         
-    elseif numel(c)>2 && strcmp(c(1:3),'kym') % Show Kymograph for Single Cell
+    elseif numel(c)>2 && strcmpi(c(1:3),'kym') % Show Kymograph for Single Cell
         
         if numel(c) > 3
             num = floor(str2num(c(4:end)));
@@ -584,12 +582,12 @@ while runFlag
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');
-            end            
+            end
         else
             disp ('Please enter a number next to kym');
         end
         
-    elseif numel(c)>5 && strcmp(c(1:5),'Movie') % movie for single Cell
+    elseif numel(c)>5 && strcmpi(c(1:5),'movie') % movie for single Cell
         if numel(c) > 5
             num = floor(str2double(c(6:end)));
             [data_cell,cell_name] = loadCellData(num,dirname_cell, []);
@@ -597,7 +595,7 @@ while runFlag
                 mov = makeCellMovie(data_cell)
                 disp('Save movie?')
                 d = input('[y/n]:','s');
-                if strcmp(d,'y')
+                if strcmpi(d,'y')
                     saveFilename = [dirSave,cell_name(1:end-4),'.avi'];
                     disp (['Saving movie at ',saveFilename]);
                     v = VideoWriter(saveFilename);
@@ -608,18 +606,22 @@ while runFlag
             end
         end
         
-    elseif strcmp(c,'Movie')  % Make Time-Lapse Images for Movies
+    elseif strcmpi(c,'movie')  % Make Time-Lapse Images for Movies
         
         tmp_axis = axis;
         
         clear mov;
         mov.cdata = [];
         mov.colormap = [];
-       
-       for ii = 1:num_im
+        
+        for ii = 1:num_im
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
+<<<<<<< HEAD
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);  
+=======
+            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
             axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
@@ -629,7 +631,7 @@ while runFlag
         
         disp('Save movie?')
         d = input('[y/n]:','s');
-        if strcmp(d,'y')
+        if strcmpi(d,'y')
             name = input('filename:','s');
             saveFilename = [dirSave,name,'.avi'];
             disp (['Saving movie at ',saveFilename]);
@@ -639,48 +641,45 @@ while runFlag
             writeVideo(v,mov)
             close(v)
         end
-
+        
         resetFlag = true;
         
-    elseif strcmp(c,'e')
+    elseif strcmpi(c,'e')
         % Show Error List
         FLAGS.e_flag = ~FLAGS.e_flag;
         
-    elseif strcmp(c,'cell') % Toggle between cell view and region view
-        FLAGS.cell_flag = ~FLAGS.cell_flag;
-        
-    elseif strcmp(c,'R') % Toggle display of region scores
+    elseif strcmpi(c,'rs') % Toggle display of region scores
         FLAGS.regionScores = ~FLAGS.regionScores;
         if FLAGS.regionScores
             FLAGS.ID_flag = 0;
         end
         
-    elseif strcmp(c,'seg') % Toggle display of region scores
+    elseif strcmpi(c,'seg') % Toggle display of region scores
         FLAGS.useSegs = ~FLAGS.useSegs;
         resetFlag = true;
         
-    %% DEVELOPER FUNCTIONS : Use at your own risk
-    elseif strcmp(c,'link')  % Show links
+        %% DEVELOPER FUNCTIONS : Use at your own risk
+    elseif strcmpi(c,'link')  % Show links
         FLAGS.showLinks = ~FLAGS.showLinks;
         resetFlag = true;
         
-    elseif strcmp(c,'mother')  % Show links
+    elseif strcmpi(c,'mother')  % Show links
         FLAGS.showMothers = ~FLAGS.showMothers;
         
-    elseif strcmp(c,'daughter')  % Show links
+    elseif strcmpi(c,'daughter')  % Show links
         FLAGS.showDaughters = ~FLAGS.showDaughters;
         
-    elseif strcmp(c,'editSegs')  % Edit Segments, allows to turn on and off segments
+    elseif strcmpi(c,'editSegs')  % Edit Segments, allows to turn on and off segments
         disp('Are you sure you want to edit the segments?')
         d = input('[y/n]:','s');
-        if strcmp(d,'y')
+        if strcmpi(d,'y')
             segsTLEdit(dirname_seg, nn, CONST);
         end
         
-    elseif strcmp(c, 'relink') % Re-Link - relinks the cells after modifications in segments
+    elseif strcmpi(c, 'relink') % Re-Link - relinks the cells after modifications in segments
         disp('Are you sure you want to relink and remake the cell files?')
         d = input('[y/n]:','s');
-        if strcmp(d,'y')
+        if strcmpi(d,'y')
             delete([dirname_cell,'*.mat']);
             delete([dirname,'*trk.mat*']);
             delete([dirname,'*err.mat*']);
@@ -692,6 +691,7 @@ while runFlag
             header = 'trackOptiView: ';
             trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
         end
+<<<<<<< HEAD
     elseif strcmp(c,'n'); % pick region and ignore error
         if FLAGS.T_flag
             disp( 'Tight flag must be off');
@@ -806,6 +806,9 @@ while runFlag
             trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
         end
         
+=======
+
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
     else % we assume that it is a number for a frame change.
         tmp_nn = str2num(c);
         if ~isempty(tmp_nn)
@@ -834,6 +837,33 @@ end
 % END OF MAIN FUNCTION (superSeggerViewer)
 
 % INTERNAL FUNCTIONS
+<<<<<<< HEAD
+=======
+function data = loaderInternal( filename, clist )
+% loaderInternal : loads the cell outlines for cells in clist
+% % Load Date and put in outline fields.
+
+data = load(filename);
+ss = size(data.phase);
+
+if isfield( data, 'mask_cell' )
+    data.outline =  xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
+end
+
+if ~isempty(clist)
+    clist = gate(clist);
+    data.cell_outline = false(ss);
+    if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
+        ind = find(ismember(data.regs.ID,clist.data(:,1))); % get ids of cells in clist
+        mask_tmp = ismember( data.regs.regs_label, ind ); % get the masks of cells in clist
+        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
+    end
+end
+
+
+end
+
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function [nameInfo] = getDirStruct( dirname )
 
 contents = dir( [dirname,filesep,'*.tif'] );
@@ -877,6 +907,39 @@ function ixy = intGetNum( str_xy )
 ixy = str2num(str_xy(ismember(str_xy, '0123456789' )));
 end
 
+<<<<<<< HEAD
+=======
+
+function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist, FLAGS)
+% intLoadData : loads current, reverse and forward data.
+% INPUT :
+%       dirname : seg directory
+%       contents : filenames to be loaded
+%       nn : frame number to be loaded
+%       num_im : total number of images
+%       clist : list of cells
+
+disp ('Loading file..');
+data_c = loaderInternal([dirname,contents(nn).name], clist);
+% not loading data_r and data_f to make this faster
+data_r = [];
+data_f = [];
+
+if shouldLoadNeighborFrames(FLAGS)
+    if nn > 1
+        data_r = loaderInternal([dirname,contents(nn-1).name], clist);
+    end
+    
+    if nn < num_im-1
+        data_f = loaderInternal([dirname,contents(nn+1).name], clist);
+    end
+end
+
+
+end
+
+
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function intDispError( data_c, FLAGS )
 % intDispError
 for kk = 1:data_c.regs.num_regs
@@ -975,28 +1038,137 @@ if ~FLAGS.regionScores
 end
 
 flagsStates.useSegs = '(on) ';
-if ~FLAGS.useSegs 
+if ~FLAGS.useSegs
     flagsStates.useSegs = '(off)';
 end
 
 
 flagsStates.showLinks = '(on) ';
-if ~FLAGS.showLinks 
+if ~FLAGS.showLinks
     flagsStates.showLinks = '(off)';
 end
 
 flagsStates.showDaughters = '(on) ';
-if ~FLAGS.showDaughters 
+if ~FLAGS.showDaughters
     flagsStates.showDaughters = '(off)';
 end
 
 flagsStates.showMothers = '(on) ';
-if ~FLAGS.showMothers 
+if ~FLAGS.showMothers
     flagsStates.showMothers = '(off)';
 end
 
 end
 
+<<<<<<< HEAD
+=======
+function [data_cell,cell_name] = loadCellData (num,dirname_cell)
+
+data_cell = [];
+cell_name = [];
+padStr = getPadSize(dirname_cell);
+
+if ~isempty( padStr )
+    data_cell = [];
+    filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
+    filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
+else
+    return;
+end
+
+
+if exist(filename_cell_C, 'file' )
+    filename_cell = filename_cell_C;
+    cell_name = ['Cell',num2str(num,padStr),'.mat'];
+elseif exist(filename_cell_c, 'file' )
+    filename_cell = filename_cell_c;
+    cell_name = ['cell',num2str(num,padStr),'.mat'];
+else
+    disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
+    return;
+end
+
+try
+    data_cell = load( filename_cell );
+catch
+    disp(['Error loading: ', filename_cell] );
+end
+
+end
+
+function FLAGS = fixFlags(FLAGS)
+% intSetDefaultFlags : sets default flags for when the program begins
+if ~isfield(FLAGS,'cell_flag')
+    FLAGS.cell_flag  = 1;
+end
+
+if ~isfield(FLAGS,'m_flag')
+    FLAGS.m_flag  = 0;
+end
+if ~isfield(FLAGS,'ID_flag')
+    FLAGS.ID_flag  = 0;
+end
+if ~isfield(FLAGS,'T_flag')
+    FLAGS.T_flag  = 0;
+end
+if ~isfield(FLAGS,'P_flag')
+    FLAGS.P_flag  = 0;
+end
+if ~isfield(FLAGS,'Outline_flag')
+    FLAGS.Outline_flag  = 1;
+end
+if ~isfield(FLAGS,'e_flag')
+    FLAGS.e_flag  = 0;
+end
+if ~isfield(FLAGS,'f_flag')
+    FLAGS.f_flag  = 0;
+end
+if ~isfield(FLAGS,'p_flag')
+    FLAGS.p_flag  = 0;
+end
+
+if ~isfield(FLAGS,'s_flag')
+    FLAGS.s_flag  = 1;
+end
+if ~isfield(FLAGS,'c_flag')
+    FLAGS.c_flag  = 1;
+end
+
+if ~isfield(FLAGS,'P_val')
+    FLAGS.P_val  = 0.2;
+end
+
+if ~isfield(FLAGS,'filt')
+    FLAGS.filt  = 1;
+end
+
+if ~isfield(FLAGS,'lyse_flag')
+    FLAGS.lyse_flag  = 0;
+end
+
+if ~isfield(FLAGS,'regionScores')
+    FLAGS.regionScores  = 0;
+end
+
+if ~isfield(FLAGS,'useSegs')
+    FLAGS.useSegs  = 0;
+end
+
+if ~isfield(FLAGS,'showLinks')
+    FLAGS.showLinks  = 0;
+end
+
+if ~isfield(FLAGS,'showMothers')
+    FLAGS.showMothers  = 0;
+end
+
+if ~isfield(FLAGS,'showDaughters')
+    FLAGS.showDaughters  = 0;
+end
+
+end
+
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function intCons(dirname0, contents_xy, setHeader, CONST)
 xyDir = [dirname0,contents_xy.name,filesep];
 dircons = [xyDir,'/consensus/']
@@ -1022,7 +1194,7 @@ else
     disp('Calculate New Consensus?')
     d = input('[y/n]:','s');
     
-    if strcmp(d,'y')
+    if strcmpi(d,'y')
         if isdir([dirname0,contents_xy.name,filesep,'seg_full'])
             dirname = [dirname0,contents_xy.name,filesep,'seg_full',filesep];
         end
@@ -1042,7 +1214,7 @@ else
             disp('Save consensus images?')
             d = input('[y/n]:','s');
             % this just saves the consensus images.
-            if strcmp(d,'y')
+            if strcmpi(d,'y')
                 save([dircons,'consensus'],'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
                 imwrite( imBW,    [dircons, 'consBW_',    setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
                 imwrite( imColor, [dircons, 'consColor_', setHeader, '_', num2str(ixy,'%02d'), '.tif'], 'tif' );
@@ -1059,4 +1231,19 @@ else
         
     end
 end
+<<<<<<< HEAD
 end
+=======
+end
+
+
+function value = shouldUseErrorFiles(FLAGS)
+global canUseErr;
+
+value = canUseErr == 1 && FLAGS.useSegs == 0;
+end
+
+function value = shouldLoadNeighborFrames(FLAGS)
+value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
+end
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9

@@ -55,7 +55,6 @@ if ~isfield( CONST.view, 'background' );
 end
 
 
-clf;
 numframe = numel( data.CellA );
 TimeStep = CONST.getLocusTracks.TimeStep; % used when plotting the numbers
 imCell = cell( 1, numel(data.CellA) );
@@ -172,7 +171,7 @@ for ii = 1:skip:numframe
         im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;        
         FLAG1 = true;
     else
-        im1_ = 0*mask_;
+        im1_ = 0*mask_mosaic;
         FLAG1 = false;
         f1mm = [0,1];
     end
@@ -204,7 +203,7 @@ for ii = 1:skip:numframe
         im2_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor2;
         FLAG2 = true;
     else
-        im2_ = uint8(0*mask_d);
+        im2_ = uint8(0*mask_mosaic);
         FLAG2 = false;
         f2mm = [0,1];
     end
@@ -262,6 +261,8 @@ inv_flag = 0;
 frameNumbers = 1:skip:numframe;
 
 if disp_flag
+    figure(2);
+    clf;
     if inv_flag
         imshow(255-im);
     else

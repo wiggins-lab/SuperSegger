@@ -72,9 +72,23 @@ function trackOptiMakeCell(dirname,CONST,header)
 %       CONST: are the segmentation constants.
 %       header : string displayed with information
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if ~exist('header','var')
     header = [];
@@ -84,6 +98,8 @@ if(nargin<1 || isempty(dirname))
     dirname = '.';
 end
 dirname = fixDir(dirname);
+
+verbose = CONST.parallel.verbose;
 
 % Get the track/error file names
 contents=dir([dirname '*_err.mat']);
@@ -145,6 +161,7 @@ for i = 1:num_im;
         PAD_SIZE = 5;
         ss = size(data_c.phase);
         
+        celld.cellLength = [data_c.regs.L1(ii),data_c.regs.L2(ii)];
         [xx,yy]  = getBBpad( data_c.regs.props(ii).BoundingBox, ss, PAD_SIZE);
         celld.xx = xx;
         celld.yy = yy;
@@ -194,8 +211,8 @@ for i = 1:num_im;
             elseif data_c.regs.birthF(ii) && ( data_c.regs.sisterID(ii) ) && ~isempty(find( data_c.regs.sisterID(ii) == data_c.regs.ID ))
                 
                 cell_old = data_r.CellA{data_c.regs.map.r{ii}(1)};                
-                celld             = toMakeCell(celld, cell_old.pole.e1,data_c.regs.props(ii));
-                celld.pole.e1     = celld.coord.e1;
+                celld  = toMakeCell(celld, cell_old.pole.e1,data_c.regs.props(ii));
+                celld.pole.e1 = celld.coord.e1;
                 e1 = celld.pole.e1;
                 op_ori = cell_old.pole.op_ori;
 
@@ -295,6 +312,7 @@ for i = 1:num_im;
             celld.gray = mean(double(celld.phase(celld.mask)));
             
         end
+        
         data_c.CellA{ii} = celld;
         
     end
@@ -305,7 +323,7 @@ for i = 1:num_im;
     
     if CONST.parallel.show_status
         waitbar(i/num_im,h,['Making Cells--Frame: ',num2str(i),'/',num2str(num_im)]);
-    else
+    elseif verbose
         disp([header, 'MakeCell frame: ',num2str(i),' of ',num2str(num_im)]);
     end
 end

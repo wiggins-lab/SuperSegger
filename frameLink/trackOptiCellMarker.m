@@ -1,4 +1,4 @@
-function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)
+function [clist, clist_def] = trackOptiCellMarker(dirname, CONST, header)
 %  trackOptiCellMarker : puts together a list of complete cell cycles.
 %  It goes through the dirname/*err.mat files and determines which
 %  cells go through complete cell cycles (i.e. cells in which both birth and 
@@ -15,19 +15,36 @@ function [clist, clist_def] = trackOptiCellMarker(dirname,CONST,header)
 %       clist : list of all cells found with non time dependent information about them. 
 %       clist_def : definitions of the fields in clist set.
 %
+%
 % Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if ~exist('header')
+if ~exist('header', 'var')
     header = [];
 end
 
-MIN_CELL_AGE = CONST.trackOpti.MIN_CELL_AGE;
+dirname = fixDir(dirname);
 
+MIN_CELL_AGE = CONST.trackOpti.MIN_CELL_AGE;
+verbose = CONST.parallel.verbose;
 
 % this variable contains the label for every set in the clist variable.
-clist_def =     { 'Cell ID', ...
+clist_def =  { 'Cell ID', ...
     'Region Num Birth', ...
     'Region Num Divide', ...
     'Cell Birth Time', ...
@@ -38,22 +55,7 @@ clist_def =     { 'Cell ID', ...
     'Long Axis Birth', ...
     'Long Axis Divide'};
 
-if ~exist('disp_flag');
-    disp_flag = 0;
-end
 
-list_touch = [];
-
-dirseperator = filesep;
-
-
-
-if(nargin<1 || isempty(dirname))
-    dirname=uigetdir()
-    dirname=[dirname,dirseperator];
-elseif dirname(length(dirname))~=dirseperator
-        dirname=[dirname,dirseperator];
-end
 
 contents=dir([dirname '*_err.mat']);
 num_im = length(contents);
@@ -96,9 +98,9 @@ for i = (num_im-1):-1:2;
                 (~data_c.regs.ehist(ii) && ...
                 (i-data_c.regs.birth(ii)) >= MIN_CELL_AGE )
             
-            
-            disp([header, 'CellMarker: Complete Cell Cycle! Frame:', num2str(i),' reg: ', num2str(ii)]);
-            
+            if verbose
+                disp([header, 'CellMarker: Complete Cell Cycle! Frame:', num2str(i),' reg: ', num2str(ii)]);
+            end
             
             % get the distance of the cell from the edge of the colony and
             % put that distance (in pixels) in cell_dist
@@ -148,8 +150,9 @@ for i = (num_im-1):-1:2;
                 num2str(i-data_c.regs.birth(ii)), ...
                 '< min age ' , num2str(MIN_CELL_AGE), '.'];
             
-            disp([header, 'CellMarker: ', data_c.regs.error.label{ii}] );
-            
+            if verbose
+                disp([header, 'CellMarker: ', data_c.regs.error.label{ii}] );
+            end
         end
         
     end
@@ -181,7 +184,7 @@ for i = (num_im-1):-1:2;
                 data_c.regs.stat0(jj) = 2;
                 
             catch
-                disp([header, 'Error is trackOptiCellMarker... FuckFuckFuck']);
+                disp([header, 'Error is trackOptiCellMarker.']);
             end
         end
     end
@@ -202,7 +205,7 @@ if ~isempty(clist)
         [tmp,ind_order] = sort( clist(:,1) );
         clist = clist(ind_order,:);
     catch
-        disp([header, 'Error is trackOptiCellMarker...']);
+        disp([header, 'Error is trackOptiCellMarker.']);
     end
 end
 

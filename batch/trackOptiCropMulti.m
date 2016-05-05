@@ -1,12 +1,30 @@
 function trackOptiCropMulti(dirname,xydir)
 % trackOptiCropMulti user chooses two corners to crops multiple images
 % Images must be in NIS name-format. 
-% new cut images are saved in dirname/crop folder.
+% New cut images are saved in dirname/crop folder.
 %
 % INPUT :
 %       dirname : directory with .tif images named in NIS name-format.
 %       xydir : number of xydirectory you would like to crop, it cuts all
 %       if none.
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if ~isempty(dirname)
     
@@ -48,8 +66,8 @@ if ~isempty(dirname)
         
         nameInfo.npos(:,1) = [nt(end); nc(1); nnxy; nz(1)];
         imEnd = imread( [dirname, MakeFileName(nameInfo) ]);
+        figure(1);
         clf;
-        
         im = cat(3, ag(im1), ag(imEnd), 0*ag(imEnd));
         imshow(im)
         
@@ -79,7 +97,7 @@ if ~isempty(dirname)
         
         yy = y(1):y(2);
         xx = x(1):x(2);
-        
+        figure(1);
         clf;
         imshow(im(yy,xx,:));
         

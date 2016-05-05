@@ -15,9 +15,24 @@ function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
 % OUTPUT :
 %       crop_box : information about alignement
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if ~exist('workers', 'var') || isempty( workers )
     workers = 0;
@@ -32,7 +47,7 @@ if dirname_ == '.'
 end
 dirname_ = fixDir(dirname_);
 
-
+verbose = CONST.parallel.verbose;
 file_filter = '*.tif';
 contents=dir([dirname_ file_filter]);
 num_im = numel( contents );
@@ -87,7 +102,7 @@ crop_box = cell(1, num_xy);
 % parallelized alignemnt for each xy
 parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
-        dirname_, targetd, nameInfo, precision, CONST );
+        dirname_, targetd, nameInfo, precision, CONST);
 end
 
 end
@@ -95,7 +110,7 @@ end
 
 
 function crop_box = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, ...
-    nnxy, dirname, targetd, nameInfo, precision, CONST )
+    nnxy, dirname, targetd, nameInfo, precision, CONST)
 % intFrameAlignXY : Frame alignment for one xy directory
 %
 % INPUT :
@@ -120,6 +135,8 @@ ERR_LIM = 1000000;
 if SHOW_FLAG
     h = waitbar(0,'aligning frames: ');
 end
+
+verbose = CONST.parallel.verbose;
 
 nnt = numel( nt );
 OutArray   = zeros( nnt, 2);
@@ -146,7 +163,9 @@ for it = nt;
         for ic = nc
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
-            disp(['Image name: ',in_name]);
+            if verbose
+                disp(['trackOptiAlignPad : Image name: ',in_name]);
+            end
             im = imread(in_name);
             
             if numel(size(im)) > 2
@@ -170,8 +189,9 @@ for it = nt;
                 end
                 
                 [out,errNum,focusNum] = intAlignIm(im_, phaseBef_, precision );
-                disp(['focusNum: ',num2str(focusNum),' errNum: ',num2str(errNum)]);
-                
+                if verbose
+                    disp(['focusNum: ',num2str(focusNum),' errNum: ',num2str(errNum)]);
+                end
                 FOCUS_FLAG = (focusNum > FOCUS_NUM_LIM) & (errNum < ERR_LIM);
                 
                 if FOCUS_FLAG % focused, with low alignment error
@@ -250,7 +270,9 @@ for it = nt;
         for ic = nc % go through each channel
             nameInfo.npos(:,1) = [it; ic; nnxy; iz];
             in_name =  [dirname, MakeFileName(nameInfo)];
-            disp(['Image name: ',in_name]);
+            if verbose
+                disp(['Image name: ',in_name]);
+            end
             im_ = imread( in_name );
             im = zeros(sspad, class(im_) ) + mean( im_(:));
             im((1-miny):(ss(1)-miny),(1-minx):(ss(2)-minx)) = im_;

@@ -1,33 +1,45 @@
 function [data] = regionOpti( data, disp_flag, CONST,header)
 % regionOpti : Segmentaion optimization using region characteristics.
-% It turns off on and off segments using a systematic method, or simulated
-% anneal, according to the number of segments to be considered.
-% if the number of segments > MAX_NUM_RESOLVE : uses the rawScore.
-% if the number of segments > MAX_NUM_SYSTEMATIC : uses simulated anneal.
-% and if it is below that it uses a systematic function.
+% It turns off on and off segments that have scores between two values in the
+% constants (CONST.regionOpti.CutOffScoreHi and CONST.regionOpti.CutOffScoreLo)
+% And uses systematic method, or simulated anneal, to find the optimal segments 
+% configuration.
 %
 % INPUT :
 %       data : data with segs field (.err data or .trk data)
-%       dissp : display flag
+%       disp_flag : display flag
 %       CONST : segmentation constants
 %       header : information string
 % OUTPUT :
 %       data : data structure with modified segments
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Styliandou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-MAX_WIDTH          = CONST.regionOpti.MAX_WIDTH;
-MAX_LENGTH         = CONST.regionOpti.MAX_LENGTH;
-CutOffScoreHi      = CONST.regionOpti.CutOffScoreHi;
-CutOffScoreLo      = CONST.regionOpti.CutOffScoreLo;
-MAX_NUM_RESOLVE    = CONST.regionOpti.MAX_NUM_RESOLVE;
+MAX_WIDTH = CONST.regionOpti.MAX_WIDTH;
+MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
+CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
+CutOffScoreLo = CONST.regionOpti.CutOffScoreLo;
+MAX_NUM_RESOLVE = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
-
-CONST.regionOpti.Emin          = .2;
-
-DE_norm          = CONST.regionOpti.DE_norm;
+CONST.regionOpti.Emin  = .2;
+DE_norm = CONST.regionOpti.DE_norm;
+verbose = CONST.parallel.verbose;
 
 if ~exist('header')
     header = [];
@@ -40,8 +52,8 @@ end
 
 % Turn on and off segs outside the cutoff.
 segs_label = data.segs.segs_label;
-segs_3n    = data.segs.segs_3n;
-segs_bad   = 0*data.segs.segs_3n;
+segs_3n = data.segs.segs_3n;
+segs_bad = 0*data.segs.segs_3n;
 segs_good  = segs_bad;
 segs_good_off  = segs_bad;
 ss = size(segs_3n);
@@ -63,15 +75,16 @@ regs_label = (bwlabel( mask_regs, 4 ));
 regs_props = regionprops( regs_label, 'BoundingBox','Orientation' );
 num_regs   = max(regs_label(:));
 segs_added = [];
+if verbose
 disp([header, 'rO: Got ',num2str(num_regs),' regions.']);
-
+end
 % Find short regions and add surrounding segments to segs_added
 for ii = 1:num_regs
     
     [xx,yy] = getBBpad(regs_props(ii).BoundingBox,ss,2);
     tmp_mask = (regs_label(yy,xx)==ii);
     % calculates long and short axis of region
-    [L1,L2] = makeRegionSizeProjectionBBint2( tmp_mask, regs_props(ii) );
+    [L1,L2] = makeRegSize (tmp_mask, regs_props(ii));
     debug_flag = 0;
     
     if debug_flag
@@ -83,9 +96,9 @@ for ii = 1:num_regs
     end
     
      
-    % if region is shorter than max_length it adds the hard segments inside the
+    % if region is shorter than MIN_LENGTH it adds the hard segments inside the
     % region in segs_added to be switched on / off.   
-    if L1 < MAX_LENGTH;
+    if L1 < MIN_LENGTH;
         tmp_mask = imdilate(tmp_mask, strel('square',3));
         tmp_added = unique( tmp_mask.*data.segs.segs_label(yy,xx).*segs_3n(yy,xx));
         tmp_added = tmp_added(logical(tmp_added));
@@ -156,14 +169,20 @@ for ii = 1:num_regs
     if isempty(segs_list)
         [vect] = [];
     elseif numel(segs_list) > MAX_NUM_RESOLVE % use raw score
+        if verbose
         disp([header, 'rO: Too many regions to analyze (',num2str(numel(segs_list)),').']);
+        end
         [vect] = data.segs.scoreRaw(segs_list)>0;
     elseif numel(segs_list) > MAX_NUM_SYSTEMATIC % use simulated anneal
+         if verbose
         disp([header, 'rO: Simulated Anneal : (',num2str(numel(segs_list)),' segments).']);
+         end
         debug_flag = 0;
         [vect] = simAnnealMap( segs_list, data, cell_mask, xx, yy, CONST, debug_flag);
     else % use systematic
-         disp([header, 'rO: Systematic : (',num2str(numel(segs_list)),' segments).']);    
+        if verbose 
+        disp([header, 'rO: Systematic : (',num2str(numel(segs_list)),' segments).']);    
+        end
         %tic;
         [vect] = systematic( segs_list, data, cell_mask, xx, yy, CONST);
        % toc;

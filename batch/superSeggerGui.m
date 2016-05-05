@@ -1,4 +1,25 @@
-function varargout = gui(varargin)
+function varargout = superSeggerGui(varargin)
+% superSeggerGui : gui for segmenting images with superSegger. 
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Silas Boye Nissen & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
@@ -19,7 +40,18 @@ end
 
 function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+load_listbox(handles)
+set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.35 0.7])
 guidata(hObject, handles);
+
+
+function load_listbox(handles)
+[~,reslist] = getConstantsList();
+[sorted_names,sorted_index] = sortrows(reslist');
+handles.file_names = sorted_names;
+handles.sorted_index = sorted_index;
+set(handles.constants_list,'String',handles.file_names,...
+	'Value',1)
 
 function varargout = superSeggerGui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
@@ -70,74 +102,46 @@ end
 
 % converts image names
 function convert_images_Callback(hObject, eventdata, handles)
-if isempty (handles.directory.String)
-     errordlg ('Please select a directory');
-     return
-end
 convertImageNames(handles.directory.String, handles.basename.String, ...
     handles.timeBefore.String, handles.timeAfter.String, handles.xyBefore.String, ...
     handles.xyAfter.String, strsplit(handles.channels.String, ','));
 
-function spots_Callback(hObject, eventdata, handles)
-
-function spots_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function segment_images_Callback(hObject, eventdata, handles)
-if isempty (handles.directory.String)
-     errordlg ('Please select a directory');
-     return
-end
-if (handles.ec60.Value + handles.ec100.Value + handles.pa100.Value + ...
-        handles.a60.Value + handles.pa60.Value + handles.a60.Value + ...
-        handles.pam60.Value+handles.eclb60.Value) > 1
-    errordlg ('Please select only one constant.')
+
+dirname = handles.directory.String;
+if isempty (dirname)
+    errordlg ('Please select a directory');
     return
 end
 
-text = '';
-if handles.ec60.Value;
-    text = '60XEc';
-elseif handles.ec100.Value;
-    text = '100XEc';
-elseif handles.pa100.Value;
-    text = '100XPa';
-elseif handles.pa60.Value;
-    text = '60XPa';
-elseif handles.a60.Value;
-    text = '60XA';
-elseif handles.eclb60.Value;
-    text = '60XEcLB';
-elseif handles.pam60.Value;
-    text = '60XPaM';
-elseif handles.bthai60.Value;
-    text = '60XBthai';
-end
-
-% get values for constants
+% load constants
 parallel = handles.parallel_flag.Value;
-if ~strcmp(text,'');
-    CONST = loadConstants(text, parallel);
-elseif isfield(handles,'CONST') && ~isempty(handles.CONST)
-    CONST = handles.CONST;
-else
-    errordlg ('No constants selected');
-    return
-end
+resValue = get(handles.constants_list,'Value');
+res = handles.constants_list.String{resValue};
+CONST = loadConstantsNN (res,parallel);
+
+
 % set constants
 CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
 CONST.trackLoci.fluorFlag = handles.fluor_flag.Value;
-CONST.consensus = handles.consensus.Value;
+CONST.parallel.verbose = handles.verbose.Value;
 CONST.trackOpti.pole_flag = handles.pole_snapshot.Value;
-skip = str2double(handles.skip.String);
 CONST.imAlign.AlignChannel = str2double(handles.alignChan.String);
 CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
+
+linkVal = get(handles.link_list,'Value'); 
+if linkVal == 1
+    CONST.trackOpti.linkFun =  @multiAssignmentFastOnlyOverlap;
+else
+    CONST.trackOpti.linkFun =  @multiAssignmentPairs;
+end
+
+
 clean_flag = handles.clean_flag.Value;
+skip = str2double(handles.skip.String);
 
 BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST);
 
@@ -152,43 +156,8 @@ function bthai60_Callback(hObject, eventdata, handles)
 
 % tries different constants
 function try_constants_Callback(hObject, eventdata, handles)
-resFlags = {};
-if handles.ec60.Value;
-    resFlags{end+1} = '60XEc';
-end
-if handles.ec100.Value;
-    resFlags{end+1} = '100XEc';
-end
-if handles.pa100.Value;
-    resFlags{end+1} = '100XPa';
-end
-if handles.pa60.Value;
-    resFlags{end+1} = '60XPa';
-end
-if handles.a60.Value;
-    resFlags{end+1} = '60XA';
-end
-if handles.eclb60.Value;
-    resFlags{end+1} = '60XEcLB';
-end
-if handles.pam60.Value;
-    resFlags{end+1} = '60XPaM';
-end
-if handles.bthai60.Value;
-    resFlags{end+1} = '60XBthai';
-end
+tryDifferentConstants(handles.directory.String);
 
-tryDifferentConstants(handles.directory.String, resFlags);
-
-% loads constants that user selects 
-function loadConstMine_Callback(hObject, eventdata, handles)
-if get(hObject,'Value')
-[filename,path] = uigetfile('*.mat', 'Pick a superSegger constants file');;
-handles.CONST = load([path,'/',filename]);
-else
-    handles.CONST  = [];
-end
-guidata(hObject, handles)
 
 
 % opens superSeggerViewer
@@ -214,7 +183,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 function remove_stray_Callback(hObject, eventdata, handles)
-function consensus_Callback(hObject, eventdata, handles)
+function verbose_Callback(hObject, eventdata, handles)
 function clean_flag_Callback(hObject, eventdata, handles)
 function fluor_flag_Callback(hObject, eventdata, handles)
 function neighbor_flag_Callback(hObject, eventdata, handles)
@@ -227,6 +196,54 @@ end
 
 function cell_age_Callback(hObject, eventdata, handles)
 function cell_age_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in constants_list.
+function link_list_Callback(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from constants_list
+
+
+
+% --- Executes during object creation, after setting all properties.
+function link_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+% --- Executes on selection change in constants_list.
+function constants_list_Callback(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from constants_list
+
+
+% --- Executes during object creation, after setting all properties.
+function constants_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

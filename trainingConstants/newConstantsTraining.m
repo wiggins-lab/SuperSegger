@@ -8,10 +8,23 @@ function newConstantsTraining(dirname, constname)
 %       dirname : directory with images
 %       constame : name under which new constants will be saved.
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % initialize
 parallel = 0;
@@ -20,10 +33,13 @@ skip = 1;
 % 1) runs selected constants on one image
 
 % modify this to only look at the initial constants you need
-resFlags = {'60XEc','60XA','60XEcLB',...
-    '60XPa','60XPaM','60XPaM2','60XBthai',...
-    '100XEc','100XPa'};
+% resFlags = {'60XEc','60XA','60XEcLB',...
+%     '60XPa','60XPaM','60XPaM2','60XBthai',...
+%     '100XEc','100XPa'};
 
+% get the list
+[possibleConstants] = getConstantsList();
+resFlags = {possibleConstants.resFlag}
 
 % creates a printable verison of resFlgas
 resFlagsPrint = resFlags ; % work on copy
@@ -43,7 +59,10 @@ while ~any(ismember(resFlags,res))
 end
 disp (['Loading constants ', res]);
 
-CONST = loadConstants(res,parallel);
+CONST = loadConstantsNN(res,parallel);disp ('Croppping images - choose a small region with a couple of colonies');
+% only xy1
+trackOptiCropMulti(dirname,1)
+segTrainingDir = [dirname,'crop',filesep];
 
 % 2) cuts the image series for xy1, every 5 time frames
 disp ('Croppping images - choose a small region with a couple of colonies');
@@ -56,7 +75,7 @@ dirname_seg = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
 mkdir(dirname_seg);
 
 only_seg = 1; % runs only segmentation, no linking
-BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,1,only_seg);
+BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,1,1,only_seg);
 
 disp ('Segmentation finished - optimize the segments');
 disp ('Red are correct segments, blue are incorrect segments');
@@ -69,7 +88,7 @@ segDirMod = [segTrainingDir,filesep,'xy1',filesep,'segMod',filesep];
 mkdir(segDirMod);
 segData = dir([segDir,'*seg.mat']);
 
-% kill bad regions
+% 4) kill bad regions
 
 for i = 1 : numel(segData)
         data = load([segDir,segData(i).name]);
@@ -77,7 +96,7 @@ for i = 1 : numel(segData)
         save([segDirMod,segData(i).name],'-STRUCT','data');
 end
 
-% 4) user sets good and bad segments
+% 5) user sets good and bad segments
 
 FLAGS.im_flag = 1;
 FLAGS.S_flag = 0;
@@ -176,7 +195,7 @@ CONST.regionOpti.minGoodRegScore = 10;
 CONST.regionOpti.neighMaxScore = 10;
 
 save([dirname,constname,'_FULLCONST'],'-STRUCT','CONST');
-save([dirname,constname],'A','E');
+save([dirname,constname,'_AE'],'A','E');
 disp ('new constants saved');
 end
 

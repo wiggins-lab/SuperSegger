@@ -7,11 +7,27 @@ function [im]= makeKymoMosaic (dirname, CONST)
 % INPUT :
 %       dirname : directory with cell data files
 %       CONST : segmentation parameters
+% OUTPUT : 
+%       im : output image of kymo mosaic
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % NOTE: TIME IN HOURS FOR 1 MIN FREQUENCY
 TimeStep     = CONST.getLocusTracks.TimeStep/60;
@@ -81,8 +97,8 @@ for jj = 1:num_list_
             im = doColorMap( ag(kymo.g,f1mm(1), f1mm(2)), colormap_ );
             data_A{ii} =( im.*backer3+.6*(1-backer3) );
         else
-            data_A{ii} = cat(3,del*autogain(1-kymo.b)+autogain(kymo.r),...
-                del*autogain(1-kymo.b)+ag(kymo.g),del*autogain(1-kymo.b));
+            data_A{ii} = cat(3,del*ag(1-kymo.b)+ag(kymo.r),...
+                del*ag(1-kymo.b)+ag(kymo.g),del*ag(1-kymo.b));
         end
         
         ss = size(data_A{ii});       

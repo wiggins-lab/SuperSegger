@@ -1,5 +1,5 @@
 function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel, filt_channel )
-% makeKymographC creates a kymograph for given cell.
+% makeKymographC creates a kymograph for given cell data file..
 % A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
 %
@@ -7,23 +7,40 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       data : cell data file
 %       disp_flag : 1 to display image, 0 to not display image
 %       CONST : segmentation parameters
-%       which_channel :
-%       filt_channel :
+%       which_channel : binarry array of fluorescence channels to be plotted eg. [1,1,1]
+%       filt_channel : 1 to filter fluorescence images 
+%
 % OUTPUT :
-%       Kymo: Kymo has images at .r .g and .b fields. The combination of
-%       which produces the kymgraph.
-%       ll1:  ? does not seem to be set anywhere
+%       Kymo: Kymo has images at .r .g and .b fields. The (autogained)
+%       combination produces the kymgraph.
+%       ll1: size of the y axis in pixels.
 %       f1mm: is a two value array with the max and min value of channel 1
 %       f2mm: is a two value array with the max and min value of channel 2
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+white_bg = 0; % set to 1 for white background, outlined kymo
 Kymo = [];
 ll1=[];
 f1mm=[0,1];
 f2mm=[0,1];
+pixelsize = CONST.getLocusTracks.PixelSize;
 
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -38,8 +55,6 @@ if ~exist( 'filt_channel', 'var' ) || isempty(filt_channel)
 end
 
 
-
-%figure(1);
 persistent colormap_;
 if isempty( colormap_ )
     colormap_ = colormap( 'jet' );
@@ -86,7 +101,6 @@ kymoR = zeros(nn,num_im);
 kymoG = zeros(nn,num_im);
 kymoB = zeros(nn,num_im);
 
-e1old = [];
 
 for ii = 1:num_im
     
@@ -127,16 +141,11 @@ for ii = 1:num_im
         fluor2 = 0*data.CellA{ii}.mask;
     end
     
-    sq = [1 1 1; 1 1 1; 1 1 1];
-    mask_dilated = imdilate(data.CellA{ii}.mask,sq);
     mask  = data.CellA{ii}.mask;
-    outline= mask_dilated-mask;
-    
-    %maski = autogain(outline);
     
     % Make all the images the same sizes
-    [rChan,roffset] = (fixIm(double(fluor2).*double(mask),ss));
-    [gChan,roffset] = (fixIm(double(fluor1).*double(mask),ss));
+    [rChan,~] = (fixIm(double((fluor2)).*double(mask),ss));
+    [gChan,~] = (fixIm(double((fluor1)).*double(mask),ss));
     [bChan,roffset] = fixIm(mask,ss);
     
     ro = data.CellA{ii}.r_offset;
@@ -186,21 +195,33 @@ f2mm(1) = min(Kymo.r(logical(Kymo.b)));
 f2mm(2) = max(Kymo.r(logical(Kymo.b)));
 
 
-if disp_flag
     if CONST.view.falseColorFlag
-        clf;
+        % false color figure
         backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)>1);
         im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
-        imagesc( im.*backer3+.6*(1-backer3) );
+        imm =  im.*backer3+.6*(1-backer3);
+    elseif white_bg     
+        % figure with outline and white background     
+        sq = [1 1 1 ; 1 1 1 ; 1 1 1];
+        backer = (ag(~Kymo.b));
+        outline = imdilate(backer,sq) - backer;
+        imm = cat(3, (ag(Kymo.r))+backer+0.2*outline, ...
+            (ag(Kymo.g))+backer+0.2*outline,...
+            backer+0.6*outline);        
     else
-        clf;
-        backer = autogain(Kymo.b);
+        % figure without outline and gray background
+        backer = (ag(Kymo.b));
         backer = 0.3*(max(backer(:))-backer);
-        imagesc(cat(3, autogain(Kymo.r)+backer, ...
-            autogain(Kymo.g)+backer,...
-            backer));
+        imm = cat(3, (ag(Kymo.r))+backer, ...
+            (ag(Kymo.g))+backer,...
+            backer);       
     end
-end
+    
+    if disp_flag
+        figure (2);
+        clf;
+        imagesc(1:num_im,pixelsize*ll1, imm);
+    end
 
 end
 

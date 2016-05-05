@@ -1,4 +1,4 @@
-function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST,skip,mag,disp_flag)
+function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,CONST,skip,mag,disp_flag)
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
@@ -12,9 +12,25 @@ function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( da
 %     imInv : Color cons image (w/ white background)
 %  imMosaic10 : Image mosaic of first 10 cells that make up the consensus image
 %
-% Copyright (C) 2016 Wiggins Lab
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
@@ -24,7 +40,7 @@ if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
 
-T0 = numel( dataImArray.imCell ); % number of frames
+T0 = numel(dataImArray.imCell); % number of frames
 
 for jj = 1:T0
     ssCell{jj} = size(dataImArray.imCell{jj} );

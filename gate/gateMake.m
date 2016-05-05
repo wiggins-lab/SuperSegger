@@ -1,5 +1,5 @@
 function [clist] = gateMake( clist, ind, x0 )
-% gate : used to create a gate field in the clist.
+% gateMake : used to create a gate field in the clist.
 %
 % INPUT :
 %       clist : table of cells with time-independent variables
@@ -10,9 +10,24 @@ function [clist] = gateMake( clist, ind, x0 )
 % OUTPUT :
 %   clist0 : list of cells with gate field
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 ncell = size(clist.data,1);
 
@@ -25,9 +40,9 @@ if  nind == 1
   
     c_flag = 1;
     gxx = zeros( 2, 2 );
-    disp( 'click on the max and min value');
-    
+       
     if ~exist( 'x0', 'var' ) || isempty( x0 )
+        disp( 'Click on the max and min value to make a gate.');
         for i = 1:2            
             tmp = ginput(1);
             if ~isempty(tmp)
