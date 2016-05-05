@@ -69,9 +69,6 @@ if ~isempty(x)
 
         if ii ~=0
 
-            hold on;
-            plot( sub2-1+cmin, sub1-1+rmin, 'w.','MarkerSize', 30)
-
             % xx and yy are the segments coordinates
             [xx,yy] = getBB( data.segs.props(ii).BoundingBox );
 

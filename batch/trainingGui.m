@@ -22,7 +22,7 @@ function varargout = trainingGui(varargin)
 
 % Edit the above text to modify the response to help trainingGui
 
-% Last Modified by GUIDE v2.5 03-May-2016 16:08:54
+% Last Modified by GUIDE v2.5 04-May-2016 15:27:59
 
 % Begin initialization code - DO NOT EDIT
 
@@ -62,7 +62,7 @@ guidata(hObject, handles);
 
 handles.directory.String = pwd;
 
-settings.axisFlag = 0;
+settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
 settings.loadDirectory = [];
@@ -71,6 +71,13 @@ settings.handles = handles;
 settings.oldData = [];
 settings.oldFrame = [];
 settings.maxData = 10;
+settings.firstPosition = [];
+settings.errorHandle = [];
+settings.segmentsDirty = 0;
+settings.numFrames = 0;
+settings.saveFolder = '';
+
+setWorkingDirectory(handles.directory.String);
 
 updateUI(handles);
 
@@ -113,6 +120,7 @@ handles.directory.String = segTrainingDir;
 only_seg = 1; % runs only segmentation, no linking
 BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,0,1,only_seg);
 
+setWorkingDirectory(settings.loadDirectory);
 
 % --- Executes on button press in try_const.
 function try_const_Callback(hObject, eventdata, handles)
@@ -143,7 +151,7 @@ global settings;
 settings.frameNumber = settings.frameNumber - 1;
 settings.frameNumber = max(settings.frameNumber, 1);
 
-settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+loadData(settings.frameNumber)
 
 updateUI(handles);
 
@@ -176,17 +184,21 @@ if numel(settings.oldData) > 0
     
     updateUI(handles);
 
-    try
-        data = settings.currentData;
-
-        save([settings.loadDirectory, settings.loadFiles(settings.frameNumber).name],'-STRUCT','data');
-    catch ME
-        warning(['Could not save undo changes: ', ME.message]);
-    end
+    saveData();
 else
-    errordlg(['Reached undo limit']);
+    dispError('Reached undo limit');
 end
 
+
+
+function dispError(message)
+global settings;
+
+if ~isempty(settings.errorHandle) 
+    delete(settings.errorHandle)
+end
+
+settings.errorHandle = errordlg(message);
 
 
 
@@ -198,26 +210,6 @@ function toggle_segs_Callback(hObject, eventdata, handles)
 global settings;
 
 settings.axisFlag = 1;
-settings.frameNumber = 1;
-
-%Make backup folder
-try
-    backupFolder = [settings.loadDirectory(1:end-1), '_old/'];
-    if ~exist(backupFolder, 'dir')
-        mkdir(backupFolder);
-    end
-    
-    copyfile(settings.loadDirectory, backupFolder)
-catch ME
-    warning(['Could not back up files: ', ME.message]);
-end
-
-segTrainingDir = handles.directory.String;
-settings.loadDirectory = [segTrainingDir,filesep,'xy1',filesep,'seg',filesep];
-settings.loadFiles = dir([settings.loadDirectory,'*seg.mat']);
-settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
-
-
 
 updateUI(handles);
 
@@ -229,24 +221,14 @@ function del_areas_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-if exist([settings.loadDirectory, 'CONST.mat'], 'file')
-    CONST = load([settings.loadDirectory, 'CONST.mat']);
+if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+    settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
 
-    for i = 1 : numel(settings.loadFiles)
-        data = load([settings.loadDirectory,settings.loadFiles(i).name]);
-
-
-
-        data = killRegions(data, CONST)
-
-        try
-            save([settings.loadDirectory, settings.loadFiles(i).name],'-STRUCT','data');
-        catch ME
-            warning(['Could not save changes: ', ME.message]);
-        end
-    end
+    settings.axisFlag = 3;
     
-    disp('Bad regions removed');
+    settings.firstPosition = [];
+    
+    updateUI(handles);
 else
     warning(['Plese segment files first']);
 end
@@ -263,13 +245,36 @@ function toggle_regs_Callback(hObject, eventdata, handles)
 % hObject    handle to toggle_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
 
+settings.axisFlag = 2;
+
+if exist([settings.loadDirectory, '../../CONST.mat'], 'file') && settings.segmentsDirty == 1
+    settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    
+    settings.segmentsDirty = 0;
+end
+
+updateUI(handles);
 
 % --- Executes on button press in bad_regs.
 function bad_regs_Callback(hObject, eventdata, handles)
 % hObject    handle to bad_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+    makeBadRegions( settings.loadDirectory, settings.CONST)
+    
+    settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
+    
+    settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
+    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+    
+    updateUI(handles);
+end
 
 
 % --- Executes on button press in train_regs.
@@ -311,6 +316,8 @@ function directory_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of directory as text
 %        str2double(get(hObject,'String')) returns contents of directory as a double
 
+setWorkingDirectory(handles.directory.String);
+
 
 % --- Executes during object creation, after setting all properties.
 function directory_CreateFcn(hObject, eventdata, handles)
@@ -347,6 +354,8 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 handles.directory.String = uigetdir;
 
+setWorkingDirectory(handles.directory.String);
+
 
 % --- Executes on button press in next.
 function next_Callback(hObject, eventdata, handles)
@@ -358,7 +367,7 @@ global settings;
 settings.frameNumber = settings.frameNumber + 1;
 settings.frameNumber = min(settings.frameNumber, numel(settings.loadFiles));
 
-settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+loadData(settings.frameNumber)
 
 updateUI(handles);
 
@@ -366,33 +375,70 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
-if settings.axisFlag > 0
+firstFrame = 0;
+if numel(handles.viewport.Children) == 0
+    firstFrame = 1;
+end
+
+while numel(handles.viewport.Children) > 0
+    delete(handles.viewport.Children(1))
+end
+
+if settings.axisFlag == 1 || settings.axisFlag == 2
     FLAGS.im_flag = settings.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
 
-    showTrainingData (settings.currentData, FLAGS, handles.viewport);
+    showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
 
     if numel(handles.viewport.Children) > 0
         set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
     end
+elseif settings.axisFlag == 3
+    FLAGS.im_flag = 2;
+    
+    showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
+    
+    if numel(handles.viewport.Children) > 0
+        set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+    end
+    
+    if numel(settings.firstPosition) > 0
+        hold on;
+        plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+    end
+elseif settings.axisFlag == 4    
+    axes(handles.viewport);
+    
+    imshow(settings.currentData.phase);
 end
 
-if settings.axisFlag == 1
-    handles.tooltip.String = ['Editing segments. Max frame: ', num2str(numel(settings.loadFiles))];
-    handles.frameNumber.Visible = 'on';
-    handles.frameNumber.String = num2str(settings.frameNumber);
-elseif settings.axisFlag == 0
-    handles.tooltip.String = ['Editing regions. Max frame: ', num2str(numel(settings.loadFiles))];
+if firstFrame
+    axis tight;
+end
+hold on;
+
+if settings.axisFlag > 0
     handles.frameNumber.Visible = 'on';
     handles.frameNumber.String = num2str(settings.frameNumber);
 else
-    handles.tooltip.String = '';
     handles.frameNumber.Visible = 'off';
     
     if numel(handles.viewport.Children) > 0
         set(handles.viewport.Children(1),'Visible', 'off');
     end
+end
+
+if settings.axisFlag == 4
+    handles.tooltip.String = ['Phase image. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 3
+    handles.tooltip.String = ['Deleting regions (Click twice). Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 1
+    handles.tooltip.String = ['Editing segments. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 2
+    handles.tooltip.String = ['Editing regions. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 0
+    handles.tooltip.String = '';
 end
 
 
@@ -408,7 +454,7 @@ global settings
 try
     data = settings.currentData;
     
-    save([settings.loadDirectory, settings.loadFiles(settings.frameNumber).name],'-STRUCT','data');
+    save([settings.saveFolder, settings.loadFiles(settings.frameNumber).name],'-STRUCT','data');
 catch ME
     warning(['Could not save changes: ', ME.message]);
 end
@@ -419,13 +465,63 @@ global settings
 
 settings.oldData = [settings.currentData, settings.oldData];
 if numel(settings.oldData) > settings.maxData
-    settings.oldData = settings.oldData(1:settings.maxData)
+    settings.oldData = settings.oldData(1:settings.maxData);
 end
 
 settings.oldFrame = [settings.frameNumber, settings.oldFrame];
 if numel(settings.oldFrame) > settings.maxData
-    settings.oldFrame = settings.oldFrame(1:settings.maxData)
+    settings.oldFrame = settings.oldFrame(1:settings.maxData);
 end
+
+
+function setWorkingDirectory(directory)
+global settings;
+
+if checkIfSave()
+    return;
+end
+
+settings.frameNumer = 1;
+settings.axisFlag = 0;
+
+settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+if exist(settings.loadDirectory, 'dir')
+    settings.axisFlag = 4;
+    
+    settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
+    
+    settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
+    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+
+    if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+        settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
+    end
+    
+    %Make save folder
+    try
+        settings.saveFolder = [settings.loadDirectory(1:end-1), '_tmp/'];
+        if ~exist(settings.saveFolder, 'dir')
+            mkdir(settings.saveFolder);
+        else
+            delete([settings.saveFolder, '*']);
+        end
+    catch ME
+        warning(['Could not back up files: ', ME.message]);
+    end
+end
+
+%Make backup folder
+% try
+%     backupFolder = [settings.loadDirectory(1:end-1), '_old/'];
+%     if ~exist(backupFolder, 'dir')
+%         mkdir(backupFolder);
+%     end
+% 
+%     copyfile(settings.loadDirectory, backupFolder)
+% catch ME
+%     warning(['Could not back up files: ', ME.message]);
+% end
+
 
 
 % --- Executes on mouse press over axes background.
@@ -435,7 +531,7 @@ function imageButtonDownFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-if settings.axisFlag > 0
+if settings.axisFlag == 1 || settings.axisFlag == 2
     FLAGS.im_flag = settings.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
@@ -444,8 +540,66 @@ if settings.axisFlag > 0
     [settings.currentData, list] = updateTrainingImage(settings.currentData, FLAGS, eventdata.IntersectionPoint(1:2));
     saveData();
     
-    updateUI(settings.handles);
+    if settings.axisFlag == 1
+        if numel(list) > 0
+            settings.segmentsDirty = 1;
+        end
+    else
+        settings.segmentsDirty = 0;
+    end
+elseif settings.axisFlag == 3
+    if numel(settings.firstPosition) == 0
+        settings.firstPosition = eventdata.IntersectionPoint;
+    else
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)
+        
+        drawnow;
+        
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
+        saveData();
+        
+        settings.firstPosition = [];
+    end
 end
+
+updateUI(settings.handles);
+
+
+
+function loadData(frameNumber)
+global settings;
+
+if exist([settings.saveFolder,settings.loadFiles(settings.frameNumber).name], 'file')
+    settings.currentData = load([settings.saveFolder,settings.loadFiles(settings.frameNumber).name]);
+else
+    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+end
+
+
+function shouldCancel = checkIfSave()
+global settings;
+
+shouldCancel = 0;
+
+if exist(settings.saveFolder, 'dir')
+    if numel(dir(settings.saveFolder)) > 2
+        answer = questdlg('You have unsaved changes.', 'Save changes?', 'Save', 'Ignore', 'Cancel', 'Save');
+        
+        if strcmp(answer, 'Save')
+            saveData_Callback();
+        elseif strcmp(answer, 'Cancel')
+            shouldCancel = 1;
+            
+            return;
+        end
+    end
+    
+    delete([settings.saveFolder, '*']);
+    rmdir(settings.saveFolder);
+end
+
+
 
 
 
@@ -461,7 +615,7 @@ global settings;
 settings.frameNumber = str2num(handles.frameNumber.String);
 settings.frameNumber = max(1, min(settings.frameNumber, numel(settings.loadFiles)));
 
-settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+loadData(settings.frameNumber);
 
 updateUI(handles);
 
@@ -477,3 +631,39 @@ function frameNumber_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in phase.
+function phase_Callback(hObject, eventdata, handles)
+% hObject    handle to phase (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+settings.axisFlag = 4;
+
+updateUI(handles);
+
+
+% --- Executes on button press in saveData.
+function saveData_Callback(hObject, eventdata, handles)
+% hObject    handle to saveData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+try
+    if numel(dir(settings.saveFolder)) > 2
+        movefile([settings.saveFolder, '*'], settings.loadDirectory)
+    end
+catch ME
+    warning(['Could not back up files: ', ME.message]);
+end
+
+
+% --- Executes during object deletion, before destroying properties.
+function figure1_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+checkIfSave();
