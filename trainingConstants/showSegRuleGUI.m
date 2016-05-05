@@ -1,4 +1,4 @@
-function showSegRuleGUI( data, FLAGS, figNum, viewport )
+function showSegRuleGUI( data, FLAGS, viewport )
 % showSegRule : shows the segmentation for regions and segments
 %
 % INPUT :
@@ -60,10 +60,6 @@ if ~isfield( FLAGS, 'Sj_flag' )
 end
 
 Sj_flag = FLAGS.Sj_flag;
-
-if ~exist('figNum','var') || isempty(figNum)
-    figNum = 4;
-end
 
 segs_good      = zeros( size( data.phase ) );
 segs_good_fail = segs_good;
