@@ -125,6 +125,7 @@ handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
 handles.make_gate.String = handles.clist.def';
 handles.histogram_clist.String = handles.clist.def';
+handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 updateImage(hObject, handles)
 
 function updateImage(hObject, handles)
@@ -226,12 +227,11 @@ end
 
 function channel_Callback(hObject, eventdata, handles)
 f = 0;
-t = 1;
-while t
+while true
     if isfield(handles.data_c, ['fluor' num2str(f+1)] )
         f = f+1;
     else
-        t = 0;
+        break
     end
 end
 c = str2double(handles.channel.String);
@@ -353,10 +353,9 @@ handles.FLAGS.useSegs = handles.use_seg_files.Value;
 updateImage(hObject, handles)
 
 % Gate options
-
 function clear_gates_Callback(hObject, eventdata, handles)
 handles.clist.gate = [];
-guidata(hObject, handles);
+updateImage(hObject, handles)
 
 function create_clist_Callback(hObject, eventdata, handles)
 if ~isfield( handles.clist, 'gate' )
@@ -386,7 +385,7 @@ end
 function make_gate_Callback(hObject, eventdata, handles)
 figure(2);
 handles.clist = gateMake(handles.clist, handles.make_gate.Value);
-guidata(hObject, handles);
+updateImage(hObject, handles)
 
 function make_gate_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
