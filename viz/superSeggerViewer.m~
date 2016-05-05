@@ -878,7 +878,115 @@ end
 
 end
 
+<<<<<<< HEAD
+=======
+function [data_cell,cell_name] = loadCellData (num,dirname_cell)
 
+data_cell = [];
+cell_name = [];
+padStr = getPadSize(dirname_cell);
+
+if ~isempty( padStr )
+    data_cell = [];
+    filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
+    filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
+else
+    return;
+end
+
+
+if exist(filename_cell_C, 'file' )
+    filename_cell = filename_cell_C;
+    cell_name = ['Cell',num2str(num,padStr),'.mat'];
+elseif exist(filename_cell_c, 'file' )
+    filename_cell = filename_cell_c;
+    cell_name = ['cell',num2str(num,padStr),'.mat'];
+else
+    disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
+    return;
+end
+
+try
+    data_cell = load( filename_cell );
+catch
+    disp(['Error loading: ', filename_cell] );
+end
+
+end
+
+function FLAGS = fixFlags(FLAGS)
+% intSetDefaultFlags : sets default flags for when the program begins
+if ~isfield(FLAGS,'cell_flag')
+    FLAGS.cell_flag  = 1;
+end
+
+if ~isfield(FLAGS,'m_flag')
+    FLAGS.m_flag  = 0;
+end
+if ~isfield(FLAGS,'ID_flag')
+    FLAGS.ID_flag  = 0;
+end
+if ~isfield(FLAGS,'T_flag')
+    FLAGS.T_flag  = 0;
+end
+if ~isfield(FLAGS,'P_flag')
+    FLAGS.P_flag  = 0;
+end
+if ~isfield(FLAGS,'Outline_flag')
+    FLAGS.Outline_flag  = 1;
+end
+if ~isfield(FLAGS,'e_flag')
+    FLAGS.e_flag  = 0;
+end
+if ~isfield(FLAGS,'f_flag')
+    FLAGS.f_flag  = 0;
+end
+if ~isfield(FLAGS,'p_flag')
+    FLAGS.p_flag  = 0;
+end
+
+if ~isfield(FLAGS,'s_flag')
+    FLAGS.s_flag  = 1;
+end
+if ~isfield(FLAGS,'c_flag')
+    FLAGS.c_flag  = 1;
+end
+
+if ~isfield(FLAGS,'P_val')
+    FLAGS.P_val  = 0.2;
+end
+
+if ~isfield(FLAGS,'filt')
+    FLAGS.filt  = 1;
+end
+
+if ~isfield(FLAGS,'lyse_flag')
+    FLAGS.lyse_flag  = 0;
+end
+
+if ~isfield(FLAGS,'regionScores')
+    FLAGS.regionScores  = 0;
+end
+
+if ~isfield(FLAGS,'useSegs')
+    FLAGS.useSegs  = 0;
+end
+
+if ~isfield(FLAGS,'showLinks')
+    FLAGS.showLinks  = 0;
+end
+
+if ~isfield(FLAGS,'showMothers')
+    FLAGS.showMothers  = 0;
+end
+
+if ~isfield(FLAGS,'showDaughters')
+    FLAGS.showDaughters  = 0;
+end
+
+end
+
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function intCons(dirname0, contents_xy, setHeader, CONST)
 xyDir = [dirname0,contents_xy.name,filesep];
 dircons = [xyDir,'/consensus/']
@@ -941,4 +1049,19 @@ else
         
     end
 end
+<<<<<<< HEAD
 end
+=======
+end
+
+
+function value = shouldUseErrorFiles(FLAGS)
+global canUseErr;
+
+value = canUseErr == 1 && FLAGS.useSegs == 0;
+end
+
+function value = shouldLoadNeighborFrames(FLAGS)
+value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
+end
+>>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9

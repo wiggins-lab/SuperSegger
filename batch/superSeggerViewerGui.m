@@ -19,6 +19,7 @@ function initImage(hObject, handles) % Not updated
 dirname = handles.image_directory.String;
 file_filter = '';
 CONST = [];
+axis tight
 cla;
 if nargin<2 || isempty(file_filter);
     if numel(dir([dirname,filesep,'xy1',filesep,'seg',filesep,'*err.mat']))~=0
@@ -112,7 +113,7 @@ end
 if FLAGS.showLinks
     handles.show_linking.Value = 1;
 end
-if nn
+if exist('nn', 'var')
     handles.go_to_frame_no.String = num2str(nn);
 end
 handles.FLAGS = FLAGS;
@@ -134,7 +135,7 @@ nn = str2double(handles.go_to_frame_no.String);
 delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
 [handles.data_r, handles.data_c, handles.data_f] = intLoadData(handles.dirname_seg, handles.contents, ...
     nn, handles.num_im, handles.clist, handles.FLAGS);
-showSeggerImage(handles.data_c, handles.data_r, handles.data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+showSeggerImage(handles.data_c, handles.data_r, handles.data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);   
 save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
 guidata(hObject, handles);
 find_cell_no(handles);
@@ -160,7 +161,9 @@ function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.image_directory.String = getappdata(0, 'dirname');
-initImage(hObject, handles);
+if handles.image_directory.String
+    initImage(hObject, handles);
+end
 
 % Main menu
 
@@ -222,8 +225,17 @@ end
 % Display options
 
 function channel_Callback(hObject, eventdata, handles)
+f = 0;
+t = 1;
+while t
+    if isfield(handles.data_c, ['fluor' num2str(f+1)] )
+        f = f+1;
+    else
+        t = 0;
+    end
+end
 c = str2double(handles.channel.String);
-if isnan(c) || c < 0 || c > 9
+if isnan(c) || c < 0 || c > f
     handles.channel.String = '0';
 end
 handles.FLAGS.f_flag = str2double(handles.channel.String);
@@ -278,7 +290,9 @@ updateImage(hObject, handles)
 function complete_cell_cycles_Callback(hObject, eventdata, handles) % Not working
 handles.CONST.view.showFullCellCycleOnly = handles.complete_cell_cycles.Value;
 if handles.CONST.view.showFullCellCycleOnly
+    figure(2)
     handles.clist = gateMake( handles.clist, 9, [0.1 inf] );
+    close(2)
     handles.message.String = 'Only showing complete Cell Cycles';
 else
     handles.clist = gateStrip ( handles.clist, 9 );

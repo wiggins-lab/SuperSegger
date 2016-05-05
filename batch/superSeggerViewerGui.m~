@@ -1,9 +1,9 @@
-function varargout = viewer(varargin)
+function varargout = superSeggerViewerGui(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @viewer_OpeningFcn, ...
-    'gui_OutputFcn',  @viewer_OutputFcn, ...
+    'gui_OpeningFcn', @superSeggerViewerGui_OpeningFcn, ...
+    'gui_OutputFcn',  @superSeggerViewerGui_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -19,6 +19,7 @@ function initImage(hObject, handles) % Not updated
 dirname = handles.image_directory.String;
 file_filter = '';
 CONST = [];
+axis tight
 cla;
 if nargin<2 || isempty(file_filter);
     if numel(dir([dirname,filesep,'xy1',filesep,'seg',filesep,'*err.mat']))~=0
@@ -112,7 +113,7 @@ end
 if FLAGS.showLinks
     handles.show_linking.Value = 1;
 end
-if nn
+if exist('nn', 'var')
     handles.go_to_frame_no.String = num2str(nn);
 end
 handles.FLAGS = FLAGS;
@@ -120,7 +121,10 @@ handles.CONST = CONST;
 handles.dirnum = dirnum;
 handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
+handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
+handles.make_gate.String = handles.clist.def';
+handles.histogram_clist.String = handles.clist.def';
 updateImage(hObject, handles)
 
 function updateImage(hObject, handles)
@@ -132,6 +136,17 @@ delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
 [handles.data_r, handles.data_c, handles.data_f] = intLoadData(handles.dirname_seg, handles.contents, ...
     nn, handles.num_im, handles.clist, handles.FLAGS);
 showSeggerImage(handles.data_c, handles.data_r, handles.data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+
+f = 0;
+t = 1;
+while t = 1
+    if isfield(handles.data_c, ['fluor' num2str(t)] )
+        t++;
+    else
+        t = 0;
+    end
+end
+    
 save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
 guidata(hObject, handles);
 find_cell_no(handles);
@@ -153,11 +168,13 @@ function select_image_directory_ClickedCallback(hObject, eventdata, handles)
 handles.image_directory.String = uigetdir;
 initImage(hObject, handles);
 
-function varargout = viewer_OutputFcn(hObject, eventdata, handles)
+function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
-function viewer_OpeningFcn(hObject, eventdata, handles, varargin)
+function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.image_directory.String = getappdata(0, 'dirname');
-initImage(hObject, handles);
+if handles.image_directory.String
+    initImage(hObject, handles);
+end
 
 % Main menu
 
@@ -338,12 +355,28 @@ updateImage(hObject, handles)
 % Gate options
 
 function clear_gates_Callback(hObject, eventdata, handles)
+handles.clist.gate = [];
+guidata(hObject, handles);
 
 function create_clist_Callback(hObject, eventdata, handles)
-
-function move_gates_Callback(hObject, eventdata, handles)
+if ~isfield( handles.clist, 'gate' )
+    handles.clist.gate = [];
+end
+for ll_ = 1:handles.num_xy
+    filename = [handles.dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat'];
+    clist_tmp = gate(load(filename ));
+    if  ll_ == 1
+        clist_comp = clist_tmp;
+    else
+        clist_comp.data = [clist_comp.data; clist_tmp.data];
+    end
+end
+save( [handles.dirname0,'clist_comp.mat'], '-STRUCT', 'clist_comp' );
 
 function histogram_clist_Callback(hObject, eventdata, handles)
+figure(2);
+clf;
+gateHist(handles.clist, handles.histogram_clist.Value);
 
 function histogram_clist_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -351,18 +384,21 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function make_gate_Callback(hObject, eventdata, handles)
+figure(2);
+handles.clist = gateMake(handles.clist, handles.make_gate.Value);
+guidata(hObject, handles);
 
 function make_gate_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-function plot_two_clists_Callback(hObject, eventdata, handles)
+function move_gates_Callback(hObject, eventdata, handles)
+trackOptiGateCellFiles(handles.dirname_cell, handles.clist);
 
-function plot_two_clists_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+function plot_two_clists_Callback(hObject, eventdata, handles)
+setappdata(0, 'clist', handles.clist);
+plot2ClistsGui();
 
 % Link options
 
