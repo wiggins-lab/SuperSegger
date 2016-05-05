@@ -343,10 +343,9 @@ handles.FLAGS.useSegs = handles.use_seg_files.Value;
 updateImage(hObject, handles)
 
 % Gate options
-
 function clear_gates_Callback(hObject, eventdata, handles)
 handles.clist.gate = [];
-guidata(hObject, handles);
+updateImage(hObject, handles)
 
 function create_clist_Callback(hObject, eventdata, handles)
 if ~isfield( handles.clist, 'gate' )
@@ -377,6 +376,7 @@ function make_gate_Callback(hObject, eventdata, handles)
 figure(2);
 handles.clist = gateMake(handles.clist, handles.make_gate.Value);
 guidata(hObject, handles);
+updateImage(hObject, handles)
 
 function make_gate_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
