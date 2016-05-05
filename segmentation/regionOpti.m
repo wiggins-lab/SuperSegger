@@ -32,7 +32,7 @@ function [data] = regionOpti( data, disp_flag, CONST,header)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 MAX_WIDTH = CONST.regionOpti.MAX_WIDTH;
-MAX_LENGTH = CONST.regionOpti.MAX_LENGTH;
+MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 CutOffScoreLo = CONST.regionOpti.CutOffScoreLo;
 MAX_NUM_RESOLVE = CONST.regionOpti.MAX_NUM_RESOLVE;
@@ -96,9 +96,9 @@ for ii = 1:num_regs
     end
     
      
-    % if region is shorter than max_length it adds the hard segments inside the
+    % if region is shorter than MIN_LENGTH it adds the hard segments inside the
     % region in segs_added to be switched on / off.   
-    if L1 < MAX_LENGTH;
+    if L1 < MIN_LENGTH;
         tmp_mask = imdilate(tmp_mask, strel('square',3));
         tmp_added = unique( tmp_mask.*data.segs.segs_label(yy,xx).*segs_3n(yy,xx));
         tmp_added = tmp_added(logical(tmp_added));

@@ -31,7 +31,6 @@ function mask = makeBgMask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 crop_box = round( crop_box );
 crop_rad = CONST.superSeggerOpti.crop_rad;
 THRESH1  = CONST.superSeggerOpti.THRESH1; % to remove background
@@ -45,17 +44,17 @@ im_filt4 = imfilter(double(phase),filt_4,'replicate');
 tmp      = uint16(-(im_filt4-im_filt3));
 nnn      = ag(tmp);
 
-% dilated mask for values above high threshold
-% this makes the white blobs bigger
-fmask    = imdilate(nnn>THRESH1,strel('disk',5));
-fmask    = fill_max_area( fmask, Amax );
+% intensity thresholding to get the cell colonies
+% dilating and filling the areas below Amax
+maskth1    = imdilate(nnn>THRESH1,strel('disk',5));
+maskth1    = fill_max_area( maskth1, Amax );
 
 % dilated mask for values above low threshold
 % emphasizes the structure in cells and background
-mask     = imdilate(nnn>THRESH2,strel('disk',1));
+maskth2     = imdilate(nnn>THRESH2,strel('disk',1));
 
-% add the two masks where they match
-mask     = and(mask,fmask);
+% Logical and of two masks where the two masks match
+mask     = and(maskth2,maskth1);
 
 % dilate, fills the max area, and erodes
 mask     = imdilate( mask, strel('disk',2));

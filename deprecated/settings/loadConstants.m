@@ -407,25 +407,25 @@ CONST.regionOpti.MAX_WIDTH  = CONST.superSeggerOpti.MAX_WIDTH;
 % segments are switched on during optimization - should be named
 % MIN_LENGTH.
 if strcmp(ResFlag, '60XEc')
-    CONST.regionOpti.MAX_LENGTH  = 15;
+    CONST.regionOpti.MIN_LENGTH  = 15;
 elseif strcmp(ResFlag, '60XEcHR')
-    CONST.regionOpti.MAX_LENGTH  = 15;
+    CONST.regionOpti.MIN_LENGTH  = 15;
 elseif strcmp(ResFlag, '100XEc')
-    CONST.regionOpti.MAX_LENGTH  = 25;
+    CONST.regionOpti.MIN_LENGTH  = 25;
 elseif strcmp(ResFlag, '100XPa')
-    CONST.regionOpti.MAX_LENGTH  = 25;
+    CONST.regionOpti.MIN_LENGTH  = 25;
 elseif strcmp(ResFlag, '60XA')
-    CONST.regionOpti.MAX_LENGTH  = 25;
+    CONST.regionOpti.MIN_LENGTH  = 25;
 elseif strcmp(ResFlag, '60XPaM')
-    CONST.regionOpti.MAX_LENGTH  = 8;
+    CONST.regionOpti.MIN_LENGTH  = 8;
 elseif strcmp(ResFlag, '60XPaM2')
-    CONST.regionOpti.MAX_LENGTH  = 8;
+    CONST.regionOpti.MIN_LENGTH  = 8;
 elseif strcmp(ResFlag, '60XBthai')
-    CONST.regionOpti.MAX_LENGTH  = 8;
+    CONST.regionOpti.MIN_LENGTH  = 8;
 elseif strcmp(ResFlag, '60XPa')
-    CONST.regionOpti.MAX_LENGTH  = 10;
+    CONST.regionOpti.MIN_LENGTH  = 10;
 elseif strcmp(ResFlag, 'R60XEcLB')
-    CONST.regionOpti.MAX_LENGTH  = 25;
+    CONST.regionOpti.MIN_LENGTH  = 25;
 end
 
 % To calculate the total score:

@@ -1,31 +1,28 @@
 function varargout = modifyConstValuesGUI(varargin)
-% MODIFYCONSTVALUESGUI MATLAB code for modifyConstValuesGUI.fig
-%      MODIFYCONSTVALUESGUI, by itself, creates a new MODIFYCONSTVALUESGUI or raises the existing
-%      singleton*.
+% modifyConstValuesGUI : gui to interactively modify parameters in constants. 
 %
-%      H = MODIFYCONSTVALUESGUI returns the handle to a new MODIFYCONSTVALUESGUI or the handle to
-%      the existing singleton*.
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Styliandou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
 %
-%      MODIFYCONSTVALUESGUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in MODIFYCONSTVALUESGUI.M with the given input arguments.
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
 %
-%      MODIFYCONSTVALUESGUI('Property','Value',...) creates a new MODIFYCONSTVALUESGUI or raises
-%      the existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before modifyConstValuesGUI_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to modifyConstValuesGUI_OpeningFcn via varargin.
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
 %
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-% Edit the above text to modify the response to help modifyConstValuesGUI
 
 % Last Modified by GUIDE v2.5 04-May-2016 18:34:41
 
 % Begin initialization code - DO NOT EDIT
-
 global settings;
 
 gui_Singleton = 1;
@@ -100,8 +97,8 @@ tryDifferentConstants(dirname, []);
 
 
 function load_listbox(handles)
-[possibleConstants] = getConstantsList();
-[sorted_names,sorted_index] = sortrows({possibleConstants.resFlag}');
+[~,resFlags] = getConstantsList();
+[sorted_names,sorted_index] = sortrows(resFlags');
 handles.file_names = sorted_names;
 handles.sorted_index = sorted_index;
 set(handles.constants_list,'String',handles.file_names,...
@@ -131,7 +128,7 @@ handles.mask_th1.Value = CONST.superSeggerOpti.THRESH1 ;
 handles.magic_thresh.Value = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 handles.magic_radius.Value = CONST.superSeggerOpti.MAGIC_RADIUS ;
 handles.max_width_regOpt.String = CONST.regionOpti.MAX_WIDTH;
-handles.maxLengRegOpti.String = CONST.regionOpti.MAX_LENGTH ;
+handles.maxLengRegOpti.String = CONST.regionOpti.MIN_LENGTH ;
 
 update_text_values (handles)
 settings.CONST = CONST;
@@ -187,7 +184,7 @@ CONST.superSeggerOpti.THRESH1 = handles.mask_th1.Value;
 CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
 CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
 CONST.regionOpti.MAX_WIDTH = handles.max_width_regOpt.Value;
-CONST.regionOpti.MAX_LENGTH = handles.maxLengRegOpti.Value;
+CONST.regionOpti.MIN_LENGTH = handles.maxLengRegOpti.Value;
 [FileName,PathName,~] = uiputfile('newConstantsName.mat');
 if FileName~=0
     save([PathName,FileName], '-struct', 'CONST');

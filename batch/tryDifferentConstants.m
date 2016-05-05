@@ -36,8 +36,7 @@ if nargin < 1 || isempty( filename ) || strcmp(filename,'.')
 end
 
 if ~exist('resFlags','var') || isempty(resFlags)
-    [possibleConstants] = getConstantsList();
-    resFlags = {possibleConstants.resFlag};
+    [~,resFlags] = getConstantsList();
 end
 
 

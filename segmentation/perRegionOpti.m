@@ -32,7 +32,7 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-MAX_LENGTH = CONST.regionOpti.MAX_LENGTH;
+MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 MAX_NUM_RESOLVE  = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
@@ -128,7 +128,7 @@ while ~isempty(badReg)
     end
     
     % add all segments inside the original cell / touching neighbors
-    if  data.regs.info(ii,1) < MAX_LENGTH % for a small cell add all segments
+    if  data.regs.info(ii,1) < MIN_LENGTH % for a small cell add all segments
         segs_list = unique(cellMaskDil.*segsLabelAll(yy_,xx_));
     else % add only segments to be considered
         segs_list = unique(cellMaskDil.*segsLabelMod(yy_,xx_));

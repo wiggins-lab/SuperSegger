@@ -46,8 +46,8 @@ guidata(hObject, handles);
 
 
 function load_listbox(handles)
-[possibleConstants] = getConstantsList();
-[sorted_names,sorted_index] = sortrows({possibleConstants.resFlag}');
+[~,reslist] = getConstantsList();
+[sorted_names,sorted_index] = sortrows(reslist');
 handles.file_names = sorted_names;
 handles.sorted_index = sorted_index;
 set(handles.constants_list,'String',handles.file_names,...
