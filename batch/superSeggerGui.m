@@ -40,9 +40,18 @@ end
 
 function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+load_listbox(handles)
 set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.35 0.7])
 guidata(hObject, handles);
 
+
+function load_listbox(handles)
+[possibleConstants] = getConstantsList();
+[sorted_names,sorted_index] = sortrows({possibleConstants.resFlag}');
+handles.file_names = sorted_names;
+handles.sorted_index = sorted_index;
+set(handles.constants_list,'String',handles.file_names,...
+	'Value',1)
 
 function varargout = superSeggerGui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
@@ -105,40 +114,12 @@ if isempty (dirname)
     return
 end
 
-if (handles.ec60.Value + handles.ec100.Value + handles.pa100.Value + ...
-        handles.pa60.Value + ...
-        handles.bay60.Value+handles.eclb60.Value) > 1
-    errordlg ('Please select only one constant.')
-    return
-end
-
-text = '';
-
-if handles.ec60.Value;
-    text = '60XEc';
-elseif handles.ec100.Value;
-    text = '100XEc';
-elseif handles.pa100.Value;
-    text = '100XPa';
-elseif handles.pa60.Value;
-    text = '60XPa';
-elseif handles.eclb60.Value;
-    text = '60XEcLB';
-elseif handles.bay60.Value;
-    text = '60XBay';
-end
-
-
-% get values for constants
+% load constants
 parallel = handles.parallel_flag.Value;
-if ~strcmp(text,'');
-    CONST = loadConstantsNN(text, parallel);
-elseif isfield(handles,'CONST') && ~isempty(handles.CONST)
-    CONST = handles.CONST;
-else
-    errordlg ('No constants selected');
-    return
-end
+resValue = get(handles.constants_list,'Value');
+res = handles.constants_list.String{resValue};
+CONST = loadConstantsNN (res,parallel);
+
 
 % set constants
 CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
@@ -150,7 +131,6 @@ CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
-
 
 linkVal = get(handles.link_list,'Value'); 
 if linkVal == 1
@@ -176,37 +156,8 @@ function bthai60_Callback(hObject, eventdata, handles)
 
 % tries different constants
 function try_constants_Callback(hObject, eventdata, handles)
-resFlags = {};
-if handles.ec60.Value;
-    resFlags{end+1} = '60XEc';
-end
-if handles.ec100.Value;
-    resFlags{end+1} = '100XEc';
-end
-if handles.pa100.Value;
-    resFlags{end+1} = '100XPa';
-end
-if handles.pa60.Value;
-    resFlags{end+1} = '60XPa';
-end
-if handles.bay60.Value;
-    resFlags{end+1} = '60XBay';
-end
-if handles.eclb60.Value;
-    resFlags{end+1} = '60XEcLB';
-end
+tryDifferentConstants(handles.directory.String);
 
-tryDifferentConstants(handles.directory.String, resFlags);
-
-% loads constants that user selects 
-function loadConstMine_Callback(hObject, eventdata, handles)
-if get(hObject,'Value')
-[filename,path] = uigetfile('*.mat', 'Pick a superSegger constants file');
-handles.CONST = load([path,'/',filename]);
-else
-    handles.CONST  = [];
-end
-guidata(hObject, handles)
 
 
 % opens superSeggerViewer
@@ -250,8 +201,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-
 % --- Executes on selection change in constants_list.
 function link_list_Callback(hObject, eventdata, handles)
 % hObject    handle to constants_list (see GCBO)
@@ -265,6 +214,30 @@ function link_list_Callback(hObject, eventdata, handles)
 
 % --- Executes during object creation, after setting all properties.
 function link_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+% --- Executes on selection change in constants_list.
+function constants_list_Callback(hObject, eventdata, handles)
+% hObject    handle to constants_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from constants_list
+
+
+% --- Executes during object creation, after setting all properties.
+function constants_list_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to constants_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called

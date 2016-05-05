@@ -53,32 +53,14 @@ end
 % '100XPa': constants for 100X Pseudemonas
 % res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
+[possibleConstants] = getConstantsList();
+
+% default values for numbers
 resFlag = [];
-if isa(res,'double' )  && res == 60
-    disp('loadConstants: 60X');
-    resFlag = '60XEc';
-elseif isa(res,'double' )    && res == 100
-    disp('loadConstants:  100X');
-    resFlag = '100XEc';
-elseif isa(res, 'char' );
-    if strcmpi(res,'60XEc')
-        resFlag = '60XEc';
-    elseif strcmpi(res,'100XEc')
-        disp('loadConstants:  100X Ecoli');
-        resFlag = '100XEc';
-    elseif strcmpi(res,'60XEcLB')
-        disp('loadConstants:  60X LB Ecoli');
-        resFlag = '60XEcLB';
-    elseif strcmpi(res,'60XBay')
-        disp('loadConstants:  60X Baylyi');
-        resFlag = '60XBay';
-    elseif strcmpi(res,'60XPa')
-        disp('loadConstants:  60X Pseudemonas');
-        resFlag = '60XPa';
-    elseif strcmpi(res,'100XPa')
-        disp('loadConstants:  100X Pseudemonas');
-        resFlag = '100XPa';
-    end
+if isa(res,'double' ) && res == 60
+    res = '60XEc';
+elseif isa(res,'double' ) && res == 100
+    res = '100XEc';
 end
 
 
@@ -132,9 +114,9 @@ CONST.trackLoci.gate = [];
 
 
 % pixelsize
-if all(ismember('100X',resFlag))
+if all(ismember('100X',res))
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif all(ismember('60X',resFlag))
+elseif all(ismember('60X',res))
     CONST.getLocusTracks.PixelSize        = 6/100;
 else
     CONST.getLocusTracks.PixelSize        = [];
@@ -192,35 +174,25 @@ CONST.SR.rcut = 10; % maximum distance between frames for two PSFs
 CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis
 
 
-
-% loading the different values for each constant
-if strcmp (resFlag,'60XEc')
-    ConstLoaded = load('60XEcnn_FULLCONST.mat');
-elseif strcmp (resFlag,'100XEc')
-    ConstLoaded = load('100XEcnn_FULLCONST.mat');
-elseif strcmp (resFlag,'60XEcLB')
-    ConstLoaded = load('60XEcLBnn_FULLCONST.mat');
-elseif strcmp (resFlag,'60XBay')
-    ConstLoaded = load('60XBaynn_FULLCONST.mat');
-elseif strcmp (resFlag,'100XPa')
-    ConstLoaded = load('100xPann_FULLCONST.mat');
-elseif strcmp (resFlag,'60XPa')
-    ConstLoaded = load('60XPann_FULLCONST.mat');
+indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
+if ~isempty(indexConst)
+     constFilename = possibleConstants(indexConst).name;
+     ConstLoaded = load (constFilename);
+     CONST.ResFlag = constFilename(1:end-4);
+     disp(['loading Constants : ', constFilename]);
 else
     error('loadConstants: Constants not loaded : no match found. Aborting.');
 end
 
 
-% different values from each constant
+% values that are loaded separatelly for each constant
+% you can add here values that you have changed from the default
+% and should be loaded from your constants file.
 CONST.superSeggerOpti = ConstLoaded.superSeggerOpti;
 CONST.seg = ConstLoaded.seg;
 CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
 CONST.regionOpti.MAX_LENGTH = ConstLoaded.regionOpti.MAX_LENGTH ;
-CONST.regionScoreFun.names = ConstLoaded.regionScoreFun.names;
-CONST.regionScoreFun.fun =ConstLoaded.regionScoreFun.fun;
-CONST.regionScoreFun.props = ConstLoaded.regionScoreFun.props;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun;
-CONST.ResFlag = resFlag;
 CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
 
 

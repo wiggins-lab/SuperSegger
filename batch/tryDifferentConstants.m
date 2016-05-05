@@ -1,63 +1,66 @@
-function tryDifferentConstants(dirname,resFlags)
+function data = tryDifferentConstants(filename,resFlags)
 % tryDifferentConstants : displays images of cells segmented with
 % different constants set in resFlags. It only does the initial
 % segmentation (only the doSeg part) and not the regions decisions,
 % linking and error resolution that come after.
-% Images need to have the right naming convention - if they don't use 
+% Images need to have the right naming convention - if they don't use
 % renameImages before this script.
 %
 % INPUT :
-%       dirname : directory with images
+%       dirname : directory with images or filename of image (must be .tif)
 % OUTPUT :
 %       data.SegFile: _seg file from segmentation
 %            .res: constants resolution for each seg file
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % modify this accoding to the constants you want to try
-if nargin < 1 || isempty( dirname ) || strcmp(dirname,'.')
-    dirname = pwd;
+if nargin < 1 || isempty( filename ) || strcmp(filename,'.')
+    filename = pwd;
 end
 
 if ~exist('resFlags','var') || isempty(resFlags)
-%resFlags = {'60XEc','60XA','60XEcLB',...
- %   '60XPa','60XPaM','60XPaM2','60XBthai','100XEc','100XPa'};
-resFlags = {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'};
+    [possibleConstants] = getConstantsList();
+    resFlags = {possibleConstants.resFlag};
 end
 
 
-
-dirname = fixDir(dirname);
-images = dir([dirname,'*c1*.tif']);
-
-
-if isempty (images)
-    disp('no images found in the directory with c1.tif.Select an image');
-    [lastPhaseImage,dirname , ~] = uigetfile('*.tif', 'Pick an image file');
-    if lastPhaseImage == 0
-        return;
+if strcmp(filename(end-3:end), '.tif')
+    tempImage = imread(filename);
+else % it is a folder
+    filename = fixDir(filename);
+    images = dir([filename,'*c1*.tif']);
+    if isempty (images)
+        disp('no images found in the directory with c1.tif.Select an image');
+        [lastPhaseImage,filename , ~] = uigetfile('*.tif', 'Pick an image file');
+        if lastPhaseImage == 0
+            return;
+        end
+    else
+        lastPhaseImage = images(end).name;
     end
-else
-    lastPhaseImage = images(end).name;
+    tempImage = imread([filename,lastPhaseImage]);  
 end
 
-phase = intCropImage (imread([dirname,lastPhaseImage]));
+phase = intCropImage (tempImage);  
+
+
 numFlags = numel(resFlags);
 numCols = 3;
 numRows = ceil(numFlags / numCols);

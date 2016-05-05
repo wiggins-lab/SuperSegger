@@ -36,7 +36,10 @@ skip = 1;
 % resFlags = {'60XEc','60XA','60XEcLB',...
 %     '60XPa','60XPaM','60XPaM2','60XBthai',...
 %     '100XEc','100XPa'};
-resFlags = {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
+
+% get the list
+[possibleConstants] = getConstantsList();
+resFlags = {possibleConstants.resFlag}
 
 % creates a printable verison of resFlgas
 resFlagsPrint = resFlags ; % work on copy

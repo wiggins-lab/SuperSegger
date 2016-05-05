@@ -88,8 +88,6 @@ MIN_BG_AREA     = CONST.superSeggerOpti.MIN_BG_AREA;
 MAGIC_RADIUS    = CONST.superSeggerOpti.MAGIC_RADIUS;
 MAGIC_THRESHOLD = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 CUT_INT         = CONST.superSeggerOpti.CUT_INT;
-MIN_THRESHOLD   = CONST.superSeggerOpti.MIN_THRESHOLD;
-MEAN_THRESHOLD  = CONST.superSeggerOpti.MEAN_THRESHOLD;
 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
@@ -245,7 +243,7 @@ end
 
 
 % Determine the "good" and "bad" segments
-[data] = defineGoodSegs(ws,C2phaseThresh,mask_bg,MIN_THRESHOLD, MEAN_THRESHOLD, A,CONST);
+[data] = defineGoodSegs(ws,C2phaseThresh,mask_bg, A,CONST);
 
 
 % Calculate and return the final cell mask
@@ -265,7 +263,7 @@ end
 end
 
 
-function [data] = defineGoodSegs(ws,phase_mg,mask_bg,MIN_THRESHOLD,MEAN_THRESHOLD,A,CONST)
+function [data] = defineGoodSegs(ws,phase_mg,mask_bg,A,CONST)
 % defineGoodSegs is a sub function that uses intensity thresholds to
 % segregate the set of segments produced by the watershed algorithm
 % into "good" segments (segs_good) which lie along a real cellular
