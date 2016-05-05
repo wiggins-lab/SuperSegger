@@ -88,14 +88,20 @@ end
 % align frames
 if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
-        disp('BatchSuperSeggerOpti : aligned images exist');
+        disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
             crop_box_array = tmp.crop_box_array;
         else
             crop_box_array = cell(1,10000);
         end
-    else 
+    elseif numel(dir ([dirname_,filesep,'*.tif']))
+        % check naming convention
+        if ~numel(dir([dirname_,filesep,'*t*c*.tif']))
+            disp('images in incorrect naming format. Using convertImageNames to convert names.')
+            convertImageNames(dirname_)
+        end
+        
         mkdir( [dirname_,filesep,'raw_im'] );
         if CONST.align.ALIGN_FLAG           
             crop_box_array = trackOptiAlignPad( dirname_,...
@@ -106,10 +112,11 @@ if exist( dirname_, 'dir' )
         else
             crop_box_array = cell(1,10000);
         end
+    else
+        error('No images found');       
     end
 else
-    disp( ['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );
-    return
+    error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );    
 end
 
 
@@ -327,8 +334,8 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-    trackOpti(dirname_xy, skip, CONST, clean_flag, header );
-   % trackOptiNewLinking(dirname_xy,skip,CONST, clean_flag, header)   
+   % trackOpti(dirname_xy, skip, CONST, clean_flag, header );
+    trackOptiNewLinking(dirname_xy,skip,CONST, clean_flag, header)   
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end

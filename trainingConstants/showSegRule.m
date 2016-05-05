@@ -24,7 +24,7 @@ end
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 0;
+    FLAGS.S_flag = 1;
 end
 
 S_flag = FLAGS.S_flag;
@@ -63,11 +63,11 @@ segs_Include   = segs_good;
 num_segs = numel( data.segs.score(:) );
 
 sz = size(segs_good);
-backer = 0*ag(data.segs.phaseMagic);
+backer = 0.7*ag(data.phase);
 
 if im_flag == 1
     
-    isnan_score = isnan(data.segs.score);
+    isnan_score = isnan(data.segs.scoreRaw);
     data.segs.score(isnan_score) = 1;
     
     if ~isfield(data.segs, 'Include' )
@@ -75,11 +75,15 @@ if im_flag == 1
     end
     
     segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
-    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
-    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
-    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
-    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
-    
+   
+    segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
+    segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
+%     
+%     segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
+%     segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
+%     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
+%     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
+%     
     segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
     segsGoodFailag = ag(segs_good_fail);
@@ -91,7 +95,7 @@ if im_flag == 1
     if FLAGS.phase
         phaseBackag = uint8(ag(data.segs.phaseMagic));
     else
-        phaseBackag = uint8(ag(data.mask_cell));
+        phaseBackag = uint8(ag(~data.mask_cell));
     end
     
     imshow( uint8(cat(3,...
@@ -140,7 +144,6 @@ if im_flag == 1
     
 elseif im_flag == 2 % region view
     
-    backer = 0*ag(data.phase);
     if ~isfield(data,'regs')
         data = updateRegionFields (data,CONST)
     end
@@ -153,9 +156,9 @@ elseif im_flag == 2 % region view
     regs_bad_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw)))));
     regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw)))));
     
-    imshow( cat(3, 0.8*backer + 1*uint8(regs_good_agree+regs_good_disagree), ...
-        0.8*backer, ...
-        0.8*backer + 1*uint8(regs_bad_agree+regs_bad_disagree)) , 'InitialMagnification', 'fit');
+    imshow( cat(3, 0.5*backer + 1*uint8(regs_good_agree+regs_good_disagree), ...
+        0.5*backer, ...
+        0.5*backer + 1*uint8(regs_bad_agree+regs_bad_disagree)) , 'InitialMagnification', 'fit');
     else
        % imshow(label2rgb(data.regs.regs_label))
          

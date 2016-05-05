@@ -34,12 +34,11 @@ function processExp( dirname )
 % you can run convertImageNames(dirname, 'whatever_name_you_want', '', 't',
 % '','', {'BF','GFP'} )
 
-
 basename = 'date-strain';
-timeFilterBefore ='_';
-timeFilterAfter = 't' ;
-xyFilterBefore='';
-xyFilterAfter='';
+timeFilterBefore ='t';
+timeFilterAfter = '_' ;
+xyFilterBefore='_x';
+xyFilterAfter='_';
 channelNames = {'BF','GFP'};
 
 convertImageNames(dirname, basename, timeFilterBefore, ...
@@ -55,45 +54,46 @@ convertImageNames(dirname, basename, timeFilterBefore, ...
 % '100XEc': loadConstants 100X Ecoli
 
 % other possible constants are :
-%'100XPa' : 100X Pseudemonas
+% '100XPa' : 100X Pseudemonas
 % '60XPa' : 60X Pseudemonas
 %' 60XA' : 60X E.coli Aska
 % '60XEcLB' : E.coli LB
 % '60XPaM','60XPaM2' : for 60X, Pseudomonas Minimal
 % '60XBthai' : 60X Thailandensis
 
-
-res = 60;
+res = '60XEcLB';
 
 %% Paralell Processing Mode
 % to run code in parallel mode must have the parallel processing toolbox,
 % for convenience default is false (non-parallel)
 
-parallel_flag = false;
+parallel_flag = true;
 
 %% Load Constants
-CONST = loadConstants(res,parallel_flag) ;
+CONST = loadConstantsNN(res,parallel_flag) ;
 
 %% Calculation Options
 % after you load the constants you can modify them according to your needs
 % for more options, looks at the loadConstants file.
 
-CONST.trackLoci.numSpots = [0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
+CONST.trackLoci.numSpots = [5 0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
 CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (default = true)
 CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
 CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
+CONST.imAlign.AlignChannel = 1; % change this if you want the images to be aligned to fluorescence channel
 
 %% Skip Frames for Segmentation
 % For fast time-lapse or slow growth you can skip phase image frames 
-% during segmentation to increase processing speed. Fluorescnce images 
+% during segmentation to increase processing speed. Fluorescence images 
 % will not be skipped. 
 
-skip = 1;  % don't skip any phase images while segmenting
-%skip = 5; % set skip to five to segment only every fifth phase image
+skip = 1;  % segment every frame
+%skip = 5; % segment every fifth phase image
 
-%% Initialize Data for Segmentation
+%% Clean previous segmented data
 % If set to true, will begin processing on aligned images; if false, will 
 % try to restart processing at last successful function (default = false)
+
 cleanflag = false;
 
 

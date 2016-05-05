@@ -84,12 +84,16 @@ A               = CONST.superSeggerOpti.A;
 
 
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
-if ~exist('crop_box')
+if ~exist('crop_box','var')
     crop_box = [];
+end
+
+if ~exist('adapt_flag','var')
+    adapt_flag = 1;
 end
 
 
@@ -123,6 +127,8 @@ phase = imfilter(phase, f,'replicate');
 % filtered phase image. We determine the thresholds empirically.
 % We use one threshold to remove the background, and another to remove
 % the smaller background regions between cells.
+
+% TEMP 
 
 if nargin < 2 || isempty(mask)
     % no background making mask
@@ -451,7 +457,6 @@ for ii = 1:numSegs
         % get a new cropping region for each region with 2 pix padding
         [xx_,yy_] = getBBpad(regs_prop(ind_reg(kk)).BoundingBox,sim,2);
         
-        
         % mask the region of interest
         kk_mask = (regs_label(yy_, xx_) == ind_reg(kk));
         
@@ -486,9 +491,7 @@ end
 
 
 data = [];
-
 data.segs.phaseMagic  = phase;
-
 data.mask_bg          = mask_bg;
 data.segs.segs_good   = segs_good;
 data.segs.segs_bad    = segs_bad;

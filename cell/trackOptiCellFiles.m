@@ -171,7 +171,7 @@ celld.stat0  = data_c.regs.stat0(ii);
 try
     data.CellA      = {data.CellA{:},celld};
 catch ME
-    printEroor(ME);
+    printError(ME);
 end
 
 data.death      = data_c.regs.death(ii);

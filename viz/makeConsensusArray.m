@@ -128,7 +128,6 @@ for ii = 1:numCells
     % update status bar
     waitbar(ii/numCells,h);
     
-    
     % load data and get file number
     [data, dataImArray.cellArrayNum{ii}] = intLoader( cellDir, contents(ii).name );
     data.CellA = data.CellA(1:skip:end);

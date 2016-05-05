@@ -37,7 +37,7 @@ num_c = 1;
 for i = 1:num_dir_tmp
     if (contents(i).isdir) && (numel(contents(i).name) > numel('fluor'))
         num_c = num_c+1;
-        nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1];
+        nc = [nc, str2double(contents(i).name(numel('fluor')+1:end))+1];
     end
 end
 
@@ -75,14 +75,12 @@ else
     h=[];
 end
 
-%parfor i=1:num_t;
-for i=1:num_t;
+parfor i=1:num_t;
+%for i=1:num_t;
     intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z);
     if CONST.parallel.show_status
-        try
-        waitbar( i/num_t,h,...
+        waitbar(i/num_t,h,...
             ['Merging Skipped frames t: ',num2str(i),'/',num2str(num_t)]);
-        end
     else
         disp( [header, 'skipMerge: No status bar. Frame ',num2str(i), ...
             ' of ', num2str(num_t),'.']);
@@ -116,7 +114,7 @@ nameInfo_tmp.npos([2,4],:) = 0;
 nameInfo_tmp.npos(1,1)     = nt(i);
 name                       = MakeFileName( nameInfo_tmp );
 nameInfo_tmp               = ReadFileName(name);
-name                       = name( 1:max(nameInfo_tmp.npos(:,3)));
+name                       = name(1:max(nameInfo_tmp.npos(:,3)));
 
 dataname2 =[dirname_xy,'seg_full', filesep,name,'_err.mat'];
 
@@ -125,12 +123,12 @@ nameInfo_tmp.npos(1,1) = nt(i);
 nameInfo_tmp.npos(4,1) = 1;
 name = MakeFileName(nameInfo_tmp);
 
-% do the min merge of z phase:
+% do the min merge of z phase
 phase = imread( [dirname_xy,'phase',filesep,name] );
 for k = 2:num_z
     nameInfo_tmp.npos(4,1) = nz(k);
     name  = MakeFileName(nameInfo_tmp);
-    phase =  min( phase, double(imread( [dirname_xy,'phase',filesep,name] )));
+    phase =  min(phase, double(imread( [dirname_xy,'phase',filesep,name] )));
 end
 
 % Loads the reference _err file for the image already segmented
@@ -144,9 +142,11 @@ name_ref  = name_ref( 1:max(nameInfo_tmp_ref.npos(:,3)));
 dataname_ref = [dirname_xy,'seg', filesep,name_ref,'_err.mat'];
 data = load(dataname_ref);
 
+% loads the data reference for the min merge of z phase, sets tha name and
+% nameInfo, and the fluorescence field from the image to be merged.
 if mod(i-1,skip)
-    data.phase = phase; % sets the phase to min merge of the z phase
-    data.basename = name; % sets the name and nameInfo for the merged image
+    data.phase = phase;
+    data.basename = name;
     nameInfo_tmp = nameInfo;
     for k = 2:num_c
         % load fluor image for each channel X and put it in data.fluorX

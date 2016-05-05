@@ -1,22 +1,25 @@
-function [y,xx] = getHist(clist, ind, xx, cc)
-% gateDot : used to make a histogram of the list of cells for the given indices.
-% it first gate the list if there is a gate field in clist. 
+function [y,xx] = gateHist(clist, ind, xx, cc)
+% getHist : makes a histogram for the list of cells
+% in the clist table for the given clist index.
+% It first gates the list if there is a gate field in clist. 
 %
 % INPUT :
 %   clist : list of cells with time-independent info
 %   ind : indices of clist definition used for x and y label [x,y]
-%   xx : number of bins for histogram or centroids
+%   xx : array of two values, the subtraction of which is the size of each bin. 
 %   cc : color of plot
 %
+% OUTPUT :
+%   y : counts
+%   xx : values of clist(ind)
+%   
 % Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
 
 clist = gate(clist);
-
 ss = size( clist.data );
-
 NUM_BINS = round((sqrt(ss(1))));
 
 if ~exist( 'xx', 'var' );

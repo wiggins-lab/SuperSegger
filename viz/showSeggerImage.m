@@ -25,6 +25,7 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fi
 %         s_flag : shows the foci and their score
 %         T_flag : ? something related to regions
 %         p_flag : shows pole positions and connects daughter cells to each other
+%         regionScores : shows scores of regions
 %
 % OUTPUT :
 %         im : trackOptiView outlined image
@@ -36,6 +37,11 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fi
 iptsetpref('imshowborder','tight');
 iptsetpref('ImshowInitialMagnification','fit');
 
+if ~exist('CONST','var') || isempty(CONST)
+    disp ('No constants loaded - loading 60XEcLb');
+    CONST = loadConstantsNN(60,0);
+end
+
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end
@@ -45,6 +51,9 @@ if nargin<4
 end
 
 FLAGS.axis = axis;
+if isempty(gui_fig)
+    clf;
+end
 
 % fix are any missing flags
 FLAGS = intFixFlags( FLAGS );
@@ -91,8 +100,17 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
         0.5*autogain(mask_full_f(yy,xx)>0))];
 end
 
-imshow(im, 'Parent', gui_fig);
+if isempty(gui_fig)
+    imshow(im)
+else
+    imshow(im, 'Parent', gui_fig);
+end
 hold on;
+
+% Displays linking information
+if FLAGS.showLinks
+    intPlotLinks(data, data_r, data_f, -xx(1)+1, -yy(1)+1, FLAGS, ID_LIST, CONST );
+end
 
 % annotates spots, cell numbers and poles
 if ~FLAGS.m_flag
@@ -109,10 +127,11 @@ end
         if ~isempty(data_)
             
             % plots cell numbers
-            if FLAGS.ID_flag
+            if FLAGS.ID_flag == 1
                 intPlotNum( data_ , x_, y_, FLAGS, ID_LIST );
+            elseif FLAGS.regionScores
+                intPlotScores( data_ , x_, y_, FLAGS );
             end
-            
             
             % plots spots, only if we are at fluorescence view
             if FLAGS.f_flag && FLAGS.s_flag && isfield(data_,'CellA')
@@ -214,13 +233,13 @@ if FLAGS.f_flag > 0
     im = 0.3*im;
     im = FLAGS.P_val*im;
     
-    if FLAGS.P_flag  % if P_flag is true, it outlines the cells
-        if FLAGS.cell_flag
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
-        else
-            im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
-        end
-    end
+%         if FLAGS.P_flag  % if P_flag is true, it outlines the cells
+%         if FLAGS.cell_flag && isfield(data,'cell_outline')
+%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+%         else
+%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+%         end
+%     end
     
     % make the background subtracted fluor
     if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
@@ -268,13 +287,6 @@ if FLAGS.f_flag > 0
         minner = min( minner(:));
         if CONST.view.falseColorFlag
             im = doColorMap( ag(fluor1,minner,maxxer), uint8(255*jet(256)) );
-            if FLAGS.P_flag
-                if FLAGS.cell_flag
-                    im = im + 0.2*cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
-                else
-                    im = im + 0.2*cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
-                end
-            end
         else
             im(:,:,2) = 0.8*ag(fluor1,minner,maxxer) + im(:,:,2);
         end
@@ -292,11 +304,13 @@ if FLAGS.f_flag > 0
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
-elseif FLAGS.Outline_flag  % it just outlines the cells
+end
+
+if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
-        im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
+        im(:,:,:) = im(:,:,:) + cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
     else
-        im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
+        im(:,:,:) = im(:,:,:) + cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
     end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
@@ -351,7 +365,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
         
         % outline the ones that were just born with stat0 == 1
-        map_stat0_1O_ind = find(and(cells_In_Frame,data.regs.stat0==1));
+        map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
         map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
         
         
@@ -383,6 +397,47 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
 end
 
+end
+
+
+function intPlotScores( data, x_, y_ , FLAGS )
+% intPlotNum : Plot cell number or region numbers
+
+counter = 200; % max amount of cell numbers to be plotted
+kk = 0; % counter for regions
+while (counter > 0 && kk < data.regs.num_regs)
+    % disp(counter)
+    kk = kk + 1;
+    rr = data.regs.props(kk).Centroid;
+    
+    if isfield( data.regs, 'ignoreError' )
+        ignoreError = data.regs.ignoreError(kk);
+    else
+        ignoreError = 0;
+    end
+    
+    score = 1 - (data.regs.scoreRaw(kk) + 50) / 100;
+    
+    colorMap = spring(256);
+    colorIndex = floor(min(score, 1) * 255) + 1;
+    
+    xpos = rr(1)+x_;
+    ypos = rr(2)+y_;
+    
+    if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
+            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
+        
+        counter = counter - 1;
+        
+        text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.scoreRaw(kk), 2)],...
+            'Color', [colorMap(colorIndex, 1), colorMap(colorIndex, 2), colorMap(colorIndex, 3)],...
+            'FontWeight', 'normal',...
+            'HorizontalAlignment','Center',...
+            'VerticalAlignment','Middle');
+        title('Region Scores');
+    end
+    
+end
 end
 
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
@@ -417,7 +472,7 @@ while (counter > 0 && kk < data.regs.num_regs)
             (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
         
         counter = counter - 1;
-        if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' ) 
+        if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
             if ismember( data.regs.ID(kk), ID_LIST )
                 text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
                     'Color', cc,...
@@ -433,14 +488,12 @@ while (counter > 0 && kk < data.regs.num_regs)
                 'FontWeight', 'normal',...
                 'HorizontalAlignment','Center',...
                 'VerticalAlignment','Middle');
-            title('Region Number');            
+            title('Region Number');
         end
     end
     
 end
 end
-
-
 
 function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )
 % intPlotSpot : plots each foci in the cells
@@ -506,63 +559,187 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
 end
 end
 
+function intPlotLinks( data, data_r, data_f, x_, y_, FLAGS, ID_LIST, CONST )
+% intPlotLinks : plots the links to the next and previous frames
+
+dataHasIds = isfield( data, 'regs' ) && isfield( data.regs,'ID' );
+dataRHasIds = ~isempty(data_r) && isfield( data_r, 'regs' ) && isfield( data_r.regs,'ID' );
+dataFHasIds = ~isempty(data_f) && isfield( data_f, 'regs' ) && isfield( data_f.regs,'ID' );
+
+%Plot reverse links
+if dataHasIds
+    colorMap = hsv(10);
+    
+    counter = 0;
+    maxCounter = 500;
+    
+    for kk = 1:data.regs.num_regs
+        % only plot links in the cell that are gated.
+        if data.regs.ID(kk) ~= 0 && (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
+            previousRegion = [];
+            nextRegion = [];
+            
+            if dataRHasIds && data.regs.ID(kk) ~= 0
+                previousRegion = find(data_r.regs.ID == data.regs.ID(kk));
+                
+                if previousRegion == 0
+                    previousRegion = [];
+                end
+            end
+            if dataFHasIds && data.regs.ID(kk) ~= 0
+                nextRegion = find(data_f.regs.ID == data.regs.ID(kk));
+                
+                if nextRegion == 0
+                    nextRegion = [];
+                end
+            end
+            
+            color = colorMap(mod(kk, 10) + 1, :);
+            valid = 0;
+            
+            if ~isempty(previousRegion)
+                X = [data_r.regs.props(previousRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                Y = [data_r.regs.props(previousRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                
+                plot(X, Y, 'Color', color);
+                
+                valid = 1;
+            else
+                if data.regs.age(kk) == 1
+                    motherRegion = [];
+                    
+                    if dataRHasIds && data.regs.motherID(kk) ~= 0
+                        motherRegion = find(data_r.regs.ID == data.regs.motherID(kk));
+                        
+                        if motherRegion == 0
+                            motherRegion = [];
+                        end
+                    end
+                    
+                    if ~isempty(motherRegion)
+                        if FLAGS.showMothers == 1
+                            X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                            Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+
+                            plot(X, Y, 'Color', color);
+                        end
+                        
+                        valid = 1;
+                    else
+                        valid = 0;
+                    end
+                end
+            end            
+            
+            if ~isempty(nextRegion)
+                X = [data_f.regs.props(nextRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                Y = [data_f.regs.props(nextRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+                plot(X, Y, 'Color', color);
+                plot(X(1), Y(1), 's', 'Color', color);
+            else
+                if data.regs.deathF(kk)
+                    daughterRegions = [];
+                    
+                    if dataFHasIds && data.regs.ID(kk) ~= 0
+                        daughterRegions = find(data_f.regs.motherID == data.regs.ID(kk));
+                        
+                        if min(daughterRegions) == 0
+                            daughterRegions = [];
+                        end
+                    end
+                    
+                    if ~isempty(daughterRegions)
+                        if FLAGS.showDaughters == 1
+                            for i = 1:numel(daughterRegions)
+                                X = [data_f.regs.props(daughterRegions(i)).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
+                                Y = [data_f.regs.props(daughterRegions(i)).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
+
+                                plot(X, Y, 'Color', color);
+                                plot(X(1), Y(1), 's', 'Color', color);
+                            end
+                        end
+                    else
+                        valid = 0;
+                    end
+                else
+                    valid = 0;
+                end
+            end
+            
+            X =  data.regs.props(kk).Centroid(1) + x_;
+            Y =  data.regs.props(kk).Centroid(2) + y_;
+            if valid == 0
+                plot(X, Y, 'x', 'Color', color);
+            else
+                plot(X, Y, 'o', 'Color', color);
+            end
+        end
+        
+        counter = counter + 1;
+        if counter >= maxCounter
+            break;
+        end
+    end
+end
+end
+
 function intPlotLink( data, x_, y_ )
 % intPlotLink shows pole positions and connects daughter cells to each other
 if ~isfield(data,'CellA')
     disp ('Showing poles is not supported in this mode');
     return;
 else
-for kk = 1:data.regs.num_regs
-    
-    rr1 = data.regs.props(kk).Centroid;
-    ID  = data.regs.ID(kk);
-    sisterID = data.regs.sisterID(kk);
-    
-    if sisterID
-        ind = find(data.regs.ID == sisterID);
-        if numel(ind)>1
-            ind = ind(1)
-        end
-    else
-        ind = [];
-    end
-    
-    if isfield( data, 'CellA' )
-        try
-            tmp = data.CellA{kk};
-            r = tmp.coord.r_center;
-            xaxisx = r(1) + [0,tmp.length(1)*tmp.coord.e1(1)]/2;
-            xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
-            yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
-            yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
-            old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-            new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
-            un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
-            un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
-        catch ME
-            printError(ME);
-        end
+    for kk = 1:data.regs.num_regs
         
-        plot([r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
+        rr1 = data.regs.props(kk).Centroid;
+        ID  = data.regs.ID(kk);
+        sisterID = data.regs.sisterID(kk);
         
-        if tmp.pole.op_ori
-            plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
-            plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
+        if sisterID
+            ind = find(data.regs.ID == sisterID);
+            if numel(ind)>1
+                ind = ind(1)
+            end
         else
-            plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
-            plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
+            ind = [];
         end
         
-        if ~isempty(ind) && ID && tmp.pole.op_ori
-            if ID < sisterID
-                tmps = data.CellA{ind};
-                rs = tmps.coord.r_center;
-                new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
-                plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
+        if isfield( data, 'CellA' )
+            try
+                tmp = data.CellA{kk};
+                r = tmp.coord.r_center;
+                xaxisx = r(1) + [0,tmp.length(1)*tmp.coord.e1(1)]/2;
+                xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
+                yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
+                yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
+                old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
+                un1_pole = r + tmp.length(1)*tmp.coord.e1/2;
+                un2_pole = r - tmp.length(1)*tmp.coord.e1/2;
+            catch ME
+                printError(ME);
+            end
+            
+            plot([r(1),un1_pole(1)], [r(2),un1_pole(2)], 'r' );
+            
+            if tmp.pole.op_ori
+                plot( old_pole(1)+x_, old_pole(2)+y_, 'w.','MarkerSize',6);
+                plot( new_pole(1)+x_, new_pole(2)+y_, 'w*','MarkerSize',6);
+            else
+                plot( un1_pole(1)+x_, un1_pole(2)+y_, 'wo','MarkerSize',3);
+                plot( un2_pole(1)+x_, un2_pole(2)+y_, 'wo','MarkerSize',3);
+            end
+            
+            if ~isempty(ind) && ID && tmp.pole.op_ori
+                if ID < sisterID
+                    tmps = data.CellA{ind};
+                    rs = tmps.coord.r_center;
+                    new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
+                    plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
+                end
             end
         end
-    end 
-end
+    end
 end
 end
 

@@ -19,11 +19,8 @@ end
 
 dirname = fixDir(dirname);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
+
 % Make and move subdirs
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 contents=dir([dirname file_filter]);
 
 if ~isempty(contents);
@@ -65,10 +62,10 @@ if ~isempty(contents);
         % creates the needed xy directories with phase, fluor, seg and cell
         % sub-directories
         dirname_list{i} = [dirname,'xy',num2str(nxy(i), padString),filesep];
-        mkdir( dirname_list{i} );
-        mkdir( [dirname_list{i},'phase', filesep] );
-        mkdir( [dirname_list{i},'seg',   filesep] );
-        mkdir( [dirname_list{i},'cell',  filesep] );
+        mkdir(dirname_list{i});
+        mkdir([dirname_list{i},'phase',filesep]);
+        mkdir([dirname_list{i},'seg',filesep]);
+        mkdir([dirname_list{i},'cell',filesep]);
         for j = 2:num_c
             mkdir( [dirname_list{i},'fluor',num2str(j-1),filesep] );
         end

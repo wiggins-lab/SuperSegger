@@ -12,7 +12,6 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag)
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-CONST.regionOpti.MIN_LENGTH = 10;
 
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir();
@@ -83,23 +82,21 @@ while time <= numIm
     
     % go through regions in current data
     
-    if ~all(size(data_c.regs.score) == size(data_c.regs.scoreRaw))
-        keyboard;
-    end
-     
     
-    disp (['Calculating maping for frame', num2str(time)])
-     if ~isempty(data_r)
-        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f]  = multiAssignmentPairs (data_r, data_c,CONST,1,0);
-     end    
+    disp (['Calculating maping for frame ', num2str(time)])
+    if ~isempty(data_r)
+        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f] = multiAssignmentPairs (data_r, data_c,CONST,1,0);
+    end
     [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r]  = multiAssignmentPairs (data_c, data_r,CONST,0,0);
     [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f] = multiAssignmentPairs (data_c, data_f,CONST,1,0);
-  
-    [data_c,data_r,cell_count,resetRegions] =  errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
-
- 
+    
+    
+    % error resolution and id assignment
+    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
+    
+    
     if resetRegions
-        disp (['Frame ', num2str(time), ' segments reset to resolve error, frame repeated.']);
+        disp (['Frame ', num2str(time), ' : segments were reset to resolve error, repeating frame.']);
         cell_count = lastCellCount;
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
     else

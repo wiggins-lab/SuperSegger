@@ -17,6 +17,10 @@ errorR = [];
 totCost=[];
 allC=[];
 allF=[];
+noOverlap = 0.0001;
+centroidWeight = 5;
+areaFactor = 20;
+areaChangeFactor = 100;
 
 if ~isempty(data_c)
     if ~isfield(data_c,'regs')
@@ -31,10 +35,7 @@ if ~isempty(data_c)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
         end
-        
-        areaFactor = 20;
-        areaChangeFactor = 100;
-        
+                
         numRegs2 = data_f.regs.num_regs;
         regsInC = 1:data_c.regs.num_regs;
         regsInF = 1:data_f.regs.num_regs;
@@ -44,13 +45,12 @@ if ~isempty(data_c)
         
         idsF(1,regsInF) = regsInF;
         idsF(2,regsInF) = NaN;
-        
-        
+               
         % colony calculation
         maskBgFill= imfill(data_c.mask_bg,'holes');
         colony_labels = bwlabel(maskBgFill);
         colony_props = regionprops( colony_labels,'Centroid','Area');
-             
+        
         % find possible pairs....
         counter = 1;
         pairsF = NaN * zeros(2,numRegs2 * numRegs2);
@@ -74,7 +74,7 @@ if ~isempty(data_c)
         counter = 1;
         pairsC = NaN * zeros(2,numRegs2 * numRegs2);
         
-        for jj = regsInC            
+        for jj = regsInC
             maskC = (data_c.regs.regs_label==jj);
             % get neighbors
             tmp_mask = imdilate(maskC, strel('square',5));
@@ -92,46 +92,52 @@ if ~isempty(data_c)
         pairsC = pairsC(:,(nansum(pairsC)~=0));
         allC = [idsC,pairsC];
         
-        
+        % initialize
         areaOverlapCost = NaN * ones(size(allC,2),size(allF,2));
         areaChange = NaN * ones(size(allC,2),size(allF,2));
         centroidCost = NaN * ones(size(allC,2),size(allF,2));
         areaOverlapTransCost = NaN * ones(size(allC,2),size(allF,2));
         outwardMot = NaN * ones(size(allC,2),size(allF,2));
         areaChangePenalty =  zeros(size(allC,2),size(allF,2));
-        % one to one mapping
         goodOneToOne = zeros(1,size(allC,2));
         distFromColn = zeros(1,size(allC,2));
+        
         for ii = 1:size(allC,2) % loop through the regions
             % ind : list of regions that overlap with region ii in data 1
             
             % if it already has a good mapping don't bother..
-            
             cRegs = allC(:,ii);
             isSingleRegC = sum(isnan(cRegs)); % has a nan
             
-            % to skip pairs for which one of the regions already has a good
-            % ... mapping
+            % condition for good one to one to mapping
             alreadyFoundOneToOne = ~isSingleRegC  && (goodOneToOne(cRegs(1)) ...
                 || goodOneToOne(cRegs(2))) ;
-            
-            
-            % check if region is still around
+                       
+            % check that region is still around - sometimes there are empty
+            % regions in the regs.
             if isSingleRegC
                 regionExists = sum(data_c.regs.regs_label(:) == cRegs(1));
             else
                 regionExists = sum(data_c.regs.regs_label(:) == cRegs(1)) &&...
-                sum(data_c.regs.regs_label(:) == cRegs(2));
+                    sum(data_c.regs.regs_label(:) == cRegs(2));
             end
+            
+            % only check pairs if not good one-to-one mapping
             if  ~alreadyFoundOneToOne && regionExists
                 
                 [maskC,areaC,centroidC] = regProperties (data_c,cRegs);
-                
-                
+                             
                 % colony it belongs to
-                colonyId =  max(colony_labels(maskC));
-                distFromColony = centroidC - colony_props(colonyId).Centroid;
-                distFromColn (ii) = sqrt(sum(distFromColony.^2));
+                colOverlap = colony_labels(maskC);
+                if sum(colOverlap(:)) == 0
+                    disp ('No colony found');
+                    distFromColony = [0 ,0];
+                    distFromColn (ii) = [0 ,0];
+                else
+                    colonyId =  max(colOverlap);
+                    distFromColony = centroidC - colony_props(colonyId).Centroid;
+                    distFromColn (ii) = sqrt(sum(distFromColony.^2));
+                end
                 
                 % dilate mask and get adjacent regions within dilated area
                 tmp_mask = imdilate(maskC, strel('square',5));
@@ -139,13 +145,7 @@ if ~isempty(data_c)
                 possibleMapInd = unique(tmpregs2);
                 possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
                 
-                
-                % one to one mapping
-                
-                % calculate masks, areas, centroids
-                
-                for uu = 1:numel(possibleMapInd)
-                                       
+                for uu = 1:numel(possibleMapInd)                   
                     % one to one mapping
                     idF = possibleMapInd(uu);
                     [maskF,areaF,centroidF] = regProperties (data_f,idF);
@@ -154,7 +154,7 @@ if ~isempty(data_c)
                     areaOverlapCost(ii,idF) = areaOverlap/areaC;
                     
                     if  (areaOverlapCost(ii,idF) == 0)
-                        areaOverlapCost(ii,idF) = 0.001;
+                        areaOverlapCost(ii,idF) = noOverlap;
                     end
                     
                     displacement = centroidC - centroidF;
@@ -163,7 +163,6 @@ if ~isempty(data_c)
                     areaChange(ii,idF) = (areaF - areaC)/(areaC);
                     
                     % moved area
-                    
                     offset = round(displacement);
                     maskOut = imtranslate(maskF,offset);
                     maskOut = maskOut(maskC);
@@ -171,14 +170,8 @@ if ~isempty(data_c)
                     areaOverlapTransCost(ii,idF) = areaOverlapTrns/areaC;
                     
                     if (areaOverlapTransCost(ii,idF) == 0)
-                        areaOverlapTransCost(ii,idF) = 0.001;
+                        areaOverlapTransCost(ii,idF) = noOverlap;
                     end
-                    
-                    %intDisplay (data_c,data_f,idF,ii)
-                    %keyboard;
-                    % if the one to one mapping looks good don't bother with
-                    % pairs - to make faster
-                    
                     
                 end
                 
@@ -197,6 +190,9 @@ if ~isempty(data_c)
                     goodOneToOne (ii) = 1; % no two to two mappings
                 end
                 
+                
+                % if the one to one mapping looks good don't bother with
+                % pairs - to make faster
                 
                 if ~goodOneToOne(ii)
                     for uu = 1:numel(possibleMapInd)
@@ -217,7 +213,7 @@ if ~isempty(data_c)
                                 areaOverlapCost(ii,location) = areaOverlap/areaC;
                                 
                                 if  (areaOverlapCost(ii,location) == 0)
-                                    areaOverlapCost(ii,location) = 0.001;
+                                    areaOverlapCost(ii,location) = noOverlap;
                                 end
                                 
                                 displacement = centroidC - centroidF;
@@ -232,14 +228,13 @@ if ~isempty(data_c)
                                 areaOverlapTransCost(ii,location) = areaOverlapTrns/areaC;
                                 
                                 if  (areaOverlapTransCost(ii,location) == 0)
-                                    areaOverlapTransCost(ii,location) = 0.01;
+                                    areaOverlapTransCost(ii,location) = noOverlap;
                                 end
-                                
                                 
                                 areaChange(ii,location) = (areaF - areaC)/(areaC);
                             end
                         end
-                    end                    
+                    end
                 end
             end
         end
@@ -254,41 +249,59 @@ if ~isempty(data_c)
             areaChangePenalty((areaChange) > 0.1) = 100;
         end
         
-        % delete big area changes
+        %  penalty for big area changes
         areaChangePenalty(abs(areaChange) > 0.6) = 50;
-        areaChangePenalty(abs(areaChange) > 2) = 1000;
+        areaChangePenalty(abs(areaChange) > 0.2) = 1000;
         distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
         
         totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + ...
             areaFactor * distFromColonyMat * 1./areaOverlapCost +...
-            5 * centroidCost +  areaChangeFactor * abs(areaChange);
+            centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange);
         
         costMat = totCost;
         
-     
+        
         assignedInC = [];
         assignedInF = [];
         
         while nansum (costMat(:)) > 0
+            setError = false;
             [minCost,ind] = min(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
+            
+            
+            % if area changes by a lot set an error
+            if forward && ((areaChange(asgnRow,asgnCol)) < -0.1 || (areaChange(asgnRow,asgnCol)) > 0.3)
+                setError = true;
+            elseif ((areaChange(asgnRow,asgnCol)) > 0.1 || (areaChange(asgnRow,asgnCol)) > -0.3)
+                setError = true;
+            end
+            
+            
             assignTemp = allF(:,asgnCol)';
             assignTemp = assignTemp (~isnan(assignTemp));
             
             regionsInC = allC (:,asgnRow);
             assignments {regionsInC(1)} = assignTemp;
+            if setError
+                errorR (regionsInC(1))  = 1;
+            end
             
             if ~isnan(regionsInC(2))
                 assignments {regionsInC(2)} = assignTemp;
+                if setError
+                    errorR (regionsInC(2))  = 1;
+                end
             end
             
             if debug_flag
                 intDisplay (data_c,data_f,assignTemp,regionsInC);
                 assignTemp
                 regionsInC
-
-               % pause;
+                % pause;
             end
+            
+            
             
             assignedInC  = [assignedInC;regionsInC'];
             assignedInF = [assignedInF;assignTemp'];
@@ -309,7 +322,7 @@ if ~isempty(data_c)
         [~,minIndxF] = min(totCost');
         %[~,minIndxC] = min(totCost');
         
-
+        
         for kk = 1 : numel(leftInC)
             leftC = leftInC(kk);
             bestF = minIndxF(leftC);

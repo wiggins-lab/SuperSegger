@@ -18,9 +18,7 @@ function out = drill( dataA, str )
 
 num       = numel(  dataA );
 cell_flag = iscell( dataA );
-
 tmp_array = cell(1,num);
-
 
 
 for ii = 1:num
@@ -39,11 +37,9 @@ for ii = 1:num
     end
 end
 
-out = cell2mat( tmp_array );
-ss  = size( dataA );
-out = reshape( out, ss);
-
-
+out = cell2mat(tmp_array);
+ss  = size(dataA);
+out = reshape(out, ss);
 
 
 end
