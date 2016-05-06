@@ -617,11 +617,7 @@ while runFlag
         for ii = 1:num_im
             [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
-<<<<<<< HEAD
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);  
-=======
-            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
             axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
@@ -691,124 +687,6 @@ while runFlag
             header = 'trackOptiView: ';
             trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
         end
-<<<<<<< HEAD
-    elseif strcmp(c,'n'); % pick region and ignore error
-        if FLAGS.T_flag
-            disp( 'Tight flag must be off');
-        else
-            x = floor(ginput(1));
-            
-            if ~isempty(x)
-                ii = data_c.regs.regs_label(x(2),x(1));
-                tmp_axis = axis();
-                
-                if ~ii
-                    disp('missed region');
-                else
-                    if isfield( data_c.regs, 'ignoreError' )
-                        disp(['Picked region ',num2str(ii)]);
-                        data_c.regs.ignoreError(ii) = 1;
-                        save([dirname,contents(nn).name],'-STRUCT','data_c');
-                    else
-                        disp( 'Ignore error not implemented for your version of trackOpti.');
-                    end
-                end
-            end
-        end
-        
-    elseif strcmp(c,'link'); % Does not work ? - Reset Linking in Current Frame
-        if FLAGS.T_flag
-            disp( 'Tight flag must be off');
-        else
-            disp('pick region to reset linking in the current frame');
-            x = floor(ginput(1));
-            
-            if ~isempty(x)
-                ii = data_c.regs.regs_label(x(2),x(1));
-                tmp_axis = axis();
-                
-                if ~ii
-                    disp('missed region');
-                else
-                    disp(['Picked region ',num2str(ii)]);
-                    showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);
-                    axis(tmp_axis);
-                    disp('Click on linked cell(s). press enter to return');
-                    x = floor(ginput());
-                    ss = size(x);
-                    list_of_regs = [];
-                    
-                    for hh = 1:ss(1);
-                        jj = data_f.regs.regs_label(x(hh,2),x(hh,1));
-                        if jj
-                            list_of_regs = [list_of_regs, jj];
-                        end
-                    end
-                    
-                    if ~isempty(list_of_regs)
-                        
-                        %list_of_regs
-                        data_c.regs.ol.f{ii}    = zeros(2, 5);
-                        nnn = min([5,numel(list_of_regs)]);
-                        data_c.regs.ol.f{ii}(1,1:nnn) = 1;
-                        data_c.regs.ol.f{ii}(2,1:nnn) = list_of_regs(1:nnn);
-                        data_c.regs.map.f{ii}   = list_of_regs;
-                        data_c.regs.error.f(ii) = double(numel(list_of_regs)>1);
-                        data_c.regs.ignoreError(ii) = 1;
-                        
-                        for kk = list_of_regs
-                            
-                            data_f.regs.ol.r{kk}     = zeros(2,5);
-                            data_f.regs.ol.r{kk}(1,1)= 1/numel(list_of_regs);
-                            data_f.regs.ol.r{kk}(2,1)= ii;
-                            data_f.regs.dA.r(kk)     = 1/numel(list_of_regs);
-                            data_f.regs.map.r{kk}    = ii;
-                            data_f.regs.error.r(kk)  = double(numel(list_of_regs)>1);
-                            data_f.regs.ignoreError(kk) = 1;
-                        end
-                        
-                        % Save files....
-                        
-                        save([dirname,contents(nn).name],'-STRUCT','data_c');
-                        save([dirname,contents(nn+1).name],'-STRUCT','data_f');
-                        
-                    end
-                end
-            end
-        end
-        
-    elseif strcmp(c,'errRez'); % ReRun Error Resolution 2 and  cell making file
-        ctmp = input('Are you sure you want to re-run error resolution 2 and cell making? (y/n): ','s');
-        
-        if ismember(ctmp(1),'yY')
-            % Erase all stamp files after .trackOptiSetEr.mat
-            contents_stamp = dir( [dirname,filesep,'.trackOpti*'] );
-            num_stamp = numel( contents_stamp );
-            
-            for iii = 1:num_stamp
-                if isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiLink.mat')) && ...
-                        isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiErRes1.mat')) && ...
-                        isempty(strfind(contents_stamp(iii).name,...
-                        '.trackOptiSetEr.mat'))
-                    delete ([dirname,filesep,contents_stamp(iii).name]);
-                end
-            end
-            
-            delete ([dirname_cell,'*.mat']);
-            delete ([dirname_cell,'clist.mat']);
-            
-            % Re-Run trackOpti
-            skip = 1;
-            CLEAN_FLAG = false;
-            header = 'trackOptiView: ';
-            trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
-        end
-        
-=======
-
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
     else % we assume that it is a number for a frame change.
         tmp_nn = str2num(c);
         if ~isempty(tmp_nn)
@@ -837,33 +715,6 @@ end
 % END OF MAIN FUNCTION (superSeggerViewer)
 
 % INTERNAL FUNCTIONS
-<<<<<<< HEAD
-=======
-function data = loaderInternal( filename, clist )
-% loaderInternal : loads the cell outlines for cells in clist
-% % Load Date and put in outline fields.
-
-data = load(filename);
-ss = size(data.phase);
-
-if isfield( data, 'mask_cell' )
-    data.outline =  xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
-end
-
-if ~isempty(clist)
-    clist = gate(clist);
-    data.cell_outline = false(ss);
-    if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
-        ind = find(ismember(data.regs.ID,clist.data(:,1))); % get ids of cells in clist
-        mask_tmp = ismember( data.regs.regs_label, ind ); % get the masks of cells in clist
-        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
-    end
-end
-
-
-end
-
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function [nameInfo] = getDirStruct( dirname )
 
 contents = dir( [dirname,filesep,'*.tif'] );
@@ -907,39 +758,6 @@ function ixy = intGetNum( str_xy )
 ixy = str2num(str_xy(ismember(str_xy, '0123456789' )));
 end
 
-<<<<<<< HEAD
-=======
-
-function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist, FLAGS)
-% intLoadData : loads current, reverse and forward data.
-% INPUT :
-%       dirname : seg directory
-%       contents : filenames to be loaded
-%       nn : frame number to be loaded
-%       num_im : total number of images
-%       clist : list of cells
-
-disp ('Loading file..');
-data_c = loaderInternal([dirname,contents(nn).name], clist);
-% not loading data_r and data_f to make this faster
-data_r = [];
-data_f = [];
-
-if shouldLoadNeighborFrames(FLAGS)
-    if nn > 1
-        data_r = loaderInternal([dirname,contents(nn-1).name], clist);
-    end
-    
-    if nn < num_im-1
-        data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-    end
-end
-
-
-end
-
-
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function intDispError( data_c, FLAGS )
 % intDispError
 for kk = 1:data_c.regs.num_regs
@@ -1060,115 +878,7 @@ end
 
 end
 
-<<<<<<< HEAD
-=======
-function [data_cell,cell_name] = loadCellData (num,dirname_cell)
 
-data_cell = [];
-cell_name = [];
-padStr = getPadSize(dirname_cell);
-
-if ~isempty( padStr )
-    data_cell = [];
-    filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
-    filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
-else
-    return;
-end
-
-
-if exist(filename_cell_C, 'file' )
-    filename_cell = filename_cell_C;
-    cell_name = ['Cell',num2str(num,padStr),'.mat'];
-elseif exist(filename_cell_c, 'file' )
-    filename_cell = filename_cell_c;
-    cell_name = ['cell',num2str(num,padStr),'.mat'];
-else
-    disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
-    return;
-end
-
-try
-    data_cell = load( filename_cell );
-catch
-    disp(['Error loading: ', filename_cell] );
-end
-
-end
-
-function FLAGS = fixFlags(FLAGS)
-% intSetDefaultFlags : sets default flags for when the program begins
-if ~isfield(FLAGS,'cell_flag')
-    FLAGS.cell_flag  = 1;
-end
-
-if ~isfield(FLAGS,'m_flag')
-    FLAGS.m_flag  = 0;
-end
-if ~isfield(FLAGS,'ID_flag')
-    FLAGS.ID_flag  = 0;
-end
-if ~isfield(FLAGS,'T_flag')
-    FLAGS.T_flag  = 0;
-end
-if ~isfield(FLAGS,'P_flag')
-    FLAGS.P_flag  = 0;
-end
-if ~isfield(FLAGS,'Outline_flag')
-    FLAGS.Outline_flag  = 1;
-end
-if ~isfield(FLAGS,'e_flag')
-    FLAGS.e_flag  = 0;
-end
-if ~isfield(FLAGS,'f_flag')
-    FLAGS.f_flag  = 0;
-end
-if ~isfield(FLAGS,'p_flag')
-    FLAGS.p_flag  = 0;
-end
-
-if ~isfield(FLAGS,'s_flag')
-    FLAGS.s_flag  = 1;
-end
-if ~isfield(FLAGS,'c_flag')
-    FLAGS.c_flag  = 1;
-end
-
-if ~isfield(FLAGS,'P_val')
-    FLAGS.P_val  = 0.2;
-end
-
-if ~isfield(FLAGS,'filt')
-    FLAGS.filt  = 1;
-end
-
-if ~isfield(FLAGS,'lyse_flag')
-    FLAGS.lyse_flag  = 0;
-end
-
-if ~isfield(FLAGS,'regionScores')
-    FLAGS.regionScores  = 0;
-end
-
-if ~isfield(FLAGS,'useSegs')
-    FLAGS.useSegs  = 0;
-end
-
-if ~isfield(FLAGS,'showLinks')
-    FLAGS.showLinks  = 0;
-end
-
-if ~isfield(FLAGS,'showMothers')
-    FLAGS.showMothers  = 0;
-end
-
-if ~isfield(FLAGS,'showDaughters')
-    FLAGS.showDaughters  = 0;
-end
-
-end
-
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
 function intCons(dirname0, contents_xy, setHeader, CONST)
 xyDir = [dirname0,contents_xy.name,filesep];
 dircons = [xyDir,'/consensus/']
@@ -1231,19 +941,4 @@ else
         
     end
 end
-<<<<<<< HEAD
 end
-=======
-end
-
-
-function value = shouldUseErrorFiles(FLAGS)
-global canUseErr;
-
-value = canUseErr == 1 && FLAGS.useSegs == 0;
-end
-
-function value = shouldLoadNeighborFrames(FLAGS)
-value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
-end
->>>>>>> d020d1e21227eaff84794c7002050fd5327d70b9
