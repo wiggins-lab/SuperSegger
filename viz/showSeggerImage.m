@@ -323,9 +323,9 @@ end
 
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
-        im(:,:,:) = im(:,:,:) + cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
+        im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
     else
-        im(:,:,:) = im(:,:,:) + cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
+        im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
     end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.

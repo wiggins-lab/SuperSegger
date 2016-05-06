@@ -134,7 +134,7 @@ dirnum = handles.dirnum;
 handles.message.String = '';
 nn = str2double(handles.go_to_frame_no.String);
 delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
-[handles.data_r, handles.data_c, handles.data_f] = intLoadData(handles.dirname_seg, handles.contents, ...
+[handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
     nn, handles.num_im, handles.clist, handles.FLAGS);
 showSeggerImage(handles.data_c, handles.data_r, handles.data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);   
 save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
@@ -534,7 +534,7 @@ clear mov;
 mov.cdata = [];
 mov.colormap = [];
 for ii = 1:handles.num_im
-    [data_r, data_c, data_f] = intLoadData( handles.dirname_seg, ...
+    [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
         handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
     showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
     drawnow;
@@ -556,4 +556,14 @@ if strcmp(choice, 'Yes')
 end
 
 function tower_cells_Callback(hObject, eventdata, handles) % Not working
-%makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+
+
+% --------------------------------------------------------------------
+function stop_tool_ClickedCallback(hObject, eventdata, handles)
+% use handles to look at the variables (for example handles.CONST)
+% if you want to exit click the continue button on the toolbar.
+keyboard;
+
+
+

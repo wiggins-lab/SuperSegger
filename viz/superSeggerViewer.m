@@ -170,7 +170,7 @@ while runFlag
     % load current frame
     if resetFlag
         resetFlag = false;
-        [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
+        [data_r, data_c, data_f] = intLoadDataViewer( dirname_seg, ...
             contents, nn, num_im, clist, FLAGS);
     end
     
@@ -615,7 +615,7 @@ while runFlag
         mov.colormap = [];
         
         for ii = 1:num_im
-            [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
+            [data_r, data_c, data_f] = intLoadDataViewer( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
             tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);  
             axis(tmp_axis);
