@@ -30,7 +30,7 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 % res       : is a string that is passed to loadConstants(Mine).m to load
 %           : the right constants for processing.
 % SEGMENT_FLAG : to segment cells
-% ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
+% ONLY_SEG : if true it does not run trackOpti (only the segments the data)
 %
 %
 % Copyright (C) 2016 Wiggins Lab 

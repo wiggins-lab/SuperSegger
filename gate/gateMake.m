@@ -42,7 +42,12 @@ if  nind == 1
         gxx = zeros( 2, 2 );
         disp( 'Click on the max and min value to make a gate.');
         for i = 1:2
-            tmp = ginput(1);
+            try
+                tmp = ginput(1);
+            catch
+                % if window was closed - does not make any clist
+                return;
+            end
             if ~isempty(tmp)
                 gxx(i,:) = tmp;
                 plot( gxx(i,1)+[0,0], [min(y(y>0)),max(y)], 'r--' );

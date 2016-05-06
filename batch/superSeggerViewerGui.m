@@ -281,7 +281,7 @@ function complete_cell_cycles_Callback(hObject, eventdata, handles) % Not workin
 handles.CONST.view.showFullCellCycleOnly = handles.complete_cell_cycles.Value;
 if handles.CONST.view.showFullCellCycleOnly
     figure(2);
-    handles.clist = gateMake( handles.clist, 9, [0.1 inf] );
+    handles.clist = gateMake( handles.clist, 9, [2 inf] );
     close(2);
     handles.message.String = 'Only showing complete Cell Cycles';
 else
