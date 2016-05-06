@@ -58,7 +58,7 @@ end
 % '100XPa': constants for 100X Pseudemonas
 % res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
-[possibleConstants] = getConstantsList();
+[possibleConstants, ~, filepath] = getConstantsList();
 
 % default values for numbers
 resFlag = [];
@@ -182,14 +182,15 @@ CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysi
 indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
 if ~isempty(indexConst)
      constFilename = possibleConstants(indexConst).name;
-     ConstLoaded = load (constFilename);
+     ConstLoaded = load ([filepath,filesep,constFilename]);
      CONST.ResFlag = constFilename(1:end-4);
      if dispText
         disp(['loading Constants : ', constFilename]);
      end
      
 else
-    error('loadConstants: Constants not loaded : no match found. Aborting.');
+    errordlg('loadConstants: Constants not loaded : no match found. Aborting.');
+    return;
 end
 
 
