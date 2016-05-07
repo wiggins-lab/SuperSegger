@@ -188,6 +188,9 @@ if ~isempty(indexConst)
         disp(['loading Constants : ', constFilename]);
      end
      
+elseif exist(res, 'file')
+    ConstLoaded = load(res);
+    CONST.ResFlag = res;
 else
     error('loadConstants: Constants not loaded : no match found. Aborting.');
 end
@@ -212,7 +215,9 @@ CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO;
 
 CONST.seg = ConstLoaded.seg;
 CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
-CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
+if isfield(ConstLoaded.regionOpti, 'MIN_LENGTH')
+    CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
+end
 CONST.regionScoreFun = ConstLoaded.regionScoreFun;
 CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
 

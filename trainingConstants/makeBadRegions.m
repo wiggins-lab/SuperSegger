@@ -32,7 +32,10 @@ num_im = length(contents);
 
 h = waitbar( 0, 'Creating bad region examples for training.' );
 for i = 1 : num_im % go through all the images
+    try
     waitbar(i/num_im,h);
+    catch
+    end
     dataname = [dirname,contents(i).name];
     data = load(dataname);
     
@@ -47,7 +50,10 @@ for i = 1 : num_im % go through all the images
     end
     
 end
-close(h);
+try
+    close(h);
+catch
+end
 end
 
 

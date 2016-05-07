@@ -22,7 +22,7 @@ function varargout = trainingGui(varargin)
 
 % Edit the above text to modify the response to help trainingGui
 
-% Last Modified by GUIDE v2.5 04-May-2016 15:27:59
+% Last Modified by GUIDE v2.5 06-May-2016 18:00:13
 
 % Begin initialization code - DO NOT EDIT
 
@@ -76,6 +76,14 @@ settings.errorHandle = [];
 settings.segmentsDirty = 0;
 settings.numFrames = 0;
 settings.saveFolder = '';
+settings.dataSegmented = 0;
+settings.CONST = [];
+settings.nameCONST = 'none';
+settings.frameSkip = 5;
+settings.imagesLoaded = 0;
+settings.imageDirectory = 0;
+settings.hasBadRegions = 0;
+settings.currentIsBad = 0;
 
 setWorkingDirectory(handles.directory.String);
 
@@ -104,29 +112,48 @@ function cut_and_seg_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % set constants
-dirname = handles.directory.String;
+global settings;
 
-disp ('Croppping images - choose a small region with a couple of colonies');
-% only xy1
-trackOptiCropMulti(dirname,1)
-segTrainingDir = [dirname,filesep,'crop',filesep];
-resValue = get(handles.constants_list,'Value'); 
-res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0);
+if handles.viewport.XLim(2) - handles.viewport.XLim(1) > 500 || handles.viewport.YLim(2) - handles.viewport.YLim(1) > 500
+    answer = questdlg('Your training set is very large (Viewport size). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+        
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
+numTrainingFrames = numel(dir([settings.imageDirectory, '*c1*.tif']));
+if numTrainingFrames < 5
+    answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
+if numTrainingFrames > 100
+    answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+        
+    if strcmp(answer, 'No')
+        return;
+    end
+end
 
 skip = 1;
 clean_flag = 1;
-handles.directory.String = segTrainingDir;
 only_seg = 1; % runs only segmentation, no linking
-BatchSuperSeggerOpti(segTrainingDir,skip,0,CONST,0,1,only_seg);
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, settings.CONST, 1, only_seg, 0);
 
-setWorkingDirectory(settings.loadDirectory);
+setWorkingDirectory(settings.loadDirectory(1:end-9));
+
+updateUI(handles);
 
 % --- Executes on button press in try_const.
 function try_const_Callback(hObject, eventdata, handles)
 % hObject    handle to try_const (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
 
 dirname = fixDir(handles.directory.String);
 images = dir([dirname,'*c1*.tif']);
@@ -135,8 +162,7 @@ if isempty(images) && ~isempty(dir([dirname,'/raw_im/*c1*.tif']))
     dirname = [dirname, '/raw_im/'];
 end
 
-tryDifferentConstants(dirname, []);
-
+tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport.XLim, handles.viewport.YLim]), settings.frameNumber);
 
 
 
@@ -222,8 +248,6 @@ function del_areas_Callback(hObject, eventdata, handles)
 global settings;
 
 if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
-    settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
-
     settings.axisFlag = 3;
     
     settings.firstPosition = [];
@@ -238,6 +262,25 @@ function train_segs_Callback(hObject, eventdata, handles)
 % hObject    handle to train_segs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+h = msgbox('Training segments, this will take a bit.' );
+handles.tooltip.String = 'Training segments... Please wait.';
+drawnow;
+
+[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
+[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs,Ysegs);
+
+% update scores and save data files again
+updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, @scoreNeuralNet);
+
+try
+    close(h);
+catch
+end
+
+updateUI(handles);
+
 
 
 % --- Executes on button press in toggle_regs.
@@ -250,7 +293,6 @@ global settings;
 settings.axisFlag = 2;
 
 if exist([settings.loadDirectory, '../../CONST.mat'], 'file') && settings.segmentsDirty == 1
-    settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
     settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
     
     settings.segmentsDirty = 0;
@@ -266,12 +308,21 @@ function bad_regs_Callback(hObject, eventdata, handles)
 global settings;
 
 if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
-    makeBadRegions( settings.loadDirectory, settings.CONST)
+    if settings.hasBadRegions
+        delete([settings.loadDirectory, '*seg_*_mod.mat']);
+    else
+        handles.tooltip.String = 'Adding bad regions, please wait.';
+        drawnow;
+
+        makeBadRegions( settings.loadDirectory, settings.CONST)
+
+        settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
+
+        settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
+        loadData(settings.frameNumber);
+    end
     
-    settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
-    
-    settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
-    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+    setWorkingDirectory(handles.directory.String, 0);
     
     updateUI(handles);
 end
@@ -282,6 +333,28 @@ function train_regs_Callback(hObject, eventdata, handles)
 % hObject    handle to train_regs (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+h = msgbox('Training regions, this will take a bit.' );
+handles.tooltip.String = 'Training regions... Please wait.';
+drawnow;
+
+settings.CONST.regionScoreFun.props = @cellprops3; 
+settings.CONST.regionScoreFun.NUM_INFO = 21;
+
+[Xregs,Yregs] =  getInfoScores (settings.loadDirectory,'regs',settings.CONST);
+[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs,Yregs);
+
+% 7) Calculates new scores for regions
+disp ('Calculating regions'' scores with new coefficients...');
+updateScores(settings.loadDirectory,'regs', settings.CONST.regionScoreFun.E, @scoreNeuralNet);
+
+try
+    close(h);
+catch
+end
+
+updateUI(handles);
 
 
 % --- Executes on selection change in constants_list.
@@ -318,6 +391,8 @@ function directory_Callback(hObject, eventdata, handles)
 
 setWorkingDirectory(handles.directory.String);
 
+updateUI(handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function directory_CreateFcn(hObject, eventdata, handles)
@@ -337,7 +412,18 @@ function save_Callback(hObject, eventdata, handles)
 % hObject    handle to save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global settings;
 
+CONST = settings.CONST;
+
+[FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [getConstantsPath(), 'newConst']);
+if ~isempty(strfind(FileName, '.'))
+    FileName = FileName(1:(strfind(FileName, '.') - 1))
+end
+
+if FileName ~= 0
+    save([PathName, FileName, '.mat'],'-STRUCT','CONST');
+end
 
 % --- If Enable == 'on', executes on mouse press in 5 pixel border.
 % --- Otherwise, executes on mouse press in 5 pixel border or over constants_list.
@@ -355,6 +441,8 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 handles.directory.String = uigetdir;
 
 setWorkingDirectory(handles.directory.String);
+
+updateUI(handles);
 
 
 % --- Executes on button press in next.
@@ -384,33 +472,39 @@ while numel(handles.viewport.Children) > 0
     delete(handles.viewport.Children(1))
 end
 
-if settings.axisFlag == 1 || settings.axisFlag == 2
-    FLAGS.im_flag = settings.axisFlag;
-    FLAGS.S_flag = 0;
-    FLAGS.t_flag = 0;
+if settings.dataSegmented
+    if settings.axisFlag == 1 || settings.axisFlag == 2
+        FLAGS.im_flag = settings.axisFlag;
+        FLAGS.S_flag = 0;
+        FLAGS.t_flag = 0;
 
-    showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
+        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
 
-    if numel(handles.viewport.Children) > 0
-        set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        if numel(handles.viewport.Children) > 0
+            set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        end
+    elseif settings.axisFlag == 3
+        FLAGS.im_flag = 2;
+
+        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
+
+        if numel(handles.viewport.Children) > 0
+            set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        end
+
+        if numel(settings.firstPosition) > 0
+            hold on;
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+        end
+    elseif settings.axisFlag == 4    
+        axes(handles.viewport);
+
+        imshow(settings.currentData.phase, []);
     end
-elseif settings.axisFlag == 3
-    FLAGS.im_flag = 2;
-    
-    showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
-    
-    if numel(handles.viewport.Children) > 0
-        set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-    end
-    
-    if numel(settings.firstPosition) > 0
-        hold on;
-        plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
-    end
-elseif settings.axisFlag == 4    
+elseif settings.imagesLoaded
     axes(handles.viewport);
-    
-    imshow(settings.currentData.phase);
+
+    imshow(settings.currentData, []);
 end
 
 if firstFrame
@@ -418,7 +512,7 @@ if firstFrame
 end
 hold on;
 
-if settings.axisFlag > 0
+if settings.imagesLoaded == 1 || settings.dataSegmented == 1
     handles.frameNumber.Visible = 'on';
     handles.frameNumber.String = num2str(settings.frameNumber);
 else
@@ -429,17 +523,79 @@ else
     end
 end
 
+if settings.currentIsBad
+    badString = ' "Bad regions"';
+else
+    badString = '';
+end
+
 if settings.axisFlag == 4
-    handles.tooltip.String = ['Phase image. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Phase image.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 3
-    handles.tooltip.String = ['Deleting regions (Click twice). Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Deleting regions (Click twice).', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 1
-    handles.tooltip.String = ['Editing segments. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Editing segments.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 2
-    handles.tooltip.String = ['Editing regions. Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Editing regions.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.imagesLoaded == 1
+    handles.tooltip.String = ['Phase image.', badString, ' Max frame: ', num2str(settings.numFrames)];
 elseif settings.axisFlag == 0
     handles.tooltip.String = '';
 end
+
+handles.currentConstants.String = ['Current: ', settings.nameCONST];
+handles.frameSkip.String = num2str(settings.frameSkip);
+handles.directory.String = settings.loadDirectory(1:end-9);
+numTrainingFrames = floor(numel(dir([settings.imageDirectory, '*c1*.tif'])) / settings.frameSkip);
+handles.totalFrames.String = ['Total frames: ', num2str(numTrainingFrames), ' / ', num2str(numel(dir([settings.imageDirectory, '*c1*.tif'])))];
+
+if settings.hasBadRegions
+    handles.bad_regs.String = 'Clear bad regions';
+else
+    handles.bad_regs.String = 'Create bad regions';
+end
+
+% No CONST file selected
+if settings.imagesLoaded
+    makeActive(handles.try_const);
+    makeActive(handles.cut_and_seg);
+else
+    makeInactive(handles.try_const);
+    makeInactive(handles.makeData);
+end
+    
+if isempty(settings.CONST)
+    makeInactive(handles.cut_and_seg);
+else
+    makeActive(handles.makeData);
+end
+
+if settings.dataSegmented == 0
+    handles.cut_and_seg.Visible = 'on';
+    
+    handles.phase.Visible = 'off';
+    handles.toggle_segs.Visible = 'off';
+    handles.toggle_regs.Visible = 'off';
+    handles.del_areas.Visible = 'off';
+    handles.bad_regs.Visible = 'off';
+    handles.train_segs.Visible = 'off';
+    handles.train_regs.Visible = 'off';
+    handles.save.Visible = 'off';
+    handles.saveData.Visible = 'off';
+else
+    handles.cut_and_seg.Visible = 'off';
+    
+    handles.phase.Visible = 'on';
+    handles.toggle_segs.Visible = 'on';
+    handles.toggle_regs.Visible = 'on';
+    handles.del_areas.Visible = 'on';
+    handles.bad_regs.Visible = 'on';
+    handles.train_segs.Visible = 'on';
+    handles.train_regs.Visible = 'on';
+    handles.save.Visible = 'on';
+    handles.saveData.Visible = 'on';
+end
+
 
 
 % numChildren = numel(viewport.Children);
@@ -474,29 +630,58 @@ if numel(settings.oldFrame) > settings.maxData
 end
 
 
-function setWorkingDirectory(directory)
+function setWorkingDirectory(directory, clearCONST)
 global settings;
 
 if checkIfSave()
     return;
 end
 
-settings.frameNumer = 1;
+if ~exist('clearCONST') || isempty(clearCONST)
+    clearCONST = 1;
+end
+
+settings.frameNumber = 1;
 settings.axisFlag = 0;
+settings.dataSegmented = 0;
 
 settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+
+hasCONST = exist([settings.loadDirectory, '../../CONST.mat'], 'file');
+if clearCONST == 1 || hasCONST == 1
+    settings.CONST = [];
+    settings.nameCONST = 'none';
+    if hasCONST
+        settings.CONST = loadConstantsNN([settings.loadDirectory, '../../CONST.mat'], 0, 0);
+        settings.nameCONST = 'local';
+    end
+end
+
+settings.imagesLoaded = 0;
+settings.imageDirectory = [];
+if numel(dir([settings.loadDirectory(1:end-8), '/*c1*.tif'])) > 2
+    settings.imagesLoaded = 1;
+    settings.imageDirectory = settings.loadDirectory(1:end-8);
+elseif numel(dir([settings.loadDirectory(1:end-8), '/raw_im/*c1*.tif'])) > 2
+    settings.imagesLoaded = 1;
+    settings.imageDirectory = [settings.loadDirectory(1:end-8), '/raw_im/'];
+end
+
 if exist(settings.loadDirectory, 'dir')
+    settings.dataSegmented = 1;
+    
     settings.axisFlag = 4;
     
     settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
     
     settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
-    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
-
-    if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
-        settings.CONST = load([settings.loadDirectory, '../../CONST.mat']);
-    end
+    loadData(settings.frameNumber);
     
+    settings.hasBadRegions = 0;
+    if settings.numFrames < numel(settings.loadFiles)
+        settings.hasBadRegions = 1;
+    end
+
     %Make save folder
     try
         settings.saveFolder = [settings.loadDirectory(1:end-1), '_tmp/'];
@@ -508,7 +693,19 @@ if exist(settings.loadDirectory, 'dir')
     catch ME
         warning(['Could not back up files: ', ME.message]);
     end
+elseif settings.imagesLoaded
+    settings.numFrames = numel(dir([settings.imageDirectory,'*c1*.tif']));
+    
+    settings.loadFiles = dir([settings.imageDirectory,'*c1*.tif']);
+    loadData(settings.frameNumber);
 end
+
+%Clear viewport
+while numel(settings.handles.viewport.Children) > 0
+    delete(settings.handles.viewport.Children(1))
+end
+
+
 
 %Make backup folder
 % try
@@ -570,11 +767,17 @@ updateUI(settings.handles);
 function loadData(frameNumber)
 global settings;
 
-if exist([settings.saveFolder,settings.loadFiles(settings.frameNumber).name], 'file')
-    settings.currentData = load([settings.saveFolder,settings.loadFiles(settings.frameNumber).name]);
+if settings.dataSegmented
+    if exist([settings.saveFolder,settings.loadFiles(frameNumber).name], 'file')
+        settings.currentData = load([settings.saveFolder,settings.loadFiles(frameNumber).name]);
+    else
+        settings.currentData = load([settings.loadDirectory,settings.loadFiles(frameNumber).name]);
+    end
 else
-    settings.currentData = load([settings.loadDirectory,settings.loadFiles(settings.frameNumber).name]);
+    settings.currentData = imread([settings.imageDirectory,settings.loadFiles(frameNumber).name]);
 end
+
+settings.currentIsBad = strfind(settings.loadFiles(frameNumber).name, '_mod');
 
 
 function shouldCancel = checkIfSave()
@@ -667,3 +870,135 @@ function figure1_DeleteFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 checkIfSave();
+
+
+% function getValuesFromConst(handles)
+% global settings;
+% resValue = get(handles.constants_list,'Value');
+% res = handles.constants_list.String{resValue};
+% CONST = loadConstantsNN (res,0,0);
+% settings.CONST = CONST;
+
+
+% --- Executes on button press in modifyConstants.
+function modifyConstants_Callback(hObject, eventdata, handles)
+% hObject    handle to modifyConstants (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+modifyConstValuesGUI();
+
+
+% --- Executes on button press in makeData.
+function makeData_Callback(hObject, eventdata, handles)
+% hObject    handle to makeData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+xSize = handles.viewport.XLim(2) - handles.viewport.XLim(1);
+ySize = handles.viewport.YLim(2) - handles.viewport.YLim(1);
+if xSize > 800 || ySize > 800
+    answer = questdlg(['Your training set is very large (Viewport size: ', num2str(ySize), ', ', num2str(xSize), '). This will take a long time. Do you wish to continue?'], 'Continue?', 'Yes', 'No', 'No');
+        
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
+numTrainingFrames = floor((numel(dir([settings.imageDirectory, '*c1*.tif']))) / settings.frameSkip);
+if numTrainingFrames < 5
+    answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
+if numTrainingFrames > 100
+    answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+        
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
+maxFrames = numel(dir([settings.imageDirectory, '*c1*.tif']));
+
+newDir = uigetdir([settings.imageDirectory, '../'], 'Select empty folder for training data');
+
+if newDir ~= 0
+    if ~exist(newDir, 'dir')
+        mkdir(newDir);
+    else
+        if numel(dir(newDir)) > 2
+            dispError('You must select an empty directory.');
+            return;
+        end
+    end
+
+    cropX = ceil(handles.viewport.XLim(1):handles.viewport.XLim(2));
+    cropY = ceil(handles.viewport.YLim(1):handles.viewport.YLim(2));
+
+    for i = 1:settings.frameSkip:maxFrames
+        tempImage = imread([settings.imageDirectory,settings.loadFiles(i).name]);
+        saveName = [newDir, '/', settings.loadFiles(i).name];
+        imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
+    end
+
+    setWorkingDirectory([newDir, '/'], 0);
+
+    updateUI(handles);
+end
+
+
+function frameSkip_Callback(hObject, eventdata, handles)
+% hObject    handle to frameSkip (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of frameSkip as text
+%        str2double(get(hObject,'String')) returns contents of frameSkip as a double
+global settings;
+
+settings.frameSkip = str2num(handles.frameSkip.String);
+
+updateUI(handles);
+
+% --- Executes during object creation, after setting all properties.
+function frameSkip_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to frameSkip (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in loadConstants.
+function loadConstants_Callback(hObject, eventdata, handles)
+% hObject    handle to loadConstants (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+[FileName,PathName] = uigetfile('.mat', 'Load CONST file', [getConstantsPath()]);
+if FileName ~= 0
+    settings.CONST = loadConstantsNN([PathName, FileName],0,0);
+    settings.nameCONST = settings.CONST.ResFlag;
+    settings.nameCONST = settings.nameCONST((max(strfind(settings.nameCONST, '/')) + 1):end);
+    
+    updateUI(handles);
+end
+
+
+function makeActive(button)
+button.Enable = 'on';
+button.ForegroundColor = [0, 0, 0];
+
+function makeInactive(button)
+button.Enable = 'inactive';
+button.ForegroundColor = [.5, .5, .5];
