@@ -162,8 +162,8 @@ tryDifferentConstants(handles.directory.String);
 
 % opens superSeggerViewer
 function view_button_Callback(hObject, eventdata, handles)
-superSeggerViewer(handles.directory.String);
-
+setappdata(0, 'dirname', handles.directory.String);
+superSeggerViewerGui();
 
 % functions to get the state of the constants handles 
 function pole_snapshot_Callback(hObject, eventdata, handles)

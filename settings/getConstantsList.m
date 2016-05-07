@@ -1,4 +1,4 @@
-function [possibleConstants, resFlagList] = getConstantsList()
+function [possibleConstants, resFlagList, filepath] = getConstantsList()
 % getConstantsList : gets all constants files from the settings directory.
 % 
 % OUTPUT : 

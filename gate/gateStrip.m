@@ -27,9 +27,9 @@ function [clist] = gateStrip( clist, ind )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if ~exist('ind','var') || isempty(ind)
+if ~exist('ind','var') || isempty(ind) || isempty(clist.gate)
     clist.gate = [];
-else
+else      
    loc = find( cellfun(@(x)isequal(x,ind),{clist.gate.ind}) ); 
    if isempty (loc)
        disp (['index : ', num2str(ind), ' not found in the gate']);
@@ -38,5 +38,4 @@ else
         clist.gate(loc) = [];
    end
 end
-
 end

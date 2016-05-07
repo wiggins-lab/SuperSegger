@@ -11,21 +11,21 @@ function [clist] = gateMake( clist, ind, x0 )
 %   clist0 : list of cells with gate field
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -36,23 +36,26 @@ nind = numel(ind);
 if  nind == 1
     clf;
     [y,xx] = gateHist( clist, ind);
-    hold on;
-  
-    c_flag = 1;
-    gxx = zeros( 2, 2 );
-       
+    hold on;   
+    
     if ~exist( 'x0', 'var' ) || isempty( x0 )
+        gxx = zeros( 2, 2 );
         disp( 'Click on the max and min value to make a gate.');
-        for i = 1:2            
-            tmp = ginput(1);
+        for i = 1:2
+            try
+                tmp = ginput(1);
+            catch
+                % if window was closed - does not make any clist
+                return;
+            end
             if ~isempty(tmp)
-                gxx(i,:) = tmp;                
+                gxx(i,:) = tmp;
                 plot( gxx(i,1)+[0,0], [min(y(y>0)),max(y)], 'r--' );
             end
-        end        
+        end
         gxx(:,1)
     else
-        gxx(:,1) = x0;        
+        gxx(:,1) = x0;
     end
     
     if isfield( clist, 'gate' )
@@ -65,7 +68,9 @@ if  nind == 1
     clist.gate(ngate).x = gxx(:,1);
     clist.gate(ngate).ind = ind;
     gateHist( clist, ind, xx, 'r' );
+    hold on;
     plot( gxx(1)+[0,0], [min(y(y>0)),max(y)], 'r--' );
+    hold on;
     plot( gxx(2)+[0,0], [min(y(y>0)),max(y)], 'r--' );
     
 elseif nind == 2
@@ -94,7 +99,7 @@ elseif nind == 2
         var(tmp1(~isnan(tmp2)))];
     
     
-
+    
     % do polygon gate
     c_flag = 1;
     disp('Draw polygon. Finish by pressing return' );
@@ -102,8 +107,8 @@ elseif nind == 2
     xx = zeros( 100, 2 );
     
     while c_flag;
-        i = i+1;        
-        tmp = ginput(1);        
+        i = i+1;
+        tmp = ginput(1);
         if isempty(tmp)
             if i ~= 1
                 plot( xx([i-1,1],1), xx([i-1,1],2), 'r-' );
@@ -111,12 +116,12 @@ elseif nind == 2
             
             c_flag = false;
             numvert = i-1;
-        else     
+        else
             dr = (xx(1,:)-tmp );
             if (i>1) && (sum((dr.^2)./dvar) < 0.001 )
                 numvert = i-1;
                 c_flag = false;
-                plot( xx([1,numvert],1), xx([1,numvert],2), 'r-' );   
+                plot( xx([1,numvert],1), xx([1,numvert],2), 'r-' );
             else
                 xx(i,:) = tmp;
                 
@@ -130,7 +135,7 @@ elseif nind == 2
     end
     
     xx = xx(1:numvert,:);
-
+    
     if isfield( clist, 'gate' )
         ngate = numel(clist.gate)+1;
     else

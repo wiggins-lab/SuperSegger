@@ -1,4 +1,4 @@
-function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST)
+function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
 % showSeggerImage : produces the superSeggerViewer image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
@@ -66,7 +66,9 @@ if nargin<4
 end
 
 FLAGS.axis = axis;
-clf;
+if isempty(gui_fig)
+    clf;
+end
 
 % fix are any missing flags
 FLAGS = intFixFlags( FLAGS );
@@ -113,7 +115,11 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
         0.5*ag(mask_full_f(yy,xx)>0))];
 end
 
-imshow(im);
+if isempty(gui_fig)
+    imshow(im)
+else
+    imshow(im, 'Parent', gui_fig);
+end
 hold on;
 
 % Displays linking information
@@ -317,9 +323,9 @@ end
 
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
-        im(:,:,:) = im(:,:,:) + cat(3,ag(data.cell_outline),ag(data.cell_outline),ag(data.cell_outline));
+        im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
     else
-        im(:,:,:) = im(:,:,:) + cat(3,ag(data.outline),ag(data.outline),ag(data.outline));
+        im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
     end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.

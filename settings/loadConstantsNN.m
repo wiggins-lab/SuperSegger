@@ -58,7 +58,7 @@ end
 % '100XPa': constants for 100X Pseudemonas
 % res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
-[possibleConstants] = getConstantsList();
+[possibleConstants, ~, filepath] = getConstantsList();
 
 % default values for numbers
 resFlag = [];
@@ -182,7 +182,7 @@ CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysi
 indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
 if ~isempty(indexConst)
      constFilename = possibleConstants(indexConst).name;
-     ConstLoaded = load (constFilename);
+     ConstLoaded = load ([filepath,filesep,constFilename]);
      CONST.ResFlag = constFilename(1:end-4);
      if dispText
         disp(['loading Constants : ', constFilename]);
@@ -192,33 +192,42 @@ elseif exist(res, 'file')
     ConstLoaded = load(res);
     CONST.ResFlag = res;
 else
-    error('loadConstants: Constants not loaded : no match found. Aborting.');
+    errordlg('loadConstants: Constants not loaded : no match found. Aborting.');
+    return;
 end
 
 
 % values that are loaded separatelly for each constant
 % you can add here values that you have changed from the default
 % and should be loaded from your constants file.
+
+% segmentation parameters
 CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
 CONST.superSeggerOpti.MAX_SEG_NUM = ConstLoaded.superSeggerOpti.MAX_SEG_NUM;
 CONST.superSeggerOpti.THRESH1= ConstLoaded.superSeggerOpti.THRESH1;
 CONST.superSeggerOpti.THRESH2 = ConstLoaded.superSeggerOpti.THRESH2;
-CONST.superSeggerOpti.Amax = ConstLoaded.superSeggerOpti.Amax;
 CONST.superSeggerOpti.MAGIC_RADIUS = ConstLoaded.superSeggerOpti.MAGIC_RADIUS;
 CONST.superSeggerOpti.CUT_INT= ConstLoaded.superSeggerOpti.CUT_INT;
 CONST.superSeggerOpti.MAGIC_THRESHOLD = ConstLoaded.superSeggerOpti.MAGIC_THRESHOLD;
 CONST.superSeggerOpti.SMOOTH_WIDTH= ConstLoaded.superSeggerOpti.SMOOTH_WIDTH;
 CONST.superSeggerOpti.MAX_WIDTH= ConstLoaded.superSeggerOpti.MAX_WIDTH;
+CONST.superSeggerOpti.Amax = ConstLoaded.superSeggerOpti.Amax;
 CONST.superSeggerOpti.crop_rad= ConstLoaded.superSeggerOpti.crop_rad;
 CONST.superSeggerOpti.A = ConstLoaded.superSeggerOpti.A;
 CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO;
 
+% defines segmentation functions used
 CONST.seg = ConstLoaded.seg;
+
+% defines region optimization parameters used
 CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
 if isfield(ConstLoaded.regionOpti, 'MIN_LENGTH')
     CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 end
+% defines region functions used
 CONST.regionScoreFun = ConstLoaded.regionScoreFun;
+
+% minimum area a cell region can have, otherwise it is discarded.
 CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
 
 

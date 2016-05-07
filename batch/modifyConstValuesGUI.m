@@ -19,7 +19,6 @@ function varargout = modifyConstValuesGUI(varargin)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 % Last Modified by GUIDE v2.5 05-May-2016 13:53:12
 
 % Begin initialization code - DO NOT EDIT
@@ -630,18 +629,19 @@ message = ({'SuperSeggerOpti - Modifying Constants Module'
     '------------------------------------------------------------'
     '   '
     '   '
-    'Magic Threshold: Intensities below this are set to 0, so that intensity differences within a cell region are minimized.'
-    '   '
-    'Magic Radius: radius for the contrast enhancing filter (proportional to the width of the cell)'
-    '   '
     'Mask thresh1: intensity threshold used for background mask to separate cell clumps and background'
     '   '
     'Mask thresh2: intensity threshold used for background mask to separate regions between cell'
     '   '
     'Max width: Width threshold for the iterative segment refinement.More segments are added to the regions whose short axis is greater than this number. All other masked regions are assumed to be correctly defined as a cell.'
     '   '
-    'Find segments : Identifies segments usings the chosen constants and values in the sliders'
+    'Threshold: Intensities below this are set to 0, so that intensity differences within a cell region are minimized.'
     '   '
+    'Magic Radius: radius for the contrast enhancing filter (proportional to the width of the cell)'
+    '   '
+    'Run : Runs segmentation with the chosen parameters.'
+    ' '
+    
     'Min length region optimization : Cells with length smaller than this are considered for further optimization'
     '   '
     'Max width region optimization : Cells with width larger than this are considered for further optimization'

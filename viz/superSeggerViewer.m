@@ -170,7 +170,7 @@ while runFlag
     % load current frame
     if resetFlag
         resetFlag = false;
-        [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
+        [data_r, data_c, data_f] = intLoadDataViewer( dirname_seg, ...
             contents, nn, num_im, clist, FLAGS);
     end
     
@@ -190,7 +190,7 @@ while runFlag
     forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS);
     %Force cell flag to 0 when err files not present
     
-    showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST);
+    showSeggerImage( data_c, data_r, data_f, forcedFlags, clist, CONST, []);
     flagsStates = intSetStateStrings(FLAGS,CONST);
     
     axis(tmp_axis);
@@ -532,7 +532,7 @@ while runFlag
                 xdim__ = floor(str2num(c(comma_pos(1):end)));
             end
             
-            padStr = getPadSize( dirname_cell );
+            padStr = getPadSize( dirname_cell, [] );
             
             if ~isempty( padStr )
                 data_cell = [];
@@ -573,7 +573,7 @@ while runFlag
         
         if numel(c) > 3
             num = floor(str2num(c(4:end)));
-            data_cell = loadCellData(num,dirname_cell);
+            data_cell = loadCellData(num,dirname_cell, []);
             
             if ~isempty( data_cell )
                 figure(2);
@@ -590,7 +590,7 @@ while runFlag
     elseif numel(c)>5 && strcmpi(c(1:5),'movie') % movie for single Cell
         if numel(c) > 5
             num = floor(str2double(c(6:end)));
-            [data_cell,cell_name] = loadCellData(num,dirname_cell);
+            [data_cell,cell_name] = loadCellData(num,dirname_cell, []);
             if ~isempty(data_cell)
                 mov = makeCellMovie(data_cell)
                 disp('Save movie?')
@@ -615,9 +615,9 @@ while runFlag
         mov.colormap = [];
         
         for ii = 1:num_im
-            [data_r, data_c, data_f] = intLoadData( dirname_seg, ...
+            [data_r, data_c, data_f] = intLoadDataViewer( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
-            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST);
+            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);  
             axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
@@ -687,7 +687,6 @@ while runFlag
             header = 'trackOptiView: ';
             trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
         end
-
     else % we assume that it is a number for a frame change.
         tmp_nn = str2num(c);
         if ~isempty(tmp_nn)
@@ -716,30 +715,6 @@ end
 % END OF MAIN FUNCTION (superSeggerViewer)
 
 % INTERNAL FUNCTIONS
-function data = loaderInternal( filename, clist )
-% loaderInternal : loads the cell outlines for cells in clist
-% % Load Date and put in outline fields.
-
-data = load(filename);
-ss = size(data.phase);
-
-if isfield( data, 'mask_cell' )
-    data.outline =  xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
-end
-
-if ~isempty(clist)
-    clist = gate(clist);
-    data.cell_outline = false(ss);
-    if isfield( data, 'regs' ) && isfield( data.regs, 'ID' )
-        ind = find(ismember(data.regs.ID,clist.data(:,1))); % get ids of cells in clist
-        mask_tmp = ismember( data.regs.regs_label, ind ); % get the masks of cells in clist
-        data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);
-    end
-end
-
-
-end
-
 function [nameInfo] = getDirStruct( dirname )
 
 contents = dir( [dirname,filesep,'*.tif'] );
@@ -779,55 +754,9 @@ nameInfo.nxy = nxy;
 nameInfo.nz  = nz;
 end
 
-function padStr = getPadSize( dirname )
-% getPadSize : returns number of numbers in cell id's.
-
-contents = dir([dirname,'*ell*.mat']);
-
-if numel(contents) == 0
-    disp('No cell files' );
-    padStr = [];
-else
-    num_num = sum(ismember(contents(1).name,'1234567890'));
-    padStr = ['%0',num2str(num_num),'d'];
-end
-
-end
-
-
 function ixy = intGetNum( str_xy )
 ixy = str2num(str_xy(ismember(str_xy, '0123456789' )));
 end
-
-
-function [data_r, data_c, data_f] = intLoadData(dirname, contents, nn, num_im, clist, FLAGS)
-% intLoadData : loads current, reverse and forward data.
-% INPUT :
-%       dirname : seg directory
-%       contents : filenames to be loaded
-%       nn : frame number to be loaded
-%       num_im : total number of images
-%       clist : list of cells
-
-disp ('Loading file..');
-data_c = loaderInternal([dirname,contents(nn).name], clist);
-% not loading data_r and data_f to make this faster
-data_r = [];
-data_f = [];
-
-if shouldLoadNeighborFrames(FLAGS)
-    if nn > 1
-        data_r = loaderInternal([dirname,contents(nn-1).name], clist);
-    end
-    
-    if nn < num_im-1
-        data_f = loaderInternal([dirname,contents(nn+1).name], clist);
-    end
-end
-
-
-end
-
 
 function intDispError( data_c, FLAGS )
 % intDispError
@@ -949,111 +878,6 @@ end
 
 end
 
-function [data_cell,cell_name] = loadCellData (num,dirname_cell)
-
-data_cell = [];
-cell_name = [];
-padStr = getPadSize(dirname_cell);
-
-if ~isempty( padStr )
-    data_cell = [];
-    filename_cell_C = [dirname_cell,'Cell',num2str(num,padStr),'.mat'];
-    filename_cell_c = [dirname_cell,'cell',num2str(num,padStr),'.mat'];
-else
-    return;
-end
-
-
-if exist(filename_cell_C, 'file' )
-    filename_cell = filename_cell_C;
-    cell_name = ['Cell',num2str(num,padStr),'.mat'];
-elseif exist(filename_cell_c, 'file' )
-    filename_cell = filename_cell_c;
-    cell_name = ['cell',num2str(num,padStr),'.mat'];
-else
-    disp( ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.']);
-    return;
-end
-
-try
-    data_cell = load( filename_cell );
-catch
-    disp(['Error loading: ', filename_cell] );
-end
-
-end
-
-function FLAGS = fixFlags(FLAGS)
-% intSetDefaultFlags : sets default flags for when the program begins
-if ~isfield(FLAGS,'cell_flag')
-    FLAGS.cell_flag  = 1;
-end
-
-if ~isfield(FLAGS,'m_flag')
-    FLAGS.m_flag  = 0;
-end
-if ~isfield(FLAGS,'ID_flag')
-    FLAGS.ID_flag  = 0;
-end
-if ~isfield(FLAGS,'T_flag')
-    FLAGS.T_flag  = 0;
-end
-if ~isfield(FLAGS,'P_flag')
-    FLAGS.P_flag  = 0;
-end
-if ~isfield(FLAGS,'Outline_flag')
-    FLAGS.Outline_flag  = 1;
-end
-if ~isfield(FLAGS,'e_flag')
-    FLAGS.e_flag  = 0;
-end
-if ~isfield(FLAGS,'f_flag')
-    FLAGS.f_flag  = 0;
-end
-if ~isfield(FLAGS,'p_flag')
-    FLAGS.p_flag  = 0;
-end
-
-if ~isfield(FLAGS,'s_flag')
-    FLAGS.s_flag  = 1;
-end
-if ~isfield(FLAGS,'c_flag')
-    FLAGS.c_flag  = 1;
-end
-
-if ~isfield(FLAGS,'P_val')
-    FLAGS.P_val  = 0.2;
-end
-
-if ~isfield(FLAGS,'filt')
-    FLAGS.filt  = 1;
-end
-
-if ~isfield(FLAGS,'lyse_flag')
-    FLAGS.lyse_flag  = 0;
-end
-
-if ~isfield(FLAGS,'regionScores')
-    FLAGS.regionScores  = 0;
-end
-
-if ~isfield(FLAGS,'useSegs')
-    FLAGS.useSegs  = 0;
-end
-
-if ~isfield(FLAGS,'showLinks')
-    FLAGS.showLinks  = 0;
-end
-
-if ~isfield(FLAGS,'showMothers')
-    FLAGS.showMothers  = 0;
-end
-
-if ~isfield(FLAGS,'showDaughters')
-    FLAGS.showDaughters  = 0;
-end
-
-end
 
 function intCons(dirname0, contents_xy, setHeader, CONST)
 xyDir = [dirname0,contents_xy.name,filesep];
@@ -1117,15 +941,4 @@ else
         
     end
 end
-end
-
-
-function value = shouldUseErrorFiles(FLAGS)
-global canUseErr;
-
-value = canUseErr == 1 && FLAGS.useSegs == 0;
-end
-
-function value = shouldLoadNeighborFrames(FLAGS)
-value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
 end
