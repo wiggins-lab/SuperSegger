@@ -39,9 +39,12 @@ end
 if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
+if ~exist( 'disp_flag', 'var' ) || isempty( disp_flag )
+    disp_flag = 1;
+end
 
 
-if isdir (dataImArray)
+if ~isstruct(dataImArray) && isdir (dataImArray)
     cellDir = dataImArray;
     [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag )
 end
@@ -61,10 +64,16 @@ end
 [ ~, ~, dataImArray.towerNorm, dataImArray.towerMask ] = ...
     towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
 
+% Merge the normalized weighted towers into a single image
+[ ~, ~, dataImArray.towerNormW, dataImArray.towerMask ] = ...
+        towerMergeImages( dataImArray.imCellNormW, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+
+
 numIm = numel( dataImArray.tower );
 
 if numIm  > 0
     % make the color map for the color image
+    
     [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, ...
         dataImArray.towerMask, dataImArray.towerCArray, ...
         dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );

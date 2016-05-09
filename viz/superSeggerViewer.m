@@ -516,7 +516,7 @@ while runFlag
         else
             disp('dataImArray already calculated');
         end
-        [kymo,kymoMask,~,~ ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+        [kymo,kymoMask] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
         disp('press enter to continue.');
         pause;
     elseif numel(c)>2 && strcmpi(c(1:3),'twr') % Cell Tower for Single Cell
