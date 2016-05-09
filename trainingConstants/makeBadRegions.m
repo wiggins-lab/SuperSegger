@@ -29,7 +29,7 @@ function makeBadRegions(dirname,CONST)
 dirname = fixDir(dirname);
 contents=dir([dirname,'*_seg.mat']);
 num_im = length(contents);
-
+num_files = 1;
 h = waitbar( 0, 'Creating bad region examples for training.' );
 for i = 1 : num_im % go through all the images
     try
@@ -43,7 +43,7 @@ for i = 1 : num_im % go through all the images
     %if ~isfield( data, 'regs' ); - i will just remake them for now!
     data = intMakeRegs( data, CONST, [],1);
     save(dataname,'-STRUCT','data');
-    for j = 1 : 3
+    for j = 1 : num_files
         data_ = intModRegions( data, CONST );
         datamodname=[dirname,contents(i).name(1:end-4),'_',sprintf('%02d',j),'_mod.mat'];
         save(datamodname,'-STRUCT','data_');
@@ -89,15 +89,25 @@ if ~ isempty( mod_list )
         [xx,yy] = getBB( data.segs.props(ii).BoundingBox );
         
         if ~isnan(data.segs.score(ii))
-            if data.segs.score(ii) % score of the segment is 1
-                data.segs.score(ii) = 0;
-                data.segs.segs_good(yy,xx) = 0; ...
-                    data.segs.segs_bad(yy,xx) = 1;
-            else % score of the segment is 0
+             if data.segs.score(ii) %  % score of the segment is 1
+                data.segs.score(ii) = 0; % set to 0
+                data.segs.segs_good(yy,xx) ...
+                    = double(~~(data.segs.segs_good(yy,xx)...
+                    - double(data.segs.segs_label(yy,xx)==ii)));
+                data.segs.segs_bad(yy,xx) = ...
+                    double(~~(data.segs.segs_bad(yy,xx)...
+                    +double(data.segs.segs_label(yy,xx)==ii)));
+             else % score of the segment is 0
                 data.segs.score(ii) = 1;
-                data.segs.segs_good(yy,xx) = 1;
-                data.segs.segs_bad(yy,xx) = 0;
+                data.segs.segs_good(yy,xx) = ...
+                    double(~~(data.segs.segs_good(yy,xx)+...
+                    double(data.segs.segs_label(yy,xx)==ii)));
+                data.segs.segs_bad(yy,xx) = ...
+                    double(~~(data.segs.segs_bad(yy,xx)-...
+                    double(data.segs.segs_label(yy,xx)==ii)));
+
             end
+            
             % image of modified segments
             mod_map (yy,xx) = (data.segs.segs_label(yy,xx)==ii);
             %imshow(ag(mod_map));

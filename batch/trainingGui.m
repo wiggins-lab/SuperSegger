@@ -85,7 +85,7 @@ settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 
-setWorkingDirectory(handles.directory.String);
+setWorkingDirectory(handles.directory.String, 1, 0);
 
 updateUI(handles);
 
@@ -268,11 +268,13 @@ h = msgbox('Training segments, this will take a bit.' );
 handles.tooltip.String = 'Training segments... Please wait.';
 drawnow;
 
+saveData_Callback();
+
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
 [settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs,Ysegs);
 
 % update scores and save data files again
-updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, @scoreNeuralNet);
+updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.regionScoreFun.fun);
 
 try
     close(h);
@@ -292,11 +294,11 @@ global settings;
 
 settings.axisFlag = 2;
 
-if exist([settings.loadDirectory, '../../CONST.mat'], 'file') && settings.segmentsDirty == 1
-    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-    
-    settings.segmentsDirty = 0;
-end
+% if exist([settings.loadDirectory, '../../CONST.mat'], 'file') && settings.segmentsDirty == 1
+%     settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+%     
+%     settings.segmentsDirty = 0;
+% end
 
 updateUI(handles);
 
@@ -309,6 +311,12 @@ global settings;
 
 if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
     if settings.hasBadRegions
+        answer = questdlg('Are you sure you want to remove bad region frames?.', 'Clear bad regions?', 'Yes', 'No', 'No');
+        
+        if strcmp(answer, 'No')            
+            return;
+        end
+        
         delete([settings.loadDirectory, '*seg_*_mod.mat']);
     else
         handles.tooltip.String = 'Adding bad regions, please wait.';
@@ -322,7 +330,7 @@ if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
         loadData(settings.frameNumber);
     end
     
-    setWorkingDirectory(handles.directory.String, 0);
+    setWorkingDirectory(handles.directory.String, 0, 0);
     
     updateUI(handles);
 end
@@ -339,15 +347,17 @@ h = msgbox('Training regions, this will take a bit.' );
 handles.tooltip.String = 'Training regions... Please wait.';
 drawnow;
 
-settings.CONST.regionScoreFun.props = @cellprops3; 
-settings.CONST.regionScoreFun.NUM_INFO = 21;
+saveData_Callback();
+
+%settings.CONST.regionScoreFun.props = @cellprops3; 
+%settings.CONST.regionScoreFun.NUM_INFO = 21;
 
 [Xregs,Yregs] =  getInfoScores (settings.loadDirectory,'regs',settings.CONST);
 [settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs,Yregs);
 
 % 7) Calculates new scores for regions
 disp ('Calculating regions'' scores with new coefficients...');
-updateScores(settings.loadDirectory,'regs', settings.CONST.regionScoreFun.E, @scoreNeuralNet);
+updateScores(settings.loadDirectory,'regs', settings.CONST.regionScoreFun.E, settings.CONST.regionScoreFun.fun);
 
 try
     close(h);
@@ -630,10 +640,14 @@ if numel(settings.oldFrame) > settings.maxData
 end
 
 
-function setWorkingDirectory(directory, clearCONST)
+function setWorkingDirectory(directory, clearCONST, checkSave)
 global settings;
 
-if checkIfSave()
+if ~exist('checkSave') || isempty(checkSave)
+    checkSave = 1;
+end
+
+if checkSave == 1 && checkIfSave()
     return;
 end
 
@@ -937,8 +951,8 @@ if newDir ~= 0
         end
     end
 
-    cropX = ceil(handles.viewport.XLim(1):handles.viewport.XLim(2));
-    cropY = ceil(handles.viewport.YLim(1):handles.viewport.YLim(2));
+    cropX = ceil(handles.viewport.XLim(1):handles.viewport.XLim(2) - 1);
+    cropY = ceil(handles.viewport.YLim(1):handles.viewport.YLim(2) - 1);
 
     for i = 1:settings.frameSkip:maxFrames
         tempImage = imread([settings.imageDirectory,settings.loadFiles(i).name]);

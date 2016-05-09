@@ -90,11 +90,17 @@ if im_flag == 1
     segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
     segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
 %     
-%     segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw)))));
-%     segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw)))));
-%     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
-%     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
+    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw > 0)))));
+    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw > 0)))));
+    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw > 0)))));
+    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw > 0)))));
 %     
+
+    segs_good = imdilate(double(segs_good), strel('square',2));
+    segs_good_fail = imdilate(double(segs_good_fail), strel('square',2));
+    segs_bad_fail = imdilate(double(segs_bad_fail), strel('square',2));
+    segs_bad = imdilate(double(segs_bad), strel('square',2));
+    
     segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
     segsGoodFailag = ag(segs_good_fail);
@@ -109,11 +115,15 @@ if im_flag == 1
         phaseBackag = uint8(ag(~data.mask_cell));
     end
     
-    imshow( uint8(cat(3,...
-            0.1*phaseBackag + 0.3*segs3nag +0.6*(segsGoodag + segsGoodFailag), ...
-            0.15*phaseBackag + 0.1*segs3nag + 0.4*(segsGoodFailag+segsBadFailag), ...
-            0.2*phaseBackag + 0.4*(segsBadag + segsBadFailag))), ...
-            'InitialMagnification', 'fit','Border','tight');
+    imshow( cat(3, 0.3*phaseBackag + segs3nag + min(255, 0.5*uint8(segsBadag+segsBadFailag) + uint8(segsGoodFailag)), ...
+        0.3*phaseBackag + segs3nag + uint8(segsGoodag+segsGoodFailag), ...
+        0.3*phaseBackag + segs3nag + uint8(segsBadFailag)) , 'InitialMagnification', 'fit');
+    
+%     imshow( uint8(cat(3,...
+%             0.1*phaseBackag + 0.3*segs3nag +0.6*(segsGoodag + segsGoodFailag), ...
+%             0.15*phaseBackag + 0.1*segs3nag + 0.4*(segsGoodFailag+segsBadFailag), ...
+%             0.2*phaseBackag + 0.4*(segsBadag + segsBadFailag))), ...
+%             'InitialMagnification', 'fit','Border','tight');
     
     
     flagger = and( data.segs.Include, ~isnan(data.segs.score) );
@@ -159,25 +169,20 @@ elseif im_flag == 2 % region view
     end
     num_regs = data.regs.num_regs;
     
-    rawScores = round(data.regs.scoreRaw);
-    if size(rawScores, 1) < size(rawScores, 2)
-        rawScores = rawScores';
-    end
-    
     if isfield(data.regs,'score')
-    regs_good_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(data.regs.score & rawScores))));
-    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~rawScores))));
+    regs_good_agree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & round(data.regs.scoreRaw > 0)))));
+    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~round(data.regs.scoreRaw > 0)))));
     
-    regs_bad_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~rawScores))));
-    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & rawScores))));
+    regs_bad_agree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw > 0)))));
+    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw > 0)))));
     
-    imshow( cat(3, 0.5*backer + 1*uint8(regs_good_agree+regs_good_disagree), ...
-        0.5*backer, ...
-        0.5*backer + 1*uint8(regs_bad_agree+regs_bad_disagree)) , 'InitialMagnification', 'fit');
+    imshow( cat(3, 0.5*backer + uint8(regs_bad_agree+regs_bad_disagree+regs_good_disagree), ...
+        0.5*backer + 0.8*uint8(regs_good_agree+regs_good_disagree), ...
+        0.5*backer + uint8(regs_bad_disagree)) , 'InitialMagnification', 'fit');
     else
        % imshow(label2rgb(data.regs.regs_label))
          
-        imshow( cat(3, 0.8*backer + 1*ag(data.mask_cell), ...
+        imshow( cat(3, 0.8*backer + ag(data.mask_cell), ...
         0.8*backer, ...
         0.8*backer) , 'InitialMagnification', 'fit');
   
