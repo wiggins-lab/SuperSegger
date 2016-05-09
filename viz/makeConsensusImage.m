@@ -1,5 +1,5 @@
 function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
-    (dataImArray, CONST, skip, mag, disp_flag)
+    (dataImArray, CONST, skip, mag, disp_flag, fnum, clist)
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
@@ -43,10 +43,19 @@ if ~exist( 'disp_flag', 'var' ) || isempty( disp_flag )
     disp_flag = 1;
 end
 
+if exist( 'clist', 'var' )
+    clist = gate( clist );
+else
+    clist = [];
+end
+
+if ~exist( 'fnum', 'var' ) || isempty(fnum)
+    fnum = 1;
+end
 
 if ~isstruct(dataImArray) && isdir (dataImArray)
     cellDir = dataImArray;
-    [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag )
+    [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, clist);
 end
 
 

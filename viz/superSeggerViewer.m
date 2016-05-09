@@ -1,13 +1,13 @@
 function superSeggerViewer(dirname)
 % superSeggerViewer : interactive visulization of the segmented data.
-% It displays a menu from which the user can make choices and vizualize or 
+% It displays a menu from which the user can make choices and vizualize or
 % analyze the segmented data.
-% 
+%
 % important notes :
 % - it saves a file in the directory named .trackOptiView.mat where it
 % saves the flags from the previous launch
 % - it uses the clist which can be gated to only show cells that pass specific
-% criteria. it outlines and analyzes only cells that pass the gate, to display 
+% criteria. it outlines and analyzes only cells that pass the gate, to display
 % the full dataset the gate needs to be deleted.
 %
 %
@@ -296,11 +296,17 @@ while runFlag
         CONST.view.showFullCellCycleOnly = ~CONST.view.showFullCellCycleOnly ;
         
         if CONST.view.showFullCellCycleOnly
-            clist = gateMake( clist, 9, [0.1 inf] )
+            figure(2);
+            clist = gateMake( clist, 9, [1.1 inf] ); % stat0 above 1
+            close(2);
             disp('Only showing complete Cell Cycles')
+            resetFlag = 1;
         else
-            clist = gateStrip ( clist, 9 )
+            figure(2);
+            clist = gateStrip ( clist, 9 ); % clear stat0 gate
+            close(2);
             disp('Showing incomplete Cell Cycles')
+            resetFlag = 1;
         end
     elseif strcmpi(c,'hist') % choose characteristics and values to gate cells
         disp('Choose histogram characteristic')
@@ -308,7 +314,7 @@ while runFlag
         cc = str2double(input('Characteristic [ ] :','s')) ;
         figure(2);
         clf;
-        gateHist(clist,cc)
+        gateHist(clist,cc);
         
     elseif strcmpi(c,'hist2') % choose characteristics and values to gate cells
         disp('Choose histogram characteristic')
@@ -316,7 +322,7 @@ while runFlag
         cc2 = str2double(input('Characteristic 2 [ ] :','s')) ;
         figure(2);
         clf;
-        gateHistDot(clist, [cc1 cc2])
+        gateHistDot(clist, [cc1 cc2]);
         
     elseif strcmpi(c,'save') % choose characteristics and values to gate cells
         figNum = str2double(input('Figure number :','s')) ;
@@ -327,9 +333,9 @@ while runFlag
         saveas(figNum,(savename),'png');
         disp (['Figure ', num2str(figNum) ,' is saved in eps, fig and png format at ',savename]);
         
-    elseif strcmpi(c, 'Find') % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
+    elseif numel(c) >= 4 && strcmpi(c(1:4), 'find') % Find Single Cells as F(number), an X appears on the iamge wehre the cell is
         if numel(c) > 4
-            find_num = floor(str2num(c(2:end)));
+            find_num = floor(str2double(c(5:end)));
             if FLAGS.cell_flag && shouldUseErrorFiles(FLAGS)
                 regnum = find( data_c.regs.ID == find_num);
                 
@@ -340,7 +346,6 @@ while runFlag
                 else
                     disp('couldn''t find that cell');
                 end
-                
             else
                 if (find_num <= data_c.regs.num_regs) && (find_num >0)
                     plot(data_c.regs.props(find_num).Centroid(1),...
@@ -495,28 +500,44 @@ while runFlag
         axis(tmp_axis);
         
     elseif strcmpi(c,'con') % Show existant consensus for this XY or calculate new one
-        if ~exist('dataImArray','var') || isempty(dataImArray)
-            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[]);
-            save ([dirSave,'dataImArray'],'dataImArray');
-        else
-            disp('dataImArray already calculated');
+        % it uses the current clist if datImArray has not been recalculated
+        % before
+        skip = 5;
+        mag = 4;
+        fnum = 1;
+        alreadyExistsImArray = exist('dataImArray','var') && ~isempty(dataImArray);
+        if alreadyExistsImArray
+            answer = input(' dataImArray already calculated - recalculate? [y/n]:','s');
         end
         
-        [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST,5,4,0);
-        figure(1)
+        if ~alreadyExistsImArray || strcmpi(answer,'y')
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST, skip,mag,fnum);
+            save ([dirSave,'dataImArray'],'dataImArray');
+        end
+        
+        [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage( dataImArray,CONST,skip,mag,0);
+        figure(2)
         clf
         imshow(imColor)
         disp('press enter to continue.');
         pause;
         
-    elseif strcmpi(c,'conK') % Show existant consensus for this XY or calculate new one
-        if ~exist('dataImArray','var') || isempty(dataImArray)
-            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
-            save ([dirSave,'dataImArray'],'dataImArray');
-        else
-            disp('dataImArray already calculated');
+    elseif strcmpi(c,'cKym') % Show existant consensus for this XY or calculate new one
+        skip = 5;
+        mag = 4;
+        fnum = 1;
+        alreadyExistsImArray = exist('dataImArray','var') && ~isempty(dataImArray);
+        if alreadyExistsImArray
+            answer = input(' dataImArray already calculated - recalculate? [y/n]:','s');
         end
-        [kymo,kymoMask] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+        
+        if ~alreadyExistsImArray || strcmpi(answer,'y')
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST, skip,mag,fnum);
+            save ([dirSave,'dataImArray'],'dataImArray');
+        end
+        
+        
+        [kymo,kymoMask] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1);
         disp('press enter to continue.');
         pause;
     elseif numel(c)>2 && strcmpi(c(1:3),'twr') % Cell Tower for Single Cell
@@ -592,7 +613,7 @@ while runFlag
             num = floor(str2double(c(6:end)));
             [data_cell,cell_name] = loadCellData(num,dirname_cell, []);
             if ~isempty(data_cell)
-                mov = makeCellMovie(data_cell)
+                mov = makeCellMovie(data_cell);
                 disp('Save movie?')
                 d = input('[y/n]:','s');
                 if strcmpi(d,'y')
@@ -617,7 +638,7 @@ while runFlag
         for ii = 1:num_im
             [data_r, data_c, data_f] = intLoadDataViewer( dirname_seg, ...
                 contents, ii, num_im, clist, FLAGS);
-            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);  
+            tmp_im =  showSeggerImage( data_c, data_r, data_f, FLAGS, clist, CONST, []);
             axis(tmp_axis);
             drawnow;
             mov(ii) = getframe;
