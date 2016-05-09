@@ -496,7 +496,7 @@ while runFlag
         
     elseif strcmpi(c,'con') % Show existant consensus for this XY or calculate new one
         if ~exist('dataImArray','var') || isempty(dataImArray)
-            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[]);
             save ([dirSave,'dataImArray'],'dataImArray');
         else
             disp('dataImArray already calculated');

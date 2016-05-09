@@ -4,8 +4,8 @@ function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
 %
 % INPUT:
 %   dataImArray : cell image array made from makeConsensusArray
-%               or cell directory - then it calls makeConsensusArray and
-%               creates dataImArray.
+%               or cell directory - then i
+
 %
 % OUPUT:
 %  imMosaic : Image mosaic of cells that make up the consensus image

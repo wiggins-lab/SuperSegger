@@ -140,11 +140,9 @@ end
     function doAnnotation( data_, x_, y_ )
         % doAnnotation : annotates spots, cell numbers and poles
         if ~isempty(data_)
-            
-            % plots cell numbers
-            if FLAGS.ID_flag == 1
+            if FLAGS.ID_flag == 1 % plots cell numbers
                 intPlotNum( data_ , x_, y_, FLAGS, ID_LIST );
-            elseif FLAGS.regionScores
+            elseif FLAGS.regionScores % plots region scores
                 intPlotScores( data_ , x_, y_, FLAGS );
             end
             
@@ -324,7 +322,10 @@ end
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
-    else
+    elseif isfield(data,'outline')
+        im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
+    elseif isfield(data,'mask_cell')% no outline field (not loaded through super segger viewer)
+        data.outline = xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
         im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
     end
     
@@ -349,18 +350,18 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
         cellBorn = or(and(data.regs.birthF,data.regs.stat0),data.regs.divide);
         
-        % cells with errors current->reverse or ignoreError
+        % cells with ehist & error current->reverse or ignoreError
         map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             data.regs.error.r),ignoreErrorV)));
         map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
         
-        % cells with errors current->reverse or ignoreError
-        map_err_fw_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+        % cells with ehist, but no error current->reverse or ignoreError
+        map_ehist_noErrorRev_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             ~data.regs.error.r),ignoreErrorV)));
-        map_err_fw  = double(ismember( data.regs.regs_label, map_err_fw_ind ));
+        map_ehist_noErRev  = double(ismember( data.regs.regs_label, map_ehist_noErrorRev_ind ));
         
         
-        % cells without errors
+        % cells without error history
         map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
         map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
         
@@ -394,7 +395,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
         
         
-        redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_err_fw)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+        redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_ehist_noErRev)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
         greenChannel =  0.30*(map_no_err);
         blueChannel = 0.7*((map_stat0_2)+ 0.5*(map_stat0_1)+0.25*(map_stat0_0));
         

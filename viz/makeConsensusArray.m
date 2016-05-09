@@ -1,4 +1,4 @@
-function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, clist )
+function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, clist )
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
@@ -43,29 +43,28 @@ function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, clist )
 
 
 dataImArray = [];
-imMosaic10 = [];
-imMosaic=[];
-imColor=[];
-imBW=[];
-imInv=[];
-kymo=[];
-kymoMask=[];
-kymoMaskMax =[];
-I=[];
-kymoMax=[];
-imBWunmasked=[];
-imBWmask=[] ;
-hotPix=[];
-AA=[];
-BB=[];
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
 end
 
+% magnification : resizes the images of the cells to make them
+% larger the image will be mag X larger in each dimension
+
 if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
+
+if ~exist( 'fnum', 'var' ) || isempty( fnum )
+    fnum = 1;
+end
+
+if exist( 'clist', 'var' ) 
+    clist = gate( clist );
+else
+    clist = [];
+end
+
 
 
 % show images in false color
@@ -100,11 +99,11 @@ if ~isempty( CONST.view.maxNumCell )
     numCells = min( [numCells, CONST.view.maxNumCell] );
 end
 
-disp( ['Running consensus (max cell number ',...
+disp( ['Computing consensus array (max cell number ',...
     num2str(numCells),')'] );
 
 % ssTot : Keep track of the total size of the tower mosaic.
-ssTot = [0,0];
+
 
 
 % Manage the waitbar
@@ -132,14 +131,14 @@ for ii = 1:numCells
     [data, dataImArray.cellArrayNum{ii}] = intLoader( cellDir, contents(ii).name );
     data.CellA = data.CellA(1:skip:end);
     
-    % mag is magnification : resizes the images of the cells to make them
-    % larger the image will be mag X larger in each dimension
-    mag = 4;
+    aboveMinLifetime = numel(data.CellA) > minimumLifetime;
+    inClist = isempty( clist ) || ismember( cell_num, row(clist.data(:,1)))
+   
     
     % Compute consensus images for cell in data
-    if numel(data.CellA) > minimumLifetime
+    if aboveMinLifetime && inClist
         kk = kk + 1;
-        dataIm = makeTowerCons(data,CONST,1,false, skip, mag );
+        dataIm = makeTowerCons(data,CONST,1,false, skip, mag, fnum );
         
         % Scale images down to the original size
         imArray{kk} = imresize( dataIm.tower, 1/mag);
@@ -168,25 +167,28 @@ T0 = numel( data.imCell );
 if isempty( dataArray.sumWeight );
     dataArray.sumWeight    = zeros(1,T0);
     dataArray.sumWeightMin = 0;
-    dataArray.sumWeightS    = zeros(1,T0);
-    dataArray.sumWeightSMin = 0;
 end
 
 
 % update im and mask sum
-% if isempty( dataArray.tower )
-%     dataArray.tower        = double( data.towerRaw );
-%     dataArray.sumWeightMin = min(data.intWeight);
-%     dataArray.towerNorm = dataArray.sumWeightMin * double( data.towerNormRaw );
-%     dataArray.towerMask = double( data.towerMask );
-% else
-%     dSumWeightMin = min(data.intWeight);
-%     dataArray.tower = dataArray.tower + double( data.towerRaw );
-%     dataArray.towerNorm = dataArray.towerNorm + ...
-%         dSumWeightMin * double( data.towerNormRaw );
-%     dataArray.towerMask = dataArray.towerMask + double( data.towerMask );
-%     dataArray.sumWeightMin = dataArray.sumWeightMin + dSumWeightMin;
-% end
+if isempty(dataArray.tower)
+    dataArray.tower        = double( data.towerRaw );
+    dSumWeightMin          = min(data.intWeight);
+    dataArray.sumWeightMin = dSumWeightMin;
+    dataArray.towerNormW    = dataArray.sumWeightMin *...
+        double( data.towerNormRaw );    
+    dataArray.towerNorm    = double( data.towerNormRaw );
+    dataArray.towerMask    = double( data.towerMask );
+else
+    dSumWeightMin = min(data.intWeight);    
+    dataArray.tower = dataArray.tower + double( data.towerRaw );
+    dataArray.towerNormW = dataArray.towerNorm + ...
+        dSumWeightMin * double( data.towerNormRaw );
+    dataArray.towerNorm    = dataArray.towerNorm + ...
+            double( data.towerNormRaw );
+    dataArray.towerMask    = dataArray.towerMask + double( data.towerMask );
+    dataArray.sumWeightMin = dataArray.sumWeightMin + dSumWeightMin;
+end
 
 ss = size(data.imCell{1});
 
@@ -194,34 +196,27 @@ dataArray.ssTot = [ max([dataArray.ssTot(1),ss(1)]),...
     dataArray.ssTot(2)+ss(2) ];
 
 if isempty( dataArray.imCell )
-    dataArray.imCell         = data.imCell;
-    dataArray.imCellNorm     = data.imCellNorm;
-    dataArray.maskCell       = data.maskCell;
-    dataArray.imCellScale    = data.imCellScale;
-    dataArray.maskCellScale  = data.maskCellScale;
-    
+    dataArray.imCell = data.imCell;
+    dataArray.imCellNorm = data.imCellNorm;
+    dataArray.maskCell = data.maskCell;
+    dataArray.sumWeight = data.intWeight;  
     for ii = 1:T0
-        dataArray.imCellNorm{ii} = data.imCellNorm{ii} * data.intWeight(ii);
-        dataArray.imCellNormScale{ii} = data.imCellNormScale{ii} ...
-            * data.intWeightS(ii);
-    end 
-    dataArray.sumWeight = data.intWeight;
-    dataArray.sumWeightS = data.intWeightS;
+        dataArray.imCellNorm{ii}  = data.imCellNorm{ii};
+        dataArray.imCellNormW{ii} = data.imCellNorm{ii} ...
+            * data.intWeight(ii);
+    end
     
 else
     for ii = 1:T0
         dataArray.imCell{ii} = dataArray.imCell{ii} + data.imCell{ii};
-        dataArray.maskCell{ii}  = dataArray.maskCell{ii} + data.maskCell{ii};
-        dataArray.imCellScale{ii} = dataArray.imCellScale{ii} + data.imCellScale{ii};
-        dataArray.maskCellScale{ ii} = dataArray.maskCellScale{ ii} ...
-            + data.maskCellScale{ ii};
-        dataArray.imCellNorm{ii}  = dataArray.imCellNorm{ii} ...
+        dataArray.maskCell{ii} = dataArray.maskCell{ii} + data.maskCell{ii};
+        dataArray.imCellNormW{ii} = dataArray.imCellNormW{ii} ...
             + data.imCellNorm{ii} * data.intWeight(ii);
-        dataArray.imCellNormScale{ii}  = dataArray.imCellNormScale{ii} ...
-            + data.imCellNormScale{ii} * data.intWeightS(ii);
-    end    
+        dataArray.imCellNorm{ii}  = dataArray.imCellNorm{ii} ...
+            + data.imCellNorm{ii};
+    end
+    
     dataArray.sumWeight = dataArray.sumWeight + data.intWeight;
-    dataArray.sumWeightS = dataArray.sumWeightS + data.intWeightS;
 end
 
 dataArray.towerCArray{jj} = data.towerC;
