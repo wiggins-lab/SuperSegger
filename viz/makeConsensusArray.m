@@ -130,7 +130,6 @@ for ii = 1:numCells
     % load data and get file number
     [data, dataImArray.cellArrayNum{ii}] = intLoader( cellDir, contents(ii).name );
     data.CellA = data.CellA(1:skip:end);
-    
     aboveMinLifetime = numel(data.CellA) > minimumLifetime;
     inClist = isempty( clist ) || ismember( cell_num, row(clist.data(:,1)))
    
