@@ -425,8 +425,8 @@ function save_Callback(hObject, eventdata, handles)
 global settings;
 
 CONST = settings.CONST;
-
-[FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [getConstantsPath(), 'newConst']);
+[~, ~, constantsPath] = getConstantsList();
+[FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [constantsPath, 'newConst']);
 if ~isempty(strfind(FileName, '.'))
     FileName = FileName(1:(strfind(FileName, '.') - 1))
 end
@@ -999,7 +999,8 @@ function loadConstants_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-[FileName,PathName] = uigetfile('.mat', 'Load CONST file', [getConstantsPath()]);
+[~, ~, constantsPath] = getConstantsList();
+[FileName,PathName] = uigetfile('.mat', 'Load CONST file', constantsPath);
 if FileName ~= 0
     settings.CONST = loadConstantsNN([PathName, FileName],0,0);
     settings.nameCONST = settings.CONST.ResFlag;

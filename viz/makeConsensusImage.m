@@ -1,9 +1,11 @@
-function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,CONST,skip,mag,disp_flag)
+function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
+    (dataImArray, CONST, skip, mag, disp_flag)
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
-%   dataImArray : cell image array from makeConsensusArray
-
+%   dataImArray : cell image array made from makeConsensusArray
+%               or cell directory - then it calls makeConsensusArray and
+%               creates dataImArray.
 %
 % OUPUT:
 %  imMosaic : Image mosaic of cells that make up the consensus image
@@ -30,8 +32,6 @@ function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dat
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
 end
@@ -39,6 +39,16 @@ end
 if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
+if ~exist( 'disp_flag', 'var' ) || isempty( disp_flag )
+    disp_flag = 1;
+end
+
+
+if ~isstruct(dataImArray) && isdir (dataImArray)
+    cellDir = dataImArray;
+    [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag )
+end
+
 
 T0 = numel(dataImArray.imCell); % number of frames
 
@@ -54,10 +64,16 @@ end
 [ ~, ~, dataImArray.towerNorm, dataImArray.towerMask ] = ...
     towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
 
+% Merge the normalized weighted towers into a single image
+[ ~, ~, dataImArray.towerNormW, dataImArray.towerMask ] = ...
+        towerMergeImages( dataImArray.imCellNormW, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+
+
 numIm = numel( dataImArray.tower );
 
 if numIm  > 0
     % make the color map for the color image
+    
     [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, ...
         dataImArray.towerMask, dataImArray.towerCArray, ...
         dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );

@@ -1,4 +1,4 @@
-function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, clist )
+function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, clist )
 % makeConsIm : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
@@ -9,7 +9,7 @@ function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, clist )
 % disp_flag : (flag) flag to show cells while they are processed
 %
 % OUPUT:
-%   dataImArray = 
+%   dataImArray =
 %           towerCArray: cell array of tower of each single cell
 %            towerArray: cell array of tower of each single cell
 %        towerNormArray: cell array of tower of each single cell
@@ -43,29 +43,28 @@ function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, clist )
 
 
 dataImArray = [];
-imMosaic10 = [];
-imMosaic=[];
-imColor=[];
-imBW=[];
-imInv=[];
-kymo=[];
-kymoMask=[];
-kymoMaskMax =[];
-I=[];
-kymoMax=[];
-imBWunmasked=[];
-imBWmask=[] ;
-hotPix=[];
-AA=[];
-BB=[];
 
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
 end
 
+% magnification : resizes the images of the cells to make them
+% larger the image will be mag X larger in each dimension
+
 if ~exist( 'mag', 'var' ) || isempty( mag )
     mag = 4;
 end
+
+if ~exist( 'fnum', 'var' ) || isempty( fnum )
+    fnum = 1;
+end
+
+if exist( 'clist', 'var' )
+    clist = gate( clist );
+else
+    clist = [];
+end
+
 
 
 % show images in false color
@@ -97,14 +96,14 @@ CONST.view.maxNumCell = min (CONST.view.maxNumCell ,numCells);
 
 
 if ~isempty( CONST.view.maxNumCell )
-    numCells = min( [numCells, CONST.view.maxNumCell] );
+    numCells = min([numCells, CONST.view.maxNumCell] );
 end
 
-disp( ['Running consensus (max cell number ',...
+disp( ['Computing consensus array (max cell number ',...
     num2str(numCells),')'] );
 
 % ssTot : Keep track of the total size of the tower mosaic.
-ssTot = [0,0];
+
 
 
 % Manage the waitbar
@@ -129,17 +128,18 @@ for ii = 1:numCells
     waitbar(ii/numCells,h);
     
     % load data and get file number
-    [data, dataImArray.cellArrayNum{ii}] = intLoader( cellDir, contents(ii).name );
+    cell_name = contents(ii).name;
+    [data, dataImArray.cellArrayNum{ii}] = intLoader(cellDir, cell_name);
     data.CellA = data.CellA(1:skip:end);
+    cur_cell_num = str2double(cell_name(isnum(cell_name)));
+    aboveMinLifetime = numel(data.CellA) > minimumLifetime;
+    inClist = isempty( clist ) || ismember( cur_cell_num, row(clist.data(:,1)));
     
-    % mag is magnification : resizes the images of the cells to make them
-    % larger the image will be mag X larger in each dimension
-    mag = 4;
     
     % Compute consensus images for cell in data
-    if numel(data.CellA) > minimumLifetime
+    if aboveMinLifetime && inClist
         kk = kk + 1;
-        dataIm = makeTowerCons(data,CONST,1,false, skip, mag );
+        dataIm = makeTowerCons(data,CONST,1,false, skip, mag, fnum );
         
         % Scale images down to the original size
         imArray{kk} = imresize( dataIm.tower, 1/mag);
@@ -168,25 +168,28 @@ T0 = numel( data.imCell );
 if isempty( dataArray.sumWeight );
     dataArray.sumWeight    = zeros(1,T0);
     dataArray.sumWeightMin = 0;
-    dataArray.sumWeightS    = zeros(1,T0);
-    dataArray.sumWeightSMin = 0;
 end
 
 
 % update im and mask sum
-% if isempty( dataArray.tower )
-%     dataArray.tower        = double( data.towerRaw );
-%     dataArray.sumWeightMin = min(data.intWeight);
-%     dataArray.towerNorm = dataArray.sumWeightMin * double( data.towerNormRaw );
-%     dataArray.towerMask = double( data.towerMask );
-% else
-%     dSumWeightMin = min(data.intWeight);
-%     dataArray.tower = dataArray.tower + double( data.towerRaw );
-%     dataArray.towerNorm = dataArray.towerNorm + ...
-%         dSumWeightMin * double( data.towerNormRaw );
-%     dataArray.towerMask = dataArray.towerMask + double( data.towerMask );
-%     dataArray.sumWeightMin = dataArray.sumWeightMin + dSumWeightMin;
-% end
+if isempty(dataArray.tower)
+    dataArray.tower        = double( data.towerRaw );
+    dSumWeightMin          = min(data.intWeight);
+    dataArray.sumWeightMin = dSumWeightMin;
+    dataArray.towerNormW    = dataArray.sumWeightMin *...
+        double( data.towerNormRaw );
+    dataArray.towerNorm    = double( data.towerNormRaw );
+    dataArray.towerMask    = double( data.towerMask );
+else
+    dSumWeightMin = min(data.intWeight);
+    dataArray.tower = dataArray.tower + double( data.towerRaw );
+    dataArray.towerNormW = dataArray.towerNorm + ...
+        dSumWeightMin * double( data.towerNormRaw );
+    dataArray.towerNorm    = dataArray.towerNorm + ...
+        double( data.towerNormRaw );
+    dataArray.towerMask    = dataArray.towerMask + double( data.towerMask );
+    dataArray.sumWeightMin = dataArray.sumWeightMin + dSumWeightMin;
+end
 
 ss = size(data.imCell{1});
 
@@ -194,34 +197,27 @@ dataArray.ssTot = [ max([dataArray.ssTot(1),ss(1)]),...
     dataArray.ssTot(2)+ss(2) ];
 
 if isempty( dataArray.imCell )
-    dataArray.imCell         = data.imCell;
-    dataArray.imCellNorm     = data.imCellNorm;
-    dataArray.maskCell       = data.maskCell;
-    dataArray.imCellScale    = data.imCellScale;
-    dataArray.maskCellScale  = data.maskCellScale;
-    
-    for ii = 1:T0
-        dataArray.imCellNorm{ii} = data.imCellNorm{ii} * data.intWeight(ii);
-        dataArray.imCellNormScale{ii} = data.imCellNormScale{ii} ...
-            * data.intWeightS(ii);
-    end 
+    dataArray.imCell = data.imCell;
+    dataArray.imCellNorm = data.imCellNorm;
+    dataArray.maskCell = data.maskCell;
     dataArray.sumWeight = data.intWeight;
-    dataArray.sumWeightS = data.intWeightS;
+    for ii = 1:T0
+        dataArray.imCellNorm{ii}  = data.imCellNorm{ii};
+        dataArray.imCellNormW{ii} = data.imCellNorm{ii} ...
+            * data.intWeight(ii);
+    end
     
 else
     for ii = 1:T0
         dataArray.imCell{ii} = dataArray.imCell{ii} + data.imCell{ii};
-        dataArray.maskCell{ii}  = dataArray.maskCell{ii} + data.maskCell{ii};
-        dataArray.imCellScale{ii} = dataArray.imCellScale{ii} + data.imCellScale{ii};
-        dataArray.maskCellScale{ ii} = dataArray.maskCellScale{ ii} ...
-            + data.maskCellScale{ ii};
-        dataArray.imCellNorm{ii}  = dataArray.imCellNorm{ii} ...
+        dataArray.maskCell{ii} = dataArray.maskCell{ii} + data.maskCell{ii};
+        dataArray.imCellNormW{ii} = dataArray.imCellNormW{ii} ...
             + data.imCellNorm{ii} * data.intWeight(ii);
-        dataArray.imCellNormScale{ii}  = dataArray.imCellNormScale{ii} ...
-            + data.imCellNormScale{ii} * data.intWeightS(ii);
-    end    
+        dataArray.imCellNorm{ii}  = dataArray.imCellNorm{ii} ...
+            + data.imCellNorm{ii};
+    end
+    
     dataArray.sumWeight = dataArray.sumWeight + data.intWeight;
-    dataArray.sumWeightS = dataArray.sumWeightS + data.intWeightS;
 end
 
 dataArray.towerCArray{jj} = data.towerC;
@@ -237,22 +233,27 @@ function dataArray = intNormalize( dataArray, numCells )
 
 T0 = numel( dataArray.imCell );
 dataArray.numCells = numCells;
+
 dataArray.towerCArray = dataArray.towerCArray(1:numCells);
 dataArray.towerArray = dataArray.towerArray(1:numCells);
 dataArray.towerNormArray = dataArray.towerNormArray(1:numCells);
 dataArray.intWeightMinArray = dataArray.intWeightMinArray(1:numCells);
 dataArray.cellArrayNum = dataArray.cellArrayNum(1:numCells);
-%dataArray.tower = dataArray.tower /dataArray.numCells;
-%dataArray.towerMask = dataArray.towerMask/dataArray.numCells;
-%dataArray.towerNorm = dataArray.towerNorm/dataArray.sumWeightMin;
+
+dataArray.tower = dataArray.tower/dataArray.numCells;
+dataArray.towerMask = dataArray.towerMask/dataArray.numCells;
+dataArray.towerNorm = dataArray.towerNorm/dataArray.numCells;
+dataArray.towerNormW = dataArray.towerNormW/dataArray.sumWeightMin;
 
 for ii = 1:T0
     dataArray.imCellSum{ii}  = dataArray.imCell{ii}/numCells;
     dataArray.maskCell{ii}  = dataArray.maskCell{ii}/numCells;
-    dataArray.imCellScale{ii} = dataArray.imCellScale{ii}/numCells;
-    dataArray.maskCellScale{ ii}  = dataArray.maskCellScale{ii}/numCells;
-    dataArray.imCellNorm{ii} = dataArray.imCellNorm{ii} /dataArray.sumWeight(ii);
-    dataArray.imCellNormScale{ii} = dataArray.imCellNormScale{ii}/dataArray.sumWeightS(ii);
+    weightNorm = sum( dataArray.imCellNorm{ii}(:).*dataArray.maskCell{ii}(:)/...
+        sum(dataArray.maskCell{ii}(:)));
+    weightNormW = sum(dataArray.imCellNormW{ii}(:).*dataArray.maskCell{ii}(:)/...
+        sum(dataArray.maskCell{ii}(:)));
+    dataArray.imCellNormW{ii} = dataArray.imCellNormW{ii}/weightNormW;
+    dataArray.imCellNorm{ii}  = dataArray.imCellNorm{ii}/weightNorm;
 end
 end
 
@@ -266,17 +267,16 @@ data.towerArray  = cell(1,numCells);
 data.towerNormArray = cell(1,numCells);
 data.intWeightMinArray  = zeros( 1,numCells);
 data.cellArrayNum = cell(1,numCells);
+data.tower           = [];
+data.towerNorm       = [];
+data.towerNormW      = [];
 data.towerMask       = [];
 data.imCell          = [];
 data.imCellNorm      = [];
+data.imCellNormW      = [];
 data.maskCell        = [];
-data.imCellScale     = [];
-data.imCellNormScale = [];
-data.maskCellScale   = [];
 data.sumWeight       = [];
 data.sumWeightMin    = [];
-data.sumWeightS      = [];
-data.sumWeightSMin   = [];
 data.numCells        = numCells;
 data.ssTot           = [0, 0];
 

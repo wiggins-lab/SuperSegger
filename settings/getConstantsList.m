@@ -28,7 +28,8 @@ function [possibleConstants, resFlagList, filepath] = getConstantsList()
 FulllocationOfFile = mfilename('fullpath');
 fileSepPosition = find(FulllocationOfFile==filesep,1,'last');
 filepath = FulllocationOfFile ( 1 :fileSepPosition-1);
-possibleConstants = dir([filepath,filesep,'*.mat']);
+filepath = [filepath,filesep];
+possibleConstants = dir([filepath,'*.mat']);
 
 for i = 1 : numel (possibleConstants)
     cName = possibleConstants (i).name;

@@ -496,7 +496,7 @@ while runFlag
         
     elseif strcmpi(c,'con') % Show existant consensus for this XY or calculate new one
         if ~exist('dataImArray','var') || isempty(dataImArray)
-            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[], clist);
+            [dataImArray] = makeConsensusArray( dirname_cell, CONST, 5,[]);
             save ([dirSave,'dataImArray'],'dataImArray');
         else
             disp('dataImArray already calculated');
@@ -516,7 +516,7 @@ while runFlag
         else
             disp('dataImArray already calculated');
         end
-        [kymo,kymoMask,~,~ ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+        [kymo,kymoMask] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
         disp('press enter to continue.');
         pause;
     elseif numel(c)>2 && strcmpi(c(1:3),'twr') % Cell Tower for Single Cell

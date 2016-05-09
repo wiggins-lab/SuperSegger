@@ -25,28 +25,35 @@ function  imData = makeTowerCons( data, CONST, xdim, ...
 %           .imCell : cell array of the raw consenus images
 %           .imCellNorm : cell array of the raw normalized consenus images
 %           .maskCell  : cell array of binary cell masks
+%           .imCellScale   : Grayscale non-crop cons.
+%           .imCellNormScale : Grayscale normalized non-crop cons.
+%           .maskCellScale : double binary mask of the cell.
 %           .intWeight :
+%           .intWeightS :
 %
-% Copyright (C) 2016 Wiggins Lab
+%
+% Copyright (C) 2016 Wiggins Lab 
 % Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-%
+% 
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-%
+% 
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-%
+% 
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-% set the color map here to generate the color images
+
+
+% set the color map here for the colored tower
 persistent colormap_;
 if isempty( colormap_ )
     colormap_ = colormap( 'jet' );
@@ -67,25 +74,36 @@ if ~exist( 'xdim', 'var' ) || isempty( xdim )
     xdim = 1;
 end
 
+if ~exist( 'mag', 'var' ) || isempty( mag )
+    mag = 1;
+end
+
+if ~exist( 'fnum', 'var' ) || isempty( fnum )
+    fnum = 1;
+end
+
 if isfield( CONST, 'view' ) && isfield( CONST.view, 'orientFlag' )
     orientFlag = CONST.view.orientFlag;
 else
     orientFlag = true;
 end
 
-
 if  ~isfield(data.CellA{1},'fluor1')
     disp ('no fluorescence field found');
     return;
 end
 
+
 % get the TimeStep variable for plotting
 TimeStep     = CONST.getLocusTracks.TimeStep;
+numframe = numel(data.CellA);
 
-% get the number of frames
-numframe = numel( data.CellA );
-t0 = numframe;
-
+% initialize variables
+imCell = cell( 1, numel(data.CellA) );
+alpha  = zeros(1, numel(data.CellA) );
+ssCell = imCell;
+xxCell = imCell;
+yyCell = imCell;
 
 % set the consensus lengths
 L0 = 26*mag; % length of the cell in the first frame
@@ -98,89 +116,41 @@ else
     T0 =  8;
 end
 
-% init variables
-imCell = cell( 1, T0 );
-ssCell = imCell;
-nii   = zeros(1, T0 );
-maskCell = imCell;
-imCellNorm = cell( 1, T0 );
-intWeight = zeros(1, T0 );
-
-
 f1mm = []; % init the max and min fluor values to empty.
 mm_name = ['fluor', num2str(fnum),'mm'];
 f_name  = ['fluor', num2str(fnum)];
 
 
-
-% figure out the mapping between the different time coords
-TT = (0:(T0-1))/(T0-1);
-tt = (0:(t0-1))/(t0-1);
-Td = abs( (0*tt'+1)*TT-tt'*(0*TT+1));
-[~,ord_tt] = min( Td' );
-[~,ord_TT] = min( Td );
-
-
 % straighten and align the cells, frame by frame
-for Tii = 1:T0
+for ii = 1:numframe
     
-    ind = find( ord_tt == Tii );
-    if isempty( ind )
-        ind = ord_TT(Tii);
-    end
-    nii(Tii) = numel( ind );
+    % intDoCellOri: (i) rotate the image, (ii) adjust cell width to W0
+    [imCell{ii}, maskCell{ii}, alpha(ii), ssCell{ii}, xxCell{ii}, yyCell{ii}] = ...
+        intDoCellOri( data.CellA{ii}, W0, mag, fnum );
     
-    for ii = row(ind)
-        % intDoCellOri: (i) rotate the image, (ii) adjust cell width to W0
-        [imCell__, maskCell__, alpha__, ssCell__, xxCell__, yyCell__] = ...
-            intDoCellOri( data.CellA{ii}, W0, L0, T0, Tii, mag, fnum );
-        
-        
-        if isempty( imCell{Tii} )
-            imCell{Tii}   = imCell__/nii(Tii);
-            maskCell{Tii} = maskCell__;
-            ssCell{Tii}   = ssCell__;
-        else
-            imCell{Tii}   = imCell{Tii} + imCell__/nii(Tii);
+    % set the max and min fluor values
+    if isempty(f1mm)
+        if isfield( data.CellA{ii}, mm_name )  % fluor1mm field
+            f1mm = data.CellA{ii}.(mm_name) ;
+        else % fluor field
+            tmp_fluor = data.CellA{ii}.(f_name);
+            f1mm = [min(tmp_fluor(:)), max(tmp_fluor(:))];
         end
-        
-        
-        % set the max and min fluor values
-        if isempty(f1mm)
-            if isfield( data.CellA{ii}, mm_name )
-                f1mm = data.CellA{ii}.(mm_name) ;
-            else
-                tmp_fluor = data.CellA{ii}.(f_name);
-                f1mm = [ min(tmp_fluor(:)), max(tmp_fluor(:))];
-            end
+    else
+        if isfield( data.CellA{ii}, mm_name )
+            tmp_fluor = data.CellA{ii}.(mm_name) ;
+            f1mm = [ min([tmp_fluor,f1mm(1)]), max([tmp_fluor(2),f1mm(2)]) ];
         else
-            if isfield( data.CellA{ii}, mm_name )
-                tmp_fluor = data.CellA{ii}.(mm_name) ;
-                f1mm = [ min([tmp_fluor,f1mm(1)]), max([tmp_fluor(2),f1mm(2)]) ];
-            else
-                tmp_fluor = data.CellA{ii}.(f_name);
-                f1mm = [ min([f1mm(1),min( tmp_fluor(:))]), max([f1mm(2),max(tmp_fluor(:))])];
-            end
+            tmp_fluor = data.CellA{ii}.(f_name); 
+            f1mm = [ min([f1mm(1),min( tmp_fluor(:))]), max([f1mm(2),max(tmp_fluor(:))])];
         end
     end
-    
-    
-    im    = imCell{Tii};
-    mask  = logical(maskCell{Tii});
-    
-    im = im - min( im( mask ) );
-    
-    intWeight( Tii ) = sum( double(im(mask)))./sum( double(mask(:)));
-    imCellNorm{Tii} = imCell{Tii}/intWeight( Tii ) ;
-    
 end
 
-
-
-% used to calculate scaled images so that they all have dimensions L0, W0, and T0
-% [imCell, maskCell, ssCell, xxCell, yyCell, imCellS, maskCellS, ...
-%     intWeight, imCellNorm, imCellNormS, intWeightS] = ...
-%     intDoRescale( imCell, maskCell, ssCell, xxCell, yyCell, L0, W0, T0 );
+% rescale the time steps so that they have dimensions L0, W0, and T0
+[imCell, maskCell, ssCell, xxCell, yyCell, imCellS, maskCellS, ...
+    intWeight, imCellNorm, imCellNormS, intWeightS] = ...
+    intDoRescale( imCell, maskCell, ssCell, xxCell, yyCell, L0, W0, T0 );
 
 % Merge the images from the arrays into a single image
 [ imColorCons, imBWCons, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
@@ -193,8 +163,8 @@ end
 % if the disp flag is true, show the image.
 if disp_flag
     intDoDraw( imColorCons, T0, nx, ny, max_x, max_y, TimeStep, CONST );
-    pause;
 end
+
 
 imData               = [];
 imData.tower         = imBWCons;
@@ -208,15 +178,11 @@ imData.fmax          = f1mm;
 imData.imCell        = imCell;
 imData.imCellNorm    = imCellNorm;
 imData.maskCell      = maskCell;
+imData.imCellScale   = imCellS;
+imData.imCellNormScale  = imCellNormS;
+imData.maskCellScale = maskCellS;
 imData.intWeight     = intWeight;
-
-% .imCellScale   : Grayscale non-crop cons.
-% .imCellNormScale : Grayscale normalized non-crop cons.
-% .maskCellScale : double binary mask of the cell.
-%imData.imCellScale   = imCellScale;
-%imData.imCellNormScale  = imCellNormS;
-%imData.maskCellScale = maskCellScale;
-%imData.intWeightS    = intWeightS;
+imData.intWeightS    = intWeightS;
 
 
 end
@@ -225,8 +191,7 @@ end
 
 function intDoDraw( im, T0, nx, ny, max_x, max_y, TimeStep, CONST )
 % intDoDraw : draws the image.
-
-imshow( im );
+imshow(im);
 
 if CONST.view.falseColorFlag
     cc = 'w';
@@ -236,13 +201,15 @@ end
 
 hold on;
 
-for ii = 1:T0
+for ii = 1:T0    
     yy = floor((ii-1)/nx);
     xx = ii-yy*nx-1;
+    
     y = 1+yy*max_y;
     x = 1+xx*max_x;
-    text( x+2, y+2, num2str((ii-1)*TimeStep),'Color',cc,'FontSize',12,'VerticalAlignment','Top');
+    text( x+2, y+2, num2str((ii-1)*TimeStep),'Color',cc,'FontSize',12,'VerticalAlignment','Top');   
 end
+
 
 dd = [1,ny*max_y+1];
 for xx = 1:(nx-1)
@@ -255,196 +222,96 @@ for yy = 1:(ny-1)
 end
 end
 
-function [fluor1, mask_rot, alpha, ss, xx, yy] = intDoCellOri( ...
-    celld, W0, L0, T0, Tii, mag, fnum )
-% intDoCellOri : orients the cell.
 
-f_name = ['fluor',num2str(fnum)];
-fl_name = ['fl',num2str(fnum)];
-debug_flag = false;
-Lii = L0*(1+(Tii-1)/(T0-1));
+
+
+function [fluor1, mask_rot, alpha, ss, xx, yy] = intDoCellOri( celld, W0, mag, fnum )
+% intDoCellOri : orients the cell.
 
 persistent strel1;
 if isempty( strel1 )
     strel1 = strel('square',3);
 end
 
-if isfield( celld, 'pole' ) && ~isnan( celld.pole.op_ori ) && (celld.pole.op_ori ~= 0)
-    ssign = sign(celld.pole.op_ori);
-else
-    ssign = 1;
-end
+f_name = ['fluor',num2str(fnum)];
+fl_name = ['fl',num2str(fnum)];
 
+ssign = getPoleSign (celld);
 e1 = celld.coord.e1;
 alpha = 90-180/pi*atan2(e1(1),e1(2)) + 180*double(ssign==1);
+
 mask = celld.mask;
+mask = imrotate((mask), alpha, 'bilinear' );
+mask = logical(imdilate(mask,strel1));
 
 % get the background fluorescence
 if isfield( celld, fl_name) && ...
-        isfield( getfield( celld, fl_name), 'bg' ) && ...
-        ~isnan( getfield( getfield(celld, fl_name), 'bg'))
-    bg_fluor =  double( getfield( getfield( celld, fl_name), 'bg' ));
+        isfield( celld.(fl_name), 'bg' ) && ...
+        ~isnan( getfield( celld.(fl_name), 'bg'))
+    bg_fluor =  double( getfield( celld.(fl_name), 'bg' ));
 else
     bg_fluor = 0;
 end
 
+fluor1   = imrotate( double(celld.(fl_name))-bg_fluor, alpha, 'bilinear');
+mask_rot = imresize( mask,   mag );
+fluor1   = imresize( fluor1, mag );
 
-% check to see if the cell runs up to the end
-xx_ = sum( mask, 1);
-xx_ = [find(logical(xx_), 1, 'first' ), find(logical(xx_), 1, 'last' )];
+sstmp = size( mask_rot );
 
-yy_ = sum( mask, 2);
-yy_ = [find(logical(yy_), 1, 'first' ), find(logical(yy_), 1, 'last' )];
+x = 1:sstmp(2);
+y = 1:sstmp(1);
 
-ss_old = size( mask );
-fluor1  = double(getfield(celld,f_name))-bg_fluor;
-
-if xx_(1) < 3
-    mask   = [ false( [ss_old(1),6] ), mask  ];
-    fluor1 = [ zeros( [ss_old(1),6] ), fluor1];
-end
-
-ss_old = size( mask );
-
-if xx_(2) > ss_old(2)-2
-    mask   = [ mask,   false( [ss_old(1),6] ) ];
-    fluor1 = [ fluor1, zeros( [ss_old(1),6] ) ];
-end
-
-ss_old = size( mask );
-
-if yy_(1) < 3
-    mask   = [ false( [6,ss_old(2)] ); mask  ];
-    fluor1 = [ zeros( [6,ss_old(2)] ); fluor1];
-end
-
-ss_old = size( mask );
-
-if yy_(2) > ss_old(1)-2
-    mask   = [ mask;   false( [6,ss_old(2)] ) ];
-    fluor1 = [ fluor1; zeros( [6,ss_old(2)] ) ];
-end
-
-mask     = imrotate(       (mask),         alpha, 'bilinear' );
-mask = logical(imdilate(mask,strel1));
-fluor1   = imrotate( fluor1, alpha, 'bilinear');
-
-% scale the cell to the target size
-
-% compute the local width
-w = sum( mask,1 );
-
-w0 = median( w(logical(w)) );
-l0 = find( logical(w), 1, 'last' )-find( logical(w), 1, 'first' )+1;
-
-% magnify length and width independently to bring cell to approximately the
-% right size.
-mag_x = Lii/l0;
-mag_y = W0/w0;
-mag_v = [mag_y,mag_x];
-ss_old = size( mask );
-
-
-mask_rot = imresize( mask,   ss_old.*mag_v );
-fluor1   = imresize( fluor1, ss_old.*mag_v );
-
-% redefine width and length
-w = sum( mask_rot,1 );
-w0 = median( w(logical(w)) );
-x0_srt = find( logical(w), 1, 'first' ); % starting x coord
-x0_end = find( logical(w), 1, 'last' ); % ending x coord
-l0 = x0_end-x0_srt+1; % cell length
-
-ss = size( mask_rot );
-x = 1:ss(2);
-y = 1:ss(1);
-
-x_mid = 0.5*(x(1)+x(end));
-y_mid = 0.5*(y(1)+y(end));
+x2 = 0.5*(x(1)+x(end));
+y2 = 0.5*(y(1)+y(end));
 
 [X,Y] = meshgrid( x, y );
 
-% compute the center of intensity
-y_cen0 = sum(mask_rot.*Y)./w;
+xsum  = sum(mask_rot);
+xsumy = sum(mask_rot.*Y)./xsum;
 
-x0_srt_ = x0_srt+floor(mag/2);
-x0_end_ = x0_end-floor(mag/2);
-dx0 = x0_end_-x0_srt_;
+ind = isnan(xsumy);
+xsumy(ind) = y2;
 
-ranger = floor( dx0*(0:.2:1)+x0_srt_);
-
-y_cen = interp1( ranger, y_cen0(ranger), x, 'linear','extrap' );
-
-% compute the model (theory) width
+mask_rot_ = mask_rot;
+fluor1_   = fluor1;
+XXX = intDoFit( x, xsum );
 RADIUS = W0/2;
-wt = intCellFit( x, x0_srt-1, x0_end+1, RADIUS );
-
-mask_rot_  = mask_rot;
-mask_rot__ = mask_rot;
-fluor1_    = fluor1;
-
-
-if debug_flag
-    figure(1);
-    clf;
-    imshow( mask_rot_, []);
-    hold on;
-    plot( y_cen, 'r.-' );
-end
-
+xsumt = intCellFit( x, XXX(1), XXX(2), RADIUS );
 
 for ii = x
-    dy1 = (y - y_cen(ii));
-    dy2 = (y - y_mid);
-    
-    mask_rot_(:,ii) = 0;
-    if wt(ii)~=0
-        mask_rot_(abs(dy2)<=wt(ii)/2,ii) = 1;
+    if (xsumt(ii)>0) && (xsum(ii)>0)
+        dy1 = (y - xsumy(ii))*xsumt(ii)/xsum(ii);
+        dy2 = (y - y2);
+        mask_rot_(:,ii) = interp1( dy1, double(mask_rot(:,ii)), dy2,'linear','extrap' );
+        fluor1_(:,ii)   = interp1( dy1, fluor1(:,ii),   dy2,'linear','extrap' );
+    else
+        mask_rot_(:,ii) = 0*mask_rot(:,ii);
+        fluor1_(:,ii)   = fluor1(:,ii);
     end
-    
-    mask_rot__(:,ii)   = interp1( dy1, double(mask_rot__(:,ii)),   dy2,'nearest','extrap' );
-    fluor1_(:,ii)   = interp1( dy1, fluor1(:,ii),   dy2,'nearest','extrap' );
 end
 
-if debug_flag
-    figure(2);
-    clf;
-    imshow( fluor1_,[] );
-    colormap jet
-    
-    figure(3);
-    clf;
-    imshow( mask_rot_,[] );
-    colormap jet
-    
-    figure(4);
-    clf;
-    imshow( mask_rot__,[] );
-    colormap jet
-end
+xsum  = sum(mask_rot_);
+xmin_ = max([1,find(xsum>0,1,'first')-1]);
+xmax_ = min([sstmp(2),find(xsum>0,1, 'last')+1]);
 
-w  = sum(mask_rot_);
-xmin_ = max([1,find(w>0,1,'first')-1]);
-xmax_ = min([ss(2),find(w>0,1, 'last')+1]);
-
-ysum  = sum(mask_rot_');
+ysum  = sum(mask_rot_,2);
 ymin_ = max([1,find(ysum>0,1,'first')-1]);
-ymax_ = min([ss(1),find(ysum>0,1, 'last')+1]);
+ymax_ = min([sstmp(1),find(ysum>0,1, 'last')+1]);
 
+yy = ymin_:ymax_;
+xx = xmin_:xmax_;
 
-yy = ymin_-1+(1:(W0+2));
-xx = xmin_-1+(1:(Lii+2));
-
-
-mask_rot = mask_rot_(yy, xx);
+mask_rot = mask_rot_( ymin_:ymax_, xmin_:xmax_ );
 fluor1   = fluor1_(yy, xx);
-
 ss = size( mask_rot );
 
 end
 
 function [X] = intDoFit( x, ysum )
 % intDoFit : fits to the theoretical shape of the cell
+
+debug = 0;
 
 X(1) = find( ysum, 1, 'first');
 X(2) = find( ysum, 1, 'last');
@@ -454,32 +321,35 @@ X = fminsearch( @intDoFitInt, X );
 
     function err = intDoFitInt( X )
         y   = intCellFit( x, X(1), X(2), X(3) );
-        
         err = sum( (ysum-y).^2 );
     end
 
 
-if 0
+if debug
     clf;
     plot( x, ysum, 'y.-');
     hold on;
     plot( x, intCellFit( x, X(1), X(2), X(3) ), 'r.-');
     pause;
 end
+
 end
 
-function [imCell__, maskCell__, ssCell__, xxCell__, yyCell__, imCellScale, ...
-    maskCellScale, intWeight, imCellNorm__, imCellNormS, intWeightS ] = ...
+function [imCell__, maskCell__, ssCell__, xxCell__, yyCell__, imCellS, ...
+    maskCellS, intWeight, imCellNorm__, imCellNormS, intWeightS ] = ...
     intDoRescale( imCell, maskCell, ssCell, xxCell, yyCell, L0, W0, T0 )
 % intDoRescale : rescales the cell in both space and time and fixes
 % the normalization over time of the tower.
 
 
 nt = numel( imCell );
+tt = (0:(T0-1))/(T0-1);
 
 % Renormalize the length of the cell to make it L = L0*(1+t/T)
 for ii = 1:nt
     tii = (ii-1)/(nt-1);
+    Lii = L0*(1+tii);
+    
     ss = size( imCell{ii} );
     
     x = 1:ss(2);
@@ -506,11 +376,10 @@ for ii = 1:nt
     
 end
 
-%  Renormalize the length of the cell cycle to be length T0.
+% (ii) Renormalize the length of the cell cycle to be length T0.
 for ii = 1:T0
     
     jj = (ii-1)/(T0-1)*(nt-1)+1;
-    
     jjm = floor(jj);
     jjp = jjm + 1;
     djj = jj-jjm;
@@ -529,13 +398,11 @@ for ii = 1:T0
 end
 
 % save the scaled versions
-imCellScale   = imCell__;
+imCellS   = imCell__;
 imCellNormS   = imCell__;
-
-maskCellScale = maskCell__;
+maskCellS = maskCell__;
 intWeight = zeros(1,T0);
 intWeightS = zeros(1,T0);
-
 imCellNorm__ =  imCell__;
 
 % rescale the long axis dimension to scale uniformly
@@ -562,30 +429,17 @@ for ii = 1:T0
     intWeight(ii) = sum_;
     
     % normalize fluor so that the mean fluor remains constant over time.
-    imCellScale{ii}(isnan(imCellScale{ii}))      = 0;
-    maskCellScale{ii}(isnan(maskCellScale{ii}))  = 0;
+    imCellS{ii}(isnan(imCellS{ii}))      = 0;
+    maskCellS{ii}(isnan(maskCellS{ii}))  = 0;
     
-    sumS_ = sum(imCellScale{ii}(:).*maskCellScale{ii}(:))/sum(maskCellScale{ii}(:));
-    imCellNormS{ii} = imCellScale{ii}/sumS_;
+    sumS_ = sum(imCellS{ii}(:).*maskCellS{ii}(:))/sum(maskCellS{ii}(:));
+    imCellNormS{ii} = imCellS{ii}/sumS_;
     intWeightS(ii) = sumS_;
     ssCell__{ii} = size( imCell__{ii} );
     xxCell__{ii} = 1:ssCell__{ii}(2);
     yyCell__{ii} = 1:ssCell__{ii}(1);
     
 end
-end
 
-
-function v = row(v)
-% row :  makes v a row vector
-
-ss = size( v );
-if ~any( ss==1 )
-    v = v(:)';
-elseif ss(2) == 1
-    v = v';
-end
 
 end
-
-

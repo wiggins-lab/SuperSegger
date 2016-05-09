@@ -1,4 +1,4 @@
-function [ kymo,kymoMask ] = makeConsensusKymo(...
+function [ kymo,kymoMask,kymoMax, kymoMaskMax ] = makeConsensusKymo(...
     imCellS, maskCellS, disp_flag )
 %  intMakeConsensusKymo : creates a consensus kymograph
 %  To obtain imCellS and maskCellS you can call 
@@ -27,23 +27,20 @@ mag = 4;
 
 if T0 > 0 
     % initialize
-    ss    = size( imCellS{T0} );
-    ssMax = size( imresize(imCellS{T0}, 1/mag) );
+    ss    = size( imCellS{1} );
+    ssMax = size( imresize(imCellS{1}, 1/mag) );
     kymo    = zeros( [ss(2), T0] );
     kymoMax = zeros( [ssMax(2), T0] );
     kymoMask    = kymo;
     kymoMaskMax = kymoMax;
-    midpoint = ss(2)/2;
+    
     for ii = 1:T0
         maskCellS{ii}( isnan( maskCellS{ii} ) ) = 0;
         imCellS{ii}( isnan( imCellS{ii} ) )     = 0;
-        tmpKymo =  sum(maskCellS{ii}.*imCellS{ii},1);
-        imageSize = size(tmpKymo,2);
-        md_temp = round(imageSize/2);
-        start_ind = midpoint-md_temp+1;
-        end_ind =  imageSize + start_ind-1;
-        kymo(start_ind:end_ind,ii)= (tmpKymo);
-        kymoMask(start_ind:end_ind,ii) = (sum(maskCellS{ii},1));
+        kymo(:,ii) = sum(maskCellS{ii}.*imCellS{ii},1);
+        kymoMask(:,ii) = sum(maskCellS{ii},1);
+        kymoMax(:,ii) = max(imresize( maskCellS{ii}.*imCellS{ii},1/mag ), [], 1);
+        kymoMaskMax(:,ii) = max(imresize( maskCellS{ii}, 1/mag ),[], 1);
         
     end
 end
@@ -54,9 +51,9 @@ if disp_flag
     ss = size( kymo );
     tt = (0:(ss(2)-1))/(ss(2)-1);
     xx = (0:(ss(1)-1))/(ss(1)-1);
-    imagesc( tt,xx -.5, colorize(kymo,kymoMask,[],[0.33,0.33,0.33]) );
+    imagesc( tt,xx, colorize(kymo,kymoMask,[],[0.33,0.33,0.33]) );
     set(gca, 'YDir', 'normal' );
     title ('Consensus Kymograph');
     xlabel( 'Time (Cell Cycle)');
-    ylabel( 'Relative Long Axis Position (L_{endCellCycle}))');
+    ylabel( 'Relative Long Axis Position');
 end
