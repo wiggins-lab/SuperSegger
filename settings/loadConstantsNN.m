@@ -58,7 +58,7 @@ end
 % '100XPa': constants for 100X Pseudemonas
 % res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
 
-[possibleConstants] = getConstantsList();
+[possibleConstants, ~, filepath] = getConstantsList();
 
 % default values for numbers
 resFlag = [];
@@ -182,14 +182,18 @@ CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysi
 indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
 if ~isempty(indexConst)
      constFilename = possibleConstants(indexConst).name;
-     ConstLoaded = load (constFilename);
+     ConstLoaded = load ([filepath,filesep,constFilename]);
      CONST.ResFlag = constFilename(1:end-4);
      if dispText
         disp(['loading Constants : ', constFilename]);
      end
      
+elseif exist(res, 'file')
+    ConstLoaded = load(res);
+    CONST.ResFlag = res;
 else
-    error('loadConstants: Constants not loaded : no match found. Aborting.');
+    errordlg('loadConstants: Constants not loaded : no match found. Aborting.');
+    return;
 end
 
 
@@ -217,8 +221,9 @@ CONST.seg = ConstLoaded.seg;
 
 % defines region optimization parameters used
 CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
-CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH;
-
+if isfield(ConstLoaded.regionOpti, 'MIN_LENGTH')
+    CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
+end
 % defines region functions used
 CONST.regionScoreFun = ConstLoaded.regionScoreFun;
 

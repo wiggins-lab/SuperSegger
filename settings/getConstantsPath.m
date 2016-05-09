@@ -1,10 +1,8 @@
-function [possibleConstants, resFlagList, filepath] = getConstantsList()
-% getConstantsList : gets all constants files from the settings directory.
+function [constantsDirectory] = getConstantsPath()
+% getConstantsPath : gets the path of the settings folder
 % 
 % OUTPUT : 
-%   possibleConstants.names : names of the constants files
-%   possibleConstants.resFlags : res flags with string to load constants from loadConstants 
-%   resFlagList : list of all res flags.
+%   constantsDirectory : location of setting directory
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Stella Styliandou.
@@ -28,13 +26,7 @@ function [possibleConstants, resFlagList, filepath] = getConstantsList()
 FulllocationOfFile = mfilename('fullpath');
 fileSepPosition = find(FulllocationOfFile==filesep,1,'last');
 filepath = FulllocationOfFile ( 1 :fileSepPosition-1);
-possibleConstants = dir([filepath,filesep,'*.mat']);
-
-for i = 1 : numel (possibleConstants)
-    cName = possibleConstants (i).name;
-    possibleConstants(i).resFlag =cName (1:end-4);
-    resFlagList{i} = possibleConstants(i).resFlag;
-end
+constantsDirectory = [filepath,filesep];
 
 end
 

@@ -1,4 +1,4 @@
-function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG)
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG,showWarnings)
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -30,7 +30,8 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 % res       : is a string that is passed to loadConstants(Mine).m to load
 %           : the right constants for processing.
 % SEGMENT_FLAG : to segment cells
-% ONLY_SEG : if true it does not run trackOpti (only the segments the data)
+% ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
+% showWarnings : Set to 0 to mute warnings
 %
 %
 % Copyright (C) 2016 Wiggins Lab 
@@ -79,6 +80,10 @@ if ~exist( 'ONLY_SEG', 'var' ) || isempty( ONLY_SEG )
     ONLY_SEG = 0;
 end
 
+if ~exist( 'showWarnings', 'var' ) || isempty( showWarnings )
+    showWarnings = 1;
+end
+
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.
 if isstruct(res)
@@ -93,7 +98,7 @@ else
 end
 
 
-if clean_flag && SEGMENT_FLAG
+if clean_flag && SEGMENT_FLAG && showWarnings
     try
         disp ('Clean flag is set to true.')
         answer=input('Do you want to continue, Y/N [Y]:','s');

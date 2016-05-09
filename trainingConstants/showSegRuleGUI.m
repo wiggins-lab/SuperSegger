@@ -159,12 +159,17 @@ elseif im_flag == 2 % region view
     end
     num_regs = data.regs.num_regs;
     
-    if isfield(data.regs,'score')
-    regs_good_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(data.regs.score & round(data.regs.scoreRaw)))));
-    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~round(data.regs.scoreRaw)))));
+    rawScores = round(data.regs.scoreRaw);
+    if size(rawScores, 1) < size(rawScores, 2)
+        rawScores = rawScores';
+    end
     
-    regs_bad_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw)))));
-    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw)))));
+    if isfield(data.regs,'score')
+    regs_good_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(data.regs.score & rawScores))));
+    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~rawScores))));
+    
+    regs_bad_agree = 0.3*double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~rawScores))));
+    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & rawScores))));
     
     imshow( cat(3, 0.5*backer + 1*uint8(regs_good_agree+regs_good_disagree), ...
         0.5*backer, ...
