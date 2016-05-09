@@ -623,7 +623,7 @@ if ~exist('dataImArray','var') || isempty(dataImArray)
 else
     handles.message.String = 'dataImArray already calculated';
 end
-[kymo,kymoMask,~,~ ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+[kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
 end
 
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
