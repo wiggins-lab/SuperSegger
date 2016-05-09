@@ -65,10 +65,10 @@ end
 
 if ~exist( 'mask_bad_regs', 'var' ) || isempty( mask_bad_regs )
     if good_regs
-        data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E);
+        data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E)';
         data.regs.score = ones( data.regs.num_regs, 1 );
     else
-        data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E);
+        data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E)';
         data.regs.score =   data.regs.scoreRaw>0;
     end
 end
