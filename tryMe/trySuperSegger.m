@@ -2,8 +2,7 @@
 %% Get tryMe-file's location
 FulllocationOfFile = mfilename('fullpath');
 fileSepPosition = find(FulllocationOfFile==filesep,1,'last');
-filepath = FulllocationOfFile ( 1 :fileSepPosition-1);
-filepath = [filepath,filesep];
+filepath = FulllocationOfFile ( 1 :fileSepPosition);
 
 dirname = [filepath,'60mrnaCropped'];
 
@@ -28,7 +27,7 @@ imshow(fluor,[])
 
 %% Different segmentation parameters
 % Try different constants to select the most appropriate one
- tryDifferentConstants([dirname,'/raw_im/']);
+tryDifferentConstants([dirname,'/raw_im/']);
 
 
 %% Set constants
@@ -54,7 +53,7 @@ BatchSuperSeggerOpti (dirname,1,clean_flag,CONST);
 %% Load an individual cell file
 cell_dir = [dirname,filesep,'xy1',filesep,'cell',filesep];
 cellData = dir([cell_dir,'Cell*.mat']);
-data = load([cell_dir,cellData(2).name]);
+data = load([cell_dir,cellData(1).name]);
 
 
 %% Cell phase image
@@ -79,7 +78,7 @@ imshow(cat(3,mask*0,ag(data.CellA{timeFrame}.fluor1),mask*0),[]);
 
 %% Cell tower
 % create a cell tower for the loaded cell.
-im_tmp = makeFrameMosaic(data, CONST,2,1,3);
+im_tmp = makeFrameMosaic(data, CONST,3,1,3);
 
 %% Kymograph
 % create a kymograph for the loaded cell.
@@ -92,7 +91,7 @@ clist = load('60mrnaCropped/xy1/clist.mat');
 %% Histogram
 % Plot the long axis at birth
 clf;
-gateHist(clist,9);
+gateHist(clist,10);
 
 %% Gate and re-plot the histogram
 % Take only cells for which the birth was observed and display the long
@@ -104,4 +103,4 @@ gateHist(clist,9);
 clistGated = gateMake(clist,4,[2 100]);
 
 % plotting for the gated clist the long axis at birth
-gateHist(clistGated,9);
+gateHist(clistGated,10);
