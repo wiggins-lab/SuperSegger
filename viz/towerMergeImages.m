@@ -80,7 +80,7 @@ towerIm   = zeros(imdim(1), imdim(2));
 for ii = 1:T0
     
     yy = floor((ii-1)/nx/skip);
-    xx = (ii-1)/skip-yy*nx;
+    xx = floor((ii-1)/skip)-yy*nx;
     
     ss = ssCell{ii};
     

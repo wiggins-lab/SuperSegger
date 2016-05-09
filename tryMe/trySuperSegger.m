@@ -1,7 +1,11 @@
 % Script to display the different superSegger methods
+%% Get tryMe-file's location
+FulllocationOfFile = mfilename('fullpath');
+fileSepPosition = find(FulllocationOfFile==filesep,1,'last');
+filepath = FulllocationOfFile ( 1 :fileSepPosition-1);
+filepath = [filepath,filesep];
 
-%% Set the directory name
-dirname = '60mrnaCropped';
+dirname = [filepath,'60mrnaCropped'];
 
 %% Sample phase and a fluorescence image
 imageFolder = [dirname,filesep,'raw_im',filesep];
@@ -55,14 +59,13 @@ data = load([cell_dir,cellData(2).name]);
 
 %% Cell phase image
 % Show the phase image for frame 1
-
+timeFrame = 1;
 figure;
 clf;
 imshow(data.CellA{timeFrame}.phase,[]);
 
 %% Cell Mask
 % Show the cell mask for frame 1
-timeFrame = 1;
 mask = data.CellA{timeFrame}.mask;
 figure;
 clf;
