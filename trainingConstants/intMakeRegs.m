@@ -50,6 +50,8 @@ for ii = 1:data.regs.num_regs
     [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
     mask = data.regs.regs_label(yy,xx)==ii;
     data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    
+    
     %data.regs.boun(ii) = any( [1==xx(1),1==yy(1),ss(1)==yy(end),ss(2)==xx(end)] );
     
     if exist( 'mask_bad_regs', 'var' ) && ~isempty( mask_bad_regs )

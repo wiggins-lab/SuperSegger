@@ -22,7 +22,7 @@ function varargout = trainingGui(varargin)
 
 % Edit the above text to modify the response to help trainingGui
 
-% Last Modified by GUIDE v2.5 06-May-2016 18:00:13
+% Last Modified by GUIDE v2.5 09-May-2016 15:20:21
 
 % Begin initialization code - DO NOT EDIT
 
@@ -122,16 +122,19 @@ if handles.viewport.XLim(2) - handles.viewport.XLim(1) > 500 || handles.viewport
     end
 end
 
-numTrainingFrames = numel(dir([settings.imageDirectory, '*c1*.tif']));
-if numTrainingFrames < 5
-    answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
 
-    if strcmp(answer, 'No')
-        return;
-    end
-end
 
-if numTrainingFrames > 100
+trainingFrames = dir([settings.imageDirectory, '*c1*.tif']);
+numTrainingFrames = numel(trainingFrames);
+% if numTrainingFrames < 5
+%     answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+% 
+%     if strcmp(answer, 'No')
+%         return;
+%     end
+% end
+
+if numTrainingFrames > 50
     answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
         
     if strcmp(answer, 'No')
@@ -139,10 +142,20 @@ if numTrainingFrames > 100
     end
 end
 
+%strip xy positions
+for i = 1:numTrainingFrames
+    saveName = [settings.imageDirectory, trainingFrames(i).name];
+    saveName = strrep(saveName, 'xy', '');
+    
+    movefile([settings.imageDirectory, trainingFrames(i).name], saveName);
+end
+
 skip = 1;
 clean_flag = 1;
 only_seg = 1; % runs only segmentation, no linking
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, settings.CONST, 1, only_seg, 0);
+
+settings.frameNumber = 1;
 
 setWorkingDirectory(settings.loadDirectory(1:end-9));
 
@@ -565,19 +578,19 @@ else
     handles.bad_regs.String = 'Create bad regions';
 end
 
-% No CONST file selected
 if settings.imagesLoaded
     makeActive(handles.try_const);
-    makeActive(handles.cut_and_seg);
+    makeActive(handles.makeData);
 else
     makeInactive(handles.try_const);
     makeInactive(handles.makeData);
 end
     
+% No CONST file selected
 if isempty(settings.CONST)
     makeInactive(handles.cut_and_seg);
 else
-    makeActive(handles.makeData);
+    makeActive(handles.cut_and_seg);
 end
 
 if settings.dataSegmented == 0
@@ -673,10 +686,10 @@ end
 
 settings.imagesLoaded = 0;
 settings.imageDirectory = [];
-if numel(dir([settings.loadDirectory(1:end-8), '/*c1*.tif'])) > 2
+if numel(dir([settings.loadDirectory(1:end-8), '/*c1*.tif'])) > 0
     settings.imagesLoaded = 1;
     settings.imageDirectory = settings.loadDirectory(1:end-8);
-elseif numel(dir([settings.loadDirectory(1:end-8), '/raw_im/*c1*.tif'])) > 2
+elseif numel(dir([settings.loadDirectory(1:end-8), '/raw_im/*c1*.tif'])) > 0
     settings.imagesLoaded = 1;
     settings.imageDirectory = [settings.loadDirectory(1:end-8), '/raw_im/'];
 end
@@ -929,7 +942,7 @@ if numTrainingFrames < 5
     end
 end
 
-if numTrainingFrames > 100
+if numTrainingFrames > 50
     answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
         
     if strcmp(answer, 'No')
@@ -1017,3 +1030,19 @@ button.ForegroundColor = [0, 0, 0];
 function makeInactive(button)
 button.Enable = 'inactive';
 button.ForegroundColor = [.5, .5, .5];
+
+
+% --- Executes on button press in makeGoodRegions.
+function makeGoodRegions_Callback(hObject, eventdata, handles)
+% hObject    handle to makeGoodRegions (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+settings.axisFlag = 2;
+
+addUndo();
+settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], 1 );
+saveData();
+
+updateUI(handles);

@@ -29,7 +29,7 @@ function makeBadRegions(dirname,CONST)
 dirname = fixDir(dirname);
 contents=dir([dirname,'*_seg.mat']);
 num_im = length(contents);
-num_files = 1;
+num_files = 3;
 h = waitbar( 0, 'Creating bad region examples for training.' );
 for i = 1 : num_im % go through all the images
     try
@@ -62,7 +62,7 @@ function [data] = intModRegions ( data,CONST )
 
 
 % fraction of segments to be modified to create bad regions
-FRACTION_SEG_MOD = 0.2;
+FRACTION_SEG_MOD = 0.5;
 num_segs = numel(data.segs.score);
 num_mod  = ceil( num_segs*FRACTION_SEG_MOD );
 mod_list = unique(ceil(rand(1,num_mod)*num_segs));
