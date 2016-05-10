@@ -350,6 +350,8 @@ try
 catch
 end
 
+loadData(settings.frameNumber);
+
 updateUI(handles);
 
 

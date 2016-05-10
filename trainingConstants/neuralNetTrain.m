@@ -32,8 +32,14 @@ net.divideParam.trainRatio = 70/100;
 net.divideParam.valRatio = 15/100;
 net.divideParam.testRatio = 15/100;
 
+numTotal = numel(t(1,:));
+numTrue = numel(find(t(1,:)==0));
+numFalse = numel(find(t(1,:)==1));
+
+errorWeights = {[(t(1,:)==0) * 0 + (t(1,:)==1) * numTotal / numFalse; (t(2,:)==0) * 0 + (t(2,:)==1) * numTotal / numTrue]};
+
 % Train the Network
-[net,tr] = train(net,x,t);
+[net,tr] = train(net,x,t,{},{},errorWeights);
 
 % Test the Network
 y = net(x);
