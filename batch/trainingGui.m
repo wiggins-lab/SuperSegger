@@ -253,7 +253,7 @@ function del_areas_Callback(hObject, eventdata, handles)
 global settings;
 
 if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
-    settings.axisFlag = 3;    
+    settings.axisFlag = 3;
     settings.firstPosition = [];
     updateUI(handles);
 else
@@ -474,11 +474,11 @@ if settings.dataSegmented
         end
     elseif settings.axisFlag == 4
         % showing phase image
-        axes(handles.viewport);        
+        axes(handles.viewport);
         imshow(settings.currentData.phase, []);
     end
 elseif settings.imagesLoaded
-    axes(handles.viewport);    
+    axes(handles.viewport);
     imshow(settings.currentData, []);
 end
 
@@ -548,7 +548,7 @@ end
 
 if settings.dataSegmented == 0
     handles.cut_and_seg.Visible = 'on';
-
+    
     handles.diplay_panel.Visible = 'off';
     handles.save_panel.Visible = 'off';
     handles.makeGoodRegions.Visible = 'off';
@@ -563,7 +563,7 @@ if settings.dataSegmented == 0
     handles.saveData.Visible = 'off';
 else
     handles.cut_and_seg.Visible = 'off';
-
+    
     handles.diplay_panel.Visible = 'on';
     handles.save_panel.Visible = 'on';
     handles.makeGoodRegions.Visible = 'on';
@@ -654,7 +654,7 @@ elseif numel(dir([settings.loadDirectory(1:end-8), '/raw_im/*.tif'])) > 0
 end
 
 if exist(settings.loadDirectory, 'dir')
-    settings.dataSegmented = 1;    
+    settings.dataSegmented = 1;
     settings.axisFlag = 4;
     settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
     settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
@@ -677,16 +677,16 @@ if exist(settings.loadDirectory, 'dir')
         warning(['Could not back up files: ', ME.message]);
     end
 elseif settings.imagesLoaded
-    settings.numFrames = numel(dir([settings.imageDirectory,'*.tif']));   
+    settings.numFrames = numel(dir([settings.imageDirectory,'*.tif']));
     settings.loadFiles = dir([settings.imageDirectory,'*.tif']);
     loadData(settings.frameNumber);
 end
 
 %Clear viewport
 if isvalid(settings.handles.viewport)
-while numel(settings.handles.viewport.Children) > 0
-    delete(settings.handles.viewport.Children(1))
-end
+    while numel(settings.handles.viewport.Children) > 0
+        delete(settings.handles.viewport.Children(1))
+    end
 end
 
 
@@ -1020,11 +1020,11 @@ if get(hObject,'Value')
     handles.segs_radio.Value = 0;
     settings.axisFlag = 2;
     
-     if settings.segmentsDirty == 1
+    if settings.segmentsDirty == 1
         settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
         settings.segmentsDirty = 0;
-     end
-
+    end
+    
 end
 updateUI(handles);
 
