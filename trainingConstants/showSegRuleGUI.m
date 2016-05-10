@@ -78,8 +78,15 @@ axes(viewport);
 
 if im_flag == 1
     
-    isnan_score = isnan(data.segs.scoreRaw);
+    rawSegs = data.segs.scoreRaw;
+    if size(rawSegs, 2) > size(rawSegs, 1)
+        rawSegs = rawSegs';
+    end
+    
+    isnan_score = isnan(rawSegs);
     data.segs.score(isnan_score) = 1;
+    
+    rawSegs = round(rawSegs > 0)
     
     if ~isfield(data.segs, 'Include' )
         data.segs.Include = 0*data.segs.score+1;
@@ -87,13 +94,13 @@ if im_flag == 1
     
     segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
    
-    segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
-    segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
+%     segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
+%     segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
 %     
-    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,round(data.segs.scoreRaw > 0)))));
-    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~round(data.segs.scoreRaw > 0)))));
-    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw > 0)))));
-    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw > 0)))));
+    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,rawSegs))));
+    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~rawSegs))));
+    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,rawSegs))));
+    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~rawSegs))));
 %     
 
     segs_good = imdilate(double(segs_good), strel('square',2));

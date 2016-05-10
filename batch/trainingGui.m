@@ -84,6 +84,7 @@ settings.imagesLoaded = 0;
 settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
+settings.constantModified = 0;
 
 setWorkingDirectory(handles.directory.String, 1, 0);
 
@@ -276,8 +277,10 @@ saveData_Callback();
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
 [settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs,Ysegs);
 
+settings.constantModified = 1;
+
 % update scores and save data files again
-updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.regionScoreFun.fun);
+updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.seg.segmentScoreFun);
 
 try
     close(h);
@@ -341,6 +344,8 @@ saveData_Callback();
 [Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
 [settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs,Yregs);
 
+settings.constantModified = 1;
+
 % 7) Calculates new scores for regions
 disp ('Calculating regions'' scores with new coefficients...');
 updateScores(settings.loadDirectory,'regs', settings.CONST.regionScoreFun.E, settings.CONST.regionScoreFun.fun);
@@ -402,6 +407,8 @@ end
 if FileName ~= 0
     save([PathName, FileName, '.mat'],'-STRUCT','CONST');
 end
+
+settings.constantModified = 0;
 
 
 % --------------------------------------------------------------------
@@ -482,6 +489,17 @@ elseif settings.imagesLoaded
     imshow(settings.currentData, []);
 end
 
+handles.regions_radio.Value = 0;
+handles.phase_radio.Value = 0;
+handles.segs_radio.Value = 0;
+if settings.axisFlag == 4
+    handles.phase_radio.Value = 1;
+elseif settings.axisFlag == 2 || settings.axisFlag == 3
+    handles.regions_radio.Value = 1;
+elseif settings.axisFlag == 1
+    handles.segs_radio.Value = 1;
+end
+
 if firstFrame
     axis tight;
 end
@@ -525,18 +543,40 @@ handles.directory.String = settings.loadDirectory(1:end-9);
 numTrainingFrames = floor(numel(dir([settings.imageDirectory, '*c1*.tif'])) / settings.frameSkip);
 handles.totalFrames.String = ['Total frames: ', num2str(numTrainingFrames), ' / ', num2str(numel(dir([settings.imageDirectory, '*c1*.tif'])))];
 
+if numel(settings.oldData) > 0
+    makeActive(handles.undo);
+else
+    makeInactive(handles.undo);
+end
+
 if settings.hasBadRegions
     handles.bad_regs.String = 'Clear bad regions';
 else
     handles.bad_regs.String = 'Create bad regions';
 end
 
+if settings.constantModified
+    makeActive(handles.save);
+else
+    makeInactive(handles.save);
+end
+
+if exist(settings.saveFolder, 'dir') && numel(dir(settings.saveFolder)) > 2
+    makeActive(handles.saveData);
+else
+    makeInactive(handles.saveData);
+end
+
 if settings.imagesLoaded
     makeActive(handles.try_const);
     makeActive(handles.makeData);
+    makeActive(handles.previous);
+    makeActive(handles.next);
 else
     makeInactive(handles.try_const);
     makeInactive(handles.makeData);
+    makeInactive(handles.previous);
+    makeInactive(handles.next);
 end
 
 % No CONST file selected
@@ -637,6 +677,7 @@ hasCONST = exist([settings.loadDirectory, '../../CONST.mat'], 'file');
 if clearCONST == 1 || hasCONST == 1
     settings.CONST = [];
     settings.nameCONST = 'none';
+    settings.constantModified = 0;
     if hasCONST
         settings.CONST = loadConstantsNN([settings.loadDirectory, '../../CONST.mat'], 0, 0);
         settings.nameCONST = 'local';
@@ -771,7 +812,7 @@ shouldCancel = 0;
 
 if exist(settings.saveFolder, 'dir')
     if numel(dir(settings.saveFolder)) > 2
-        answer = questdlg('You have unsaved changes.', 'Save changes?', 'Save', 'Ignore', 'Cancel', 'Save');
+        answer = questdlg('You have unsaved changes to the data.', 'Save data changes?', 'Save', 'Ignore', 'Cancel', 'Save');
         
         if strcmp(answer, 'Save')
             saveData_Callback();
@@ -784,6 +825,18 @@ if exist(settings.saveFolder, 'dir')
     
     delete([settings.saveFolder, '*']);
     rmdir(settings.saveFolder);
+end
+
+if settings.constantModified == 1
+    answer = questdlg('You have unsaved changes to the constants.', 'Save constants changes?', 'Save', 'Ignore', 'Cancel', 'Save');
+
+    if strcmp(answer, 'Save')
+        save_Callback();
+    elseif strcmp(answer, 'Cancel')
+        shouldCancel = 1;
+
+        return;
+    end
 end
 
 
@@ -1001,9 +1054,10 @@ function phase_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of phase_radio
 global settings
 if get(hObject,'Value')
+    settings.axisFlag = 4;
+    
     handles.regions_radio.Value = 0;
     handles.segs_radio.Value = 0;
-    settings.axisFlag = 4;
 end
 updateUI(handles);
 
@@ -1016,15 +1070,18 @@ function regions_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of regions_radio
 global settings
 if get(hObject,'Value')
-    handles.phase_radio.Value = 0;
-    handles.segs_radio.Value = 0;
     settings.axisFlag = 2;
     
+    handles.phase_radio.Value = 0;
+    handles.segs_radio.Value = 0;
+    
+
     if settings.segmentsDirty == 1
         settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
         settings.segmentsDirty = 0;
     end
     
+
 end
 updateUI(handles);
 
@@ -1037,9 +1094,10 @@ function segs_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of segs_radio
 global settings
 if get(hObject,'Value')
+    settings.axisFlag = 1;
+    
     handles.regions_radio.Value = 0;
     handles.phase_radio.Value = 0;
-    settings.axisFlag = 1;
 end
 updateUI(handles);
 
