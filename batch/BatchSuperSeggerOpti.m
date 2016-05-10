@@ -123,7 +123,7 @@ if exist( dirname_, 'dir' )
         end
     elseif numel(dir ([dirname_,filesep,'*.tif']))
         % check naming convention
-        if ~numel(dir([dirname_,filesep,'*t*c*.tif']))
+        if ~isRightNameFormat(dirname_)
             disp('Images in incorrect naming format. Using convertImageNames to convert names.')
             convertImageNames(dirname_)
         end

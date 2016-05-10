@@ -165,7 +165,7 @@ if im_flag == 1
 elseif im_flag == 2 % region view
     
     if ~isfield(data,'regs')
-        data = updateRegionFields (data,CONST)
+        data = updateRegionFields (data,CONST);
     end
     num_regs = data.regs.num_regs;
     

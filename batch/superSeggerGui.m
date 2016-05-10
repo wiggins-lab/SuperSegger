@@ -40,6 +40,7 @@ end
 
 function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+handles.directory.String = pwd;
 load_listbox(handles)
 set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.35 0.7])
 guidata(hObject, handles);

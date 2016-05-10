@@ -155,10 +155,8 @@ end
 skip = 1;
 clean_flag = 1;
 only_seg = 1; % runs only segmentation, no linking
-CONSTtemp = settings.CONST;
-CONSTtemp.parallel.verbose = 0;
-CONSTtemp.align.ALIGN_FLAG = 0
-BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
+
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, settings.CONST, 1, only_seg, 0);
 
 settings.frameNumber = 1;
 setWorkingDirectory(settings.loadDirectory(1:end-9));

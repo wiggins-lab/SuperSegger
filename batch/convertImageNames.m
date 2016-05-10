@@ -58,7 +58,7 @@ if exist([dirname,filesep,'raw_im'],'dir') && ~isempty(dir([dirname,filesep,'raw
     return;
 end
 
-if numel(dir([dirname,filesep,'*t*c*.tif']))
+if isRightNameFormat(dirname)
     disp('File names in NIS-Elements format')
     disp('Procede to segmentation')
     return;
@@ -72,22 +72,13 @@ end
 
 disp('File names not in Elements format : Converting..')
 
-if ~exist('basename','var') || isempty(basename)
-    basename = input('Please type the basename:','s');
-end
-if ~exist('timeFilterBefore','var') ||  isempty(timeFilterBefore)
-    timeFilterBefore = input('Please type the prefix for the number of the time frame, press enter if none:','s');
-end
-if ~exist('timeFilterAfter','var') ||  isempty(timeFilterAfter)
+% if the basename does not exist ask the user to input all the variables
+if ~exist('basename','var')
+    basename = input('Please type the basename:','s');    
+    timeFilterBefore = input('Please type the prefix for the number of the time frame, press enter if none:','s');    
     timeFilterAfter = input('Please type the suffix for the number of the time frame, press enter if none:','s');
-end
-if ~exist('xyFilterBefore','var') || isempty(xyFilterBefore)
     xyFilterBefore = input('Please type the prefix for the number of the xy position, press enter if none:','s');
-end
-if ~exist('xyFilterAfter','var') || isempty(xyFilterAfter)
     xyFilterAfter = input('Please type the suffix for the number of the xy position, press enter if none:','s');
-end
-if ~exist('channelNames','var') ||isempty(channelNames)
     channelNames = input('Please type the names of the channels as {''BF'',GFP''}:');
 end
 

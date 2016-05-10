@@ -56,17 +56,17 @@ set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 load_listbox(handles)
 handles.directory.String = 'Image filename';
 
+handles.display_flag = 3;
 settings.data = [];
 settings.phaseImage = [];
 settings.axisFlag = 0;
 settings.loadDirectory = [];
-settings.handles = handles;
-handles.display_flag = 3;
 % phase : 1, mask : 2, seg : 3
 handles.seg_radio.Value = 1;
 initialize_all(handles)
 
 guidata(hObject, handles);
+settings.handles = handles;
 updateUI(handles);
 
 % UIWAIT makes modifyConstValuesGUI wait for user response (see UIRESUME)
@@ -522,9 +522,14 @@ if numel(imageName)<3 || ~strcmp(imageName(end-3:end), '.tif')
     image_folder_ClickedCallback([],[],handles);
 end
 phaseIm = imread(handles.directory.String);
+
+  set(gcf,'Pointer','watch');
 settings.data = superSeggerOpti(phaseIm,[],0,CONST);
+
 guidata(hObject, handles);
 updateUI(handles);
+  set(gcf,'Pointer','arrow');
+
 
 
 

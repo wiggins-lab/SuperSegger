@@ -1,6 +1,6 @@
 function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
     towerMergeImages( imCell, maskCell, ssCell, xdim, skip, mag, CONST )
-% towerMergeImages : merges the towers of several cells
+% towerMergeImages : merges the towers of several cells.
 %
 % INPUT :
 %       imCell : cell array of individual cell images

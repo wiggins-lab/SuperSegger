@@ -88,7 +88,6 @@ if ~isempty(x)
                 data.segs.segs_bad(yy,xx) = ...
                     double(~~(data.segs.segs_bad(yy,xx)-...
                     double(data.segs.segs_label(yy,xx)==ii)));
-
             end
 
             % updates cell mask
