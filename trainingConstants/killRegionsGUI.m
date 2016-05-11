@@ -1,5 +1,5 @@
-function data = killRegions (data, CONST, position1, position2)
-% killRegions : used to remove regions from an image.
+function data = killRegionsGUI (data, CONST, position1, position2)
+% killRegionsGUI : used to remove regions from an image.
 %
 % INPUT :
 %       data : data file with regions (seg/err file)
@@ -25,7 +25,7 @@ function data = killRegions (data, CONST, position1, position2)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-xy = [position1(1:2); position2(1:2)]
+xy = [position1(1:2); position2(1:2)];
 
 if ~isempty(xy) && numel(xy)==4
     xy = floor(xy);
@@ -47,7 +47,7 @@ if ~isempty(xy) && numel(xy)==4
 
     if isfield( data, 'regs' );
         ind_regs = unique( data.regs.regs_label(yy,xx));
-        ind_regs = ind_regs(logical(ind_regs))
+        ind_regs = ind_regs(logical(ind_regs));
         ind_regs = reshape(ind_regs,1,numel(ind_regs));
         data = rmfield(data,'regs');
     end

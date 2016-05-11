@@ -33,8 +33,8 @@ function [data] = regionOpti( data, disp_flag, CONST,header)
 
 MAX_WIDTH = CONST.regionOpti.MAX_WIDTH;
 MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
-CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
-CutOffScoreLo = CONST.regionOpti.CutOffScoreLo;
+CutOffScoreHi = 30;%CONST.regionOpti.CutOffScoreHi;
+CutOffScoreLo = -30%;CONST.regionOpti.CutOffScoreLo;
 MAX_NUM_RESOLVE = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
 CONST.regionOpti.Emin  = .2;
@@ -221,11 +221,7 @@ if disp_flag
     segs_tried = ((segs_good_off + segs_good)>0);
     
     try
-        clf
-             imshow(uint8(cat(3,back + 0.5*double(data.segs.segs_good),...
-            back + 0.3*double(ag(segs_tried)),...
-            back + 0.3*double(ag(segs_tried)).*double(segs_good_off) + 0.2*double(ag(~cell_mask)-outline) + 0.5*double(ag(segs_never)))));
-   
+        clf;
         
         imshow(uint8(cat(3,back + 1*double(outline),...
             back + 0.3*double(ag(segs_tried)),...

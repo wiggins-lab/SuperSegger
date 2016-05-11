@@ -3,6 +3,7 @@ function showSegDataPhase( data, viewport )
 %
 % INPUT :
 %   data : data (seg.mat) file with permanent, good and bad segments
+%   viewport : used for viewing in the gui
 %
 % Copyright (C) 2016 Wiggins Lab
 % Unviersity of Washington, 2016

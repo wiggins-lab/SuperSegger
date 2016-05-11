@@ -91,9 +91,9 @@ CUT_INT         = CONST.superSeggerOpti.CUT_INT;
 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
-
-
 verbose = CONST.parallel.verbose;
+
+GAUSS_H_SIZE = 11;
 
 if ~exist('header','var')
     header = [];
@@ -113,25 +113,24 @@ end
 %phase image. Without it, the watershed algorithm will over-segment the
 %image.
 if all(ismember('100X',CONST.ResFlag))
-    phaseNormFilt = imfilter(phaseOrig,fspecial('disk',1),'replicate');
+    phaseNorm = imfilter(phaseOrig,fspecial('disk',1),'replicate');
 else
-    phaseNormFilt = phaseOrig;
+    phaseNorm = phaseOrig;
 end
 
 
 % fix the range, set the max and min value of the phase image
 mult_max = 2.5;
 mult_min = 0.3;
-mp = mean(phaseNormFilt(:));
-phaseNormFilt(phaseNormFilt > (mult_max*mp)) = mult_max*mp;
-phaseNormFilt(phaseNormFilt < (mult_min*mp)) = mult_min*mp;
+mean_phase = mean(phaseNorm(:));
+phaseNorm(phaseNorm > (mult_max*mean_phase)) = mult_max*mean_phase;
+phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
 
 
 % if the size of the matrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
-f = fspecial('gaussian', 11, SMOOTH_WIDTH);
-phaseNormFilt = imfilter(phaseNormFilt, f,'replicate');
-
+f = fspecial('gaussian', GAUSS_H_SIZE, SMOOTH_WIDTH);
+phaseNormFilt = imfilter(phaseNorm, f,'replicate');
 
 % creates initial background mask by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
@@ -174,7 +173,6 @@ end
 mask_halos = (magicPhase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_halos)>0);
 
-
 % C2phase is the Principal curvature 2 of the image without negative values
 % it also enhances subcellular contrast. We subtract the magic threshold
 % to remove the variation in intesnity within a cell region.
@@ -193,53 +191,54 @@ if adapt_flag
     % code down, AND slows down the regionOpti code.
     
     wsc = 1- ws;
-    regs_label = bwlabel( wsc );
-    props = regionprops( regs_label, 'BoundingBox','Orientation' );
+    regs_label = bwlabel( wsc );    
+    props = regionprops( regs_label, 'BoundingBox','Orientation','MajorAxisLength','MinorAxisLength');
+    L2 = [props.MinorAxisLength];
+    wide_regions = find(L2 > MAX_WIDTH);
     
-    num_wsc = max(regs_label(:));
-    L1 = zeros(1,num_wsc);
-    L2 = zeros(1,num_wsc);
-    
-    for ii = 1:num_wsc
-        [xx,yy] = getBB(props(ii).BoundingBox);
-        [L1(ii),L2(ii)] = makeRegSize((regs_label(yy,xx)==ii), props(ii));
+    for ii = wide_regions
+        [xx,yy] = getBB( props(ii).BoundingBox );
+        mask_reg = (regs_label(yy,xx)==ii);
         
-        if L2(ii) > MAX_WIDTH;
-            
-            [xx,yy] = getBB( props(ii).BoundingBox );
-            mask_reg = (regs_label(yy,xx)==ii);
-            
-            c2PhaseReg = double(C2phase(yy,xx)).*mask_reg;
-            invC2PhaseReg = 1-mask_reg;
-            ppp = c2PhaseReg+max(c2PhaseReg(:))*invC2PhaseReg;
-            wsl = double(watershed(ppp)>0);
-            wsl = (1-wsl).*mask_reg;
-            
-            % prune added segs by adding just enough to fix the cell width problem
-            wsl_cc = compConn( wsl, 4 );
-            wsl_3n = double(wsl_cc>2);
-            wsl_segs = wsl-wsl_3n;
-            wsl_label = bwlabel(wsl_segs,4);
-            num_wsl_label = max(wsl_label(:));
-            wsl_mins = zeros(1,num_wsl_label);
-            for ff = 1:num_wsl_label
-                wsl_mins(ff) = min(c2PhaseReg(ff==wsl_label));
-            end
-            [wsl_mins, sort_ord] = sort(wsl_mins,'descend');
-            
-            wsl_segs_good = wsl_3n;
-            
-            for ff = sort_ord;
-                wsl_segs_good = wsl_segs_good + double(wsl_label==ff);
-                mask_reg_tmp = mask_reg-wsl_segs_good;
-                if maxMinAxis(mask_reg_tmp) < MAX_WIDTH
-                    break
-                end
-            end
-            ws(yy,xx) = double(0<(ws(yy,xx) + wsl_segs_good));
+        c2PhaseReg = double(C2phase(yy,xx)).*mask_reg;
+        invC2PhaseReg = 1-mask_reg;
+        ppp = c2PhaseReg+max(c2PhaseReg(:))*invC2PhaseReg;
+        wsl = double(watershed(ppp)>0);
+        wsl = (1-wsl).*mask_reg;
+        
+        % prune added segs by adding just enough to fix the cell width problem
+        wsl_cc = compConn( wsl, 4 );
+        wsl_3n = double(wsl_cc>2);
+        wsl_segs = wsl-wsl_3n;
+        wsl_label = bwlabel(wsl_segs,4);
+        num_wsl_label = max(wsl_label(:));
+        wsl_mins = zeros(1,num_wsl_label);
+        
+        debug_flag = 0;
+        if debug_flag
+            backer = 0.5*ag(ppp);
+            imshow(cat(3,backer,backer,backer + ag(wsl_segs)),[]);
+            keyboard;
         end
+        
+        for ff = 1:num_wsl_label
+            wsl_mins(ff) = min(c2PhaseReg(ff==wsl_label));
+        end
+        [wsl_mins, sort_ord] = sort(wsl_mins,'descend');
+        
+        wsl_segs_good = wsl_3n;
+        
+        for ff = sort_ord;
+            wsl_segs_good = wsl_segs_good + double(wsl_label==ff);
+            mask_reg_tmp = mask_reg-wsl_segs_good;
+            if maxMinAxis(mask_reg_tmp) < MAX_WIDTH
+                break
+            end
+        end
+        ws(yy,xx) = double(0<(ws(yy,xx) + wsl_segs_good));
     end
 end
+%end
 
 
 % Determine the "good" and "bad" segments
@@ -319,7 +318,7 @@ segs = ismember(labelmatrix(cc), idx);
 % required to process each segment
 segs_label = bwlabel( segs,4);
 numSegs    = max( segs_label(:) );
-segs_props = regionprops(  segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
+segs_props = regionprops(segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
     'MajorAxisLength', 'Orientation'} );
 
 % segs_good is the im created by the segments that will be on
@@ -518,16 +517,10 @@ end
 
 
 function Lmax = maxMinAxis(mask)
-
+% maxMinAxis : calculates maximum minor axis length of the regions in the mask.
 mask_label = bwlabel(mask);
-props = regionprops( mask_label, 'Orientation' );
-num_regs = max(mask_label(:));
-Lmax = 0;
-
-for ii = 1:num_regs
-    [L1,L2] = makeRegSize ((mask_label==ii), props(ii));
-    Lmax = max([Lmax,L2]);
-end
+props = regionprops( mask_label, 'Orientation', 'MinorAxisLength' );
+Lmax =  max([props.MinorAxisLength]);
 end
 
 

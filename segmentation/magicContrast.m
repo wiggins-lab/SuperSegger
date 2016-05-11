@@ -1,4 +1,4 @@
-function im = magicContrast( im, radius )
+function imMagic = magicContrast( im, radius )
 % magicContrast : applies a filter to enhance inter-cellular contrast.
 % It is local minimum filter (similar to a median filter) to enhance contrast.
 % It is subtracting from each pixel the minimum intensity in its neighborhood.
@@ -60,8 +60,8 @@ for ii = (-radius):(radius)
     end
 end
 
-im = im-minpad;
-im(im<0) = 0;
+imMagic = im-minpad;
+imMagic(imMagic<0) = 0;
 
 end
 

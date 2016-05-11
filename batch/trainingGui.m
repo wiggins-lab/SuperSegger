@@ -1,32 +1,27 @@
 function varargout = trainingGui(varargin)
-% TRAININGGUI MATLAB code for trainingGui.fig
-%      TRAININGGUI, by itself, creates a new TRAININGGUI or raises the existing
-%      singleton*.
+% modifyConstValuesGUI : gui to interactively modify parameters in constants. 
 %
-%      H = TRAININGGUI returns the handle to a new TRAININGGUI or the handle to
-%      the existing singleton*.
+% Copyright (C) 2016 Wiggins Lab
+% Written by Connor Brennan and Stella Styliandou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
 %
-%      TRAININGGUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in TRAININGGUI.M with the given input arguments.
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
 %
-%      TRAININGGUI('Property','Value',...) creates a new TRAININGGUI or raises
-%      the existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before trainingGui_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to trainingGui_OpeningFcn via varargin.
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
 %
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help trainingGui
-
-% Last Modified by GUIDE v2.5 09-May-2016 23:08:14
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+% Last Modified by GUIDE v2.5 10-May-2016 21:25:35
 
 % Begin initialization code - DO NOT EDIT
 
-global settings;
 
 
 gui_Singleton = 1;
@@ -58,7 +53,7 @@ global settings;
 
 handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
-guidata(hObject, handles);
+
 
 handles.directory.String = pwd;
 
@@ -89,6 +84,7 @@ settings.constantModified = 0;
 setWorkingDirectory(handles.directory.String, 1, 0);
 
 updateUI(handles);
+guidata(hObject, handles);
 
 % UIWAIT makes trainingGui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -115,7 +111,7 @@ function cut_and_seg_Callback(hObject, eventdata, handles)
 % set constants
 global settings;
 
-if handles.viewport.XLim(2) - handles.viewport.XLim(1) > 500 || handles.viewport.YLim(2) - handles.viewport.YLim(1) > 500
+if handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1) > 500 || handles.viewport_train.YLim(2) - handles.viewport_train.YLim(1) > 500
     answer = questdlg('Your training set is very large (Viewport size). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
     
     if strcmp(answer, 'No')
@@ -158,7 +154,7 @@ clean_flag = 1;
 only_seg = 1; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 0;
-CONSTtemp.align.ALIGN_FLAG = 0
+CONSTtemp.align.ALIGN_FLAG = 0;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
 
 settings.frameNumber = 1;
@@ -179,7 +175,7 @@ if isempty(images) && ~isempty(dir([dirname,'/raw_im/*.tif']))
     dirname = [dirname, '/raw_im/'];
 end
 
-tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport.XLim, handles.viewport.YLim]), settings.frameNumber);
+tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport_train.XLim, handles.viewport_train.YLim]), settings.frameNumber);
 
 
 
@@ -445,12 +441,12 @@ set(gca,'ytick',[]);
 set(gca,'xtick',[]);
 
 firstFrame = 0;
-if numel(handles.viewport.Children) == 0
+if numel(handles.viewport_train.Children) == 0
     firstFrame = 1;
 end
 
-while numel(handles.viewport.Children) > 0
-    delete(handles.viewport.Children(1))
+while numel(handles.viewport_train.Children) > 0
+    delete(handles.viewport_train.Children(1))
 end
 
 if settings.dataSegmented
@@ -460,19 +456,19 @@ if settings.dataSegmented
         FLAGS.S_flag = 0;
         FLAGS.t_flag = 0;
         
-        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
+        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
         
-        if numel(handles.viewport.Children) > 0
-            set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
     elseif settings.axisFlag == 3
         % deleting regions
         FLAGS.im_flag = 2;
         
-        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport);
+        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
         
-        if numel(handles.viewport.Children) > 0
-            set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
         
         if numel(settings.firstPosition) > 0
@@ -481,11 +477,16 @@ if settings.dataSegmented
         end
     elseif settings.axisFlag == 4
         % showing phase image
-        axes(handles.viewport);
+        axes(handles.viewport_train);
         imshow(settings.currentData.phase, []);
+    else settings.axisFlag == 4
+        % mask image
+        backer = ag(settings.currentData.phase);
+        imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+        disp('mask');
     end
 elseif settings.imagesLoaded
-    axes(handles.viewport);
+    axes(handles.viewport_train);
     imshow(settings.currentData, []);
 end
 
@@ -512,8 +513,8 @@ if settings.imagesLoaded == 1 || settings.dataSegmented == 1
 else
     handles.frameNumber.Visible = 'off';
     handles.frame_text.Visible = 'off';
-    if numel(handles.viewport.Children) > 0
-        set(handles.viewport.Children(1),'Visible', 'off');
+    if numel(handles.viewport_train.Children) > 0
+        set(handles.viewport_train.Children(1),'Visible', 'off');
     end
 end
 
@@ -570,11 +571,15 @@ end
 if settings.imagesLoaded
     makeActive(handles.try_const);
     makeActive(handles.makeData);
-    makeActive(handles.previous);
-    makeActive(handles.next);
 else
     makeInactive(handles.try_const);
     makeInactive(handles.makeData);
+end
+
+if settings.imagesLoaded || settings.dataSegmented == 1
+    makeActive(handles.previous);
+    makeActive(handles.next);
+else
     makeInactive(handles.previous);
     makeInactive(handles.next);
 end
@@ -620,9 +625,9 @@ end
 
 
 
-% numChildren = numel(viewport.Children);
+% numChildren = numel(viewport_train.Children);
 % for i = 1:numChildren
-%     viewport.Children(i).HitTest = 'off';
+%     viewport_train.Children(i).HitTest = 'off';
 % end
 
 
@@ -723,10 +728,10 @@ elseif settings.imagesLoaded
     loadData(settings.frameNumber);
 end
 
-%Clear viewport
-if isvalid(settings.handles.viewport)
-    while numel(settings.handles.viewport.Children) > 0
-        delete(settings.handles.viewport.Children(1))
+%Clear viewport_train
+if isvalid(settings.handles.viewport_train)
+    while numel(settings.handles.viewport_train.Children) > 0
+        delete(settings.handles.viewport_train.Children(1))
     end
 end
 
@@ -748,7 +753,7 @@ end
 
 % --- Executes on mouse press over axes background.
 function imageButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to viewport (see GCBO)
+% hObject    handle to viewport_train (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
@@ -923,8 +928,8 @@ function makeData_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-xSize = handles.viewport.XLim(2) - handles.viewport.XLim(1);
-ySize = handles.viewport.YLim(2) - handles.viewport.YLim(1);
+xSize = handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1);
+ySize = handles.viewport_train.YLim(2) - handles.viewport_train.YLim(1);
 if xSize > 800 || ySize > 800
     answer = questdlg(['Your training set is very large (Viewport size: ', num2str(ySize), ', ', num2str(xSize), '). This will take a long time. Do you wish to continue?'], 'Continue?', 'Yes', 'No', 'No');
     if strcmp(answer, 'No')
@@ -961,8 +966,8 @@ if newDir ~= 0
         end
     end
     
-    cropX = ceil(handles.viewport.XLim(1):handles.viewport.XLim(2) - 1);
-    cropY = ceil(handles.viewport.YLim(1):handles.viewport.YLim(2) - 1);
+    cropX = ceil(handles.viewport_train.XLim(1):handles.viewport_train.XLim(2) - 1);
+    cropY = ceil(handles.viewport_train.YLim(1):handles.viewport_train.YLim(2) - 1);
     
     for i = 1:settings.frameSkip:maxFrames
         tempImage = imread([settings.imageDirectory,settings.loadFiles(i).name]);
@@ -1058,6 +1063,7 @@ if get(hObject,'Value')
     
     handles.regions_radio.Value = 0;
     handles.segs_radio.Value = 0;
+    handles.mask_radio.Value = 0;
 end
 updateUI(handles);
 
@@ -1074,7 +1080,7 @@ if get(hObject,'Value')
     
     handles.phase_radio.Value = 0;
     handles.segs_radio.Value = 0;
-    
+    handles.mask_radio.Value = 0;
 
     if settings.segmentsDirty == 1
         settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
@@ -1095,7 +1101,7 @@ function segs_radio_Callback(hObject, eventdata, handles)
 global settings
 if get(hObject,'Value')
     settings.axisFlag = 1;
-    
+    handles.mask_radio.Value = 0;
     handles.regions_radio.Value = 0;
     handles.phase_radio.Value = 0;
 end
@@ -1107,3 +1113,20 @@ function frame_text_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to frame_text (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes on button press in mask_radio.
+function mask_radio_Callback(hObject, eventdata, handles)
+% hObject    handle to mask_radio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of mask_radio
+global settings
+if get(hObject,'Value')
+    settings.axisFlag = 5;  
+    handles.regions_radio.Value = 0;
+    handles.segs_radio.Value = 0;
+    handles.phase_radio.Value = 0;
+end
+updateUI(handles);

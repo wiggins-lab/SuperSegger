@@ -63,7 +63,7 @@ x0 = zeros(num_segs,1);
 stateEnergyMap = containers.Map();
 
 % runs simulated anneal
-options = saoptimset('Display',display,'ReannealInterval',reannealIter,'DataType','custom', 'AnnealingFcn',@newPoint,'StallIterLimit',num_segs*12,'MaxIter',maxiter);
+options = saoptimset('Display',display,'TimeLimit',180,'ReannealInterval',reannealIter,'DataType','custom', 'AnnealingFcn',@newPoint,'StallIterLimit',num_segs*12,'MaxIter',maxiter);
 [x,Emin,exitflag,output] = simulannealbnd(@stateCostFunction,x0,[],[],options);
 
 % compare to the state with the on/off segments by score and keep that one

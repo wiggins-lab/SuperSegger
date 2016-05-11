@@ -19,10 +19,9 @@ function varargout = modifyConstValuesGUI(varargin)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-% Last Modified by GUIDE v2.5 05-May-2016 13:53:12
+% Last Modified by GUIDE v2.5 10-May-2016 15:45:31
 
 % Begin initialization code - DO NOT EDIT
-global settings;
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',mfilename, ...
@@ -209,7 +208,7 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 [imageName,directoryName , ~] = uigetfile('*.tif', 'Pick an image file');
 handles.directory.String = [directoryName,filesep,imageName];
 settings.phaseImage = imread(handles.directory.String);
-axes(handles.viewport);
+axes(handles.viewport_modify);
 imshow(settings.phaseImage,[]);
 
 
@@ -217,17 +216,17 @@ function updateUI(handles)
 global settings;
 if ~isempty(settings.data)
     if handles.display_flag == 3
-        showSegDataPhase(settings.data, handles.viewport);
+        showSegDataPhase(settings.data, handles.viewport_modify);
     elseif handles.display_flag == 2
-        axes(handles.viewport);
+        axes(handles.viewport_modify);
         imshow(settings.data.mask_bg,[])
     elseif handles.display_flag == 1
-         axes(handles.viewport);
+         axes(handles.viewport_modify);
         imshow(settings.data.phase,[])
     end
 end
-if numel(handles.viewport.Children) > 0
-    set(handles.viewport.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+if numel(handles.viewport_modify.Children) > 0
+    set(handles.viewport_modify.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
 hold on;
 end
 % --- Executes on slider movement.
@@ -582,7 +581,7 @@ end
 
 % --- Executes on mouse press over axes background.
 function imageButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to viewport (see GCBO)
+% hObject    handle to viewport_modify (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
