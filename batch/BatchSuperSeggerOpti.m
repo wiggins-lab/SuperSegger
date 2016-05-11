@@ -302,8 +302,8 @@ end
 
 % does the segmentations for all the frames in parallel
 if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
-    %parfor(i=1:num_t,workers) % through all frames
-    for i = 1:num_t
+    parfor(i=1:num_t,workers) % through all frames
+    %for i = 1:num_t
         if isempty( crop_box )
             crop_box_tmp = [];
         else
