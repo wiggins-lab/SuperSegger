@@ -1,5 +1,5 @@
 function varargout = trainingGui(varargin)
-% modifyConstValuesGUI : gui to interactively modify parameters in constants. 
+% modifyConstValuesGUI : gui to interactively modify parameters in constants.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Connor Brennan and Stella Styliandou.
@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 10-May-2016 21:25:35
+% Last Modified by GUIDE v2.5 11-May-2016 14:41:57
 
 % Begin initialization code - DO NOT EDIT
 
@@ -439,6 +439,7 @@ set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
 set(gca,'xtick',[]);
+handles.currentConstants.String = ['Current: ', settings.nameCONST];
 
 firstFrame = 0;
 if numel(handles.viewport_train.Children) == 0
@@ -592,35 +593,14 @@ else
 end
 
 if settings.dataSegmented == 0
-    handles.cut_and_seg.Visible = 'on';
+    handles.train_actions.Visible = 'off';
+    handles.seg_actions.Visible = 'on';
     
-    handles.diplay_panel.Visible = 'off';
-    handles.save_panel.Visible = 'off';
-    handles.makeGoodRegions.Visible = 'off';
-    handles.phase.Visible = 'off';
-    handles.toggle_segs.Visible = 'off';
-    handles.toggle_regs.Visible = 'off';
-    handles.del_areas.Visible = 'off';
-    handles.bad_regs.Visible = 'off';
-    handles.train_segs.Visible = 'off';
-    handles.train_regs.Visible = 'off';
-    handles.save.Visible = 'off';
-    handles.saveData.Visible = 'off';
 else
+    handles.train_actions.Visible = 'on';
+    handles.seg_actions.Visible = 'off';
     handles.cut_and_seg.Visible = 'off';
     
-    handles.diplay_panel.Visible = 'on';
-    handles.save_panel.Visible = 'on';
-    handles.makeGoodRegions.Visible = 'on';
-    handles.phase.Visible = 'on';
-    handles.toggle_segs.Visible = 'on';
-    handles.toggle_regs.Visible = 'on';
-    handles.del_areas.Visible = 'on';
-    handles.bad_regs.Visible = 'on';
-    handles.train_segs.Visible = 'on';
-    handles.train_regs.Visible = 'on';
-    handles.save.Visible = 'on';
-    handles.saveData.Visible = 'on';
 end
 
 
@@ -834,12 +814,12 @@ end
 
 if settings.constantModified == 1
     answer = questdlg('You have unsaved changes to the constants.', 'Save constants changes?', 'Save', 'Ignore', 'Cancel', 'Save');
-
+    
     if strcmp(answer, 'Save')
         save_Callback();
     elseif strcmp(answer, 'Cancel')
         shouldCancel = 1;
-
+        
         return;
     end
 end
@@ -1081,13 +1061,13 @@ if get(hObject,'Value')
     handles.phase_radio.Value = 0;
     handles.segs_radio.Value = 0;
     handles.mask_radio.Value = 0;
-
+    
     if settings.segmentsDirty == 1
         settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
         settings.segmentsDirty = 0;
     end
     
-
+    
 end
 updateUI(handles);
 
@@ -1124,9 +1104,23 @@ function mask_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of mask_radio
 global settings
 if get(hObject,'Value')
-    settings.axisFlag = 5;  
+    settings.axisFlag = 5;
     handles.regions_radio.Value = 0;
     handles.segs_radio.Value = 0;
     handles.phase_radio.Value = 0;
 end
 updateUI(handles);
+
+
+% --- Executes on button press in crop.
+function crop_Callback(hObject, eventdata, handles)
+% hObject    handle to crop (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in save_cut.
+function save_cut_Callback(hObject, eventdata, handles)
+% hObject    handle to save_cut (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
