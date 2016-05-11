@@ -1,20 +1,8 @@
 function [data_r, data_c, data_f] = intLoadDataViewer(dirname, contents, nn, num_im, clist, FLAGS)
 % intLoadDataViewer : used to load data in superSeggerViewer
-% INPUT :
-%       dirname : seg directory name
-%       contents: contains all names of files in the directory
-%       nn : image number to be loaded
-%       num_im : total number of images
-%       clist : clist 
-%       FLAGS : current flags
-%
-% OUTPUT : 
-%   data_r: reverse frame data file (err/seg)
-%   data_c: current frame data file (err/seg)
-%   data_f: forward frame data file (err/seg)
 %
 % Copyright (C) 2016 Wiggins Lab
-% Written by Paul Wiggins, Stella Stylianidou, Connor Brennan.
+% Written by Paul Wiggins, Stella Stylianidou, Connor Br.
 % University of Washington, 2016
 % This file is part of SuperSegger.
 %
@@ -43,17 +31,12 @@ if shouldLoadNeighborFrames(FLAGS)
         data_f = loaderInternal([dirname,contents(nn+1).name], clist);
     end
 end
-end
 
 function value = shouldLoadNeighborFrames(FLAGS)
-% shouldLoadNeighborFrames : checks if reverse and forward frame should be
-% loaded.
 value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
-end
+
 
 function data = loaderInternal(filename, clist)
-% loaderInternal : loads the clist and creates outlines of the cells in the
-% clist.
 data = load(filename);
 ss = size(data.phase);
 if isfield( data, 'mask_cell' )
@@ -67,5 +50,4 @@ if ~isempty(clist)
         mask_tmp = ismember( data.regs.regs_label, ind );
         data.cell_outline = xor(bwmorph( mask_tmp, 'dilate' ), mask_tmp);       
    end
-end
 end

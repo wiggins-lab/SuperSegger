@@ -6,7 +6,7 @@ function [y,xx] = gateHist(clist, ind, xx, cc)
 % INPUT :
 %   clist : list of cells with time-independent info
 %   ind : indices of clist definition used for x and y label [x,y]
-%   xx : number of bins
+%   xx : number of bins.
 %   cc : color of plot
 %
 % OUTPUT :

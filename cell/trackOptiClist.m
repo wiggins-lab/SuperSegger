@@ -175,10 +175,9 @@ else
         
         % switch the locus positions, aligned to the old and new pole ( old is positive)
         if isfield(CONST.trackOpti,'pole_flag') && CONST.trackOpti.pole_flag == 1
-            data_c = getNeighborPole(data_c) ; % flags cells with one neighbor only
+            data_c = getNeighborPole(data_c) ; % flags cells with one neighbor
             share_pole = drill(data_c.CellA, '.neighbor_pole');
             data_c = poleDirection(data_c);
-            data_c.pole
         else
             share_pole = nan(1,numel(ID));
         end
