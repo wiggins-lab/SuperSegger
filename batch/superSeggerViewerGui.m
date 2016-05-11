@@ -237,6 +237,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+function next_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.go_to_frame_no.String = num2str(str2double(handles.go_to_frame_no.String)+1);
+    go_to_frame_no_Callback(hObject, eventdata, handles);
+end
+
+function previous_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.go_to_frame_no.String = num2str(str2double(handles.go_to_frame_no.String)-1);
+    go_to_frame_no_Callback(hObject, eventdata, handles);
+end
+
 function switch_xy_directory_Callback(hObject, eventdata, handles) % Not tested
 if ~isempty(handles.FLAGS)
     ll_ = str2double(handles.switch_xy_directory.String);
@@ -681,6 +693,3 @@ function stop_tool_ClickedCallback(hObject, eventdata, handles)
 % use handles to look at the variables (for example handles.CONST)
 % if you want to exit click the continue button on the toolbar.
 keyboard;
-
-
-
