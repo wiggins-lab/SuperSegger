@@ -34,21 +34,21 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 % showWarnings : Set to 0 to mute warnings
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -68,7 +68,7 @@ if nargin < 3 || isempty( clean_flag )
 end
 
 if nargin < 4 || isempty( res )
-    res = []; 
+    res = [];
 end
 
 
@@ -107,12 +107,12 @@ if clean_flag && SEGMENT_FLAG && showWarnings
             return
         end
     catch
-       % can not use input  - in eval mode 
+        % can not use input  - in eval mode
     end
 end
 
 % align frames
-if exist( dirname_, 'dir' )    
+if exist( dirname_, 'dir' )
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
         disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
@@ -129,7 +129,7 @@ if exist( dirname_, 'dir' )
         end
         
         mkdir( [dirname_,filesep,'raw_im'] );
-        if CONST.align.ALIGN_FLAG           
+        if CONST.align.ALIGN_FLAG
             crop_box_array = trackOptiAlignPad( dirname_,...
                 CONST.parallel.parallel_pool_num, CONST);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
@@ -139,10 +139,10 @@ if exist( dirname_, 'dir' )
             crop_box_array = cell(1,10000);
         end
     else
-        error('No images found');       
+        error('No images found');
     end
 else
-    error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );    
+    error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );
 end
 
 
@@ -162,7 +162,7 @@ else
     num_dir_tmp = numel(contents);
     nxy = [];
     num_xy = 0;
-
+    
     for i = 1:num_dir_tmp
         if (contents(i).isdir) && (numel(contents(i).name) > 2)
             num_xy = num_xy+1;
@@ -174,13 +174,13 @@ else
     % set values for nc (array of channels (phase and fluorescent))
     contents = dir([dirname_list{1},'fluor*']);
     num_dir_tmp = numel(contents);
-    nc = 1; 
+    nc = 1;
     num_c = 1;
     
     for i = 1:num_dir_tmp
         if (contents(i).isdir) && (numel(contents(i).name) > numel('fluor'))
             num_c = num_c+1;
-            nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1]; 
+            nc = [nc, str2num(contents(i).name(numel('fluor')+1:end))+1];
         end
     end
     
@@ -202,7 +202,7 @@ else
     end
     
     parfor(j = 1:num_xy,workers)
-       %for j = 1:num_xy
+        %for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
@@ -213,9 +213,9 @@ else
                 ' of ', num2str(num_xy),'.']);
         else
             if isvalid(h)
-            waitbar( j/num_xy,h,...
-                ['Data segmentation xy: ',num2str(j),...
-                '/',num2str(num_xy)]);
+                waitbar( j/num_xy,h,...
+                    ['Data segmentation xy: ',num2str(j),...
+                    '/',num2str(num_xy)]);
             end
         end
     end
@@ -224,7 +224,7 @@ else
         poolobj = gcp('nocreate');
         delete(poolobj);
     end
-        
+    
     
     if ~workers
         close(h);
@@ -240,7 +240,7 @@ function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images..
- 
+
 % Initialization
 file_filter = '*.tif';
 verbose = CONST.parallel.verbose;
@@ -260,10 +260,10 @@ contents=dir([dirname_xy,'phase',filesep,file_filter]);
 num_im = numel(contents);
 
 nz = []; % array of numbers of z frames
-nt = []; % array of frame numbers 
+nt = []; % array of frame numbers
 
 for i = 1:num_im;
-    nameInfo = ReadFileName( contents(i).name );   
+    nameInfo = ReadFileName( contents(i).name );
     nt = [nt, nameInfo.npos(1,1)];
     nz = [nz, nameInfo.npos(4,1)];
 end
@@ -301,9 +301,9 @@ end
 
 
 % does the segmentations for all the frames in parallel
-if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
-    %parfor(i=1:num_t,workers) % through all frames
-    for i = 1:num_t
+if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
+    parfor(i=1:num_t,workers) % through all frames
+        %for i = 1:num_t
         if isempty( crop_box )
             crop_box_tmp = [];
         else
@@ -316,20 +316,19 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
         if ~CONST.parallel.show_status
             if verbose
                 disp( [header, 'BatchSuperSeggerOpti : Segment. Frame ',num2str(i), ...
-                ' of ', num2str(num_t),'.']);
+                    ' of ', num2str(num_t),'.']);
             end
         else
             waitbar( i/num_t, h,...
                 ['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
         end
     end
-    if CONST.parallel.show_status
-        close(h);
-    end
     time_stamp = clock; %#ok saved below
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
-
+if CONST.parallel.show_status
+    close(h);
+end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
