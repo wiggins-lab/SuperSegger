@@ -93,7 +93,7 @@ regs_label = data.regs.regs_label;
 badReg = find(data.regs.scoreRaw < minGoodRegScore);
 props = data.regs.props;
 
-% remove tiny region
+% remove tiny regions
 small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
 badReg = badReg(ismember(badReg,small));
 
