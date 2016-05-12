@@ -188,6 +188,16 @@ if ~isempty(handles.FLAGS)
     dirnum = handles.dirnum;
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
+    if ~isempty(handles.clist.gate)
+        handles.gate_text.String = 'Gates:';
+        cell_gates = struct2cell(handles.clist.gate);       
+        for i=1:length(cell_gates(2,1,:));
+            handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
+        end
+        handles.gate_text.String = handles.gate_text.String(1:end-1);
+    else
+        handles.gate_text.String = '';
+    end
     if ~isempty(handles.clist)
         handles.clist_text.String = ['Clist: ' handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
     else
@@ -794,7 +804,6 @@ if ~isempty(handles.FLAGS)
 makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
 end
 
-% --------------------------------------------------------------------
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
 % use handles to look at the variables (for example handles.CONST)
 % if you want to exit click the continue button on the toolbar.
