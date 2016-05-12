@@ -37,7 +37,8 @@ function [regionScore,state] = calculateStateEnergy(cell_mask,vect,segs_list,dat
 
 state =  caclulateState(cell_mask,vect,segs_list,data,xx,yy,CONST);
 sigma = 1-2*double(state.seg_vect0);
-regionScore = mean(-state.reg_E)+ mean(sigma.*state.seg_E);
+allGoodScore = double(all(state.reg_E> CONST.regionOpti.minGoodRegScore));
+regionScore = mean(-state.reg_E)+ mean(sigma.*state.seg_E) - allGoodScore * 50;
 
 end
 

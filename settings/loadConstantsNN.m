@@ -220,7 +220,6 @@ CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO;
 CONST.seg = ConstLoaded.seg;
 
 % defines region optimization parameters used
-CONST.regionOpti.MAX_WIDTH = ConstLoaded.regionOpti.MAX_WIDTH;
 if isfield(ConstLoaded.regionOpti, 'MIN_LENGTH')
     CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 end
