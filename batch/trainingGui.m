@@ -402,9 +402,13 @@ end
 
 if FileName ~= 0
     save([PathName, FileName, '.mat'],'-STRUCT','CONST');
-end
+    
+    settings.constantModified = 0;
 
-settings.constantModified = 0;
+    if xist('hObject', 'var') && ~isempty(hObject)
+        updateUI(handles);
+    end
+end
 
 
 % --------------------------------------------------------------------
@@ -893,6 +897,10 @@ try
     end
 catch ME
     warning(['Could not back up files: ', ME.message]);
+end
+
+if exist('hObject', 'var') && ~isempty(hObject)
+    updateUI(handles);
 end
 
 
