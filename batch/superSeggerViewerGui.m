@@ -178,6 +178,12 @@ if ~isempty(handles.FLAGS)
     dirnum = handles.dirnum;
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
+    if ~isempty(handles.clist)
+        handles.clist_text.String = ['Clist: ' handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
+    else
+        handles.clist_text.String = 'No clist loaded, these commands will not work';
+    end
+    handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat'])))];
     delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
     [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
         nn, handles.num_im, handles.clist, handles.FLAGS);
