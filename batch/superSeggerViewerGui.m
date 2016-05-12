@@ -25,8 +25,8 @@ handles.dirname0 = [];
 handles.contents_xy = [];
 guidata(hObject, handles);
 
-if(nargin<1 || isempty(handles.image_directory.String))
-    handles.image_directory.String = uigetdir();
+if (nargin<1 || isempty(handles.image_directory.String))
+    handles.image_directory.String = pwd;
 end
 dirname = handles.image_directory.String;
 
@@ -171,6 +171,8 @@ handles.num_im = length(handles.contents);
 
 
 function updateImage(hObject, handles)
+delete(get(handles.axes1, 'Children'))
+
 if ~isempty(handles.FLAGS)
     FLAGS = handles.FLAGS;
     dirnum = handles.dirnum;
@@ -192,11 +194,16 @@ if ~isempty(handles.FLAGS)
 end
 
 function save_figure_ClickedCallback(hObject, eventdata, handles) % Do not save complete figure!
-filename = inputdlg('Filename:', 'Filename', 1);
-if ~isempty(filename)
+[filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
+
+if ~isempty(strfind(filename, '.'))
+    filename = filename(1:(max(strfind(filename, '.')) - 1));
+end
+
+if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
-    savename = sprintf('%s/%s',handles.dirSave,filename{1});
+    savename = sprintf('%s/%s',pathName,filename);
     saveas(fh,(savename),'fig');
     print(fh,'-depsc',[(savename),'.eps'])
     saveas(fh,(savename),'png');
@@ -205,8 +212,12 @@ if ~isempty(filename)
 end
 
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
-handles.image_directory.String = uigetdir;
-initImage(hObject, handles);
+folderName = uigetdir;
+
+if folderName ~= 0
+    handles.image_directory.String = folderName;
+    initImage(hObject, handles);
+end
 
 function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
@@ -675,6 +686,9 @@ if ~isempty(handles.FLAGS)
 clear mov;
 mov.cdata = [];
 mov.colormap = [];
+
+delete(get(handles.axes1, 'Children'))
+
 for ii = 1:handles.num_im
     [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
         handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);

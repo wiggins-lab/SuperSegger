@@ -404,7 +404,7 @@ CONST = settings.CONST;
 [~, ~, constantsPath] = getConstantsList();
 [FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [constantsPath, 'newConst']);
 if ~isempty(strfind(FileName, '.'))
-    FileName = FileName(1:(strfind(FileName, '.') - 1));
+    FileName = FileName(1:(max(strfind(FileName, '.')) - 1));
 end
 
 if FileName ~= 0
