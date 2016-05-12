@@ -120,13 +120,16 @@ end
 if isempty(gui_fig)
     imshow(im)
 else
-    imshow(im, 'Parent', gui_fig);
+    axes(gui_fig);
+    imshow(im);
+    FLAGS.axis = axis;
 end
 hold on;
 
 % Displays linking information
 if FLAGS.showLinks
     intPlotLinks(data, data_r, data_f, -xx(1)+1, -yy(1)+1, FLAGS, ID_LIST, CONST );
+    hold on;
 end
 
 % annotates spots, cell numbers and poles

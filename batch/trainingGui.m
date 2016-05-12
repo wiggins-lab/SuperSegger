@@ -271,7 +271,7 @@ drawnow;
 saveData_Callback();
 
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
-[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs,Ysegs);
+[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs, Ysegs, 5);
 
 settings.constantModified = 1;
 
@@ -328,6 +328,13 @@ function train_regs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
+if ~settings.hasBadRegions
+    answer = questdlg(['You have not added bad regions. Do you wish to continue?'], 'Continue?', 'Yes', 'No', 'No');
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
 h = msgbox('Training regions, this will take a bit.' );
 handles.tooltip.String = 'Training regions... Please wait.';
 drawnow;
@@ -338,7 +345,7 @@ saveData_Callback();
 %settings.CONST.regionScoreFun.NUM_INFO = 21;
 
 [Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
-[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs,Yregs);
+[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs, Yregs, 5);
 
 settings.constantModified = 1;
 
@@ -397,14 +404,18 @@ CONST = settings.CONST;
 [~, ~, constantsPath] = getConstantsList();
 [FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [constantsPath, 'newConst']);
 if ~isempty(strfind(FileName, '.'))
-    FileName = FileName(1:(strfind(FileName, '.') - 1))
+    FileName = FileName(1:(max(strfind(FileName, '.')) - 1));
 end
 
 if FileName ~= 0
     save([PathName, FileName, '.mat'],'-STRUCT','CONST');
-end
+    
+    settings.constantModified = 0;
 
-settings.constantModified = 0;
+    if exist('hObject', 'var') && ~isempty(hObject)
+        updateUI(handles);
+    end
+end
 
 
 % --------------------------------------------------------------------
@@ -480,11 +491,10 @@ if settings.dataSegmented
         % showing phase image
         axes(handles.viewport_train);
         imshow(settings.currentData.phase, []);
-    else settings.axisFlag == 4
+    elseif settings.axisFlag == 5
         % mask image
         backer = ag(settings.currentData.phase);
         imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-        disp('mask');
     end
 elseif settings.imagesLoaded
     axes(handles.viewport_train);
@@ -494,7 +504,10 @@ end
 handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
-if settings.axisFlag == 4
+handles.mask_radio.Value = 0;
+if settings.axisFlag == 5
+    handles.mask_radio.Value = 1;
+elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
 elseif settings.axisFlag == 2 || settings.axisFlag == 3
     handles.regions_radio.Value = 1;
@@ -525,16 +538,18 @@ else
     badString = '';
 end
 
-if settings.axisFlag == 4
-    handles.tooltip.String = ['Phase image.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+if settings.axisFlag == 5
+    handles.tooltip.String = ['Mask.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 4
+    handles.tooltip.String = ['Phase image.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 3
-    handles.tooltip.String = ['Click to the two corners to delete the regions inside a square', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to the two corners to delete the regions inside a square', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 1
-    handles.tooltip.String = ['Click to toggle segments.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to toggle segments.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 2
-    handles.tooltip.String = ['Click to toggle regions.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to toggle regions.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.imagesLoaded == 1
-    handles.tooltip.String = ['Phase image. Zoom in to the part of the image you want to train on.', badString, ' Max frame: ', num2str(settings.numFrames)];
+    handles.tooltip.String = ['Phase image. Zoom in to the part of the image you want to train on.', badString, ' Num frames: ', num2str(settings.numFrames)];
 elseif settings.axisFlag == 0
     handles.tooltip.String = 'Load a file with images or segmented files.';
 end
@@ -873,6 +888,10 @@ try
     end
 catch ME
     warning(['Could not back up files: ', ME.message]);
+end
+
+if exist('hObject', 'var') && ~isempty(hObject)
+    updateUI(handles);
 end
 
 

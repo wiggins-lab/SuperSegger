@@ -23,10 +23,12 @@ handles.dirnum = [];
 handles.dirSave = [];
 handles.dirname0 = [];
 handles.contents_xy = [];
+handles.clist = [];
+handles.num_xy = 0;
 guidata(hObject, handles);
 
-if(nargin<1 || isempty(handles.image_directory.String))
-    handles.image_directory.String = uigetdir();
+if (nargin<1 || isempty(handles.image_directory.String))
+    handles.image_directory.String = pwd;
 end
 dirname = handles.image_directory.String;
 
@@ -35,13 +37,6 @@ file_filter = '';
 CONST = [];
 axis tight
 cla;
-if nargin<2 || isempty(file_filter);
-    if numel(dir([dirname,filesep,'xy1',filesep,'seg',filesep,'*err.mat']))~=0
-        file_filter = '*err.mat';
-    else
-        file_filter = '*seg.mat';
-    end
-end
 
 dirname = fixDir(dirname);
 dirname0 = dirname;
@@ -98,6 +93,14 @@ else
     end
 end
 
+if nargin<2 || isempty(file_filter);
+    if numel(dir([handles.dirname_seg,filesep,'*err.mat']))~=0
+        file_filter = '*err.mat';
+    else
+        file_filter = '*seg.mat';
+    end
+end
+
 if strcmp(file_filter,'*seg.mat')
     FLAGS.cell_flag = 0;
 end
@@ -141,7 +144,6 @@ if exist('nn','var');
     handles.go_to_frame_no.String = num2str(nn);
 end
 
-
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.num_im = length(handles.contents);
 
@@ -158,8 +160,13 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
-handles.make_gate.String = handles.clist.def';
-handles.histogram_clist.String = handles.clist.def';
+if isempty(handles.clist)
+    handles.gate_options_text.Visible = 'off'
+else
+    handles.gate_options_text.Visible = 'on'
+    handles.make_gate.String = handles.clist.def';
+    handles.histogram_clist.String = handles.clist.def';
+end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 updateImage(hObject, handles)
 
@@ -171,11 +178,22 @@ handles.num_im = length(handles.contents);
 
 
 function updateImage(hObject, handles)
+delete(get(handles.axes1, 'Children'))
+
 if ~isempty(handles.FLAGS)
     FLAGS = handles.FLAGS;
     dirnum = handles.dirnum;
+    
+    
+    
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
+    if ~isempty(handles.clist)
+        handles.clist_text.String = ['Clist: ' handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
+    else
+        handles.clist_text.String = 'No clist loaded, these commands will not work';
+    end
+    handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat'])))];
     delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
     [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
         nn, handles.num_im, handles.clist, handles.FLAGS);
@@ -186,11 +204,16 @@ if ~isempty(handles.FLAGS)
 end
 
 function save_figure_ClickedCallback(hObject, eventdata, handles) % Do not save complete figure!
-filename = inputdlg('Filename:', 'Filename', 1);
-if ~isempty(filename)
+[filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
+
+if ~isempty(strfind(filename, '.'))
+    filename = filename(1:(max(strfind(filename, '.')) - 1));
+end
+
+if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
-    savename = sprintf('%s/%s',handles.dirSave,filename{1});
+    savename = sprintf('%s/%s',pathName,filename);
     saveas(fh,(savename),'fig');
     print(fh,'-depsc',[(savename),'.eps'])
     saveas(fh,(savename),'png');
@@ -199,8 +222,12 @@ if ~isempty(filename)
 end
 
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
-handles.image_directory.String = uigetdir;
-initImage(hObject, handles);
+folderName = uigetdir;
+
+if folderName ~= 0
+    handles.image_directory.String = folderName;
+    initImage(hObject, handles);
+end
 
 function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
@@ -247,6 +274,15 @@ function previous_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.go_to_frame_no.String = num2str(str2double(handles.go_to_frame_no.String)-1);
     go_to_frame_no_Callback(hObject, eventdata, handles);
+end
+
+function max_cell_no_Callback(hObject, eventdata, handles)
+handles.CONST.view.maxNumCell = str2double(handles.max_cell_no.String);
+updateImage(hObject, handles);
+
+function max_cell_no_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
 
 function switch_xy_directory_Callback(hObject, eventdata, handles) % Not tested
@@ -660,6 +696,9 @@ if ~isempty(handles.FLAGS)
 clear mov;
 mov.cdata = [];
 mov.colormap = [];
+
+delete(get(handles.axes1, 'Children'))
+
 for ii = 1:handles.num_im
     [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
         handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);

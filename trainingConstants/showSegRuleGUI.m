@@ -86,7 +86,7 @@ if im_flag == 1
     isnan_score = isnan(rawSegs);
     data.segs.score(isnan_score) = 1;
     
-    rawSegs = round(rawSegs > 0)
+    rawSegs = round(rawSegs > 0);
     
     if ~isfield(data.segs, 'Include' )
         data.segs.Include = 0*data.segs.score+1;
