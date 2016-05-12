@@ -41,7 +41,7 @@ for i = 1 : num_im % go through all the images
     
     % if there are no regions it makes regions from the segments
     %if ~isfield( data, 'regs' ); - i will just remake them for now!
-    data = intMakeRegs( data, CONST, [],1);
+    %data = intMakeRegs( data, CONST, [],1);
     save(dataname,'-STRUCT','data');
     for j = 1 : num_files
         data_ = intModRegions( data, CONST );
