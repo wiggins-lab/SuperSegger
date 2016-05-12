@@ -63,6 +63,7 @@ clist = [];
 
 if CONST.parallel.show_status
     h = waitbar( 0, 'Marking complete cell cycles.');
+    cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
 end

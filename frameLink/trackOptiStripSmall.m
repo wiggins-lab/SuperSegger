@@ -41,6 +41,7 @@ end
 
 if CONST.parallel.show_status
     h = waitbar( 0, 'Strip small cells.');
+    cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
 end

@@ -1,4 +1,4 @@
-function [clist] = trackOptiClist(dirname,CONST,header)
+function [clist] = trackOptiClistNew(dirname,CONST,header)
 % trackOptiClist : generates an array called the clist
 % which contains non time dependent information for each cell.
 % Fluorescence values contained are for at birth time.
@@ -170,10 +170,26 @@ else
  
         locus1_PoleAlign_relL1 = locus1_relL1 .* op_ori;
         locus1_PoleAlign_relL1 (op_ori==0) = nan;
-
+ 
+        
         locus1_fitSigma  = drill(data_c.CellA,'.locus1(1).fitSigma');
         locus2_fitSigma  = drill(data_c.CellA,'.locus1(2).fitSigma');
         locus3_fitSigma   = drill(data_c.CellA,'.locus1(3).fitSigma');
+        
+        if CONST.trackOpti.LYSE_FLAG
+            errorColor1Cum = data_c.regs.lyse.errorColor1Cum;
+            errorColor2Cum = data_c.regs.lyse.errorColor2Cum;
+            errorShapeCum  = data_c.regs.lyse.errorShapeCum;
+            errorColor1bCum = data_c.regs.lyse.errorColor1bCum;
+            errorColor2bCum = data_c.regs.lyse.errorColor2bCum;
+        else
+            errorColor1Cum  = nan(size(ID));
+            errorColor2Cum  = nan(size(ID));
+            errorShapeCum   = nan(size(ID));
+            errorColor1bCum = nan(size(ID));
+            errorColor2bCum = nan(size(ID));
+        end
+        
         
         lnew = data_c.regs.L1;
         dl = (lnew-lold);

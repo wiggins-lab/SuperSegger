@@ -61,6 +61,7 @@ end
 
 if CONST.parallel.show_status
     h = waitbar( 0, 'Find Loci.');
+    cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
 end

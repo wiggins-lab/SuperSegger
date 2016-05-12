@@ -47,6 +47,7 @@ num_im = numel(contents);
 
 if CONST.parallel.show_status
     h = waitbar( 0, 'Fluorescence Computation');
+    cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
 end
