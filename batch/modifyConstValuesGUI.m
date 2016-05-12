@@ -128,7 +128,6 @@ handles.mask_th2.Value = CONST.superSeggerOpti.THRESH2;
 handles.mask_th1.Value = CONST.superSeggerOpti.THRESH1 ;
 handles.magic_thresh.Value = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 handles.magic_radius.Value = CONST.superSeggerOpti.MAGIC_RADIUS ;
-handles.max_width_regOpt.String = CONST.regionOpti.MAX_WIDTH;
 handles.maxLengRegOpti.String = CONST.regionOpti.MIN_LENGTH ;
 
 update_text_values (handles)
@@ -184,7 +183,6 @@ CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
 CONST.superSeggerOpti.THRESH1 = handles.mask_th1.Value;
 CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
 CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
-CONST.regionOpti.MAX_WIDTH = handles.max_width_regOpt.Value;
 CONST.regionOpti.MIN_LENGTH = handles.maxLengRegOpti.Value;
 [FileName,PathName,~] = uiputfile('newConstantsName.mat');
 if FileName~=0

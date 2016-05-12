@@ -31,7 +31,7 @@ function [data] = regionOpti( data, disp_flag, CONST,header)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-MAX_WIDTH = CONST.regionOpti.MAX_WIDTH;
+MAX_WIDTH = CONST.superSeggerOpti.MAX_WIDTH;
 MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
 CutOffScoreHi = 30;%CONST.regionOpti.CutOffScoreHi;
 CutOffScoreLo = -30%;CONST.regionOpti.CutOffScoreLo;
