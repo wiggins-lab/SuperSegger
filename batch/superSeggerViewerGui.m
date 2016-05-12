@@ -25,6 +25,8 @@ handles.dirname0 = [];
 handles.contents_xy = [];
 handles.clist = [];
 handles.num_xy = 0;
+handles.num_errs = 0;
+handles.canUseErr = 0;
 guidata(hObject, handles);
 
 if (nargin<1 || isempty(handles.image_directory.String))
@@ -41,14 +43,6 @@ cla;
 dirname = fixDir(dirname);
 dirname0 = dirname;
 dirSave = [dirname, 'superSeggerViewer', filesep];
-if ~exist(dirSave, 'dir')
-    mkdir(dirSave);
-else
-    if exist([dirSave, 'dataImArray.mat'], 'file')
-        load([dirSave, 'dataImArray'], 'dataImArray');
-    end
-end
-
 
 
 % flags
@@ -101,9 +95,18 @@ if nargin<2 || isempty(file_filter);
     end
 end
 
-if strcmp(file_filter,'*seg.mat')
-    FLAGS.cell_flag = 0;
+if ~exist(dirSave, 'dir')
+    mkdir(dirSave);
+else
+    if exist([dirSave, 'dataImArray.mat'], 'file')
+        load([dirSave, 'dataImArray'], 'dataImArray');
+    end
 end
+
+% if strcmp(file_filter,'*seg.mat')
+%     FLAGS.cell_flag = 0;
+% end
+FLAGS.cell_flag = 1; %This is handled by useSegs now
 if FLAGS.f_flag
     handles.channel.String = num2str(FLAGS.f_flag);
 end
@@ -183,9 +186,6 @@ delete(get(handles.axes1, 'Children'))
 if ~isempty(handles.FLAGS)
     FLAGS = handles.FLAGS;
     dirnum = handles.dirnum;
-    
-    
-    
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
     if ~isempty(handles.clist)
@@ -194,13 +194,74 @@ if ~isempty(handles.FLAGS)
         handles.clist_text.String = 'No clist loaded, these commands will not work';
     end
     handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat'])))];
+    
+    handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));    
+    
+    %Use region IDs if cells IDs unavailable
+    if nn > handles.num_errs || FLAGS.useSegs
+        handles.canUseErr = 0;
+        handles.contents=dir([handles.dirname_seg, '*seg.mat']);
+    else
+        handles.canUseErr = 1;
+        handles.contents=dir([handles.dirname_seg, '*err.mat']);
+    end
+    
+    %Force flags to required values when data is unavailable
+    forcedFlags = FLAGS;
+    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS, handles.canUseErr);
+    %Force cell flag to 0 when err files not present
+    
+    
     delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
     [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
-        nn, handles.num_im, handles.clist, handles.FLAGS);
-    showSeggerImage(handles.data_c, handles.data_r, handles.data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+        nn, handles.num_im, handles.clist, forcedFlags);
+    showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
     save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
     guidata(hObject, handles);
     find_cell_no(handles);
+end
+
+if handles.FLAGS.f_flag == 1 % Phase
+    makeActive(handles.log_view);
+    
+    makeActive(handles.false_color);
+    
+    if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
+        makeActive(handles.fluor_foci_scores);
+        makeActive(handles.filtered_fluorescence);
+    else
+        makeInactive(handles.fluor_foci_scores);
+        makeInactive(handles.filtered_fluorescence);
+    end
+else
+    makeInactive(handles.log_view);
+    makeInactive(handles.fluor_foci_scores);
+    makeInactive(handles.filtered_fluorescence);
+    makeInactive(handles.false_color);
+end
+
+if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
+    makeActive(handles.cell_poles);
+    makeActive(handles.complete_cell_cycles);
+    
+    if handles.FLAGS.showLinks
+        makeActive(handles.show_daughters);
+        makeActive(handles.show_mothers);
+    else
+        makeInactive(handles.show_daughters);
+        makeInactive(handles.show_mothers);
+    end
+    
+    makeActive(handles.show_linking);
+    
+else
+    makeInactive(handles.cell_poles);
+    makeInactive(handles.complete_cell_cycles);
+    
+    makeInactive(handles.show_daughters);
+    makeInactive(handles.show_mothers);
+    makeInactive(handles.show_linking);
+    
 end
 
 function save_figure_ClickedCallback(hObject, eventdata, handles) % Do not save complete figure!
@@ -353,10 +414,16 @@ end
 function find_cell_no(handles)
 if ~isempty(handles.FLAGS)
     c = str2double(handles.find_cell_no.String);
-    if isnan(c) || c < 1 ||c > max(handles.data_c.regs.ID)
+    
+    maxIndex = handles.data_c.regs.num_regs;
+    if isfield(handles.data_c.regs, 'ID')
+        maxIndex = max(handles.data_c.regs.ID);
+    end
+    
+    if isnan(c) || c < 1 || c >= maxIndex
         handles.find_cell_no.String = '';
     else
-        if handles.FLAGS.cell_flag % && shouldUseErrorFiles(FLAGS) - this part not working
+        if handles.FLAGS.cell_flag && shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
             regnum = find(handles.data_c.regs.ID == c);
             if ~isempty(regnum)
                 plot(handles.data_c.regs.props(regnum).Centroid(1),...
@@ -732,3 +799,13 @@ function stop_tool_ClickedCallback(hObject, eventdata, handles)
 % use handles to look at the variables (for example handles.CONST)
 % if you want to exit click the continue button on the toolbar.
 keyboard;
+
+
+function value = shouldUseErrorFiles(FLAGS, canUseErr)
+value = canUseErr == 1 && FLAGS.useSegs == 0;
+
+function makeActive(button)
+button.ForegroundColor = [0, 0, 0];
+
+function makeInactive(button)
+button.ForegroundColor = [.5, .5, .5];
