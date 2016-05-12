@@ -23,6 +23,8 @@ handles.dirnum = [];
 handles.dirSave = [];
 handles.dirname0 = [];
 handles.contents_xy = [];
+handles.clist = [];
+handles.num_xy = 0;
 guidata(hObject, handles);
 
 if (nargin<1 || isempty(handles.image_directory.String))
@@ -35,13 +37,6 @@ file_filter = '';
 CONST = [];
 axis tight
 cla;
-if nargin<2 || isempty(file_filter);
-    if numel(dir([dirname,filesep,'xy1',filesep,'seg',filesep,'*err.mat']))~=0
-        file_filter = '*err.mat';
-    else
-        file_filter = '*seg.mat';
-    end
-end
 
 dirname = fixDir(dirname);
 dirname0 = dirname;
@@ -98,6 +93,14 @@ else
     end
 end
 
+if nargin<2 || isempty(file_filter);
+    if numel(dir([handles.dirname_seg,filesep,'*err.mat']))~=0
+        file_filter = '*err.mat';
+    else
+        file_filter = '*seg.mat';
+    end
+end
+
 if strcmp(file_filter,'*seg.mat')
     FLAGS.cell_flag = 0;
 end
@@ -141,7 +144,6 @@ if exist('nn','var');
     handles.go_to_frame_no.String = num2str(nn);
 end
 
-
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.num_im = length(handles.contents);
 
@@ -158,8 +160,13 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
-handles.make_gate.String = handles.clist.def';
-handles.histogram_clist.String = handles.clist.def';
+if isempty(handles.clist)
+    handles.gate_options_text.Visible = 'off'
+else
+    handles.gate_options_text.Visible = 'on'
+    handles.make_gate.String = handles.clist.def';
+    handles.histogram_clist.String = handles.clist.def';
+end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 updateImage(hObject, handles)
 
@@ -176,6 +183,9 @@ delete(get(handles.axes1, 'Children'))
 if ~isempty(handles.FLAGS)
     FLAGS = handles.FLAGS;
     dirnum = handles.dirnum;
+    
+    
+    
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
     if ~isempty(handles.clist.gate)

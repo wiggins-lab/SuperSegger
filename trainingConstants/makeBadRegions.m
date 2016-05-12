@@ -31,6 +31,7 @@ contents=dir([dirname,'*_seg.mat']);
 num_im = length(contents);
 num_files = 3;
 h = waitbar( 0, 'Creating bad region examples for training.' );
+cleanup = onCleanup( @()( delete( h ) ) );
 for i = 1 : num_im % go through all the images
     try
     waitbar(i/num_im,h);

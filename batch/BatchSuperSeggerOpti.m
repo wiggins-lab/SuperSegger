@@ -291,6 +291,7 @@ if ~CONST.parallel.show_status
     h = [];
 else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
+    cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];

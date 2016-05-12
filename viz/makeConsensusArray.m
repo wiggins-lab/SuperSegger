@@ -124,6 +124,7 @@ disp( ['Computing consensus array (max cell number ',...
 
 % Manage the waitbar
 h = waitbar(0, 'Computation' );
+cleanup = onCleanup( @()( delete( h ) ) );
 
 % initialize the sum variables
 dataImArray = intInit( numCells );

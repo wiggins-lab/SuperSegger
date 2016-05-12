@@ -72,6 +72,7 @@ else
     
     if CONST.parallel.show_status
         h = waitbar( 0, 'Make Cell Files.');
+        cleanup = onCleanup( @()( delete( h ) ) );
     else
         h = [];
     end

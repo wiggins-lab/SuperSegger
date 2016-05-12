@@ -31,21 +31,21 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fi
 %         im : trackOptiView outlined image
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou, Paul Wiggins, Connor Brennan.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -66,20 +66,22 @@ if nargin<4
 end
 
 FLAGS.axis = axis;
-if isempty(gui_fig)
+
+if ~exist('gui_fig','var') || isempty(gui_fig)
+    gui_fig = [];
     clf;
 end
 
 % fix are any missing flags
 FLAGS = intFixFlags( FLAGS );
 
-
 % if there is a clist enables look only cells included in the clist
-if ~isempty( clist );
+if exist('clist','var') && ~isempty( clist );
     clist = gate( clist );
     ID_LIST = clist.data(:,1);
     ID_LIST = ID_LIST(logical(ID_LIST));
 else
+    clist = [];
     if isfield(data, 'regs') && isfield( data.regs, 'ID' );
         ID_LIST = data.regs.ID;
     else
@@ -151,12 +153,12 @@ end
             
             % plots spots, only if we are at fluorescence view
             if FLAGS.f_flag && FLAGS.s_flag && isfield(data_,'CellA')
-                intPlotSpot( data_, x_, y_, FLAGS, clist, CONST );
+                intPlotSpot( data_, x_, y_, FLAGS, ID_LIST, CONST );
             end
             
             % plots poles
             if FLAGS.p_flag
-                intPlotPole( data_, x_, y_ );
+                intPlotPole( data_, x_, y_, FLAGS);
             end
         end
     end
@@ -248,14 +250,6 @@ end
 if FLAGS.f_flag > 0
     im = 0.3*im;
     im = FLAGS.P_val*im;
-    
-%         if FLAGS.P_flag  % if P_flag is true, it outlines the cells
-%         if FLAGS.cell_flag && isfield(data,'cell_outline')
-%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.cell_outline);
-%         else
-%             im(:,:,3) = im(:,:,3) + 0.5*ag(data.outline);
-%         end
-%     end
     
     % make the background subtracted fluor
     if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
@@ -462,8 +456,12 @@ end
 function intPlotNum( data, x_, y_ , FLAGS, ID_LIST )
 % intPlotNum : Plot cell number or region numbers
 
-counter = 500; % max amount of cell numbers to be plotted
+counter = 1000; % max amount of cell numbers to be plotted
 kk = 0; % counter for regions
+xpos_id =[];
+ypos_id = [];
+str_id = {};
+color = [];
 while (counter > 0 && kk < data.regs.num_regs)
     % disp(counter)
     kk = kk + 1;
@@ -475,13 +473,9 @@ while (counter > 0 && kk < data.regs.num_regs)
         ignoreError = 0;
     end
     
-    
-    if ignoreError
-        cc = 'g';
-    elseif isfield (data.regs, 'error') && data.regs.error.r(kk)
-        cc = 'r';
-    else
-        cc = 'w';
+    setRed = false;
+    if isfield (data.regs, 'error') && data.regs.error.r(kk)
+        setRed = true;
     end
     
     xpos = rr(1)+x_;
@@ -492,29 +486,40 @@ while (counter > 0 && kk < data.regs.num_regs)
         
         counter = counter - 1;
         if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
-            if ismember( data.regs.ID(kk), ID_LIST )
-                text( xpos, ypos, ['\fontsize{11}',num2str(data.regs.ID(kk))],...
-                    'Color', cc,...
-                    'FontWeight', 'Bold',...
-                    'HorizontalAlignment','Center',...
-                    'VerticalAlignment','Middle');
-                title('Cell ID');
+            xpos_id = [xpos_id;xpos];
+            ypos_id = [ypos_id;ypos];
+            if setRed
+                str_id{end+1} = ['{\color{red}',num2str(data.regs.ID(kk)),'}'];
+            else
+                str_id{end+1} = num2str(data.regs.ID(kk));
             end
+            
         else % region view cell_flag is 0
-            text( xpos, ypos, ['\fontsize{11}',num2str(kk)],...
-                'Color', cc,...
-                'Color', cc,...
-                'FontWeight', 'normal',...
-                'HorizontalAlignment','Center',...
-                'VerticalAlignment','Middle');
-            title('Region Number');
+            xpos_id = [xpos_id;xpos];
+            ypos_id = [ypos_id;ypos];
+            if setRed
+                str_id{end+1} = ['{\color{red}',num2str(kk),'}'];
+            else
+                str_id{end+1} = num2str(num2str(kk));
+            end
         end
     end
     
 end
+
+text( xpos_id, ypos_id,str_id,...
+    'color','w',...
+    'FontWeight', 'Bold',...
+    'HorizontalAlignment','Center',...
+    'VerticalAlignment','Middle');
+if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
+    title('Cell ID');
+else
+    title('Region Number');
+end
 end
 
-function intPlotSpot( data, x_, y_, FLAGS, clist, CONST )
+function intPlotSpot( data, x_, y_, FLAGS, ID_LIST, CONST )
 % intPlotSpot : plots each foci in the cells
 
 
@@ -525,11 +530,15 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
     counter2 = 0;
     maxCounter1 = 500;
     maxCounter2 = 500;
-    
+    locus_1_txt = {};
+    locus1_x = [];
+    locus1_y = [];
+    locus_2_txt = {};
+    locus2_x = [];
+    locus2_y = [];
     for kk = 1:data.regs.num_regs
         % only plot spots in the cell that are gated.
-        if ~FLAGS.cell_flag || ismember(data.regs.ID(kk), clist.data(:,1))
-            
+        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))            
             % locus 1
             if isfield( data.CellA{kk}, 'locus1') &&  ( FLAGS.f_flag == 1 );
                 num_spot = numel( data.CellA{kk}.locus1);
@@ -544,8 +553,9 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
                                 (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
                             counter1 = counter1 + 1;
-                            text( xpos+1, ypos, text_, 'Color', [0.5,1,0.5]);
-                            plot( xpos, ypos, '.', 'Color', [0.5,1,0.5] );
+                            locus_1_txt{end+1} = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
+                            locus1_x = [locus1_x;xpos];
+                            locus1_y = [locus1_y;ypos];                  
                         end
                     end
                 end
@@ -558,22 +568,30 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                 while mm < num_spot && counter2 < maxCounter2
                     mm = mm + 1;
                     r = data.CellA{kk}.locus2(mm).r;
-                    text_ = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];
-                    if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
+                       if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
                             data.CellA{kk}.locus2(mm).b < 3
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
+                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)                     
                             counter2 = counter2 + 1;
-                            text( r(1)+x_+1, r(2)+y_, text_, 'Color',  [1,0.5,0.5]);
-                            plot( r(1)+x_, r(2)+y_, '.',  'Color', [1,0.5,0.5]);
+                            locus_2_txt{end+1} = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];        
+                            locus2_x = [locus2_x;xpos];
+                            locus2_y = [locus2_y;ypos];                  
                         end
                     end
                 end
             end
         end
     end
+    
+      
+    text( locus2_x+1, locus2_y, locus_2_txt, 'Color', [1,0.5,0.5]);
+    plot( locus2_x, locus2_y, '.', 'Color', [1,0.5,0.5]);
+      
+    text( locus1_x+1, locus1_y, locus_1_txt, 'Color', [0.5,1,0.5]);
+    plot( locus1_x, locus1_y, '.', 'Color', [0.5,1,0.5]);
+    
 end
 end
 
@@ -638,7 +656,7 @@ if dataHasIds
                         if FLAGS.showMothers == 1
                             X = [data_r.regs.props(motherRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
                             Y = [data_r.regs.props(motherRegion).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
-
+                            
                             plot(X, Y, 'Color', color);
                         end
                         
@@ -647,7 +665,7 @@ if dataHasIds
                         valid = 0;
                     end
                 end
-            end            
+            end
             
             if ~isempty(nextRegion)
                 X = [data_f.regs.props(nextRegion).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
@@ -671,7 +689,7 @@ if dataHasIds
                             for i = 1:numel(daughterRegions)
                                 X = [data_f.regs.props(daughterRegions(i)).Centroid(1) + x_, data.regs.props(kk).Centroid(1) + x_];
                                 Y = [data_f.regs.props(daughterRegions(i)).Centroid(2) + y_, data.regs.props(kk).Centroid(2) + y_];
-
+                                
                                 plot(X, Y, 'Color', color);
                                 plot(X(1), Y(1), 's', 'Color', color);
                             end
@@ -701,7 +719,7 @@ if dataHasIds
 end
 end
 
-function intPlotPole( data, x_, y_ )
+function intPlotPole( data, x_, y_,FLAGS )
 % intPlotPole shows pole positions and connects daughter cells to each other
 if ~isfield(data,'CellA')
     disp ('Showing poles is not supported in this mode');
@@ -716,7 +734,7 @@ else
         if sisterID
             ind = find(data.regs.ID == sisterID);
             if numel(ind)>1
-                ind = ind(1)
+                ind = ind(1);
             end
         else
             ind = [];
@@ -730,7 +748,7 @@ else
                 xaxisy = r(2) + [0,tmp.length(1)*tmp.coord.e1(2)]/2;
                 yaxisx = r(1) + [0,tmp.length(2)*tmp.coord.e2(1)]/2;
                 yaxisy = r(2) + [0,tmp.length(2)*tmp.coord.e2(2)]/2;
-                                
+                
                 if tmp.pole.op_ori
                     old_pole = r + tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
                     new_pole = r - tmp.length(1)*tmp.coord.e1*tmp.pole.op_ori/2;
@@ -742,18 +760,23 @@ else
                 printError(ME);
             end
             
-            plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
-
-            plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
-            plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
-
             
-            if ~isempty(ind) && ID && tmp.pole.op_ori
-                if ID < sisterID
-                    tmps = data.CellA{ind};
-                    rs = tmps.coord.r_center;
-                    new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
-                    plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
+            if (FLAGS.axis(1)<r(1)) && (FLAGS.axis(2)>r(1)) && ...
+                    (FLAGS.axis(3)<r(2)) && (FLAGS.axis(4)>r(2))
+                
+                plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
+                
+                plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
+                plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
+                
+                
+                if ~isempty(ind) && ID && tmp.pole.op_ori
+                    if ID < sisterID
+                        tmps = data.CellA{ind};
+                        rs = tmps.coord.r_center;
+                        new_pole_s = rs - tmps.length(1)*tmps.coord.e1*tmps.pole.op_ori/2;
+                        plot( [new_pole(1),new_pole_s(1)]+x_, [new_pole(2),new_pole_s(2)]+y_, 'w-');
+                    end
                 end
             end
         end
