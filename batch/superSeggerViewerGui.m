@@ -276,6 +276,15 @@ if ~isempty(handles.FLAGS)
     go_to_frame_no_Callback(hObject, eventdata, handles);
 end
 
+function max_cell_no_Callback(hObject, eventdata, handles)
+handles.CONST.view.maxNumCell = str2double(handles.max_cell_no.String);
+updateImage(hObject, handles);
+
+function max_cell_no_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
 function switch_xy_directory_Callback(hObject, eventdata, handles) % Not tested
 if ~isempty(handles.FLAGS)
     ll_ = str2double(handles.switch_xy_directory.String);
