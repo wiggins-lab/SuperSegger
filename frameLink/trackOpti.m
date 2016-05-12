@@ -50,7 +50,7 @@ if ~exist('header','var')
 end
 
 % turn skip off if skip isn't set.
-if isempty(skip)
+if ~exist('skip') || isempty(skip)
     skip = 1;
 end
 

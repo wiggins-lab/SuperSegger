@@ -1,0 +1,521 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>trackOpti</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-11"><meta name="DC.source" content="trackOpti.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Clean directories</a></li><li><a href="#4">trackOptiStripSmall</a></li><li><a href="#5">Link frames and do error resolution</a></li><li><a href="#6">Skip Merge</a></li><li><a href="#7">Cell Marker</a></li><li><a href="#8">Fluor</a></li><li><a href="#9">Make Cell</a></li><li><a href="#10">Finds loci in each fluorescent channel</a></li><li><a href="#11">Computes cell characteristics in make cells</a></li><li><a href="#12">cell files</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)
+</pre><pre class="codeinput"><span class="comment">% trackOpti : calls the rest of the functions for segmentation</span>
+<span class="comment">% After each sub-function is called, is creates a file in the seg directory</span>
+<span class="comment">% that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?</span>
+<span class="comment">% to see these)  and then the function name, e.g. .trackOptiSetEr.mat.</span>
+<span class="comment">% This is designed in case the segmentation dies somewhere in middle and you</span>
+<span class="comment">% want to restart without having to recalculate everything;</span>
+<span class="comment">% if these files exist, it won't rerun that particular function again.</span>
+<span class="comment">% If you DO need to rerun one of these functions, you'll</span>
+<span class="comment">% have to delete the respective .trackOpti file for it to work.</span>
+<span class="comment">%</span>
+<span class="comment">% INPUT :</span>
+<span class="comment">%       dirname : xy folder</span>
+<span class="comment">%       skip : frames to be skipped in segmentation, default is 1.</span>
+<span class="comment">%       CONST : Constants file</span>
+<span class="comment">%       CLEAN_FLAG : 0 (default) continue from previous stop point</span>
+<span class="comment">%                    1 clean everything and restart segmentation</span>
+<span class="comment">%       header : information string</span>
+<span class="comment">% OUTPUT :</span>
+<span class="comment">%       clist : list of cells with time-independent information about each</span>
+<span class="comment">%</span>
+<span class="comment">% Copyright (C) 2016 Wiggins Lab</span>
+<span class="comment">% Written by Stella Stylianidou &amp; Paul Wiggins</span>
+<span class="comment">% University of Washington, 2016</span>
+<span class="comment">% This file is part of SuperSegger.</span>
+<span class="comment">%</span>
+<span class="comment">% SuperSegger is free software: you can redistribute it and/or modify</span>
+<span class="comment">% it under the terms of the GNU General Public License as published by</span>
+<span class="comment">% the Free Software Foundation, either version 3 of the License, or</span>
+<span class="comment">% (at your option) any later version.</span>
+<span class="comment">%</span>
+<span class="comment">% SuperSegger is distributed in the hope that it will be useful,</span>
+<span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="comment">% GNU General Public License for more details.</span>
+<span class="comment">%</span>
+<span class="comment">% You should have received a copy of the GNU General Public License</span>
+<span class="comment">% along with SuperSegger.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+
+
+<span class="comment">% if the CLEAN_FLAG does not exist, set it to true and remove all existing</span>
+<span class="comment">% files. This is the safer option.</span>
+<span class="keyword">if</span> ~exist(<span class="string">'CLEAN_FLAG'</span>) || isempty( CLEAN_FLAG )
+    CLEAN_FLAG = true;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist(<span class="string">'header'</span>,<span class="string">'var'</span>)
+    header = <span class="string">'trackOpti no header: '</span>;
+<span class="keyword">end</span>
+
+<span class="comment">% turn skip off if skip isn't set.</span>
+<span class="keyword">if</span> isempty(skip)
+    skip = 1;
+<span class="keyword">end</span>
+
+<span class="comment">% directories' names</span>
+<span class="keyword">if</span> nargin &lt; 1 || isempty( dirname );
+    dirname = <span class="string">'.'</span>;
+<span class="keyword">end</span>
+
+dirname = fixDir(dirname);
+dirname_seg  = [dirname,<span class="string">'seg'</span>,filesep];
+dirname_full = [dirname,<span class="string">'seg_full'</span>,filesep];
+dirname_cell = [dirname,<span class="string">'cell'</span>,filesep];
+
+<span class="keyword">if</span> ~exist( dirname_cell, <span class="string">'dir'</span> )
+    mkdir(  dirname_cell );
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Not enough input arguments.
+Error in trackOpti (line 53)
+if isempty(skip)</pre><h2>Clean directories<a name="3"></a></h2><pre class="codeinput"><span class="keyword">if</span> CLEAN_FLAG
+    warning(<span class="string">'off'</span>,<span class="string">'MATLAB:DELETE:Permission'</span>)
+    delete ([dirname,<span class="string">'clist.mat'</span>]); <span class="comment">% clist</span>
+    delete ([dirname_seg,<span class="string">'*err.mat'</span>]); <span class="comment">% error files</span>
+    delete ([dirname_cell,<span class="string">'*.mat'</span>]); <span class="comment">% cell files</span>
+    delete ([dirname_cell,<span class="string">'.trackOpti*'</span>]);
+    delete ([dirname_seg,<span class="string">'.trackOpti*'</span>]); <span class="comment">% stamp files</span>
+    <span class="keyword">if</span> skip &gt; 1
+        delete ([dirname_full,<span class="string">'*.mat'</span>]);
+        delete ([dirname_full,<span class="string">'.trackOpti*'</span>]);
+    <span class="keyword">end</span>
+    warning(<span class="string">'on'</span>,<span class="string">'MATLAB:DELETE:Permission'</span>)
+<span class="keyword">end</span>
+</pre><h2>trackOptiStripSmall<a name="4"></a></h2><p>removes small regions that are probably not real (bubbles, dust, or minicells)</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiStripSmall-Step1.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 1: Running trackOptiStripSmall.'</span>]);
+    trackOptiStripSmall(dirname_seg, CONST);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header, <span class="string">'trackOpti: trackOptiStripSmall already run.'</span>] );
+<span class="keyword">end</span>
+</pre><h2>Link frames and do error resolution<a name="5"></a></h2><p>Calculate the overlap between cells between subsequent frames.</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiLinkCell-Step2.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 2: Running trackOptiLinkCell.'</span>]);
+    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header, <span class="string">'trackOpti: trackOptiLinkCell already run.'</span>] );
+<span class="keyword">end</span>
+</pre><h2>Skip Merge<a name="6"></a></h2><p>If skip is bigger than 1, it takes care of merging all the frames skipped. the merged skipped frames are placed in the seg_full dir</p><pre class="codeinput"><span class="keyword">if</span> skip&gt;1
+
+    dirname_seg  = dirname_full; <span class="comment">% change dirname_seg to seg_all directory</span>
+    stamp_name = [dirname_seg,<span class="string">'.trackOptiSkipMerge-Step2merge.mat'</span>];
+    <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+        disp([header,<span class="string">'trackOpti - Step 2, merge: Running trackOptiSkipMerge.'</span>]);
+        trackOptiSkipMerge(dirname,skip,CONST, header);
+        time_stamp = clock;
+        save( stamp_name, <span class="string">'time_stamp'</span>);
+    <span class="keyword">else</span>
+        disp([header,<span class="string">'trackOpti: trackOptiSkipMerge already run.'</span>]);
+    <span class="keyword">end</span>
+
+    <span class="comment">% Relink and do error resolution for the skipped files</span>
+    stamp_name = [dirname_seg,<span class="string">'.trackOptiLinkCell-Step2merge.mat'</span>];
+    <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+        disp([header,<span class="string">'trackOpti - Step 2, merge: Running trackOptiLinkCell.'</span>]);
+        trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+        time_stamp = clock;
+        save( stamp_name, <span class="string">'time_stamp'</span>);
+    <span class="keyword">else</span>
+        disp([header,<span class="string">'trackOpti: trackOptiLink already run.'</span>]);
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><h2>Cell Marker<a name="7"></a></h2><p>trackOptiCellMarker marks complete cells cycles. clist contains a list of cell statistics etc.</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiCellMarker-Step3.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 3: Running trackOptiCellMarker.'</span>]);
+    trackOptiCellMarker(dirname_seg, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header,<span class="string">'trackOpti: trackOptiCellMarker already run.'</span>]);
+<span class="keyword">end</span>
+</pre><h2>Fluor<a name="8"></a></h2><p>Calculates Fluorescence Background</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiFluor-Step4.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 4: Running trackOptiFluor.'</span>]);
+    trackOptiFluor(dirname_seg,CONST, header);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header,<span class="string">'trackOpti: trackOptiFluor already run.'</span>]);
+<span class="keyword">end</span>
+</pre><h2>Make Cell<a name="9"></a></h2><p>Computes cell characteristics and puts them in *err files under CellA{}</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiMakeCell-Step5.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 5: Running trackOptiMakeCell.'</span>]);
+    trackOptiMakeCell(dirname_seg, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header,<span class="string">'trackOpti: trackOptiMakeCell already run.'</span>]);
+<span class="keyword">end</span>
+</pre><h2>Finds loci in each fluorescent channel<a name="10"></a></h2><pre class="codeinput"><span class="keyword">if</span> sum(CONST.trackLoci.numSpots(:))
+    stamp_name = [dirname_seg,<span class="string">'.trackOptiFindFociCyto-Step6.mat'</span>];
+    <span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+        disp([header,<span class="string">'trackOpti - Step 6: Running trackOptiFindFociCyto.'</span>]);
+        trackOptiFindFociCyto(dirname_seg, CONST, header);
+        time_stamp = clock;
+        save( stamp_name, <span class="string">'time_stamp'</span>);
+    <span class="keyword">else</span>
+        disp([header,<span class="string">'trackOpti: trackOptiFindFociCyto already run.'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><h2>Computes cell characteristics in make cells<a name="11"></a></h2><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiClist-Step7.mat'</span>];
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 7: Running trackOptiClist.'</span>]);
+
+    [clist] = trackOptiClist(dirname_seg, CONST, header);
+
+    <span class="keyword">if</span> isfield( CONST, <span class="string">'gate'</span> )
+        clist.gate = CONST.gate;
+    <span class="keyword">end</span>
+
+    <span class="keyword">try</span>
+        save( [dirname,<span class="string">'clist.mat'</span>],<span class="string">'-STRUCT'</span>,<span class="string">'clist'</span>);
+    <span class="keyword">catch</span> ME
+        printError(ME);
+        disp([header,<span class="string">'trackOpti: Cell list error being saved.'</span>]);
+    <span class="keyword">end</span>
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header,<span class="string">'trackOpti: trackOptiClist already run.'</span>]);
+<span class="keyword">end</span>
+</pre><h2>cell files<a name="12"></a></h2><p>Organize data into cell files that contain all the time lapse data for a single cell.</p><pre class="codeinput">stamp_name = [dirname_seg,<span class="string">'.trackOptiCellFiles-Step8.mat'</span>];
+
+<span class="keyword">if</span> ~exist( stamp_name, <span class="string">'file'</span> );
+    disp([header,<span class="string">'trackOpti - Step 8: Running trackOptiCellFiles.'</span>]);
+    clist = load([dirname,<span class="string">'clist.mat'</span>]);
+    <span class="keyword">if</span> isfield( CONST, <span class="string">'gate'</span> )
+        clist.gate = CONST.gate;
+    <span class="keyword">end</span>
+    <span class="comment">% delete old cell files</span>
+    delete ([dirname_cell,<span class="string">'cell*.mat'</span>]);
+    delete ([dirname_cell,<span class="string">'Cell*.mat'</span>]);
+    trackOptiCellFiles(dirname_seg,dirname_cell,CONST, header, clist);
+    time_stamp = clock;
+    save( stamp_name, <span class="string">'time_stamp'</span>);
+<span class="keyword">else</span>
+    disp([header,<span class="string">'trackOpti: trackOptiCellFiles already run.'</span>]);
+<span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header) 
+% trackOpti : calls the rest of the functions for segmentation
+% After each sub-function is called, is creates a file in the seg directory
+% that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?
+% to see these)  and then the function name, e.g. .trackOptiSetEr.mat.
+% This is designed in case the segmentation dies somewhere in middle and you
+% want to restart without having to recalculate everything;
+% if these files exist, it won't rerun that particular function again.
+% If you DO need to rerun one of these functions, you'll
+% have to delete the respective .trackOpti file for it to work.
+%
+% INPUT :
+%       dirname : xy folder
+%       skip : frames to be skipped in segmentation, default is 1.
+%       CONST : Constants file
+%       CLEAN_FLAG : 0 (default) continue from previous stop point
+%                    1 clean everything and restart segmentation
+%       header : information string
+% OUTPUT :
+%       clist : list of cells with time-independent information about each
+%
+% Copyright (C) 2016 Wiggins Lab 
+% Written by Stella Stylianidou & Paul Wiggins
+% University of Washington, 2016
+% This file is part of SuperSegger.
+% 
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+% if the CLEAN_FLAG does not exist, set it to true and remove all existing
+% files. This is the safer option.
+if ~exist('CLEAN_FLAG') || isempty( CLEAN_FLAG )
+    CLEAN_FLAG = true;
+end
+
+if ~exist('header','var')
+    header = 'trackOpti no header: ';
+end
+
+% turn skip off if skip isn't set.
+if isempty(skip)
+    skip = 1;
+end
+
+% directories' names
+if nargin < 1 || isempty( dirname );
+    dirname = '.';
+end
+
+dirname = fixDir(dirname);
+dirname_seg  = [dirname,'seg',filesep];
+dirname_full = [dirname,'seg_full',filesep];
+dirname_cell = [dirname,'cell',filesep];
+
+if ~exist( dirname_cell, 'dir' )
+    mkdir(  dirname_cell );
+end
+
+
+
+%% Clean directories
+if CLEAN_FLAG
+    warning('off','MATLAB:DELETE:Permission')
+    delete ([dirname,'clist.mat']); % clist
+    delete ([dirname_seg,'*err.mat']); % error files
+    delete ([dirname_cell,'*.mat']); % cell files
+    delete ([dirname_cell,'.trackOpti*']); 
+    delete ([dirname_seg,'.trackOpti*']); % stamp files
+    if skip > 1
+        delete ([dirname_full,'*.mat']);
+        delete ([dirname_full,'.trackOpti*']);
+    end
+    warning('on','MATLAB:DELETE:Permission')
+end
+
+
+%% trackOptiStripSmall
+% removes small regions that are probably not real (bubbles, dust, or minicells)
+stamp_name = [dirname_seg,'.trackOptiStripSmall-Step1.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 1: Running trackOptiStripSmall.']);
+    trackOptiStripSmall(dirname_seg, CONST);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header, 'trackOpti: trackOptiStripSmall already run.'] );
+end
+
+%% Link frames and do error resolution
+% Calculate the overlap between cells between subsequent frames.
+stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 2: Running trackOptiLinkCell.']);
+    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header, 'trackOpti: trackOptiLinkCell already run.'] );
+end
+
+%% Skip Merge
+% If skip is bigger than 1, it takes care of merging all the frames skipped.
+% the merged skipped frames are placed in the seg_full dir
+if skip>1
+    
+    dirname_seg  = dirname_full; % change dirname_seg to seg_all directory
+    stamp_name = [dirname_seg,'.trackOptiSkipMerge-Step2merge.mat'];
+    if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 2, merge: Running trackOptiSkipMerge.']);
+        trackOptiSkipMerge(dirname,skip,CONST, header);
+        time_stamp = clock;
+        save( stamp_name, 'time_stamp');
+    else
+        disp([header,'trackOpti: trackOptiSkipMerge already run.']);
+    end
+    
+    % Relink and do error resolution for the skipped files
+    stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2merge.mat'];
+    if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 2, merge: Running trackOptiLinkCell.']);        
+        trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+        time_stamp = clock;
+        save( stamp_name, 'time_stamp');
+    else
+        disp([header,'trackOpti: trackOptiLink already run.']);
+    end
+    
+end
+
+
+%% Cell Marker
+% trackOptiCellMarker marks complete cells cycles. clist contains a
+% list of cell statistics etc.
+stamp_name = [dirname_seg,'.trackOptiCellMarker-Step3.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 3: Running trackOptiCellMarker.']);        
+    trackOptiCellMarker(dirname_seg, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiCellMarker already run.']);
+end
+
+%% Fluor
+% Calculates Fluorescence Background
+stamp_name = [dirname_seg,'.trackOptiFluor-Step4.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 4: Running trackOptiFluor.']);  
+    trackOptiFluor(dirname_seg,CONST, header);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiFluor already run.']);
+end
+
+
+%% Make Cell
+% Computes cell characteristics and puts them in *err files under CellA{}
+stamp_name = [dirname_seg,'.trackOptiMakeCell-Step5.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 5: Running trackOptiMakeCell.']); 
+    trackOptiMakeCell(dirname_seg, CONST, header);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiMakeCell already run.']);
+end
+
+
+%% Finds loci in each fluorescent channel
+if sum(CONST.trackLoci.numSpots(:))
+    stamp_name = [dirname_seg,'.trackOptiFindFociCyto-Step6.mat'];
+    if ~exist( stamp_name, 'file' );
+        disp([header,'trackOpti - Step 6: Running trackOptiFindFociCyto.']); 
+        trackOptiFindFociCyto(dirname_seg, CONST, header);
+        time_stamp = clock;
+        save( stamp_name, 'time_stamp');
+    else
+        disp([header,'trackOpti: trackOptiFindFociCyto already run.']);
+    end
+end
+
+
+%% Computes cell characteristics in make cells
+stamp_name = [dirname_seg,'.trackOptiClist-Step7.mat'];
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 7: Running trackOptiClist.']);  
+    
+    [clist] = trackOptiClist(dirname_seg, CONST, header);
+    
+    if isfield( CONST, 'gate' )
+        clist.gate = CONST.gate;
+    end
+    
+    try
+        save( [dirname,'clist.mat'],'-STRUCT','clist');
+    catch ME
+        printError(ME);
+        disp([header,'trackOpti: Cell list error being saved.']);
+    end
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiClist already run.']);
+end
+
+%% cell files
+% Organize data into cell files that contain all the time lapse data
+% for a single cell.
+stamp_name = [dirname_seg,'.trackOptiCellFiles-Step8.mat'];
+
+if ~exist( stamp_name, 'file' );
+    disp([header,'trackOpti - Step 8: Running trackOptiCellFiles.']);  
+    clist = load([dirname,'clist.mat']);
+    if isfield( CONST, 'gate' )
+        clist.gate = CONST.gate;
+    end
+    % delete old cell files
+    delete ([dirname_cell,'cell*.mat']);
+    delete ([dirname_cell,'Cell*.mat']);   
+    trackOptiCellFiles(dirname_seg,dirname_cell,CONST, header, clist);
+    time_stamp = clock;
+    save( stamp_name, 'time_stamp');
+else
+    disp([header,'trackOpti: trackOptiCellFiles already run.']);
+end
+
+
+
+end
+
+
+
+##### SOURCE END #####
+--></body></html>

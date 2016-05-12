@@ -86,7 +86,7 @@ makeKymographC(data,1,CONST,1);
 
 %% Clist
 % Load the clist
-clist = load('60mrnaCropped/xy1/clist.mat');
+clist = load([dirname,'/xy1/clist.mat']);
 
 %% Histogram
 % Plot the long axis at birth
