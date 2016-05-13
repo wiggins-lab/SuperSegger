@@ -12,12 +12,38 @@ end
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
+    
     gui_mainfcn(gui_State, varargin{:});
 end
+
+function disable_all_panels (hObject,handles)
+set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
+set(findall(handles.output_options_text, '-property', 'enable'), 'enable', 'off')
+set(findall(handles.display_options_text, '-property', 'enable'), 'enable', 'off')
+set(findall(handles.link_options_text, '-property', 'enable'), 'enable', 'off')
+
+handles.go_to_frame_no.Enable = 'off';
+handles.previous.Enable = 'off';
+handles.next.Enable = 'off';
+handles.switch_xy_directory.Enable = 'off';
+handles.max_cell_no.Enable = 'off';
+
+function enable_all_panels (hObject,handles)
+set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
+set(findall(handles.output_options_text, '-property', 'enable'), 'enable', 'on')
+set(findall(handles.display_options_text, '-property', 'enable'), 'enable', 'on')
+set(findall(handles.link_options_text, '-property', 'enable'), 'enable', 'on')
+
+handles.go_to_frame_no.Enable = 'on';
+handles.previous.Enable = 'on';
+handles.next.Enable = 'on';
+handles.switch_xy_directory.Enable = 'on';
+handles.max_cell_no.Enable = 'on';
 
 function initImage(hObject, handles) % Not updated
 global dataImArray;
 % initialize
+enable_all_panels(hObject,handles)
 handles.FLAGS = [];
 handles.dirnum = [];
 handles.dirSave = [];
@@ -43,7 +69,6 @@ cla;
 dirname = fixDir(dirname);
 dirname0 = dirname;
 dirSave = [dirname, 'superSeggerViewer', filesep];
-
 
 % flags
 filename_flags = [dirname0,'.superSeggerViewer.mat'];
@@ -79,6 +104,7 @@ else
     if numel(direct_contents) == 0 % no images found abort.
         cla(handles.axes1)
         handles.message.String = ['There are no xy dirs. Choose a different directory.'];
+        disable_all_panels(hObject,handles);
         return;
     else % loading from the seg directory directly
         handles.dirname_cell = dirname;
@@ -104,9 +130,7 @@ else
     end
 end
 
-% if strcmp(file_filter,'*seg.mat')
-%     FLAGS.cell_flag = 0;
-% end
+
 FLAGS.cell_flag = 1; %This is handled by useSegs now
 if FLAGS.f_flag
     handles.channel.String = num2str(FLAGS.f_flag);
@@ -157,6 +181,7 @@ if exist([dirname0, 'CONST.mat'], 'file')
         CONST = CONST.CONST;
     end
 end
+
 handles.CONST = CONST;
 handles.FLAGS = FLAGS;
 handles.dirnum = dirnum;
@@ -164,10 +189,11 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
+
 if isempty(handles.clist)
-    handles.gate_options_text.Visible = 'off'
+    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
 else
-    handles.gate_options_text.Visible = 'on'
+    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
 end
@@ -183,12 +209,21 @@ handles.num_im = length(handles.contents);
 
 function updateImage(hObject, handles)
 delete(get(handles.axes1, 'Children'))
-
+handles.previous.Enable = 'off';
+handles.next.Enable = 'off';
 if ~isempty(handles.FLAGS)
+    
     FLAGS = handles.FLAGS;
     dirnum = handles.dirnum;
     handles.message.String = '';
     nn = str2double(handles.go_to_frame_no.String);
+    if nn > 1
+        handles.previous.Enable = 'on';
+    end
+    if nn < handles.num_im
+        handles.next.Enable = 'on';
+    end
+    
     if  ~isempty(handles.clist) && ~isempty(handles.clist.gate)
         handles.gate_text.String = 'Gates:';
         cell_gates = struct2cell(handles.clist.gate);
