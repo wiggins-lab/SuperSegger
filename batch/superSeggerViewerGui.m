@@ -267,9 +267,19 @@ if ~isempty(handles.FLAGS)
     find_cell_no(handles);
 end
 
+
+% messages
+handles.message.String = '';
+if handles.FLAGS.p_flag
+    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |']
+end
+if handles.FLAGS.P_flag
+    handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |']
+end
+
+
 if handles.FLAGS.f_flag == 1 % Phase
     makeActive(handles.log_view);
-    
     makeActive(handles.false_color);
     
     if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
@@ -340,7 +350,7 @@ function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.image_directory.String = getappdata(0, 'dirname');
-set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.9 0.9])
+set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 
 
@@ -513,7 +523,8 @@ if ~isempty(handles.FLAGS)
     if handles.CONST.view.showFullCellCycleOnly
         figure(2);
         if isfield(handles,'clist') && ~isempty(handles.clist)
-            handles.clist = gateMake( handles.clist, 9, [2 inf] );
+            % gate of stat0 2
+            handles.clist = gateMake( handles.clist, 9, [1.9 inf] );
         end
         close(2);
         handles.message.String = 'Only showing complete Cell Cycles';
