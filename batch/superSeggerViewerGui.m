@@ -141,44 +141,22 @@ end
 
 
 FLAGS.cell_flag = 1; %This is handled by useSegs now
-if FLAGS.f_flag
-    handles.channel.String = num2str(FLAGS.f_flag);
-end
-if FLAGS.ID_flag
-    handles.cell_numbers.Value = 1;
-end
-if FLAGS.p_flag
-    handles.cell_poles.Value = 1;
-end
-if FLAGS.Outline_flag
-    handles.outline_cells.Value = 1;
-end
-if FLAGS.s_flag
-    handles.fluor_foci_scores.Value = 1;
-end
-if FLAGS.filt
-    handles.filtered_fluorescence.Value = 1;
-end
-if FLAGS.P_flag
-    handles.region_outlines.Value = 1;
-end
-if FLAGS.regionScores
-    handles.region_scores.Value = 1;
-end
-if FLAGS.useSegs
-    handles.use_seg_files.Value = 1;
-end
-if FLAGS.showDaughters
-    handles.show_daughters.Value = 1;
-end
-if FLAGS.showMothers
-    handles.show_mothers.Value = 1;
-end
-if FLAGS.showLinks
-    handles.show_linking.Value = 1;
-end
+handles.channel.String = num2str(FLAGS.f_flag);
+handles.cell_numbers.Value = FLAGS.ID_flag;
+handles.cell_poles.Value = FLAGS.p_flag;
+handles.outline_cells.Value = FLAGS.Outline_flag;
+handles.fluor_foci_scores.Value = FLAGS.s_flag;
+handles.filtered_fluorescence.Value = FLAGS.filt;
+handles.region_outlines.Value = FLAGS.P_flag;
+handles.region_scores.Value = FLAGS.regionScores;
+handles.use_seg_files.Value = FLAGS.useSegs;
+handles.show_daughters.Value = FLAGS.showDaughters;
+handles.show_mothers.Value = FLAGS.showMothers;
+handles.show_linking.Value = FLAGS.showLinks;
 if exist('nn','var');
     handles.go_to_frame_no.String = num2str(nn);
+else
+    handles.go_to_frame_no.String = '1';
 end
 
 handles.kymograph_cell_no.String = '';
