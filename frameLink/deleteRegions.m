@@ -1,9 +1,9 @@
-function [data ] = deleteRegions( data, list_c )
-% deleteRegions : deletes regions from error resolution
+function [data] = deleteRegions( data, list_c )
+% deleteRegions : deletes regions in list_c from mask in data. 
 %
 % INPUT :
-%       data: region (cell) data structure from .err file
-%       list :  regions labels to be deleted
+%       data: region (cell) data structure (seg/err) file
+%       list:  regions labels to be deleted
 % OUTPUT :
 %       data : updated region (cell) data structure
 %

@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 12-May-2016 16:14:33
+% Last Modified by GUIDE v2.5 11-May-2016 14:41:57
 
 % Begin initialization code - DO NOT EDIT
 
@@ -252,24 +252,6 @@ else
     warning(['Plese segment files first']);
 end
 
-
-
-% --- Executes on button press in del_reg.
-function del_reg_Callback(hObject, eventdata, handles)
-% hObject    handle to del_reg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global settings
-if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
-    settings.axisFlag = 6;
-    settings.firstPosition = [];
-    updateUI(handles);
-else
-    warning(['Plese segment files first']);
-end
-
-
-
 % --- Executes on button press in train_segs.
 function train_segs_Callback(hObject, eventdata, handles)
 % hObject    handle to train_segs (see GCBO)
@@ -487,7 +469,7 @@ if settings.dataSegmented
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
     elseif settings.axisFlag == 3
-        % deleting areas in square
+        % deleting regions
         FLAGS.im_flag = 2;
         
         showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
@@ -508,19 +490,6 @@ if settings.dataSegmented
         % mask image
         backer = ag(settings.currentData.phase);
         imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-    elseif settings.axisFlag == 6
-        % deleting regions
-        backer = ag(settings.currentData.phase);
-        imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-       
-        if numel(handles.viewport_train.Children) > 0
-            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-        end
-        
-        if numel(settings.firstPosition) > 0
-            hold on;
-            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
-        end
     end
 elseif settings.imagesLoaded
     axes(handles.viewport_train);
@@ -809,14 +778,6 @@ elseif settings.axisFlag == 3
         
         settings.firstPosition = [];
     end
-    
-elseif settings.axisFlag == 6
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       
-        drawnow;        
-        addUndo();
-        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, [eventdata.IntersectionPoint(1),eventdata.IntersectionPoint(2)],[]);
-        saveData();    
-    
 end
 
 updateUI(settings.handles);
@@ -1187,11 +1148,12 @@ ySize = handles.viewport_train.YLim(2) - handles.viewport_train.YLim(1);
 cropX = ceil(handles.viewport_train.XLim(1):handles.viewport_train.XLim(2) - 1);
 cropY = ceil(handles.viewport_train.YLim(1):handles.viewport_train.YLim(2) - 1);
 i = settings.frameNumber;
-filename =[ settings.imageDirectory,filesep,settings.loadFiles(i).name];
-
-tempImage = imread([filename]);
-saveName = [filename];
-imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
+tempImage = imread([settings.imageDirectory,settings.loadFiles(i).name]);
+        saveName = [newDir, '/', settings.loadFiles(i).name];
+        imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
     
+    
+    setWorkingDirectory([newDir, '/'], 0);   
+    updateUI(handles);
 
 
