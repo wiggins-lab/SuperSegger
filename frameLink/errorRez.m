@@ -98,13 +98,13 @@ for regNum =  1 : data_c.regs.num_regs;
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 &&  numel (revMap) == 2
             %% one to one but disagreement
             
-            % red in c maps to blue in r, but blue in r maps to green
-            % in c
             sister1 = regNum;
             sister2 = revMap (revMap~=regNum);
             mother = mapCR;
             
             if debug_flag
+                % red in c maps to blue in r, but blue in r maps to green
+                % in c
                 imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
                     ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
             end
@@ -112,12 +112,12 @@ for regNum =  1 : data_c.regs.num_regs;
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
             totAreaR =  data_c.regs.props(mother).Area;
             AreaChange = (totAreaC-totAreaR)/totAreaC;
-            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX)
+            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             
             if divAreaChange
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
-                oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH)
+                oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
                 % or one is small..
                 % r: one has no forward mapping, or both map to the same in forwa
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
