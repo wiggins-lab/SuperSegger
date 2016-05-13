@@ -60,6 +60,13 @@ if (nargin<1 || isempty(handles.image_directory.String))
 end
 dirname = handles.image_directory.String;
 
+% Ends in xy directory
+index = regexp(dirname, [filesep, 'xy.[', filesep, ']*$']);
+if index > 0
+    dirname = dirname(1:index - 1);
+end
+
+handles.image_directory.String = dirname;
 
 file_filter = '';
 CONST = [];
@@ -110,6 +117,8 @@ else
         handles.dirname_cell = dirname;
         handles.dirname_seg  = dirname;
         dirnum = 1;
+        
+        handles.use_seg_files.Value = 1;
     end
 end
 
@@ -172,8 +181,15 @@ if exist('nn','var');
     handles.go_to_frame_no.String = num2str(nn);
 end
 
+handles.kymograph_cell_no.String = '';
+handles.movie_cell_no.String = '';
+handles.tower_cell_no.String = '';
+handles.max_cell_no.String = '';
+handles.find_cell_no.String = '';
+
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.num_im = length(handles.contents);
+handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
     CONST = load([dirname0, 'CONST.mat']);
@@ -189,6 +205,9 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
+handles.num_xy = 1;
+handles.FLAGS.f_flag = 0;
+handles.channel.String = 0;
 
 if isempty(handles.clist)
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
@@ -239,7 +258,7 @@ if ~isempty(handles.FLAGS)
     else
         handles.clist_text.String = 'No clist loaded, these commands will not work';
     end
-    handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat'])))];
+    handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat'])))];
     
     handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));
     
@@ -277,8 +296,49 @@ if handles.FLAGS.P_flag
     handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |']
 end
 
+if handles.num_errs == 0
+    handles.use_seg_files.Value = 1;
+    makeInactive(handles.use_seg_files);
+else
+    makeActive(handles.use_seg_files);
+end
 
-if handles.FLAGS.f_flag == 1 % Phase
+handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
+
+f = 0;
+while true
+    if isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
+        f = f+1;
+    else
+        break
+    end
+end
+handles.channel_text.String = ['Channel (', num2str(f), ')'];
+
+% Has cell files loaded
+if areCellsLoaded(handles)
+    makeActiveInput(handles.kymograph_cell_no);
+    makeActiveInput(handles.movie_cell_no);
+    makeActiveInput(handles.tower_cell_no);
+    makeActive(handles.consensus_kymograph);
+    makeActive(handles.mosaic_kymograph);
+    makeActive(handles.show_consensus);
+    makeActive(handles.tower_cells);
+    
+else
+    handles.kymograph_cell_no.String = '';
+    makeInactiveInput(handles.kymograph_cell_no);
+    handles.movie_cell_no.String = '';
+    makeInactiveInput(handles.movie_cell_no);
+    handles.tower_cell_no.String = '';
+    makeInactiveInput(handles.tower_cell_no);
+    makeInactive(handles.consensus_kymograph);
+    makeInactive(handles.mosaic_kymograph);
+    makeInactive(handles.show_consensus);
+    makeInactive(handles.tower_cells);
+end
+
+if handles.FLAGS.f_flag >= 1 % Flour 
     makeActive(handles.log_view);
     makeActive(handles.false_color);
     
@@ -415,14 +475,14 @@ if ~isempty(handles.FLAGS)
                 handles.message.String = 'Error writing clist file';
             end
             dirnum = ll_;
-            dirname_seg = [dirname0,contents_xy(ll_).name,filesep,'seg',filesep];
-            dirname_cell = [dirname0,contents_xy(ll_).name,filesep,'cell',filesep];
-            dirname_xy = [dirname0,contents_xy(ll_).name,filesep];
-            ixy = intGetNum( contents_xy(dirnum).name );
+            dirname_seg = [dirname0,handles.contents_xy(ll_).name,filesep,'seg',filesep];
+            dirname_cell = [dirname0,handles.contents_xy(ll_).name,filesep,'cell',filesep];
+            dirname_xy = [dirname0,handles.contents_xy(ll_).name,filesep];
+            ixy = sscanf( handles.contents_xy(dirnum).name, 'xy%d' );
             header = ['xy',num2str(ixy),': '];
             contents = dir([dirname_seg, '*seg.mat']);
             error_list = [];
-            clist = load([dirname0,contents_xy(ll_).name,filesep,'clist.mat']);
+            clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
             resetFlag = true;
         else
             handles.message.String = 'Incorrect number for xy position';
@@ -472,7 +532,7 @@ if ~isempty(handles.FLAGS)
     c = str2double(handles.find_cell_no.String);
     
     maxIndex = handles.data_c.regs.num_regs;
-    if isfield(handles.data_c.regs, 'ID')
+    if areCellsLoaded(handles)
         maxIndex = max(handles.data_c.regs.ID);
     end
     
@@ -602,8 +662,12 @@ end
 
 function use_seg_files_Callback(hObject, eventdata, handles) % Not working
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.useSegs = handles.use_seg_files.Value;
-    updateImage(hObject, handles)
+    if handles.num_errs > 0
+        handles.FLAGS.useSegs = handles.use_seg_files.Value;
+        updateImage(hObject, handles)
+    else
+        handles.use_seg_files.Value = 1;
+    end
 end
 
 % Gate options
@@ -690,7 +754,7 @@ end
 % Output options
 
 function kymograph_cell_no_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     c = str2double(handles.kymograph_cell_no.String);
     if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID);
         handles.kymograph_cell_no.String = '';
@@ -712,7 +776,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function movie_cell_no_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     c = str2double(handles.movie_cell_no.String);
     if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
         handles.movie_cell_no.String = '';
@@ -789,7 +853,7 @@ end
 
 function consensus_kymograph_Callback(hObject, eventdata, handles)
 global dataImArray
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     if ~exist('dataImArray','var') || isempty(dataImArray)
         fnum = handles.FLAGS.f_flag;
         if fnum == 0
@@ -806,14 +870,14 @@ if ~isempty(handles.FLAGS)
 end
 
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     makeKymoMosaic( handles.dirname_cell, handles.CONST );
 end
 
 function show_consensus_Callback(hObject, eventdata, handles)
 global dataImArray
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     if ~exist('dataImArray','var') || isempty(dataImArray)
         fnum = handles.FLAGS.f_flag;
         if fnum == 0
@@ -863,7 +927,7 @@ if ~isempty(handles.FLAGS)
 end
 
 function tower_cells_Callback(hObject, eventdata, handles) % Not working
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
 end
@@ -879,6 +943,19 @@ value = canUseErr == 1 && FLAGS.useSegs == 0;
 
 function makeActive(button)
 button.ForegroundColor = [0, 0, 0];
+button.Enable = 'on';
+
+function makeActiveInput(input)
+input.ForegroundColor = [0, 0, 0];
+input.Enable = 'on';
 
 function makeInactive(button)
-button.ForegroundColor = [.5, .5, .5];
+button.ForegroundColor = [0, 0, 0];
+button.Enable = 'off';
+
+function makeInactiveInput(input)
+input.ForegroundColor = [.5, .5, .5];
+input.Enable = 'off';
+
+function value = areCellsLoaded(handles)
+value =  isfield(handles.data_c.regs, 'ID');

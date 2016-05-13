@@ -75,7 +75,7 @@ if ~exist( 'fnum', 'var' ) || isempty( fnum )
     fnum = 1;
 end
 
-if exist( 'clist', 'var' )
+if exist( 'clist', 'var' ) && ~isempty( clist )
     clist = gate( clist );
 else
     clist = [];
