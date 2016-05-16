@@ -79,7 +79,7 @@ elseif ~isempty(contents2)
     time = numel(contents2);
     if time > 1
         disp (['continuing from where I stopped - time : ', num2str(time)]);
-        delete([dirname,contents2(end).name])
+        %delete([dirname,contents2(end).name])
         dataLast = load([dirname,contents2(end-1).name]);
         cell_count = max(dataLast.regs.ID);
     end

@@ -105,26 +105,20 @@ for regNum =  1 : data_c.regs.num_regs;
             mother = mapCR;
             
             if debug_flag
-                imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
-                    ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
-                keyboard;
-            end
             
-            totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
-            totAreaR =  data_c.regs.props(mother).Area;
-            AreaChange = (totAreaC-totAreaR)/totAreaC;
+                AreaChange = (totAreaC-totAreaR)/totAreaC;
             divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             
             if divAreaChange
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
-                oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
+                oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH)
                 % or one is small..
                 % r: one has no forward mapping, or both map to the same in forwa
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                     % wrong division merge cells
-                    [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
-                    resetRegions = (resetRegions || mergeReset);
+
+                    [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2, CONST);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 end
@@ -170,8 +164,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % r: one has no forward mapping, or both map to the same in fw
                 if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
-                    [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
-                    resetRegions = (resetRegions || mergeReset);
+                    [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2, CONST);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 end
@@ -297,11 +290,11 @@ for regNum =  1 : data_c.regs.num_regs;
         end
         
     else
-%         if verbose
-%             disp([header, 'ErRes: Frame: ', num2str(time),...
-%                 ', reg: ', num2str(regNum),' already has an ID.']);
-%         end
-%         
+        if verbose
+            disp([header, 'ErRes: Frame: ', num2str(time),...
+                ', reg: ', num2str(regNum),' already has an ID.']);
+        end
+        
         
     end
 end
