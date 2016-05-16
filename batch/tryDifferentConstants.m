@@ -70,7 +70,7 @@ for i = 1:numFlags
     CONST = loadConstantsNN(res, 0);
     CONST.parallel.verbose = 0;
     dataname = 'test';
-    data.SegFile {i} = CONST.seg.segFun( phase, CONST, '', dataname, [] ,0);
+    data.SegFile {i} = CONST.seg.segFun( phase, CONST, '', dataname, []);
     data.res{i} = res;
 end
 figure(5);

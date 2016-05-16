@@ -64,13 +64,24 @@ elseif nind == 1
     else
         [y,xx] = hist( clist.data(:,ind), xx );
     end
+    
     clf;
-    semilogy( xx, y, '.-', 'Color', cc );
+    
+    if (max(y) - min(y)) > 100
+        semilogy( xx, y, '.-', 'Color', cc );
+    else
+        plot( xx, y, '.-', 'Color', cc );
+    end
     
     tmp = ishold;
     hold on;
     
-    semilogy( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );
+    if (max(y) - min(y)) > 100
+        semilogy( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );
+    else
+        plot( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );
+    end
+    
     if ~tmp
         hold off;
     end
