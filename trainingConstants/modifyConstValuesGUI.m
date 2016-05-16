@@ -490,7 +490,7 @@ set(handles.mask_th2,'Max',100,'Min',0)
 set(handles.mask_th2,'SliderStep',[0.1 1])
 
 % maximum width
-set(handles.max_wid,'Max',30,'Min',5)
+set(handles.max_wid,'Max',11,'Min',0.1)
 set(handles.max_wid,'SliderStep',[0.1 1])
 
 getValuesFromConst(handles)

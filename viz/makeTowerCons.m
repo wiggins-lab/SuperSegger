@@ -576,16 +576,4 @@ end
 end
 
 
-function v = row(v)
-% row :  makes v a row vector
-
-ss = size( v );
-if ~any( ss==1 )
-    v = v(:)';
-elseif ss(2) == 1
-    v = v';
-end
-
-end
-
 

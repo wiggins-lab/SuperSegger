@@ -93,7 +93,6 @@ MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
 verbose = CONST.parallel.verbose;
 
-GAUSS_H_SIZE = 11;
 
 if ~exist('header','var')
     header = [];
@@ -127,9 +126,9 @@ phaseNorm(phaseNorm > (mult_max*mean_phase)) = mult_max*mean_phase;
 phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
 
 
-% if the size of the matrix is even, we get a half pixel shift in the
+% if the size of the meditatrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
-f = fspecial('gaussian', GAUSS_H_SIZE, SMOOTH_WIDTH);
+f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phaseNormFilt = imfilter(phaseNorm, f,'replicate');
 
 % creates initial background mask by globally thresholding the band-pass

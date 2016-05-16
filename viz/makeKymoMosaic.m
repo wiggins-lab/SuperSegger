@@ -78,7 +78,7 @@ del = .1;
 ii = 0;
 
 h = waitbar(0, 'Computation' );
-
+cleanup = onCleanup( @()( delete( h ) ) );
 
 for jj = 1:num_list_
     

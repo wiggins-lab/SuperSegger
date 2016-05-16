@@ -1,5 +1,5 @@
 function varargout = trainingGui(varargin)
-% modifyConstValuesGUI : gui to interactively modify parameters in constants. 
+% modifyConstValuesGUI : gui to interactively modify parameters in constants.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Connor Brennan and Stella Styliandou.
@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 10-May-2016 21:25:35
+% Last Modified by GUIDE v2.5 12-May-2016 16:14:33
 
 % Begin initialization code - DO NOT EDIT
 
@@ -102,7 +102,6 @@ varargout{1} = handles.output;
 
 
 
-
 % --- Executes on button press in cut_and_seg.
 function cut_and_seg_Callback(hObject, eventdata, handles)
 % hObject    handle to cut_and_seg (see GCBO)
@@ -113,13 +112,10 @@ global settings;
 
 if handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1) > 500 || handles.viewport_train.YLim(2) - handles.viewport_train.YLim(1) > 500
     answer = questdlg('Your training set is very large (Viewport size). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
-    
     if strcmp(answer, 'No')
         return;
     end
 end
-
-
 
 trainingFrames = dir([settings.imageDirectory, '*c1*.tif']);
 numTrainingFrames = numel(trainingFrames);
@@ -132,8 +128,7 @@ numTrainingFrames = numel(trainingFrames);
 % end
 
 if numTrainingFrames > 50
-    answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
-    
+    answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');    
     if strcmp(answer, 'No')
         return;
     end
@@ -257,6 +252,24 @@ else
     warning(['Plese segment files first']);
 end
 
+
+
+% --- Executes on button press in del_reg.
+function del_reg_Callback(hObject, eventdata, handles)
+% hObject    handle to del_reg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings
+if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+    settings.axisFlag = 6;
+    settings.firstPosition = [];
+    updateUI(handles);
+else
+    warning(['Plese segment files first']);
+end
+
+
+
 % --- Executes on button press in train_segs.
 function train_segs_Callback(hObject, eventdata, handles)
 % hObject    handle to train_segs (see GCBO)
@@ -271,7 +284,7 @@ drawnow;
 saveData_Callback();
 
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
-[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs,Ysegs);
+[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs, Ysegs, 5);
 
 settings.constantModified = 1;
 
@@ -328,6 +341,13 @@ function train_regs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
+if ~settings.hasBadRegions
+    answer = questdlg(['You have not added bad regions. Do you wish to continue?'], 'Continue?', 'Yes', 'No', 'No');
+    if strcmp(answer, 'No')
+        return;
+    end
+end
+
 h = msgbox('Training regions, this will take a bit.' );
 handles.tooltip.String = 'Training regions... Please wait.';
 drawnow;
@@ -338,7 +358,7 @@ saveData_Callback();
 %settings.CONST.regionScoreFun.NUM_INFO = 21;
 
 [Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
-[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs,Yregs);
+[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs, Yregs, 5);
 
 settings.constantModified = 1;
 
@@ -397,14 +417,18 @@ CONST = settings.CONST;
 [~, ~, constantsPath] = getConstantsList();
 [FileName,PathName] = uiputfile('newCONST.mat', 'Save CONST file', [constantsPath, 'newConst']);
 if ~isempty(strfind(FileName, '.'))
-    FileName = FileName(1:(strfind(FileName, '.') - 1))
+    FileName = FileName(1:(max(strfind(FileName, '.')) - 1));
 end
 
 if FileName ~= 0
     save([PathName, FileName, '.mat'],'-STRUCT','CONST');
-end
+    
+    settings.constantModified = 0;
 
-settings.constantModified = 0;
+    if exist('hObject', 'var') && ~isempty(hObject)
+        updateUI(handles);
+    end
+end
 
 
 % --------------------------------------------------------------------
@@ -439,6 +463,7 @@ set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
 set(gca,'xtick',[]);
+handles.currentConstants.String = ['Current: ', settings.nameCONST];
 
 firstFrame = 0;
 if numel(handles.viewport_train.Children) == 0
@@ -462,7 +487,7 @@ if settings.dataSegmented
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
     elseif settings.axisFlag == 3
-        % deleting regions
+        % deleting areas in square
         FLAGS.im_flag = 2;
         
         showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
@@ -479,11 +504,23 @@ if settings.dataSegmented
         % showing phase image
         axes(handles.viewport_train);
         imshow(settings.currentData.phase, []);
-    else settings.axisFlag == 4
+    elseif settings.axisFlag == 5
         % mask image
         backer = ag(settings.currentData.phase);
         imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-        disp('mask');
+    elseif settings.axisFlag == 6
+        % deleting regions
+        backer = ag(settings.currentData.phase);
+        imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        end
+        
+        if numel(settings.firstPosition) > 0
+            hold on;
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+        end
     end
 elseif settings.imagesLoaded
     axes(handles.viewport_train);
@@ -493,7 +530,10 @@ end
 handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
-if settings.axisFlag == 4
+handles.mask_radio.Value = 0;
+if settings.axisFlag == 5
+    handles.mask_radio.Value = 1;
+elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
 elseif settings.axisFlag == 2 || settings.axisFlag == 3
     handles.regions_radio.Value = 1;
@@ -524,16 +564,18 @@ else
     badString = '';
 end
 
-if settings.axisFlag == 4
-    handles.tooltip.String = ['Phase image.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+if settings.axisFlag == 5
+    handles.tooltip.String = ['Mask.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+elseif settings.axisFlag == 4
+    handles.tooltip.String = ['Phase image.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 3
-    handles.tooltip.String = ['Click to the two corners to delete the regions inside a square', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to the two corners to delete the regions inside a square', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 1
-    handles.tooltip.String = ['Click to toggle segments.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to toggle segments.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.axisFlag == 2
-    handles.tooltip.String = ['Click to toggle regions.', badString, ' Max frame: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
+    handles.tooltip.String = ['Click to toggle regions.', badString, ' Num frames: ', num2str(settings.numFrames), ', Test data: ', num2str(numel(settings.loadFiles))];
 elseif settings.imagesLoaded == 1
-    handles.tooltip.String = ['Phase image. Zoom in to the part of the image you want to train on.', badString, ' Max frame: ', num2str(settings.numFrames)];
+    handles.tooltip.String = ['Phase image. Zoom in to the part of the image you want to train on.', badString, ' Num frames: ', num2str(settings.numFrames)];
 elseif settings.axisFlag == 0
     handles.tooltip.String = 'Load a file with images or segmented files.';
 end
@@ -592,35 +634,14 @@ else
 end
 
 if settings.dataSegmented == 0
-    handles.cut_and_seg.Visible = 'on';
+    handles.train_actions.Visible = 'off';
+    handles.seg_actions.Visible = 'on';
     
-    handles.diplay_panel.Visible = 'off';
-    handles.save_panel.Visible = 'off';
-    handles.makeGoodRegions.Visible = 'off';
-    handles.phase.Visible = 'off';
-    handles.toggle_segs.Visible = 'off';
-    handles.toggle_regs.Visible = 'off';
-    handles.del_areas.Visible = 'off';
-    handles.bad_regs.Visible = 'off';
-    handles.train_segs.Visible = 'off';
-    handles.train_regs.Visible = 'off';
-    handles.save.Visible = 'off';
-    handles.saveData.Visible = 'off';
 else
+    handles.train_actions.Visible = 'on';
+    handles.seg_actions.Visible = 'off';
     handles.cut_and_seg.Visible = 'off';
     
-    handles.diplay_panel.Visible = 'on';
-    handles.save_panel.Visible = 'on';
-    handles.makeGoodRegions.Visible = 'on';
-    handles.phase.Visible = 'on';
-    handles.toggle_segs.Visible = 'on';
-    handles.toggle_regs.Visible = 'on';
-    handles.del_areas.Visible = 'on';
-    handles.bad_regs.Visible = 'on';
-    handles.train_segs.Visible = 'on';
-    handles.train_regs.Visible = 'on';
-    handles.save.Visible = 'on';
-    handles.saveData.Visible = 'on';
 end
 
 
@@ -788,6 +809,14 @@ elseif settings.axisFlag == 3
         
         settings.firstPosition = [];
     end
+    
+elseif settings.axisFlag == 6
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       
+        drawnow;        
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, [eventdata.IntersectionPoint(1),eventdata.IntersectionPoint(2)],[]);
+        saveData();    
+    
 end
 
 updateUI(settings.handles);
@@ -834,12 +863,12 @@ end
 
 if settings.constantModified == 1
     answer = questdlg('You have unsaved changes to the constants.', 'Save constants changes?', 'Save', 'Ignore', 'Cancel', 'Save');
-
+    
     if strcmp(answer, 'Save')
         save_Callback();
     elseif strcmp(answer, 'Cancel')
         shouldCancel = 1;
-
+        
         return;
     end
 end
@@ -893,6 +922,10 @@ try
     end
 catch ME
     warning(['Could not back up files: ', ME.message]);
+end
+
+if exist('hObject', 'var') && ~isempty(hObject)
+    updateUI(handles);
 end
 
 
@@ -975,8 +1008,7 @@ if newDir ~= 0
         imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
     end
     
-    setWorkingDirectory([newDir, '/'], 0);
-    
+    setWorkingDirectory([newDir, '/'], 0);   
     updateUI(handles);
 end
 
@@ -1081,13 +1113,13 @@ if get(hObject,'Value')
     handles.phase_radio.Value = 0;
     handles.segs_radio.Value = 0;
     handles.mask_radio.Value = 0;
-
+    
     if settings.segmentsDirty == 1
         settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
         settings.segmentsDirty = 0;
     end
     
-
+    
 end
 updateUI(handles);
 
@@ -1124,9 +1156,42 @@ function mask_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of mask_radio
 global settings
 if get(hObject,'Value')
-    settings.axisFlag = 5;  
+    settings.axisFlag = 5;
     handles.regions_radio.Value = 0;
     handles.segs_radio.Value = 0;
     handles.phase_radio.Value = 0;
 end
 updateUI(handles);
+
+
+% --- Executes on button press in crop.
+function crop_Callback(hObject, eventdata, handles)
+% hObject    handle to crop (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in save_cut.
+function save_cut_Callback(hObject, eventdata, handles)
+% hObject    handle to save_cut (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% hObject    handle to makeData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+
+xSize = handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1);
+ySize = handles.viewport_train.YLim(2) - handles.viewport_train.YLim(1);
+cropX = ceil(handles.viewport_train.XLim(1):handles.viewport_train.XLim(2) - 1);
+cropY = ceil(handles.viewport_train.YLim(1):handles.viewport_train.YLim(2) - 1);
+i = settings.frameNumber;
+filename =[ settings.imageDirectory,filesep,settings.loadFiles(i).name];
+
+tempImage = imread([filename]);
+saveName = [filename];
+imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
+    
+
+

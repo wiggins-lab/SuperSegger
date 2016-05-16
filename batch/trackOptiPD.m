@@ -85,6 +85,7 @@ if ~isempty(contents);
     
     if CONST.parallel.show_status
         h = waitbar(0, 'Moving Files');
+        cleanup = onCleanup( @()( delete( h ) ) );
     else
         h = [];
     end

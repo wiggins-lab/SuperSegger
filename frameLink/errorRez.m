@@ -98,13 +98,13 @@ for regNum =  1 : data_c.regs.num_regs;
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 &&  numel (revMap) == 2
             %% one to one but disagreement
             
-            % red in c maps to blue in r, but blue in r maps to green
-            % in c
             sister1 = regNum;
             sister2 = revMap (revMap~=regNum);
             mother = mapCR;
             
             if debug_flag
+                % red in c maps to blue in r, but blue in r maps to green
+                % in c
                 imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
                     ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
                 keyboard;

@@ -31,6 +31,7 @@ contents=dir([dirname,'*_seg.mat']);
 num_im = length(contents);
 num_files = 3;
 h = waitbar( 0, 'Creating bad region examples for training.' );
+cleanup = onCleanup( @()( delete( h ) ) );
 for i = 1 : num_im % go through all the images
     try
     waitbar(i/num_im,h);
@@ -41,7 +42,7 @@ for i = 1 : num_im % go through all the images
     
     % if there are no regions it makes regions from the segments
     %if ~isfield( data, 'regs' ); - i will just remake them for now!
-    data = intMakeRegs( data, CONST, [],1);
+    %data = intMakeRegs( data, CONST, [],1);
     save(dataname,'-STRUCT','data');
     for j = 1 : num_files
         data_ = intModRegions( data, CONST );
@@ -67,6 +68,12 @@ num_segs = numel(data.segs.score);
 num_mod  = ceil( num_segs*FRACTION_SEG_MOD );
 mod_list = unique(ceil(rand(1,num_mod)*num_segs));
 mod_map = logical(data.mask_cell)*0;
+
+scoreMask = false(size(data.phase));
+for ii = 1:data.regs.num_regs
+    [xx,yy] = getBB( data.regs.props(ii).BoundingBox );
+    scoreMask(yy,xx) = scoreMask(yy,xx) | logical( data.regs.score(ii) & (data.regs.regs_label(yy,xx)==ii) );
+end
 
 
 % find the indices of regions that have bad score
@@ -123,7 +130,37 @@ sqr3 = strel( 'square', 3 );
 mod_map = imdilate( mod_map, sqr3 );
 
 % make new regions using the new cell mask from modified segments
-data = intMakeRegs( data, CONST, mask_bad_regs);
+
+% sets all scores to 1
+ss = size( data.mask_cell );
+NUM_INFO = CONST.regionScoreFun.NUM_INFO;
+data.regs.regs_label = bwlabel( data.mask_cell );
+data.regs.num_regs = max( data.regs.regs_label(:) );
+data.regs.props = regionprops( data.regs.regs_label, ...
+    'BoundingBox','Orientation','Centroid','Area');
+data.regs.score  = ones( data.regs.num_regs, 1 );
+data.regs.scoreRaw = ones( data.regs.num_regs, 1 );
+data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
+
+for ii = 1:data.regs.num_regs
+    
+    [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
+    mask = data.regs.regs_label(yy,xx)==ii;
+    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    
+    testMask = zeros(size(mask));
+    testMask = testMask | (~scoreMask(yy,xx) & (data.regs.regs_label(yy,xx)==ii));
+    if max(any( testMask )) == 1
+        data.regs.score(ii) = 0;
+    else
+        data.regs.score(ii) = 1;
+    end
+    
+end
+
+E = CONST.regionScoreFun.E;
+data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E)';
+
 mod_regs = unique( data.regs.regs_label( logical(mod_map) ) );
 mod_regs = mod_regs(logical(mod_regs));
 % sets scores of all regions which had modified segments to 0

@@ -25,9 +25,39 @@ function data = killRegionsGUI (data, CONST, position1, position2)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-xy = [position1(1:2); position2(1:2)];
 
-if ~isempty(xy) && numel(xy)==4
+
+if ~isempty(position1) && isempty(position2)
+    % get closer region
+    ss = size(data.phase);
+    x = round(position1);
+    tmp = zeros([51,51]);
+    tmp(26,26) = 1;
+    tmp = 8000-double(bwdist(tmp));
+
+    rmin = max([1,x(2)-25]);
+    rmax = min([ss(1),x(2)+25]);
+
+    cmin = max([1,x(1)-25]);
+    cmax = min([ss(2),x(1)+25]);
+
+    rrind = rmin:rmax;
+    ccind = cmin:cmax;
+
+    pointSize = [numel(rrind),numel(ccind)];
+    tmp = tmp(26-x(2)+rrind,26-x(1)+ccind).*data.mask_cell(rrind,ccind);
+    try
+        [~,ind] = max( tmp(:) );
+    catch ME
+        printError(ME);
+    end
+
+    [sub1, sub2] = ind2sub( pointSize, ind );
+    ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+    data = deleteRegions(data,ii);
+    
+elseif ~isempty(position1) && ~isempty(position2)
+    xy = [position1(1:2); position2(1:2)];
     xy = floor(xy);
     xmin = min(xy(:,1));
     xmin = max(xmin,1);
@@ -75,7 +105,7 @@ if ~isempty(xy) && numel(xy)==4
     data.segs.segs_label(mask) = 0;
     data.mask_cell(mask)       = 0;
     data.mask_bg(mask)         = 0;
-end
-
+    
 % update region fields
 data = intMakeRegs( data, CONST, [], [] );
+end

@@ -49,6 +49,7 @@ else
     
     if CONST.parallel.show_status
         h = waitbar( 0, 'Make Neighbor List.');
+        cleanup = onCleanup( @()( delete( h ) ) );
     else
         h = [];
     end

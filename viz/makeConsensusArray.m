@@ -75,7 +75,7 @@ if ~exist( 'fnum', 'var' ) || isempty( fnum )
     fnum = 1;
 end
 
-if exist( 'clist', 'var' )
+if exist( 'clist', 'var' ) && ~isempty( clist )
     clist = gate( clist );
 else
     clist = [];
@@ -89,13 +89,15 @@ if ~isfield(CONST.view, 'falseColorFlag' )
 end
 
 
+
+
 % Get the number of cells in the cell directory
-if ~isfield( CONST, 'view') || CONST.view.showFullCellCycleOnly
-    contents = dir([cellDir,filesep,'Cell*.mat']);
-else
-    contents = dir([cellDir,filesep,'*ell*.mat']);
-end
-numCells = numel(contents);
+cellNames = getCellFiles (cellDir,CONST)
+
+
+
+
+numCells = numel(cellNames);
 
 if numCells == 0
     disp ('No cells found')
@@ -121,9 +123,9 @@ disp( ['Computing consensus array (max cell number ',...
 % ssTot : Keep track of the total size of the tower mosaic.
 
 
-
 % Manage the waitbar
 h = waitbar(0, 'Computation' );
+cleanup = onCleanup( @()( delete( h ) ) );
 
 % initialize the sum variables
 dataImArray = intInit( numCells );
@@ -131,7 +133,7 @@ minimumLifetime = 4;
 imArray = cell(1,numCells);
 kk = 0;
 
-firstCell = load([cellDir,contents(1).name]);
+firstCell = load([cellDir,cellNames{1}]);
 if ~isfield(firstCell.CellA{1},'fluor1')
     disp ('no fluorescence found - exiting')
     return;
@@ -144,7 +146,7 @@ for ii = 1:numCells
     waitbar(ii/numCells,h);
     
     % load data and get file number
-    cell_name = contents(ii).name;
+    cell_name = cellNames{ii};
     [data, dataImArray.cellArrayNum{ii}] = intLoader(cellDir, cell_name);
     data.CellA = data.CellA(1:skip:end);
     cur_cell_num = str2double(cell_name(isnum(cell_name)));

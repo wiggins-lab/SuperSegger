@@ -134,6 +134,7 @@ ERR_LIM = 1000000;
 
 if SHOW_FLAG
     h = waitbar(0,'aligning frames: ');
+    cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 verbose = CONST.parallel.verbose;

@@ -9,12 +9,12 @@ function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag, clist
 % OUTPUT :
 %       imTot : final image
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
 if ~isfield( CONST.view, 'saveFiles' )
-     CONST.view.saveFiles = false;
+    CONST.view.saveFiles = false;
 end
 
 
@@ -48,6 +48,7 @@ ssTot = [0,0];
 
 if disp_flag
     h = waitbar(0, 'Computation' );
+    cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 for ii = 1:numCells
@@ -73,13 +74,13 @@ for ii = 1:numCells
     tmp_im = makeFrameMosaic(data,CONST,1,false, skip );
     
     if isfield( CONST.view, 'saveFiles' ) && CONST.view.saveFiles
-        loadname(end-2:end)='png'; 
+        loadname(end-2:end)='png';
         imwrite( tmp_im, loadname, 'png' );
     else
         cellArray{ii} = tmp_im;
     end
     
-    ss = size(cellArray{ii});    
+    ss = size(cellArray{ii});
     ssTot = [ max([ssTot(1),ss(1)]), ssTot(2)+ss(2) ];
 end
 
@@ -95,13 +96,13 @@ if ~CONST.view.saveFiles
             CONST.view.background = [0,0,0];
         end
         
-        tmptmp = zeros( [ssTot(1), ssTot(2)] );       
+        tmptmp = zeros( [ssTot(1), ssTot(2)] );
         imTot = uint8( cat( 3, tmptmp + CONST.view.background(1),...
             tmptmp + CONST.view.background(2),...
             tmptmp + CONST.view.background(3)));
         
     else
-        del = 0.0;        
+        del = 0.0;
         limTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
     end
     
@@ -111,7 +112,7 @@ if ~CONST.view.saveFiles
     for ii = 1:numCells
         
         ss = size(cellArray{ii});
-        imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};        
+        imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
         cellArrayPos{ii} = colPos + ss(2)/2;
         colPos = colPos + ss(2);
         
@@ -128,12 +129,8 @@ if ~CONST.view.saveFiles
     
     
     for ii = 1:numCells
-        text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, 'HorizontalAlignment','center' );        
+        text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, 'HorizontalAlignment','center' );
     end
 end
 
 end
-
-
-
-

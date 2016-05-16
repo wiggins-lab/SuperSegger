@@ -82,7 +82,8 @@ if ~exist([dirname_xy,'seg_full'],'dir')
 end
 
 if CONST.parallel.show_status
-    h = waitbar( 0, ['Merging Skipped frames xy: 0/',num2str(num_t)] );
+    h = waitbar( 0, ['Merging Skipped frames xy: 0/',num2str(num_t)]);
+    cleanup = onCleanup( @()( delete( h ) ) );
 else
     h=[];
 end
