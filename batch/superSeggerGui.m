@@ -42,7 +42,7 @@ function superSeggerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 handles.directory.String = pwd;
 load_listbox(handles)
-set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.35 0.7])
+set(handles.figure1, 'units', 'normalized', 'position', [0.25 0.2 0.38 0.8])
 guidata(hObject, handles);
 
 
@@ -126,7 +126,6 @@ CONST = loadConstantsNN (res,parallel);
 CONST.trackOpti.NEIGHBOR_FLAG = handles.neighbor_flag.Value;
 CONST.trackLoci.fluorFlag = handles.fluor_flag.Value;
 CONST.parallel.verbose = handles.verbose.Value;
-CONST.trackOpti.pole_flag = handles.pole_snapshot.Value;
 CONST.imAlign.AlignChannel = str2double(handles.alignChan.String);
 CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);

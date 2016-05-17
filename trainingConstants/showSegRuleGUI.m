@@ -122,17 +122,11 @@ if im_flag == 1
         phaseBackag = uint8(ag(~data.mask_cell));
     end
     
-    imshow( cat(3, 0.3*phaseBackag + segs3nag + min(255, 0.5*uint8(segsBadag+segsBadFailag) + uint8(segsGoodFailag)), ...
-        0.3*phaseBackag + segs3nag + uint8(segsGoodag+segsGoodFailag), ...
-        0.3*phaseBackag + segs3nag + uint8(segsBadFailag)) , 'InitialMagnification', 'fit');
     
-%     imshow( uint8(cat(3,...
-%             0.1*phaseBackag + 0.3*segs3nag +0.6*(segsGoodag + segsGoodFailag), ...
-%             0.15*phaseBackag + 0.1*segs3nag + 0.4*(segsGoodFailag+segsBadFailag), ...
-%             0.2*phaseBackag + 0.4*(segsBadag + segsBadFailag))), ...
-%             'InitialMagnification', 'fit','Border','tight');
-    
-    
+    imshow( cat(3, 0.2*phaseBackag + 0.3*segs3nag + min(255, uint8(0.8*segsBadag+segsBadFailag)), ...
+        0.2*phaseBackag + 0.3*segs3nag + uint8(0.8*segsGoodag+segsGoodFailag+0.5*segsBadFailag), ...
+        0.2*phaseBackag + 0.3*segs3nag + uint8(segsGoodFailag)) , 'InitialMagnification', 'fit');
+
     flagger = and( data.segs.Include, ~isnan(data.segs.score) );
     scoreRawTmp = data.segs.scoreRaw(flagger);
     scoreTmp    = data.segs.score(flagger);
@@ -183,12 +177,11 @@ elseif im_flag == 2 % region view
     regs_bad_agree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw > 0)))));
     regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw > 0)))));
     
-    imshow( cat(3, 0.5*backer + uint8(regs_bad_agree+regs_bad_disagree+regs_good_disagree), ...
-        0.5*backer + 0.8*uint8(regs_good_agree+regs_good_disagree), ...
-        0.5*backer + uint8(regs_bad_disagree)) , 'InitialMagnification', 'fit');
+    imshow(cat(3, 0.5*backer + uint8(0.5*regs_bad_agree+regs_bad_disagree), ...
+        0.5*backer + uint8(0.5*regs_good_agree+regs_good_disagree+0.4*regs_bad_disagree), ...
+        0.5*backer + 0.6*uint8(regs_good_disagree)) , 'InitialMagnification', 'fit');
     else
-       % imshow(label2rgb(data.regs.regs_label))
-         
+     
         imshow( cat(3, 0.8*backer + ag(data.mask_cell), ...
         0.8*backer, ...
         0.8*backer) , 'InitialMagnification', 'fit');
@@ -216,7 +209,6 @@ elseif im_flag == 2 % region view
         for ii = 1:num_regs
             r = data.regs.props(ii).Centroid;
             text( r(1), r(2), num2str( ii ), 'Color', 'w' );
-            %text( r(1), r(2), num2str( data.regs.props(ii).Orientation ), 'Color', 'w' );
         end
     end
     
@@ -247,8 +239,5 @@ outline = ag(outline-cell_mask);
     drawnow;
 end
 
-% if ~all(axis_current == [ 0     1     0     1])
-%     axis(axis_current);
-% end
 
 end

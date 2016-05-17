@@ -1,5 +1,5 @@
 function varargout = modifyConstValuesGUI(varargin)
-% modifyConstValuesGUI : gui to interactively modify parameters in constants. 
+% modifyConstValuesGUI : gui to interactively modify parameters in constants.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Stella Styliandou.
@@ -19,7 +19,7 @@ function varargout = modifyConstValuesGUI(varargin)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-% Last Modified by GUIDE v2.5 10-May-2016 15:45:31
+% Last Modified by GUIDE v2.5 17-May-2016 11:22:51
 
 % Begin initialization code - DO NOT EDIT
 
@@ -103,7 +103,7 @@ function load_listbox(handles)
 handles.file_names = sorted_names;
 handles.sorted_index = sorted_index;
 set(handles.constants_list,'String',handles.file_names,...
-	'Value',1)
+    'Value',1)
 
 
 
@@ -129,10 +129,26 @@ handles.mask_th1.Value = CONST.superSeggerOpti.THRESH1 ;
 handles.magic_thresh.Value = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 handles.magic_radius.Value = CONST.superSeggerOpti.MAGIC_RADIUS ;
 handles.maxLengRegOpti.String = CONST.regionOpti.MIN_LENGTH ;
+handles.gaus_wid.Value = CONST.superSeggerOpti.SMOOTH_WIDTH;
 
 update_text_values (handles)
 settings.CONST = CONST;
 
+
+function putValuesInConstants(handles)
+global settings
+resValue = get(handles.constants_list,'Value');
+res = handles.constants_list.String{resValue};
+CONST = loadConstantsNN (res,0,0);
+CONST.superSeggerOpti.CUT_INT = handles.cut_intensity.Value;
+CONST.superSeggerOpti.MAX_WIDTH = handles.max_wid.Value;
+CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
+CONST.superSeggerOpti.THRESH1 = handles.mask_th1.Value;
+CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
+CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
+CONST.regionOpti.MIN_LENGTH = handles.maxLengRegOpti.Value;
+CONST.superSeggerOpti.SMOOTH_WIDTH = handles.gaus_wid.Value;
+settings.CONST = CONST;
 
 % --- Executes during object creation, after setting all properties.
 function constants_list_CreateFcn(hObject, eventdata, handles)
@@ -174,16 +190,9 @@ function save_Callback(hObject, eventdata, handles)
 % hObject    handle to save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-resValue = get(handles.constants_list,'Value');
-res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
-CONST.superSeggerOpti.CUT_INT = handles.cut_intensity.Value;
-CONST.superSeggerOpti.MAX_WIDTH = handles.max_wid.Value;
-CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
-CONST.superSeggerOpti.THRESH1 = handles.mask_th1.Value;
-CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
-CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
-CONST.regionOpti.MIN_LENGTH = handles.maxLengRegOpti.Value;
+global settings;
+putValuesInConstants(handles)
+CONST = settings.CONST;
 [FileName,PathName,~] = uiputfile('newConstantsName.mat');
 if FileName~=0
     save([PathName,FileName], '-struct', 'CONST');
@@ -204,10 +213,12 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [imageName,directoryName , ~] = uigetfile('*.tif', 'Pick an image file');
-handles.directory.String = [directoryName,filesep,imageName];
-settings.phaseImage = imread(handles.directory.String);
-axes(handles.viewport_modify);
-imshow(settings.phaseImage,[]);
+if imageName~=0
+    handles.directory.String = [directoryName,filesep,imageName];
+    settings.phaseImage = imread(handles.directory.String);
+    axes(handles.viewport_modify);
+    imshow(settings.phaseImage,[]);
+end
 
 
 function updateUI(handles)
@@ -219,13 +230,13 @@ if ~isempty(settings.data)
         axes(handles.viewport_modify);
         imshow(settings.data.mask_bg,[])
     elseif handles.display_flag == 1
-         axes(handles.viewport_modify);
+        axes(handles.viewport_modify);
         imshow(settings.data.phase,[])
     end
 end
 if numel(handles.viewport_modify.Children) > 0
     set(handles.viewport_modify.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-hold on;
+    hold on;
 end
 % --- Executes on slider movement.
 function slider3_Callback(hObject, eventdata, handles)
@@ -326,13 +337,14 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 function update_text_values (handles)
-
 handles.magic_val.String = num2str(handles.magic_thresh.Value);
 handles.magic_rad_text.String = num2str(handles.magic_radius.Value);
 handles.cut_int_text.String = num2str(handles.cut_intensity.Value);
 handles.mask_th1_text.String = num2str(handles.mask_th1.Value);
 handles.mask_th2_text.String = num2str(handles.mask_th2.Value);
 handles.max_wid_text.String = num2str(handles.max_wid.Value);
+handles.gaus_wid_text.String = num2str(handles.gaus_wid.Value);
+
 
 
 % --- Executes on slider movement.
@@ -473,13 +485,18 @@ set(handles.magic_thresh,'Max',30,'Min',0)
 set(handles.magic_thresh,'SliderStep',[0.1 1])
 
 % magic radius
-set(handles.magic_radius,'Max',50,'Min',1)
+set(handles.magic_radius,'Max',15,'Min',0.1)
 set(handles.magic_radius,'SliderStep',[0.1 1])
 
 
 % cut_intensity
 set(handles.cut_intensity,'Max',150,'Min',10)
 set(handles.cut_intensity,'SliderStep',[0.1 1])
+
+
+% gaussian smooth/blur width
+set(handles.gaus_wid,'Max',5,'Min',0.01)
+set(handles.gaus_wid,'SliderStep',[0.1 1])
 
 % mask_th1
 set(handles.mask_th1,'Max',100,'Min',10)
@@ -490,7 +507,7 @@ set(handles.mask_th2,'Max',100,'Min',0)
 set(handles.mask_th2,'SliderStep',[0.1 1])
 
 % maximum width
-set(handles.max_wid,'Max',11,'Min',0.1)
+set(handles.max_wid,'Max',20,'Min',5)
 set(handles.max_wid,'SliderStep',[0.1 1])
 
 getValuesFromConst(handles)
@@ -503,29 +520,20 @@ function run_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global settings;
-resValue = get(handles.constants_list,'Value');
-res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
-CONST.superSeggerOpti.CUT_INT = handles.cut_intensity.Value;
-CONST.superSeggerOpti.MAX_WIDTH = handles.max_wid.Value;
-CONST.superSeggerOpti.THRESH2 = handles.mask_th2.Value;
-CONST.superSeggerOpti.THRESH1 = handles.mask_th1.Value;
-CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
-CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
-settings.CONST = CONST;
-
+putValuesInConstants(handles)
+CONST = settings.CONST;
 imageName = handles.directory.String;
 if numel(imageName)<3 || ~strcmp(imageName(end-3:end), '.tif')
     image_folder_ClickedCallback([],[],handles);
 end
 phaseIm = imread(handles.directory.String);
 
-  set(gcf,'Pointer','watch');
+set(gcf,'Pointer','watch');
 settings.data = superSeggerOpti(phaseIm,[],0,CONST);
 
 guidata(hObject, handles);
 updateUI(handles);
-  set(gcf,'Pointer','arrow');
+set(gcf,'Pointer','arrow');
 
 
 
@@ -635,7 +643,7 @@ message = ({'SuperSeggerOpti - Modifying Constants Module'
     '   '
     'Mask thresh2: intensity threshold used for background mask to separate regions between cell'
     '   '
-    'Max width: Width threshold for the iterative segment refinement.More segments are added to the regions whose short axis is greater than this number. All other masked regions are assumed to be correctly defined as a cell.'
+    'Max width: Width threshold for the iterative segment refinement. More segments are added to the regions whose short axis is greater than this number. All other masked regions are assumed to be correctly defined as a cell.'
     '   '
     'Threshold: Intensities below this are set to 0, so that intensity differences within a cell region are minimized.'
     '   '
@@ -645,8 +653,6 @@ message = ({'SuperSeggerOpti - Modifying Constants Module'
     ' '
     
     'Min length region optimization : Cells with length smaller than this are considered for further optimization'
-    '   '
-    'Max width region optimization : Cells with width larger than this are considered for further optimization'
     '   '
     });
 
@@ -696,3 +702,25 @@ end
 guidata(hObject, handles);
 updateUI(handles);
 % Hint: get(hObject,'Value') returns toggle state of seg_radio
+
+
+% --- Executes on slider movement.
+function gaus_wid_Callback(hObject, eventdata, handles)
+% hObject    handle to gaus_wid (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function gaus_wid_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gaus_wid (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end

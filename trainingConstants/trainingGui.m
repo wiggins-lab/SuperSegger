@@ -732,6 +732,10 @@ if exist(settings.loadDirectory, 'dir')
         settings.hasBadRegions = 1;
     end
     
+    if isempty(settings.CONST)
+        loadConstants_Callback([], [], settings.handles)
+    end
+    
     %Make save folder
     try
         settings.saveFolder = [settings.loadDirectory(1:end-1), '_tmp/'];
@@ -757,18 +761,6 @@ if isvalid(settings.handles.viewport_train)
 end
 
 
-
-%Make backup folder
-% try
-%     backupFolder = [settings.loadDirectory(1:end-1), '_old/'];
-%     if ~exist(backupFolder, 'dir')
-%         mkdir(backupFolder);
-%     end
-%
-%     copyfile(settings.loadDirectory, backupFolder)
-% catch ME
-%     warning(['Could not back up files: ', ME.message]);
-% end
 
 
 
@@ -799,14 +791,11 @@ elseif settings.axisFlag == 3
     if numel(settings.firstPosition) == 0
         settings.firstPosition = eventdata.IntersectionPoint;
     else
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)
-        
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
         drawnow;
-        
         addUndo();
         settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
-        saveData();
-        
+        saveData();        
         settings.firstPosition = [];
     end
     
@@ -815,8 +804,7 @@ elseif settings.axisFlag == 6
         drawnow;        
         addUndo();
         settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, [eventdata.IntersectionPoint(1),eventdata.IntersectionPoint(2)],[]);
-        saveData();    
-    
+        saveData();      
 end
 
 updateUI(settings.handles);
@@ -1091,8 +1079,7 @@ function phase_radio_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of phase_radio
 global settings
 if get(hObject,'Value')
-    settings.axisFlag = 4;
-    
+    settings.axisFlag = 4;    
     handles.regions_radio.Value = 0;
     handles.segs_radio.Value = 0;
     handles.mask_radio.Value = 0;
