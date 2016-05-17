@@ -268,7 +268,7 @@ end
 % messages
 handles.message.String = '';
 if handles.FLAGS.p_flag
-    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
+    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |']
 end
 if handles.FLAGS.P_flag
     handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |']
@@ -796,17 +796,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function no_columns_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
-    c = round(str2double(handles.no_columns.String));
-    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-        handles.no_columns.String = '';
-    else
-        handles.no_columns.String = num2str(c);
-    end
-    if ~isempty(handles.tower_cell_no.String)
-        tower_cell_no_Callback(hObject, eventdata, handles);
-    end
-end
 
 function no_columns_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -819,13 +808,14 @@ if ~isempty(handles.FLAGS)
     if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
         handles.tower_cell_no.String = '';
     else
+        ll_ = c;
+        xdim__ = [];
         handles.tower_cell_no.String = num2str(c);
-        xdim__ = str2double(handles.no_columns.String);
         padStr = getPadSize( handles.dirname_cell, handles );
         if ~isempty( padStr )
             data_cell = [];
-            filename_cell_C = [handles.dirname_cell,'Cell',num2str(c,padStr),'.mat'];
-            filename_cell_c = [handles.dirname_cell,'cell',num2str(c,padStr),'.mat'];
+            filename_cell_C = [handles.dirname_cell,'Cell',num2str(ll_,padStr),'.mat'];
+            filename_cell_c = [handles.dirname_cell,'cell',num2str(ll_,padStr),'.mat'];
             if exist(filename_cell_C, 'file' )
                 filename_cell = filename_cell_C;
             elseif exist(filename_cell_c, 'file' )
