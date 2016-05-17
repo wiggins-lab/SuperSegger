@@ -87,7 +87,8 @@ end
 
 
 %resetRegions  = 1;
-
+ignoreError = 0;
+previousMasks ={};
 while time <= numIm
     
     if (time == 1)
@@ -121,11 +122,17 @@ while time <= numIm
     [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
     [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
     
-    
-    
+    for x = 1 : numel(previousMasks)
+     maskDif = xor(data_c.mask_cell,previousMasks{x});
+     if all(maskDif==0)
+         ignoreError = 1;
+     end
+    end
+
+    previousMasks  {end+1} = data_c.mask_cell;
     
     % error resolution and id assignment
-    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, debug_flag);
+    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
     
     
     if resetRegions
@@ -136,6 +143,8 @@ while time <= numIm
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
     else
         time = time + 1;
+        previousMasks = {};
+        ignoreError = 0;
     end
     
     if ~isempty(data_r)

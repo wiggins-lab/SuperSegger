@@ -1,5 +1,5 @@
 function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
-    data_c, data_r, data_f, CONST, cell_count, header, debug_flag)
+    data_c, data_r, data_f, CONST, cell_count, header, ignoreError, debug_flag)
 % errorRez : links cells from the frame before to the current and attempts to
 % resolve segmentation errors if the linking is inconsistent.
 %
@@ -41,7 +41,10 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 
 global SCORE_LIMIT_MOTHER
 global SCORE_LIMIT_DAUGHTER
+global REMOVE_STRAY
+global header_string
 
+header_string = header;
 verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
@@ -96,92 +99,74 @@ for regNum =  1 : data_c.regs.num_regs;
             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 1 &&  numel (revMap) == 2
-            %% one to one but disagreement
+            %% regNum maps to mapCR, mapCR maps to two in current, but mapCR maps to one otherwise, but disagreement
             
-            % red in c maps to blue in r, but blue in r maps to green
-            % in c
             sister1 = regNum;
             sister2 = revMap (revMap~=regNum);
             mother = mapCR;
             
             if debug_flag
-            
-                AreaChange = (totAreaC-totAreaR)/totAreaC;
-            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
-            
-            if divAreaChange
-                haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
-                matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
-                oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH)
-                % or one is small..
-                % r: one has no forward mapping, or both map to the same in forwa
-                if ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
-                    % wrong division merge cells
-
-                    [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2, CONST);
-                else
-                    [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                end
-            else
-                
-                
-                % map to best, remove mapping from second
-                sisters = [sister1,sister2];
-                [~,minInd] = min ([data_c.regs.dA.r(sisters)]);
-                keeper = sisters(minInd);
-                remove = sisters(sisters~=keeper);
-                [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
-                
-                
-
-                data_c.regs.revmap.r{mapCR} = keeper;
-                
-                data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-                    ', reg: ', num2str(remove),' was not the best match for ', num2str(mother),'.']);
-                if verbose
-                    disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
-                end
-                
-                data_c.regs.error.r(remove) = 1;
-                [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
-                % make it stray..
-                
+                % red in c maps to blue in r, blue in r maps to green in c
+                imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
+                    ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
+                keyboard;
             end
             
+            totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
+            totAreaR =  data_c.regs.props(mother).Area;
+            AreaChange = (totAreaC-totAreaR)/totAreaC;
+            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
+            haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
+            matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
+            oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
+            if divAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
+                % r: one has no forward mapping, or both map to the same in fw, or one small               
+                % wrong division merge cells
+                [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
+                resetRegions = (resetRegions || mergeReset);
+            elseif divAreaChange
+                [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
+            else               
+                % map to best, remove mapping from second
+                 [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+            end
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 2
             % the 1 in reverse maps to two in current : possible splitting event
             mother = mapCR;
+            sister1 = regNum;
             mapRC = data_r.regs.map.f{mother};
-            otherSister = mapRC (mapRC~=regNum);
+            sister2 = mapRC (mapRC~=regNum);
+            sister2Mapping = data_c.regs.map.r{sister2};
             
-            if numel(otherSister) == 1 && any(mapRC==regNum) && data_c.regs.map.r{otherSister} == mother
-                sister1 = regNum;
-                sister2 = mapRC(mapRC~=sister1);
+            if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(data_c.regs.map.r{sister2}) && data_c.regs.map.r{sister2} == mother
+                
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
                 
                 % r: one has no forward mapping, or both map to the same in fw
-                if ~isempty(data_f) && (haveNoMatch || matchToTheSame)
+                if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
-                    [data_c,resetRegions] = merge2Regions (data_c, sister1, sister2, CONST);
+                    if ~ignoreError
+                        [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
+                        resetRegions = (resetRegions || mergeReset);
+                    else
+                        [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+                    end
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 end
-            elseif numel(otherSister) == 1 && any(mapRC==regNum) && data_c.regs.map.r{otherSister} ~= mother
+            elseif numel(sister2) == 1 && any(mapRC==regNum) && data_c.regs.map.r{sister2} ~= mother
                 % map the one-to-one to mother
-                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
                 
             elseif  ~any(mapRC==regNum)
                 % ERROR NOT FIXED :  mapCR maps to mother. but mother maps to
                 % two other cells..
-                
                 % OTHER POSSIBLE RESOLUTIONS.. :
                 % 1 : merging missing, cell divided but piece fell out - check
                 % if all three should be mapped
                 % 2 : get the best two couples of the three
-                % other?
-                
                 
                 % force mapping
                 sister1 = regNum;
@@ -206,7 +191,7 @@ for regNum =  1 : data_c.regs.num_regs;
                     keyboard;
                 end
                 
-               
+                
             end
         elseif numel(mapCR) == 2
             % 1 in current maps to two in reverse
@@ -220,13 +205,14 @@ for regNum =  1 : data_c.regs.num_regs;
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==mapCR(1)) + (data_r.regs.regs_label==mapCR(2)))));
-                 keyboard;
+                keyboard;
             end
             
-            success = false;
             
             if twoInRMapToCOnly
                 [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,mapCR,CONST);
+            else
+                success = false;
             end
             
             if success % segment found
@@ -241,39 +227,12 @@ for regNum =  1 : data_c.regs.num_regs;
                     imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
                         ag(data_r.regs.regs_label == mapCR(1)),...
                         ag(data_r.regs.regs_label == mapCR(2))));
-                     keyboard;
+                    keyboard;
                 end
                 resetRegions = true;
             else
                 % ERROR NOT FIXED : link to the one with the best score
-                cost1 = data_c.regs.cost.r(regNum,mapCR(1));
-                cost2 = data_c.regs.cost.r(regNum,mapCR(2));
-                
-                
-                if cost1<cost2 || isnan(cost2)
-                    data_c.regs.error.r(regNum) = 2;
-                    errorStat = 1;
-                    data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                        ', reg: ', num2str(regNum),'. Map to minimum cost'];
-                    
-                    if verbose
-                        disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-                    end
-                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, errorStat);
-                    
-                else
-                    errorStat = 1;
-                    data_c.regs.error.r(regNum) = 2;
-                    data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                        ', reg: ', num2str(regNum),'. Map to minimum cost'];
-                    
-                    if verbose
-                        disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-                    end
-                    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
-                    
-                end
-                
+                [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, mapCR, time, verbose,header)
             end
         else
             data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
@@ -290,11 +249,11 @@ for regNum =  1 : data_c.regs.num_regs;
         end
         
     else
-        if verbose
-            disp([header, 'ErRes: Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),' already has an ID.']);
-        end
-        
+        %         if verbose
+        %             disp([header, 'ErRes: Frame: ', num2str(time),...
+        %                 ', reg: ', num2str(regNum),' already has an ID.']);
+        %         end
+        %
         
     end
 end
@@ -303,6 +262,7 @@ end
 
 
 function intDisplay (data_c,regC,data_f,regF)
+% intDisplay : displays linking
 % reg : maskF
 % green : maskC
 % blue : all cell masks  in c
@@ -392,4 +352,59 @@ end
 
 function result = hasNoFwMapping (data_c,regNum)
 result = isempty(data_c.regs.map.f{regNum});
+end
+
+
+function [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, mapCR, time, verbose,header)
+% maps to best from two forward
+
+cost1 = data_c.regs.cost.r(regNum,mapCR(1));
+cost2 = data_c.regs.cost.r(regNum,mapCR(2));
+
+if cost1<cost2 || isnan(cost2)
+    data_c.regs.error.r(regNum) = 2;
+    errorStat = 1;
+    data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+        ', reg: ', num2str(regNum),'. Map to minimum cost'];
+    
+    if verbose
+        disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+    end
+    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(1), time, errorStat);
+    
+else
+    errorStat = 1;
+    data_c.regs.error.r(regNum) = 2;
+    data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+        ', reg: ', num2str(regNum),'. Map to minimum cost'];
+    
+    if verbose
+        disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+    end
+    [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
+    
+end
+end
+
+
+function [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
+% maps to best from two forward
+global REMOVE_STRAY
+[~,minInd] = min ([data_c.regs.dA.r(mapRC)]);
+keeper = mapRC(minInd);
+remove = mapRC(mapRC~=keeper);
+[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
+data_c.regs.revmap.r{mapCR} = keeper;
+data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+    ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),'.']);
+if verbose
+    disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
+end
+
+data_c.regs.error.r(remove) = 1;
+if ~REMOVE_STRAY
+[data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
+end
+% make it stray..
+
 end

@@ -268,7 +268,7 @@ end
 % messages
 handles.message.String = '';
 if handles.FLAGS.p_flag
-    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |']
+    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
 end
 if handles.FLAGS.P_flag
     handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |']
