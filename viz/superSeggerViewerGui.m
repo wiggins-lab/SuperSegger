@@ -405,11 +405,13 @@ end
 
 function go_to_frame_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    c = str2double(handles.go_to_frame_no.String);
+    c = round(str2double(handles.go_to_frame_no.String));
     if c > handles.num_im
         handles.go_to_frame_no.String = num2str(handles.num_im);
     elseif isnan(c) || c < 1;
         handles.go_to_frame_no.String = '1';
+    else
+        handles.go_to_frame_no.String = num2str(c);
     end
     updateImage(hObject, handles)
 end
@@ -440,7 +442,8 @@ if ~isempty(handles.FLAGS)
 end
 
 function max_cell_no_Callback(hObject, eventdata, handles)
-handles.CONST.view.maxNumCell = str2double(handles.max_cell_no.String);
+handles.CONST.view.maxNumCell = round(str2double(handles.max_cell_no.String));
+handles.max_cell_no.String = num2str(round(str2double(handles.max_cell_no.String)));
 updateImage(hObject, handles);
 
 function max_cell_no_CreateFcn(hObject, eventdata, handles)
@@ -450,9 +453,10 @@ end
 
 function switch_xy_directory_Callback(hObject, eventdata, handles) % Not tested
 if ~isempty(handles.FLAGS)
-    ll_ = str2double(handles.switch_xy_directory.String);
+    ll_ = round(str2double(handles.switch_xy_directory.String));
     dirname0 = handles.dirname0;
     if isnumeric(ll_)
+        handles.switch_xy_directory.String = num2str(ll_);
         if ~isempty(ll_) && (ll_ >= 1) && (ll_ <= handles.num_xy)
             try
                 save( [dirname0,contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
@@ -495,11 +499,13 @@ if ~isempty(handles.FLAGS)
             break
         end
     end
-    c = str2double(handles.channel.String);
+    c = round(str2double(handles.channel.String));
     if isnan(c) || c < 0 || c > f
         handles.channel.String = '0';
+    else
+        handles.channel.String = num2str(c);
     end
-    handles.FLAGS.f_flag = str2double(handles.channel.String);
+    handles.FLAGS.f_flag = c;
     updateImage(hObject, handles)
 end
 
@@ -515,16 +521,15 @@ end
 
 function find_cell_no(handles)
 if ~isempty(handles.FLAGS)
-    c = str2double(handles.find_cell_no.String);
-    
+    c = round(str2double(handles.find_cell_no.String));
     maxIndex = handles.data_c.regs.num_regs;
     if areCellsLoaded(handles)
         maxIndex = max(handles.data_c.regs.ID);
     end
-    
     if isnan(c) || c < 1 || c >= maxIndex
         handles.find_cell_no.String = '';
     else
+        handles.find_cell_no.String = num2str(c);
         if handles.FLAGS.cell_flag && shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
             regnum = find(handles.data_c.regs.ID == c);
             if ~isempty(regnum)
@@ -741,10 +746,11 @@ end
 
 function kymograph_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    c = str2double(handles.kymograph_cell_no.String);
+    c = round(str2double(handles.kymograph_cell_no.String));
     if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID);
         handles.kymograph_cell_no.String = '';
     else
+        handles.kymograph_cell_no.String = num2str(c);
         data_cell = loadCellData(c, handles.dirname_cell, handles);
         if ~isempty( data_cell )
             figure(2);
@@ -763,10 +769,11 @@ end
 
 function movie_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    c = str2double(handles.movie_cell_no.String);
+    c = round(str2double(handles.movie_cell_no.String));
     if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
         handles.movie_cell_no.String = '';
     else
+        handles.movie_cell_no.String = num2str(c);
         [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
         if ~isempty(data_cell)
             mov = makeCellMovie(data_cell);
