@@ -795,24 +795,37 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function tower_cell_no_Callback(hObject, eventdata, handles) % Not working
+function no_columns_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    working = false;
-    c = handles.tower_cell_no.String;
-    if working == true && ~isempty(c)
-        comma_pos = strfind(c, ',');
-        if isempty(comma_pos)
-            ll_ = floor(str2double(c(1:end)));
-            xdim__ = [];
-        else
-            ll_ = floor(str2double(c(1:comma_pos(1))));
-            xdim__ = floor(str2double(c(comma_pos(1):end)));
-        end
+    c = round(str2double(handles.no_columns.String));
+    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+        handles.no_columns.String = '';
+    else
+        handles.no_columns.String = num2str(c);
+    end
+    if ~isempty(handles.tower_cell_no.String)
+        tower_cell_no_Callback(hObject, eventdata, handles);
+    end
+end
+
+function no_columns_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function tower_cell_no_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    c = round(str2double(handles.tower_cell_no.String));
+    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+        handles.tower_cell_no.String = '';
+    else
+        handles.tower_cell_no.String = num2str(c);
+        xdim__ = str2double(handles.no_columns.String);
         padStr = getPadSize( handles.dirname_cell, handles );
         if ~isempty( padStr )
             data_cell = [];
-            filename_cell_C = [handles.dirname_cell,'Cell',num2str(ll_,padStr),'.mat'];
-            filename_cell_c = [handles.dirname_cell,'cell',num2str(ll_,padStr),'.mat'];
+            filename_cell_C = [handles.dirname_cell,'Cell',num2str(c,padStr),'.mat'];
+            filename_cell_c = [handles.dirname_cell,'cell',num2str(c,padStr),'.mat'];
             if exist(filename_cell_C, 'file' )
                 filename_cell = filename_cell_C;
             elseif exist(filename_cell_c, 'file' )
@@ -919,7 +932,7 @@ if ~isempty(handles.FLAGS)
     end
 end
 
-function tower_cells_Callback(hObject, eventdata, handles) % Not working
+function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
