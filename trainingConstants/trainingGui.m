@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 12-May-2016 16:14:33
+% Last Modified by GUIDE v2.5 18-May-2016 13:00:49
 
 % Begin initialization code - DO NOT EDIT
 
@@ -1179,6 +1179,11 @@ filename =[ settings.imageDirectory,filesep,settings.loadFiles(i).name];
 tempImage = imread([filename]);
 saveName = [filename];
 imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
-    
 
-
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+if strcmpi(eventdata.Key,'leftarrow')
+	previous_Callback(hObject, eventdata, handles);
+end
+if strcmpi(eventdata.Key,'rightarrow')
+	next_Callback(hObject, eventdata, handles);
+end
