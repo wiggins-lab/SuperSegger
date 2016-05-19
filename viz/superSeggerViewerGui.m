@@ -1,4 +1,25 @@
 function varargout = superSeggerViewerGui(varargin)
+% superSeggerViewerGui : gui used to visualize the results of segmentation
+% and use the superSegger analysis tools.
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Silas Boye Nissen, Connor Brennan, Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
@@ -271,7 +292,7 @@ if handles.FLAGS.p_flag
     handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
 end
 if handles.FLAGS.P_flag
-    handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |']
+    handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |'];
 end
 
 if handles.num_errs == 0
@@ -665,7 +686,7 @@ end
 function clear_gates_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.clist.gate = [];
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function create_clist_Callback(hObject, eventdata, handles)
@@ -878,7 +899,7 @@ end
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
-    makeKymoMosaic( handles.dirname_cell, handles.CONST );
+    im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
 end
 
 function show_consensus_Callback(hObject, eventdata, handles)
@@ -935,7 +956,7 @@ end
 function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
-    makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)

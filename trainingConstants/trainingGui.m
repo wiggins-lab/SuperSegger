@@ -148,8 +148,10 @@ skip = 1;
 clean_flag = 1;
 only_seg = 1; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
-CONSTtemp.parallel.verbose = 0;
+CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
+CONSTtemp.seg.OPTI_FLAG = 1;
+CONSTtemp.parallel.show_status = 0;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
 
 settings.frameNumber = 1;
@@ -754,7 +756,7 @@ elseif settings.imagesLoaded
 end
 
 %Clear viewport_train
-if isvalid(settings.handles.viewport_train)
+if isfield(settings.handles,'viewport_train') && isvalid(settings.handles.viewport_train)
     while numel(settings.handles.viewport_train.Children) > 0
         delete(settings.handles.viewport_train.Children(1))
     end

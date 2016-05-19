@@ -194,7 +194,7 @@ else
         workers=0;
     end
     
-    if workers
+    if workers || ~CONST.parallel.show_status
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
@@ -208,7 +208,7 @@ else
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
             CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG)
         
-        if workers
+        if workers || ~CONST.parallel.show_status
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
                 ' of ', num2str(num_xy),'.']);
         else
@@ -291,7 +291,7 @@ if ~CONST.parallel.show_status
     h = [];
 else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
-    cleanup = onCleanup( @()( delete( h ) ) );
+    %cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];

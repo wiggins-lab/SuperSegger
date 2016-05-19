@@ -41,6 +41,7 @@ dirname = fixDir(dirname);
 % Get the track file names...
 contents=dir([dirname '*_err.mat']);
 
+
 if isempty( contents )
     clist.data = [];
     clist.def={};
@@ -63,6 +64,8 @@ else
     tmpFields = setter(:,2)';
     death_ind = find([setter{:,3}]); % death fields : updated in every frame 
     clist_tmp = nan( MAX_CELL, numel( clist.def));
+    clist_3D  = nan( MAX_CELL, numel( clist.def), num_im );
+
     clist_tmp(:,1) = 0;
     
     
@@ -92,10 +95,12 @@ else
         % figure out which cells are new born.
         maxID = max(clist_tmp(:,index_ID));
         ID = data_c.regs.ID;
-        birthID = (ID>maxID);
-        ci = and( ~birthID, logical(ID));
+        birthID_flag = (ID>maxID);
+        ID_non_zero_flag = (ID>0);
         
-        IDnz = ID(ID>0);
+        ci = and( ~birthID_flag, logical(ID));
+        
+        ID_non_zero = ID(ID>0);
         IDlog = ID>0;
    
         lold     = nan(1,numel(ID));
@@ -103,10 +108,10 @@ else
         dlmaxOld = nan(1,numel(ID));
         dlminOld = nan(1,numel(ID));
         
-        lold(IDlog) = clist_tmp(IDnz,index_lold);
-        lbirth(IDlog) = clist_tmp(IDnz,index_lbirth);
-        dlmaxOld(IDlog) = clist_tmp(IDnz,index_dlmaxOld);
-        dlminOld(IDlog) = clist_tmp(IDnz,index_dlminOld);
+        lold(IDlog) = clist_tmp(ID_non_zero,index_lold);
+        lbirth(IDlog) = clist_tmp(ID_non_zero,index_lbirth);
+        dlmaxOld(IDlog) = clist_tmp(ID_non_zero,index_dlmaxOld);
+        dlminOld(IDlog) = clist_tmp(ID_non_zero,index_dlminOld);
         
         regnum = (1:data_c.regs.num_regs)';
         zz = zeros( data_c.regs.num_regs, 1);
@@ -213,7 +218,9 @@ else
                   
         % keeping from tmp only the cell that were just born
         try
-            clist_tmp(ID(birthID), : ) = tmp(birthID, :);
+            clist_tmp(ID(birthID_flag), : )     = tmp(birthID_flag, :);
+            clist_3D(ID(ID_non_zero_flag), :, i ) = tmp(ID_non_zero_flag, :);
+            
         catch ME
             printError(ME);
         end
@@ -235,7 +242,9 @@ else
     end
     
     % removes cells with 0 cell id
-    clist.data = clist_tmp(logical(clist_tmp(:,1)),:);
+    clist.data   = clist_tmp(logical(clist_tmp(:,1)),:);
+    clist.data3D = clist_3D(clist.data(:,1),:,:);
+
     clist.gate = CONST.trackLoci.gate;
     clist.neighbor = [];
     
@@ -272,7 +281,7 @@ setter = [{'Cell ID'},{'ID'},0;
     {'x position birth'},{'xpos'},0;
     {'y position birth'},{'ypos'},0;
     {'fluor1 sum'},{'fl1sum'},0;
-    {'fluor1 mean'},{'fl2sum./Area'},0;
+    {'fluor1 mean'},{'fl1sum./Area'},0;
     {'fluor2 sum'},{'fl2sum'},0;
     {'fluor2 mean'},{'fl2sum./Area'},0;
     {'Number of neighbors'},{'numNeighbors'},0;
