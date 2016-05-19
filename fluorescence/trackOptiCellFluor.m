@@ -6,6 +6,7 @@ function fl = trackOptiCellFluor( fluor, mask, r_offset )
 %       mask : cell mask
 %       r_offset : offset in global coordinates
 % OUTPUT :
+%       fl.sum : sum of fluorescence of all pixels within cell mask
 %       fl.r : the coordinates of the center of mass of the fluorescence
 %       fl.Ixx : normalized sum of the square of background fluorescence 
 %       along the X direction of the cell
@@ -14,9 +15,22 @@ function fl = trackOptiCellFluor( fluor, mask, r_offset )
 %       fl.Ixy : normalized sum of fluorescence along the Y * X direction
 %
 % Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
-% This file is part of SuperSeggerOpti.
-
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 fl = [];
 fl.sum = sum(double(fluor(mask(:))));

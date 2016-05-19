@@ -1,4 +1,6 @@
 function BatchSuperSeggerDebug(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG,showWarnings)
+% BatchSuperSeggerDebug is the same as BatchSuperSeggerOpti but without PARFOR making it possible to
+% debug the program.
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -194,29 +196,26 @@ else
         workers=0;
     end
     
-    if workers
+    if workers || ~CONST.parallel.show_status
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
-        cleanup = onCleanup( @()( delete( h ) ) );
     end
     
-    %parfor(j = 1:num_xy,workers)
-        for j = 1:num_xy
+    
+    for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
             CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG)
         
-        if workers
+        if workers || ~CONST.parallel.show_status
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
                 ' of ', num2str(num_xy),'.']);
         else
-            if isvalid(h)
-                waitbar( j/num_xy,h,...
-                    ['Data segmentation xy: ',num2str(j),...
-                    '/',num2str(num_xy)]);
-            end
+            waitbar( j/num_xy,h,...
+                ['Data segmentation xy: ',num2str(j),...
+                '/',num2str(num_xy)]);
         end
     end
     
@@ -288,9 +287,9 @@ else
 end
 
 if ~CONST.parallel.show_status
-    h = [];
+    h_frame = [];
 else
-    h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
+    h_frame = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
@@ -301,10 +300,10 @@ end
 
 
 % does the segmentations for all the frames in parallel
-if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
-    parfor(i=1:num_t,workers) % through all frames
-    %for i = 1:num_t
-
+if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
+    %parfor(i=1:num_t,workers) % through all frames
+    for i = 1:num_t
+        
         if isempty( crop_box )
             crop_box_tmp = [];
         else
@@ -320,15 +319,17 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
                     ' of ', num2str(num_t),'.']);
             end
         else
-            waitbar( i/num_t, h,...
-                ['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
+            if isvalid(h_frame)
+                set(0, 'CurrentFigure', h_frame);
+                waitbar( i/num_t, h_frame,['Data segmentation t: ',num2str(i),'/',num2str(num_t)]);
+            end
         end
     end
     time_stamp = clock; %#ok saved below
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
 if CONST.parallel.show_status
-    close(h);
+    close(h_frame);
 end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc

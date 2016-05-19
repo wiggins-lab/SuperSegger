@@ -12,6 +12,7 @@ function showSegRuleGUI( data, FLAGS, viewport )
 %           .t_flag = segments/regions' labels
 %           .Sj_flag = shows disagreeing segments scores (S_flag must be on
 %           too)
+%       viewport : display axis
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Paul Wiggins & Stella Stylianidou.
@@ -71,9 +72,6 @@ num_segs = numel( data.segs.score(:) );
 sz = size(segs_good);
 backer = 0.7*ag(data.phase);
 
-%viewport.Children = [];
-%viewport.Visible = 'on';
-
 axes(viewport);
 
 if im_flag == 1
@@ -92,21 +90,18 @@ if im_flag == 1
         data.segs.Include = 0*data.segs.score+1;
     end
     
-    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
-   
-%     segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
-%     segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
-%     
+    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));  
     segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,rawSegs))));
     segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~rawSegs))));
     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,rawSegs))));
     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~rawSegs))));
-%     
-
-    segs_good = imdilate(double(segs_good), strel('square',2));
-    segs_good_fail = imdilate(double(segs_good_fail), strel('square',2));
-    segs_bad_fail = imdilate(double(segs_bad_fail), strel('square',2));
-    segs_bad = imdilate(double(segs_bad), strel('square',2));
+    
+    str = strel('square',2);
+    
+    segs_good = imdilate(double(segs_good), str);
+    segs_good_fail = imdilate(double(segs_good_fail), str);
+    segs_bad_fail = imdilate(double(segs_bad_fail), str);
+    segs_bad = imdilate(double(segs_bad),str);
     
     segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
@@ -123,9 +118,9 @@ if im_flag == 1
     end
     
     
-    imshow( cat(3, 0.2*phaseBackag + 0.3*segs3nag + min(255, uint8(0.8*segsBadag+segsBadFailag)), ...
-        0.2*phaseBackag + 0.3*segs3nag + uint8(0.8*segsGoodag+segsGoodFailag+0.5*segsBadFailag), ...
-        0.2*phaseBackag + 0.3*segs3nag + uint8(segsGoodFailag)) , 'InitialMagnification', 'fit');
+    imshow( cat(3, 0.2*phaseBackag + 0.3*segs3nag + uint8(segsGoodag+segsGoodFailag+0.5*segsBadFailag), ...
+         0.2*phaseBackag + 0.3*segs3nag + 0.8*uint8(segsGoodFailag+segsBadFailag) , ...
+       0.2*phaseBackag + 0.3*segs3nag + uint8(segsBadag+segsBadFailag + 0.5 * segsGoodFailag) ), 'InitialMagnification', 'fit');
 
     flagger = and( data.segs.Include, ~isnan(data.segs.score) );
     scoreRawTmp = data.segs.scoreRaw(flagger);
@@ -166,7 +161,8 @@ if im_flag == 1
 elseif im_flag == 2 % region view
     
     if ~isfield(data,'regs')
-        data = updateRegionFields (data,CONST);
+        error ('no region fields');
+        return;
     end
     num_regs = data.regs.num_regs;
     

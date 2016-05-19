@@ -3,26 +3,19 @@ function resetingSegmentation(dirname, step)
 % at the points specified by set flags in the function.
 % If you want to re-run the whole thing just set the clean_flag in 
 % BatchSuperSegger to 1. If you want to re-run specific function 
-% set from the following the wanted flags to 1:
-% removeOptiStrip 
-% removeOptiLink
-% removeOptiErRes1 
-% removeOptiSetEr 
-% removeOptiSkipMerge 
-% removeOptiLink 
-% removeOptiCellMaker
-% removeOptiFluor 
-% removeOptiMakeCell 
-% removeOptiFindFoci 
-% removeOptiClist
-% removeOptiCellFiles
-% You may need to set all the flags to 1 following a flag for the results
-% to propagate to the cell files. 
+% set step here to the following numbers:
+% 1 : trackOptiStripSmall  & all following
+% 2 : trackOptiLinkCell  & all following
+% 3 : trackOptiCellMarker  & all following
+% 4 : trackOptiFluor & all following
+% 5 : trackOptiMakeCell  & all following
+% 6 : trackOptiFindFociCyto  & all following
+% 7 : trackOptiClist  & all following
+% 8 : trackOptiMakeCell & all following
 %
 % INPUT : 
 %       dirname : directory with xy folder
-%
-% superSeggerGui : gui for segmenting images with superSegger. 
+%       step : 1 - 8 for step onwards you want to reset
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Stella Stylianidou.

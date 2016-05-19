@@ -9,8 +9,8 @@ function CONST = loadConstantsNN( res, PARALLEL_FLAG, dispText )
 % to loadConstantsMine to avoid confusion.
 %
 % INPUT :
-%   res : number for resolution of microscope used (60 or 100) for E. coli
-%         or use a string as shown below
+%   res : name of constants file in the settings folder (without the .mat) to be loaded.
+%         If you use a number (60 or 100) it loads the 60X or 100X for E. coli
 %   PARALLEL_FLAG : 1 if you want to use parallel computation
 %                   0 for single core computation
 %   dispText : to display the name of the constants that are loaded.
@@ -46,18 +46,7 @@ if ~exist('dispText','var') || isempty( dispText )
     dispText = true;
 end
 
-
-                                                                     %
-%% Specify scope resolution                                                %                                                                       %                                %
-% Values for setting res
-% '60XEc' : constants for 60X Ecoli
-% '100XEc': constants for 100X Ecoli
-% '60XEcLB': constants for 60X LB Ecoli
-% '60XBay' : constants for 60X Baylyi
-% '60XPa': constants for 60X Pseudemonas
-% '100XPa': constants for 100X Pseudemonas
-% res : {'60XEc','100XEc','60XEcLB','60XBay','60XPa','100XPa'}
-
+%% gets the list of all possible constants in the settings folder
 [possibleConstants, ~, filepath] = getConstantsList();
 
 % default values for numbers
@@ -67,8 +56,6 @@ if isa(res,'double' ) && res == 60
 elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
-
-
 
 % Settings for alignment in differnt channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
@@ -83,20 +70,19 @@ CONST.align.ALIGN_FLAG = 1;
 
 
 % region optimization parameters
-CONST.regionOpti.MAX_NUM_RESOLVE = 5000; % no further optimization above this number of segments 
+CONST.regionOpti.MAX_NUM_RESOLVE = 5000; % no region optimization above this number of segments
 CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8; % max number of segments for systematic
 CONST.regionOpti.CutOffScoreHi = 10; % cut off score for segments
 CONST.regionOpti.CutOffScoreLo = -10; % cut off score for segments
 CONST.regionOpti.fignum =  1;
 CONST.regionOpti.Nt = 500; % max number of steps in simulated anneal
-CONST.regionOpti.minGoodRegScore = 10; % minimum score for region to not be optimized.
+CONST.regionOpti.minGoodRegScore = 10; % regions with score below this are optimized.
 CONST.regionOpti.neighMaxScore = 10; % max score for neighbor to be optimized with a bad region
 CONST.regionOpti.ADJUST_FLAG = 1; % adjusts simulated anneal with number of segs
 CONST.regionOpti.DE_norm = 0.5000; % segments' weight for global region opti scoring 
 
 % trackOpti : general constants
 CONST.trackOpti.NEIGHBOR_FLAG = 0; % finds cell neighbors
-CONST.trackOpti.pole_flag = 1; % guesses old and new pole in snapshots
 
 % trackOpti : linking constants
 CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
@@ -113,8 +99,8 @@ CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap; % function used for l
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
 CONST.trackLoci.crop = 4;
-CONST.trackLoci.numSpots = []; % number of spots per channel per cell
-CONST.trackLoci.fluorFlag = 0; % to calculate statistics
+CONST.trackLoci.numSpots = []; % needs to be set to the number of spots per channel to find foci
+CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 CONST.trackLoci.gate = [];
 
 
@@ -128,21 +114,21 @@ else
 end
 
 % getLocusTracks Constants
-CONST.getLocusTracks.FLUOR1_MIN_SCORE = 3;
+CONST.getLocusTracks.FLUOR1_MIN_SCORE = 3; % only foci above this score are shown in the viewer
 CONST.getLocusTracks.FLUOR2_MIN_SCORE = 3;
 CONST.getLocusTracks.FLUOR1_REL       = 0.3;
 CONST.getLocusTracks.FLUOR2_REL       = 0.3;
-CONST.getLocusTracks.TimeStep         = 1;
+CONST.getLocusTracks.TimeStep         = 1; % used for time axis when towers and kymos are made
 
 % view constants
-CONST.view.showFullCellCycleOnly = false;
-CONST.view.orientFlag = true;
+CONST.view.showFullCellCycleOnly = false; % only uses full cell cycle for analysis tools
+CONST.view.orientFlag = true; % to orient the cells along the horizontal axis for the analysis tools
 CONST.view.falseColorFlag = false;
 CONST.view.LogView = false;
-CONST.view.maxNumCell = [];
+CONST.view.maxNumCell = []; % maximum number of cells used for analysis tools
 
 
-% super resolution constants
+% super resolution constants - not used in released version
 % Const for findFocusSR
 CONST.findFocusSR.MAX_FOCUS_NUM = 8;
 CONST.findFocusSR.crop          = 4;
@@ -159,17 +145,17 @@ CONST.findFocusSR.SED_WINDOW    = 10;
 CONST.findFocusSR.SED_P         = 10;
 CONST.findFocusSR.A_MIN         =  6;
 
-% Const for SR
+% Const for SR - not used in released version
 CONST.SR.opt =  optimset('MaxIter',1000,'Display','off', 'TolX', 1e-8);
 
-% Setup CONST calues for image processing
+% for image processing
 CONST.SR.GausImgFilter_HighPass = fspecial('gaussian',141,10);
 CONST.SR.GausImgFilter_LowPass3 = fspecial('gaussian',21,3);
 CONST.SR.GausImgFilter_LowPass2 = fspecial('gaussian',21,2);
 CONST.SR.GausImgFilter_LowPass1 = fspecial('gaussian',7,1.25);
 CONST.SR.maxBlinkNum = 2;
 
-% this is the pad size for cropping regions for fitting
+% pad size for cropping regions for fitting
 CONST.SR.pad = 8;
 CONST.SR.crop = 4;
 CONST.SR.Icut = 1000;
@@ -179,6 +165,7 @@ CONST.SR.rcut = 10; % maximum distance between frames for two PSFs
 CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis
 
 
+% constants file is loaded here using input 'res'
 indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
 if ~isempty(indexConst)
      constFilename = possibleConstants(indexConst).name;
@@ -187,7 +174,6 @@ if ~isempty(indexConst)
      if dispText
         disp(['loading Constants : ', constFilename]);
      end
-     
 elseif exist(res, 'file')
     ConstLoaded = load(res);
     CONST.ResFlag = res;
@@ -197,38 +183,57 @@ else
 end
 
 
-% values that are loaded separatelly for each constant
+% these are the values that are set by the loaded constant.
 % you can add here values that you have changed from the default
 % and should be loaded from your constants file.
 
 % segmentation parameters
-CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
+
+% max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = ConstLoaded.superSeggerOpti.MAX_SEG_NUM;
+
+% objects with less area than this are removed from the mask
+CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
+
+% intensity thresholds for initial mask creation
 CONST.superSeggerOpti.THRESH1= ConstLoaded.superSeggerOpti.THRESH1;
 CONST.superSeggerOpti.THRESH2 = ConstLoaded.superSeggerOpti.THRESH2;
-CONST.superSeggerOpti.MAGIC_RADIUS = ConstLoaded.superSeggerOpti.MAGIC_RADIUS;
-CONST.superSeggerOpti.CUT_INT= ConstLoaded.superSeggerOpti.CUT_INT;
-CONST.superSeggerOpti.MAGIC_THRESHOLD = ConstLoaded.superSeggerOpti.MAGIC_THRESHOLD;
-CONST.superSeggerOpti.SMOOTH_WIDTH= ConstLoaded.superSeggerOpti.SMOOTH_WIDTH;
-CONST.superSeggerOpti.MAX_WIDTH= ConstLoaded.superSeggerOpti.MAX_WIDTH;
-CONST.superSeggerOpti.Amax = ConstLoaded.superSeggerOpti.Amax;
-CONST.superSeggerOpti.crop_rad= ConstLoaded.superSeggerOpti.crop_rad;
-CONST.superSeggerOpti.A = ConstLoaded.superSeggerOpti.A;
-CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO;
 
-% defines segmentation functions used
+% radius of minimum/magic filter - should be about the width of the cell
+CONST.superSeggerOpti.MAGIC_RADIUS = ConstLoaded.superSeggerOpti.MAGIC_RADIUS;
+
+% intensity used to find halos in the magic contrast image
+CONST.superSeggerOpti.CUT_INT= ConstLoaded.superSeggerOpti.CUT_INT;
+
+% intensities below this are set to 0 to remove variation in intesnity within a cell region.
+CONST.superSeggerOpti.MAGIC_THRESHOLD = ConstLoaded.superSeggerOpti.MAGIC_THRESHOLD;
+
+% width of gaussian blur in phase image
+CONST.superSeggerOpti.SMOOTH_WIDTH= ConstLoaded.superSeggerOpti.SMOOTH_WIDTH;
+
+% cells with width bigger than this are iteratively added more segments
+CONST.superSeggerOpti.MAX_WIDTH= ConstLoaded.superSeggerOpti.MAX_WIDTH;
+
+% max area for micro-colonies to be filled
+CONST.superSeggerOpti.Amax = ConstLoaded.superSeggerOpti.Amax;
+
+% erosion size of disk at the creation of the background mask
+CONST.superSeggerOpti.crop_rad = ConstLoaded.superSeggerOpti.crop_rad;
+
+CONST.superSeggerOpti.A = ConstLoaded.superSeggerOpti.A; % neural network for segment scoring
+CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO; % number of parameters used
+
+% defines segments scoring functions
 CONST.seg = ConstLoaded.seg;
 
-% defines region optimization parameters used
-if isfield(ConstLoaded.regionOpti, 'MIN_LENGTH')
-    CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
-end
-% defines region functions used
+% regions with smaller length than min_length are optimized by using all segments surrounding them
+CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
+
+% defines region scoring functions
 CONST.regionScoreFun = ConstLoaded.regionScoreFun;
 
 % minimum area a cell region can have, otherwise it is discarded.
 CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
-
 
 % Parallel processing on multiple cores settings :
 if PARALLEL_FLAG

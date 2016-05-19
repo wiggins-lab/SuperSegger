@@ -88,14 +88,8 @@ if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end
 
-
-
-
 % Get the number of cells in the cell directory
 cellNames = getCellFiles (cellDir,CONST)
-
-
-
 
 numCells = numel(cellNames);
 

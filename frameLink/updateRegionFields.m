@@ -33,10 +33,6 @@ function data  = updateRegionFields (data,CONST)
 data.regs.regs_label = bwlabel( data.mask_cell );
 num_regs =  max(data.regs.regs_label(:));
 
-% recalculateScores = ~isfield (data,'regs') || ~isfield (data.regs,'num_regs') || ...
-%     (data.regs.num_regs ~= num_regs) || ~isfield (data.regs,'score');
-
-
 data.regs.num_regs =num_regs;
 data.regs.props = regionprops( data.regs.regs_label, ...
     'BoundingBox','Orientation','Centroid','Area');
@@ -72,14 +68,12 @@ data.regs.ignoreError = zeros(1,data.regs.num_regs); % a flag for ignoring the e
 
 % go through the regions and update info,L1,L2 and scoreRaw.
 for ii = 1:data.regs.num_regs
-    
-    data.regs.L1(ii)= data.regs.info(ii,1);
-    data.regs.L2(ii)= data.regs.info(ii,2);
-    
-    
+     
     [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
     mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props(mask,data.regs.props(ii) );
+    data.regs.info(ii,:) = CONST.regionScoreFun.props(mask,data.regs.props(ii) );       
+    data.regs.L1(ii)= data.regs.info(ii,1);
+    data.regs.L2(ii)= data.regs.info(ii,2);
     
     if CONST.trackOpti.NEIGHBOR_FLAG
         try

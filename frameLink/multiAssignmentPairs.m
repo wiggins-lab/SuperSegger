@@ -29,7 +29,9 @@ function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentP
 
 
 
+global str5
 
+str5 = strel('square',5);
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 
@@ -67,11 +69,13 @@ if ~isempty(data_c)
     if ~isfield(data_c,'regs')
         data_c = updateRegionFields (data_c,CONST);
     end
+    ss = size(data_c.phase);
     
     numRegs1 = data_c.regs.num_regs;
     assignments  = cell( 1, numRegs1);
     errorR = zeros(1,numRegs1);
     dA = nan*zeros(1,numRegs1);
+    
     if ~isempty(data_f)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
@@ -92,45 +96,11 @@ if ~isempty(data_c)
         colony_labels = bwlabel(maskBgFill);
         colony_props = regionprops( colony_labels,'Centroid','Area');
         
-        % find possible pairs....
-        counter = 1;
-        pairsF = NaN * zeros(2,numRegs2 * numRegs2);
-        for jj = regsInF
-            maskF = (data_f.regs.regs_label==jj);
-            tmp_mask = imdilate(maskF, strel('square',5));
-            neigh = data_f.regs.regs_label(tmp_mask);% get neighbors
-            ind_neigh = unique(neigh)'; % unique neighbors
-            ind_neigh = ind_neigh(ind_neigh > jj); % not already made pairs
-            
-            % make pairs
-            for uu = ind_neigh
-                pairsF(:,counter)   = [jj;uu];
-                counter = counter + 1;
-            end
-        end
-        
-        cleanpairIDs = (nansum(pairsF)~=0);
-        pairsF = pairsF(:,cleanpairIDs);
+        % find possible pairs
+        pairsF = findNeighborPairs (data_f, numRegs2, regsInF);
         allF = [idsF,pairsF];
-        counter = 1;
-        pairsC = NaN * zeros(2,numRegs2 * numRegs2);
         
-        for jj = regsInC
-            maskC = (data_c.regs.regs_label==jj);
-            % get neighbors
-            tmp_mask = imdilate(maskC, strel('square',5));
-            neigh = data_c.regs.regs_label(tmp_mask);
-            ind_neigh = unique(neigh)'; % unique neighbors
-            ind_neigh = ind_neigh(ind_neigh > jj); % not already made pairs
-            
-            % make pairs
-            for uu = ind_neigh
-                pairsC(:,counter) = [jj;uu];
-                counter = counter + 1;
-            end
-        end
-        
-        pairsC = pairsC(:,(nansum(pairsC)~=0));
+        pairsC = findNeighborPairs (data_c, numRegs1, regsInC);
         allC = [idsC,pairsC];
         
         % initialize
@@ -154,22 +124,16 @@ if ~isempty(data_c)
             alreadyFoundOneToOne = ~isSingleRegC  && (goodOneToOne(cRegs(1)) ...
                 || goodOneToOne(cRegs(2))) ;
             
-            % check that region is still around - sometimes there are empty
-            % regions in the regs.
-            if isSingleRegC
-                regionExists = sum(data_c.regs.regs_label(:) == cRegs(1));
-            else
-                regionExists = sum(data_c.regs.regs_label(:) == cRegs(1)) &&...
-                    sum(data_c.regs.regs_label(:) == cRegs(2));
-            end
-            
             % only check pairs if not good one-to-one mapping
-            if  ~alreadyFoundOneToOne && regionExists
+            if  ~alreadyFoundOneToOne %&& regionExists
                 
-                [maskC,areaC,centroidC] = regProperties (data_c,cRegs);
+                [BB_c_xx,BB_c_yy] = getBoxLimits (data_c,cRegs);
+                [maskC,areaC,centroidC] = regProperties (data_c,cRegs,BB_c_xx,BB_c_yy);
+                
                 
                 % colony it belongs to
-                colOverlap = colony_labels(maskC);
+                colony_labels_temp = colony_labels(BB_c_yy,BB_c_xx);
+                colOverlap = colony_labels_temp(maskC);
                 if sum(colOverlap(:)) == 0
                     disp ('No colony found');
                     distFromColony = [0 ,0];
@@ -181,15 +145,16 @@ if ~isempty(data_c)
                 end
                 
                 % dilate mask and get adjacent regions within dilated area
-                tmp_mask = imdilate(maskC, strel('square',5));
-                tmpregs2 = data_f.regs.regs_label(tmp_mask);
+                tmp_mask = imdilate(maskC, str5);
+                regs_label_f = data_f.regs.regs_label(BB_c_yy,BB_c_xx);
+                tmpregs2 = regs_label_f(tmp_mask);
                 possibleMapInd = unique(tmpregs2);
                 possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
                 
                 for uu = 1:numel(possibleMapInd)
                     % one to one mapping
                     idF = possibleMapInd(uu);
-                    [maskF,areaF,centroidF] = regProperties (data_f,idF);
+                    [maskF,areaF,centroidF] = regProperties (data_f,idF,BB_c_xx,BB_c_yy);
                     overlapMask = maskF(maskC);
                     areaOverlap = sum(overlapMask(:)); % area of overlap between jj and ii
                     areaOverlapCost(ii,idF) = areaOverlap/areaC;
@@ -248,7 +213,7 @@ if ~isempty(data_c)
                                 location = find (isItPair);
                                 
                                 % combined masks, areas, centroids
-                                [maskF,areaF,centroidF] = regProperties (data_f,sis);
+                                [maskF,areaF,centroidF] = regProperties (data_f,sis,BB_c_xx,BB_c_yy);
                                 overlapMask = maskF(maskC);
                                 areaOverlap = sum(overlapMask(:)); % area of overlap between jj and ii
                                 areaOverlapCost(ii,location) = areaOverlap/areaC;
@@ -295,29 +260,27 @@ if ~isempty(data_c)
         areaChangePenalty(abs(areaChange) > 0.2) = 1000;
         distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
         
-        totCost = areaChangePenalty + outwardMot / 10 + areaChangeFactor * 1./areaOverlapTransCost + ...
-            areaFactor * distFromColonyMat * 1./areaOverlapCost +...
-            centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange);
-        
-        costMat = totCost;
+        totCost = areaChangePenalty +  areaChangeFactor * 1./areaOverlapTransCost + ...
+            centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange) + ...
+            areaFactor * distFromColonyMat * 1./areaOverlapCost + outwardMot / 10;
         
         
         assignedInC = [];
         assignedInF = [];
+        costMat= totCost;
+        maxVal = max(totCost(:));
+        costMat = maxVal-costMat;
+        costMat (isnan(costMat)) = 0;
         
-        while nansum (costMat(:)) > 0
-            [minCost,ind] = min(costMat(:));
+        while sum(costMat(:))>0
+            [minCost,ind] = max(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
-            
-            
             assignTemp = allF(:,asgnCol)';
             assignTemp = assignTemp (~isnan(assignTemp));
-            
             regionsInC = allC (:,asgnRow);
+            
             assignments {regionsInC(1)} = assignTemp;
             dA(regionsInC(1)) = areaChange(asgnRow,asgnCol);
-            
-            
             if ~isnan(regionsInC(2))
                 assignments {regionsInC(2)} = assignTemp;
                 dA(regionsInC(2)) = areaChange(asgnRow,asgnCol);
@@ -328,9 +291,10 @@ if ~isempty(data_c)
             % find all columns to be set as nans
             colToDelF = any(ismember(allF,assignTemp));
             colToDelC = any(ismember(allC,regionsInC));
-            costMat (colToDelC, :) = NaN; % add nans to already assigned
-            costMat (:, colToDelF) = NaN; % add nans to already assigned
+            costMat (colToDelC, :) = 0; % add nans to already assigned
+            costMat (:, colToDelF) = 0; % add nans to already assigned
         end
+        
         
         
         % find leftovers, give them max assignments, and put errors in them..
@@ -395,6 +359,31 @@ if ~isempty(data_c)
 end
 end
 
+function pairsF = findNeighborPairs (data_f, numRegs2, regsInF)
+% finds neighboring regions to be considered as pairs
+global str5
+
+counter = 1;
+pairsF = NaN * zeros(2,numRegs2 * numRegs2);
+for jj = regsInF
+    [bbx,bby] = getBoxLimits (data_f,jj);
+    labels_f = data_f.regs.regs_label(bby,bbx);
+    maskF = (labels_f==jj);
+    tmp_mask = imdilate(maskF, str5);
+    neigh = labels_f(tmp_mask);% get neighbors
+    ind_neigh = unique(neigh)'; % unique neighbors
+    ind_neigh = ind_neigh(ind_neigh > jj); % not already made pairs
+    
+    % make pairs
+    for uu = ind_neigh
+        pairsF(:,counter) = [jj;uu];
+        counter = counter + 1;
+    end
+end
+
+cleanpairIDs = (nansum(pairsF)~=0);
+pairsF = pairsF(:,cleanpairIDs);
+end
 
 function errorR = setError(DA,minDA,maxDA)
 errorR = zeros(1, numel(DA));
@@ -402,15 +391,35 @@ errorR (DA < minDA ) = 2;
 errorR (DA > maxDA) = 3;
 end
 
-function [comboMask,comboArea,comboCentroid] = regProperties (data_c,regNums)
+
+function [bbx,bby] = getBoxLimits (data_c,regNums)
+regNums = regNums(~isnan(regNums));
+comboBoundingBox = [];
+ss = size(data_c.phase);
+% get total bounding box
+for ii = 1: numel(regNums)
+    reg = regNums(ii);
+    comboBoundingBox = addBB(comboBoundingBox,data_c.regs.props(reg).BoundingBox);
+end
+
+[bbx,bby] =  getBBpad(comboBoundingBox,ss,5);
+
+end
+
+
+
+function [comboMask,comboArea,comboCentroid] = regProperties (data_c,regNums,bbx,bby)
 comboCentroid = 0;
-comboMask = 0 * (data_c.regs.regs_label);
 comboArea = 0;
 regNums = regNums(~isnan(regNums));
+
+regs_labels =  data_c.regs.regs_label(bby,bbx);
+comboMask = 0 * (regs_labels);
+
 for ii = 1: numel(regNums)
     reg = regNums(ii);
     comboCentroid = comboCentroid + data_c.regs.props(reg).Centroid;
-    comboMask =  comboMask + (data_c.regs.regs_label==reg);
+    comboMask =  comboMask + (regs_labels==reg);
     comboArea = comboArea + data_c.regs.props(reg).Area;
 end
 
@@ -447,4 +456,5 @@ for c = 1 : num_ass
         end
     end
 end
+       
 end

@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 12-May-2016 16:14:33
+% Last Modified by GUIDE v2.5 18-May-2016 13:00:49
 
 % Begin initialization code - DO NOT EDIT
 
@@ -148,8 +148,10 @@ skip = 1;
 clean_flag = 1;
 only_seg = 1; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
-CONSTtemp.parallel.verbose = 0;
+CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
+CONSTtemp.seg.OPTI_FLAG = 1;
+CONSTtemp.parallel.show_status = 0;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
 
 settings.frameNumber = 1;
@@ -754,7 +756,7 @@ elseif settings.imagesLoaded
 end
 
 %Clear viewport_train
-if isvalid(settings.handles.viewport_train)
+if isfield(settings.handles,'viewport_train') && isvalid(settings.handles.viewport_train)
     while numel(settings.handles.viewport_train.Children) > 0
         delete(settings.handles.viewport_train.Children(1))
     end
@@ -1179,6 +1181,11 @@ filename =[ settings.imageDirectory,filesep,settings.loadFiles(i).name];
 tempImage = imread([filename]);
 saveName = [filename];
 imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
-    
 
-
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+if strcmpi(eventdata.Key,'leftarrow')
+	previous_Callback(hObject, eventdata, handles);
+end
+if strcmpi(eventdata.Key,'rightarrow')
+	next_Callback(hObject, eventdata, handles);
+end
