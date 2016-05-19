@@ -406,7 +406,20 @@ while runFlag
         
     elseif numel(c) == 2 && c(1) == 'f' && isnum(c(2)) % Toggle Between Fluorescence and Phase Images
         disp('toggling between phase and fluorescence');
-        FLAGS.f_flag = str2num(c(2));
+        f = 0;
+        while true
+            if isfield(data_c, ['fluor' num2str(f+1)] )
+                f = f+1;
+            else
+                break
+            end
+        end
+        c = round(str2double(c(2)));
+        if isnan(c) || c < 0 || c > f
+            FLAGS.f_flag = 0;
+        else
+            FLAGS.f_flag = c;
+        end
         
     elseif strcmpi(c, 'filter') % Toggle Between filtered and unfiltered
         disp('filtering');
