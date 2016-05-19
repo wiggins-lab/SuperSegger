@@ -276,7 +276,7 @@ data.segs.segs_bad = segs_bad;
 data = intMakeRegs( data, CONST );
 
 if disp_flag
-    
+    figure(1);
     cell_mask = data.mask_cell;
     back = double(0.7*ag( data.phase ));
     outline = imdilate( cell_mask, strel( 'square',3) );

@@ -137,8 +137,7 @@ end
 %strip xy positions
 for i = 1:numTrainingFrames
     originalName = [settings.imageDirectory, trainingFrames(i).name];
-    saveName = [settings.imageDirectory, trainingFrames(i).name];
-    saveName = strrep(saveName, 'xy', '');
+    saveName = [settings.imageDirectory, strrep(trainingFrames(i).name, 'xy', '')];
     if ~strcmp(originalName,saveName)
         movefile(originalName, saveName);
     end
@@ -150,8 +149,8 @@ only_seg = 1; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
-CONSTtemp.seg.OPTI_FLAG = 1;
-CONSTtemp.parallel.show_status = 0;
+CONSTtemp.seg.OPTI_FLAG = 0;
+CONSTtemp.parallel.show_status = 1;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
 
 settings.frameNumber = 1;
@@ -439,8 +438,10 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.directory.String = uigetdir;
-setWorkingDirectory(handles.directory.String);
-updateUI(handles);
+if handles.directory.String ~= 0
+    setWorkingDirectory(handles.directory.String);
+    updateUI(handles);
+end
 
 
 % --- Executes on button press in next.
@@ -638,6 +639,7 @@ end
 if settings.dataSegmented == 0
     handles.train_actions.Visible = 'off';
     handles.seg_actions.Visible = 'on';
+    handles.cut_and_seg.Visible = 'on';
     
 else
     handles.train_actions.Visible = 'on';
