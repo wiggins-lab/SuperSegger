@@ -46,22 +46,22 @@ function resetingSegmentation(dirname, step)
 dirname = fixDir(dirname);
 xydirs = dir([dirname,'xy*']);
 
-if ~exist('step','var')
-    error ('provide the step you want to reset');
-    return;
-end
-
 % set the flags of parts of supersegger you would like
 % these are in order
 
-removeOptiStrip = 0;
-removeOptiLink = 0;
-removeOptiCellMaker = 0;
-removeOptiFluor = 0;
-removeOptiMakeCell = 0;
-removeOptiFindFoci = 0;
-removeOptiClist = 0;
-removeOptiCellFiles = 0;
+removeOptiStrip = 1;
+removeOptiLink = 1;
+removeOptiCellMaker = 1;
+removeOptiFluor = 1;
+removeOptiMakeCell = 1;
+removeOptiFindFoci = 1;
+removeOptiClist = 1;
+end
+
+
+if step >= 8
+removeOptiCellFiles = 1;
+
 
 if step >= 1
 removeOptiStrip = 1;
@@ -75,21 +75,27 @@ if step >= 3
 removeOptiCellMaker = 1;
 end
 
+
 if step >= 4
 removeOptiFluor = 1;
 end
+
+
 
 if step >= 5
 removeOptiMakeCell = 1;
 end
 
+
 if step >= 6
 removeOptiFindFoci = 1;
 end
 
+
 if step >= 7
 removeOptiClist = 1;
 end
+
 
 if step >= 8
 removeOptiCellFiles = 1;
@@ -97,6 +103,7 @@ end
 
 
 for i = 1 : numel(xydirs)
+    
     curXyDir = xydirs(i).name;
     dirname_seg = [dirname,curXyDir,filesep,'seg',filesep];
     intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripSmall-Step1.mat']);
