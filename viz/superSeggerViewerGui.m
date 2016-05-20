@@ -704,6 +704,9 @@ if ~isempty(handles.FLAGS)
             clist_comp = clist_tmp;
         else
             clist_comp.data = [clist_comp.data; clist_tmp.data];
+            if isfield(clist_tmp,'data3D')
+                clist_comp.data3D = [clist_comp.data3D; clist_tmp.data3D];
+            end
         end
     end
     save( [handles.dirname0,'clist_comp.mat'], '-STRUCT', 'clist_comp' );
