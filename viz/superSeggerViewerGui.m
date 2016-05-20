@@ -215,7 +215,7 @@ else
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
     if isfield(handles.clist,'def3d')
-        handles.histogram_clist.String = handles.clist.def3d';
+        handles.time_clist.String = handles.clist.def3d';
     end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
