@@ -97,7 +97,7 @@ for i = 1:num_im;
     data_c.mask_cell = mask_new;
     
     % remake the regions
-    data_c = intMakeRegs( data_c, CONST);
+    %data_c = intMakeRegs( data_c, CONST);
     
     % save the updated *seg.mat file
     dataname=[dirname,contents(i).name];

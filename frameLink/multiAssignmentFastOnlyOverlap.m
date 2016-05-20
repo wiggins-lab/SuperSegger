@@ -125,7 +125,7 @@ if ~isempty(data_c)
                 areaC = data_c.regs.props(ii).Area;
                 tmpdA = (totAreaF-areaC)./totAreaF;
                 tmpError = setError(tmpdA);
-           
+                
                 
                 if numel(tmpError) > 0 && tmpError(1) == 0
                     assignments{ii} = tmpAssign(1);
@@ -133,7 +133,7 @@ if ~isempty(data_c)
                 elseif numel(tmpError) > 1 && tmpError(2) == 0
                     assignments{ii} = tmpAssign(1:2);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
-                    revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];   
+                    revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];
                 else
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
@@ -141,7 +141,7 @@ if ~isempty(data_c)
             end
         end
         
-   
+        
         [~,minIndxF] = min(totCost,[],2);
         [~,minIndxC] = min(totCost,[],1);
         cArea = [data_c.regs.props.Area];
@@ -163,8 +163,8 @@ if ~isempty(data_c)
     end
     
     
-   
-
+    
+    
 end
 
 
@@ -181,51 +181,6 @@ for ll = 1 : numRegs1
     carea_tmp =  (cArea(ll));
     farea_tmp = sum(fArea(tmpAssgn));
     dA(ll) = (farea_tmp - carea_tmp) / max(carea_tmp,farea_tmp);
-end
-
-end
-
-function [assignments, revAssign] =fixProblems (assignments, revAssign, minIndxC, cArea, fArea)
-global minDA;
-global maxDA;
-
-leftInF = find(cellfun('isempty',revAssign));
-
-for jj = leftInF
-    bestAssgnC = minIndxC(jj);
-    FAlready = assignments{bestAssgnC};
-    revToAlreadyF = revAssign{FAlready};
-    areaC = sum(cArea(revToAlreadyF));
-    areaFBefore = sum(fArea(FAlready));
-    dABefore = (areaFBefore - areaC)/max(areaFBefore,areaC);
-    
-    if numel(revToAlreadyF) == 2 && ...
-            setError(dABefore)>0
-        % two assigned to other f - steal one
-        areaFjj = fArea(jj);
-        newRevToAlreadyF = revToAlreadyF(revToAlreadyF~=bestAssgnC);
-        newAreaC = cArea(newRevToAlreadyF);
-        areaC = cArea(bestAssgnC);
-        newdAjj = (areaFjj - areaC)/max(areaFjj,areaC);
-        newdAalreadyF = (areaFBefore - newAreaC)/max(areaFBefore,areaC);;
-        if  ~setError(newdAjj) && ...
-                ~setError(newdAalreadyF)
-            assignments{bestAssgnC} = jj;
-            revAssign{jj} = bestAssgnC;
-            revAssign{FAlready} = newRevToAlreadyF;
-        end
-    else
-        % see if assigning both to bestAssgnC solves the problem
-        tempAssgn = [FAlready,jj];
-        areaF = areaFBefore + fArea(jj);
-        dAtmp = (areaF - areaC)/max(areaF,areaC);
-        if  setError(dABefore) > 0 && ...
-                ~setError(dAtmp)
-            assignments{bestAssgnC} = tempAssgn;
-            revAssign{jj} = bestAssgnC;
-        end
-    end
-    
 end
 
 end
@@ -259,6 +214,53 @@ for c = 1 : num_ass
         end
     end
 end
+end
+
+function [assignments, revAssign] =fixProblems (assignments, revAssign, minIndxC, cArea, fArea)
+
+leftInF = find(cellfun('isempty',revAssign));
+
+for jj = leftInF
+    bestAssgnC = minIndxC(jj);
+    FAlready = assignments{bestAssgnC};
+    if isempty(FAlready)
+        assignments{bestAssgnC} = jj;
+    else
+        revToAlreadyF = revAssign{FAlready};
+        areaC = sum(cArea(revToAlreadyF));
+        areaFBefore = sum(fArea(FAlready));
+        dABefore = (areaFBefore - areaC)/max(areaFBefore,areaC);
+        
+        if numel(revToAlreadyF) == 2 && ...
+                setError(dABefore)>0
+            % two assigned to other f - steal one
+            areaFjj = fArea(jj);
+            newRevToAlreadyF = revToAlreadyF(revToAlreadyF~=bestAssgnC);
+            newAreaC = cArea(newRevToAlreadyF);
+            areaC = cArea(bestAssgnC);
+            newdAjj = (areaFjj - areaC)/max(areaFjj,areaC);
+            newdAalreadyF = (areaFBefore - newAreaC)/max(areaFBefore,areaC);;
+            if  ~setError(newdAjj) && ...
+                    ~setError(newdAalreadyF)
+                assignments{bestAssgnC} = jj;
+                revAssign{jj} = bestAssgnC;
+                revAssign{FAlready} = newRevToAlreadyF;
+            end
+        else
+            % see if assigning both to bestAssgnC solves the problem
+            tempAssgn = [FAlready,jj];
+            areaF = areaFBefore + fArea(jj);
+            dAtmp = (areaF - areaC)/max(areaF,areaC);
+            if  setError(dABefore) > 0 && ...
+                    ~setError(dAtmp)
+                assignments{bestAssgnC} = tempAssgn;
+                revAssign{jj} = bestAssgnC;
+            end
+        end
+    end
+    
+end
+
 end
 
 function errorR = setError(DA)
