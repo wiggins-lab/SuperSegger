@@ -1013,3 +1013,15 @@ function time_clist_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+function clear_gate_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.clist = gateStrip(handles.clist, str2double(handles.clear_gate.String));
+    handles.clear_gate.String = '';
+    updateImage(hObject, handles)
+end
+
+function clear_gate_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
