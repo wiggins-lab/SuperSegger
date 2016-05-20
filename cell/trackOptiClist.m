@@ -59,12 +59,14 @@ else
     end
     
     clist = [];
-    setter = clistSetter ();
+    [setter,clist.def3d]  = clistSetter ();
     clist.def = setter(:,1)';
     tmpFields = setter(:,2)';
+    clist3d_ind = find([setter{:,4}]);
+    
     death_ind = find([setter{:,3}]); % death fields : updated in every frame 
     clist_tmp = nan( MAX_CELL, numel( clist.def));
-    clist_3D  = nan( MAX_CELL, numel( clist.def), num_im );
+    clist_3D  = nan( MAX_CELL, numel( clist.def3d), num_im );
 
     clist_tmp(:,1) = 0;
     
@@ -219,7 +221,7 @@ else
         % keeping from tmp only the cell that were just born
         try
             clist_tmp(ID(birthID_flag), : )     = tmp(birthID_flag, :);
-            clist_3D(ID(ID_non_zero_flag), :, i ) = tmp(ID_non_zero_flag, :);
+            clist_3D(ID(ID_non_zero_flag), :, i ) = tmp(ID_non_zero_flag, clist3d_ind);
             
         catch ME
             printError(ME);
@@ -255,117 +257,129 @@ end
 end
 
 
-function setter = clistSetter ()
+function [setter,names_3dclist] = clistSetter ()
 % clistSetter : use this function to add new values to the clist
 % the first variable is the description, the second is the variabel to
 % which it will be set (needs to be calculated in the first function, and
 % the third is 0 if it is set at birth and 1 if it is set at death.
 
-setter = [{'Cell ID'},{'ID'},0;
-    {'Region Num Birth'},{'regnum'},0;
-    {'Region Num Death'},{'regnum'},1;
-    {'Cell Birth Time'},{'i + zz'},0;
-    {'Cell Division Time'},{'i + zz'},1;
-    {'Cell Age'},{'i - data_c.regs.birth'},1;
-    {'Cell Dist to edge'},{'cell_dist'},0;
-    {'Old Pole Age'},{'pole_age'},0;
-    {'stat0'},{'data_c.regs.stat0'},1;
-    {'Long Axis Birth'},{'data_c.regs.L1'},0;
-    {'Long Axis Death'},{'data_c.regs.L1'},1;
-    {'Short Axis Birth'},{'data_c.regs.L2'},0;
-    {'Short Axis Death'},{'data_c.regs.L2'},1;
-    {'Area Birth'},{'Area'},0;
-    {'Area Death'},{'Area'},1;
-    {'Region Score birth'},{'data_c.regs.scoreRaw'},0;
-    {'Region Score death'},{'data_c.regs.scoreRaw'},1;
-    {'x position birth'},{'xpos'},0;
-    {'y position birth'},{'ypos'},0;
-    {'fluor1 sum'},{'fl1sum'},0;
-    {'fluor1 mean'},{'fl1sum./Area'},0;
-    {'fluor2 sum'},{'fl2sum'},0;
-    {'fluor2 mean'},{'fl2sum./Area'},0;
-    {'Number of neighbors'},{'numNeighbors'},0;
-    {'Region gray val'},{'gray'},0;
-    {'locus1_1 longaxis'},{'locus1_L1'},0;
-    {'locus1_1 shortaxis'},{'locus1_L2'},0;
-    {'locus1_1 score'},{'locus1_s'},0;
-    {'locus1_1 Intensity'},{'locus1_i'},0;
-    {'locus1_2 longaxis'},{'locus2_L1'},0;
-    {'locus1_2 shortaxis'},{'locus2_L2'},0;
-    {'locus1_2 score'},{'locus2_s'},0;
-    {'locus1_2 Intensity'},{'locus2_i'},0;
-    {'locus1_2 longaxis'},{'locus3_L1'},0;
-    {'locus1_3 shortaxis'},{'locus3_L2'},0;
-    {'locus1_3 score'},{'locus3_s'},0;
-    {'locus1_3 Intensity'},{'locus3_i'},0;
-    {'locus1_4 longaxis'},{'locus4_L1'},0;
-    {'locus1_4 shortaxis'},{'locus4_L2'},0;
-    {'locus1_4 score'},{'locus4_s'},0;
-    {'locus1_4 Intensity'},{'locus4_i'},0;
-    {'locus1_5 longaxis'},{'locus5_L1'},0;
-    {'locus1_5 shortaxis'},{'locus5_L2'},0;
-    {'locus1_5 score'},{'locus5_s'},0;
-    {'locus1_5 Intensity'},{'locus5_i'},0;
-    {'locus_1_1_longaxis pole_align'},{'locus1_PoleAlign_L1'},0;
-    {'locus_1_1_longaxis normalized pole_align'},{'locus1_PoleAlign_relL1'},0;
-    {'locus1_1_longaxis normalized'},{'locus1_relL1'},0;
-    {'locus1_2_longaxis normalized'},{'locus2_relL1'},0;
-    {'locus1_3_longaxis normalized'},{'locus3_relL1'},0;
-    {'locus1_4_longaxis normalized'},{'locus4_relL1'},0;
-    {'locus1_5_longaxis normalized'},{'locus5_relL1'},0;
-    {'locus1_1_shortaxis normalized'},{'locus1_relL2'},0;
-    {'locus1_2_shortaxis normalized'},{'locus2_relL2'},0;
-    {'locus1_3_shortaxis normalized'},{'locus3_relL2'},0;
-    {'locus1_4_shortaxis normalized'},{'locus4_relL2'},0;
-    {'locus1_5_shortaxis normalized'},{'locus5_relL2'},0;
-    {'locus1_1_gaussianFitWidth'},{'locus1_fitSigma'},0;
-    {'locus1_2_gaussianFitWidth'},{'locus2_fitSigma'},0;
-    {'locus1_3_gaussianFitWidth'},{'locus3_fitSigma'},0;
-    {'mother ID'},{'data_c.regs.motherID'},0;
-    {'daughter1 ID'},{'daughter1_id'},1;
-    {'daughter2 ID'},{'daughter2_id'},1;
-    {'dl max'},{'dlmax'},1;
-    {'dl min'},{'dlmin'},1;
-    {'l/l_birth'},{'lrel'},1
-    {'fluor1 sum death'},{'fl1sum'},1;
-    {'fluor1 mean death'},{'fl2sum./Area'},1;
-    {'fluor2 sum death'},{'fl2sum'},1;
-    {'fluor2 mean death'},{'fl2sum./Area'},1;
-    {'locus1_1 longaxis death'},{'locus1_L1'},1;
-    {'locus1_1 shortaxis death'},{'locus1_L2'},1;
-    {'locus1_1 score death'},{'locus1_s'},1;
-    {'locus1_1 Intensity death'},{'locus1_i'},1;
-    {'locus1_2 longaxis death'},{'locus2_L1'},1;
-    {'locus1_2 shortaxis death'},{'locus2_L2'},1;
-    {'locus1_2 score death'},{'locus2_s'},1;
-    {'locus1_2 Intensity death'},{'locus2_i'},1;
-    {'locus1_2 longaxis death'},{'locus3_L1'},1;
-    {'locus1_3 shortaxis death'},{'locus3_L2'},1;
-    {'locus1_3 score death'},{'locus3_s'},1;
-    {'locus1_3 Intensity death'},{'locus3_i'},1;
-    {'locus1_4 longaxis death'},{'locus4_L1'},1;
-    {'locus1_4 shortaxis death'},{'locus4_L2'},1;
-    {'locus1_4 score death'},{'locus4_s'},1;
-    {'locus1_4 Intensity death'},{'locus4_i'},1;
-    {'locus1_5 longaxis death'},{'locus5_L1'},1;
-    {'locus1_5 shortaxis death'},{'locus5_L2'},1;
-    {'locus1_5 score death'},{'locus5_s'},1;
-    {'locus1_5 Intensity death'},{'locus5_i'},1;
-    {'locus1_1_gaussianFitWidth death'},{'locus1_fitSigma'},1;
-    {'locus1_2_gaussianFitWidth death'},{'locus2_fitSigma'},1;
-    {'locus1_3_gaussianFitWidth death'},{'locus3_fitSigma'},1;
-    {'long axis/short axis birth'},{'longOverShort'},0;
-    {'long axis/short axis death'},{'longOverShort'},1;
-    {'Neck Width'},{'neckWidth'},0;
-    {'Maximum Width'},{'maxWidth'},0;
+setter = [{'Cell ID'},{'ID'},0,1;
+    {'Region Num birth'},{'regnum'},0,0;
+    {'Region Num death'},{'regnum'},1,0;
+    {'Cell birth Time'},{'i + zz'},0,0;
+    {'Cell Division Time'},{'i + zz'},1,0;
+    {'Cell Age'},{'i - data_c.regs.birth'},1,0;
+    {'Cell Dist to edge'},{'cell_dist'},0,0;
+    {'Old Pole Age'},{'pole_age'},0,0;
+    {'stat0'},{'data_c.regs.stat0'},1,0;
+    {'Long Axis'},{'data_c.regs.L1'},0,1;
+    {'Long Axis death'},{'data_c.regs.L1'},1,0;
+    {'Short Axis birth'},{'data_c.regs.L2'},0,1;
+    {'Short Axis death'},{'data_c.regs.L2'},1,0;
+    {'Area birth'},{'Area'},0,1;
+    {'Area death'},{'Area'},1,0;
+    {'Region Score birth'},{'data_c.regs.scoreRaw'},0,0;
+    {'Region Score death'},{'data_c.regs.scoreRaw'},1,0;
+    {'x position birth'},{'xpos'},0,0;
+    {'y position birth'},{'ypos'},0,0;
+    {'fluor1 sum'},{'fl1sum'},0,1;
+    {'fluor1 mean'},{'fl1sum./Area'},0,1;
+    {'fluor2 sum'},{'fl2sum'},0,1;
+    {'fluor2 mean'},{'fl2sum./Area'},0,1;
+    {'Number of neighbors'},{'numNeighbors'},0,1;
+    {'Region gray val'},{'gray'},0,0;
+    {'locus1_1 longaxis'},{'locus1_L1'},0,1;
+    {'locus1_1 shortaxis'},{'locus1_L2'},0,1;
+    {'locus1_1 score'},{'locus1_s'},0,1;
+    {'locus1_1 Intensity'},{'locus1_i'},0,1;
+    {'locus1_2 longaxis'},{'locus2_L1'},0,1;
+    {'locus1_2 shortaxis'},{'locus2_L2'},0,1;
+    {'locus1_2 score'},{'locus2_s'},0,1;
+    {'locus1_2 Intensity'},{'locus2_i'},0,1;
+    {'locus1_2 longaxis'},{'locus3_L1'},0,1;
+    {'locus1_3 shortaxis'},{'locus3_L2'},0,1;
+    {'locus1_3 score'},{'locus3_s'},0,1;
+    {'locus1_3 Intensity'},{'locus3_i'},0,1;
+    {'locus1_4 longaxis'},{'locus4_L1'},0,1;
+    {'locus1_4 shortaxis'},{'locus4_L2'},0,1;
+    {'locus1_4 score'},{'locus4_s'},0,1;
+    {'locus1_4 Intensity'},{'locus4_i'},0,1;
+    {'locus1_5 longaxis'},{'locus5_L1'},0,1;
+    {'locus1_5 shortaxis'},{'locus5_L2'},0,1;
+    {'locus1_5 score'},{'locus5_s'},0,1;
+    {'locus1_5 Intensity'},{'locus5_i'},0,1;
+    {'locus_1_1_longaxis pole_align'},{'locus1_PoleAlign_L1'},0,1;
+    {'locus_1_1_longaxis normalized pole_align'},{'locus1_PoleAlign_relL1'},0,1;
+    {'locus1_1_longaxis normalized'},{'locus1_relL1'},0,1;
+    {'locus1_2_longaxis normalized'},{'locus2_relL1'},0,1;
+    {'locus1_3_longaxis normalized'},{'locus3_relL1'},0,1;
+    {'locus1_4_longaxis normalized'},{'locus4_relL1'},0,1;
+    {'locus1_5_longaxis normalized'},{'locus5_relL1'},0,1;
+    {'locus1_1_shortaxis normalized'},{'locus1_relL2'},0,1;
+    {'locus1_2_shortaxis normalized'},{'locus2_relL2'},0,1;
+    {'locus1_3_shortaxis normalized'},{'locus3_relL2'},0,1;
+    {'locus1_4_shortaxis normalized'},{'locus4_relL2'},0,1;
+    {'locus1_5_shortaxis normalized'},{'locus5_relL2'},0,1;
+    {'locus1_1_gaussianFitWidth'},{'locus1_fitSigma'},0,0;
+    {'locus1_2_gaussianFitWidth'},{'locus2_fitSigma'},0,0;
+    {'locus1_3_gaussianFitWidth'},{'locus3_fitSigma'},0,0;
+    {'mother ID'},{'data_c.regs.motherID'},0,0;
+    {'daughter1 ID'},{'daughter1_id'},1,0;
+    {'daughter2 ID'},{'daughter2_id'},1,0;
+    {'dl max'},{'dlmax'},1,1;
+    {'dl min'},{'dlmin'},1,1;
+    {'l/l_birth'},{'lrel'},1,1;
+    {'fluor1 sum death'},{'fl1sum'},1,0;
+    {'fluor1 mean death'},{'fl1sum./Area'},1,0;
+    {'fluor2 sum death'},{'fl2sum'},1,0;
+    {'fluor2 mean death'},{'fl2sum./Area'},1,0;
+    {'locus1_1 longaxis death'},{'locus1_L1'},1,0;
+    {'locus1_1 shortaxis death'},{'locus1_L2'},1,0;
+    {'locus1_1 score death'},{'locus1_s'},1,0;
+    {'locus1_1 Intensity death'},{'locus1_i'},1,0;
+    {'locus1_2 longaxis death'},{'locus2_L1'},1,0;
+    {'locus1_2 shortaxis death'},{'locus2_L2'},1,0;
+    {'locus1_2 score death'},{'locus2_s'},1,0;
+    {'locus1_2 Intensity death'},{'locus2_i'},1,0;
+    {'locus1_2 longaxis death'},{'locus3_L1'},1,0;
+    {'locus1_3 shortaxis death'},{'locus3_L2'},1,0;
+    {'locus1_3 score death'},{'locus3_s'},1,0;
+    {'locus1_3 Intensity death'},{'locus3_i'},1,0;
+    {'locus1_4 longaxis death'},{'locus4_L1'},1,0;
+    {'locus1_4 shortaxis death'},{'locus4_L2'},1,0;
+    {'locus1_4 score death'},{'locus4_s'},1,0;
+    {'locus1_4 Intensity death'},{'locus4_i'},1,0;
+    {'locus1_5 longaxis death'},{'locus5_L1'},1,0;
+    {'locus1_5 shortaxis death'},{'locus5_L2'},1,0;
+    {'locus1_5 score death'},{'locus5_s'},1,0;
+    {'locus1_5 Intensity death'},{'locus5_i'},1,0;
+    {'locus1_1_gaussianFitWidth death'},{'locus1_fitSigma'},1,0;
+    {'locus1_2_gaussianFitWidth death'},{'locus2_fitSigma'},1,0;
+    {'locus1_3_gaussianFitWidth death'},{'locus3_fitSigma'},1,0;
+    {'long axis/short axis birth'},{'longOverShort'},0,1;
+    {'long axis/short axis death'},{'longOverShort'},1,0;
+    {'Neck Width'},{'neckWidth'},0,1;
+    {'Maximum Width'},{'maxWidth'},0,1;
     ];
 
 % used to add numbers in front of the description
+names_3dclist = [];
+counter = 0;
 for i = 1 : size(setter,1)
-    field_name = setter(i,1);
-    nameWithNum = [num2str(i), ' : ', field_name{1}];
+    fieldname = setter{i,1};
+    nameWithNum = [num2str(i), ' : ',fieldname];
     setter(i,1) = {nameWithNum};
+    if setter{i,4}
+        counter = counter + 1;
+        removeBirth  =strfind(fieldname,'Birth');
+        if removeBirth > 0
+            fieldname = fieldname (1 :removeBirth-1);
+        end
+        names_3dclist{counter} = [num2str(counter), ' : ', fieldname];
+    end
 end
+
+
 
 end
 

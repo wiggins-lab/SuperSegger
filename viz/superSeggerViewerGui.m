@@ -214,6 +214,9 @@ else
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
+    if isfield(handles.clist,'def3d')
+        handles.histogram_clist.String = handles.clist.def3d';
+    end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 updateImage(hObject, handles)
@@ -986,3 +989,29 @@ input.Enable = 'off';
 
 function value = areCellsLoaded(handles)
 value =  isfield(handles.data_c.regs, 'ID');
+
+
+% --- Executes on selection change in time_clist.
+function time_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to time_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isempty(handles.FLAGS)
+    figure(2);
+    clf;
+    plotClist3D(handles.clist, handles.time_clist.Value);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function time_clist_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to time_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
