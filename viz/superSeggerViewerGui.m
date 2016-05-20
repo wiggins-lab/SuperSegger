@@ -112,7 +112,8 @@ end
 
 contents_xy = dir([dirname, 'xy*']);
 handles.num_xy = numel(contents_xy);
-direct_contents = dir([dirname, '*seg.mat']);
+direct_contents_seg = dir([dirname, '*seg.mat']);
+direct_contents_err = dir([dirname, '*err.mat']);
 
 
 if handles.num_xy~=0
@@ -129,7 +130,7 @@ if handles.num_xy~=0
         handles.clist = [];
     end
 else
-    if numel(direct_contents) == 0 % no images found abort.
+    if numel(direct_contents_err) == 0 &&  numel(direct_contents_seg) == 0   % no images found abort.
         cla(handles.axes1)
         handles.message.String = ['There are no xy dirs. Choose a different directory.'];
         disable_all_panels(hObject,handles);
@@ -138,8 +139,9 @@ else
         handles.dirname_cell = dirname;
         handles.dirname_seg  = dirname;
         dirnum = 1;
-        
-        handles.use_seg_files.Value = 1;
+        if numel(direct_contents_err) == 0
+            handles.use_seg_files.Value = 1;
+        end
     end
 end
 
