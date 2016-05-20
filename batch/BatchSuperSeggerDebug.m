@@ -329,7 +329,9 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
 if CONST.parallel.show_status
-    close(h_frame);
+    if isvalid(h_frame)
+        close(h_frame);
+    end
 end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc

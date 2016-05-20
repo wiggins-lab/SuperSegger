@@ -121,15 +121,16 @@ for regNum =  1 : data_c.regs.num_regs;
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
             oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
             if divAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
-                % r: one has no forward mapping, or both map to the same in fw, or one small               
+                % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
                 [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
                 resetRegions = (resetRegions || mergeReset);
             elseif divAreaChange
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-            else               
+            else
                 % map to best, remove mapping from second
-                 [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+                [data_c,data_r,cell_count,resetRegions_tmp] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+                resetRegions = xor(resetRegions_tmp,resetRegions)
             end
             
         elseif numel(mapCR) == 1 && numel(data_r.regs.map.f{mapCR}) == 2
@@ -149,15 +150,16 @@ for regNum =  1 : data_c.regs.num_regs;
                 if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
                     if ~ignoreError
-                        [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
-                        resetRegions = (resetRegions || mergeReset);
+                        [data_c,resetRegions_tmp] = merge2Regions (data_c, sister1, sister2, CONST);
                     else
-                        [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+                        [data_c,data_r,cell_count,resetRegions_tmp] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header);
+                        
                     end
+                    resetRegions = xor(resetRegions_tmp,resetRegions)
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 end
-            elseif numel(sister2) == 1 && any(mapRC==regNum) && data_c.regs.map.r{sister2} ~= mother
+            elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
                 
@@ -183,16 +185,13 @@ for regNum =  1 : data_c.regs.num_regs;
                 if verbose
                     disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
                 end
-                % red is regNum, green is the ones mother maps to, blue is
-                % mother
+                % red : regNum, green : ones mother maps to, blue : mother
                 if debug_flag
                     imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                         ag((data_c.regs.regs_label == mapRC(1)) + ...
                         (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
                     keyboard;
                 end
-                
-                
             end
         elseif numel(mapCR) == 2
             % 1 in current maps to two in reverse
@@ -388,24 +387,34 @@ end
 end
 
 
-function [data_c,data_r,cell_count] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
+function [data_c,data_r,cell_count,resetRegions] = mapBestOfTwo (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
 % maps to best from two forward
 global REMOVE_STRAY
+resetRegions = 0;
 [~,minInd] = min (data_c.regs.dA.r(mapRC));
 keeper = mapRC(minInd);
 remove = mapRC(mapRC~=keeper);
 [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
 data_c.regs.revmap.r{mapCR} = keeper;
-data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-    ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),'.']);
-if verbose
-    disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
-end
+
 
 data_c.regs.error.r(remove) = 1;
 if ~REMOVE_STRAY
-[data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
+    [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
+    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' made into a new cell.']);
+    if verbose
+        disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
+    end
+else
+    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.']);
+    if verbose
+        disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
+    end
+    [data_c] = deleteRegions( data_c,remove);
+    resetRegions = true;
 end
-% make it stray..
+
 
 end

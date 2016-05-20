@@ -101,8 +101,8 @@ if ~isempty(data_c)
             tmpregs2 = tmpf_labels(maskC);
             possibleMapInd = unique(tmpregs2);
             possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
-            overlapAreaNorm = zeros(numel(possibleMapInd));
-
+            overlapAreaNorm = zeros(1,numel(possibleMapInd));
+            
             for uu = 1: numel(possibleMapInd)
                 % one to one mapping
                 regInF = possibleMapInd(uu);
@@ -111,7 +111,7 @@ if ~isempty(data_c)
                 overlapMask = maskF(maskC);
                 areaOverlap = sum(overlapMask(:)); % area of overlap between jj and ii
                 overlapAreaNorm(uu) = areaOverlap/max(areaC,areaF);
-                totCost (ii, uu ) = 1/overlapAreaNorm(uu);
+                totCost (ii, regInF ) = 1/overlapAreaNorm(uu);
             end
             
             [overlapAreaNormSort, indexesSort] = sort(overlapAreaNorm,'descend');
@@ -124,41 +124,109 @@ if ~isempty(data_c)
                 totAreaF = cumsum(tmpAreaF);
                 areaC = data_c.regs.props(ii).Area;
                 tmpdA = (totAreaF-areaC)./totAreaF;
-                tmpError = setError(tmpdA,minDA,maxDA);
-                
+                tmpError = setError(tmpdA);
+           
                 
                 if numel(tmpError) > 0 && tmpError(1) == 0
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
-                    errorR(ii) =  tmpError(1) ;
-                    dA(ii) = tmpdA(1);
-                    
                 elseif numel(tmpError) > 1 && tmpError(2) == 0
                     assignments{ii} = tmpAssign(1:2);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
-                    revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];
-                    errorR(ii) =  tmpError(2) ;
-                    dA(ii) = tmpdA(2);
-                    
+                    revAssign{tmpAssign(2)} = [revAssign{tmpAssign(2)},ii];   
                 else
                     assignments{ii} = tmpAssign(1);
                     revAssign{tmpAssign(1)} = [revAssign{tmpAssign(1)},ii];
-                    errorR(ii) =  tmpError(1);
-                    dA(ii) = tmpdA(1);
                 end
             end
         end
+        
+   
+        [~,minIndxF] = min(totCost,[],2);
+        [~,minIndxC] = min(totCost,[],1);
+        cArea = [data_c.regs.props.Area];
+        fArea = [data_f.regs.props.Area];
+        
+        [assignments,revAssign] =fixProblems(assignments,revAssign,minIndxC, cArea, fArea);
+        [revAssign,assignments] =fixProblems(revAssign,assignments,minIndxF, fArea, cArea);
+        
+        dA = changeInArea(assignments, cArea,fArea);
+        errorR = setError(dA);
     end
     
+    % if something assigned to two...
     
     
     
     if debug_flag
         visualizeLinking(data_c,data_f,assignments);
     end
+    
+    
+   
+
 end
 
 
+
+end
+
+
+function dA = changeInArea(assignments, cArea,fArea)
+% change in area set for data_c
+numRegs1 = size(assignments,2);
+dA = nan*zeros(1,numRegs1);
+for ll = 1 : numRegs1
+    tmpAssgn =  assignments{ll};
+    carea_tmp =  (cArea(ll));
+    farea_tmp = sum(fArea(tmpAssgn));
+    dA(ll) = (farea_tmp - carea_tmp) / max(carea_tmp,farea_tmp);
+end
+
+end
+
+function [assignments, revAssign] =fixProblems (assignments, revAssign, minIndxC, cArea, fArea)
+global minDA;
+global maxDA;
+
+leftInF = find(cellfun('isempty',revAssign));
+
+for jj = leftInF
+    bestAssgnC = minIndxC(jj);
+    FAlready = assignments{bestAssgnC};
+    revToAlreadyF = revAssign{FAlready};
+    areaC = sum(cArea(revToAlreadyF));
+    areaFBefore = sum(fArea(FAlready));
+    dABefore = (areaFBefore - areaC)/max(areaFBefore,areaC);
+    
+    if numel(revToAlreadyF) == 2 && ...
+            setError(dABefore)>0
+        % two assigned to other f - steal one
+        areaFjj = fArea(jj);
+        newRevToAlreadyF = revToAlreadyF(revToAlreadyF~=bestAssgnC);
+        newAreaC = cArea(newRevToAlreadyF);
+        areaC = cArea(bestAssgnC);
+        newdAjj = (areaFjj - areaC)/max(areaFjj,areaC);
+        newdAalreadyF = (areaFBefore - newAreaC)/max(areaFBefore,areaC);;
+        if  ~setError(newdAjj) && ...
+                ~setError(newdAalreadyF)
+            assignments{bestAssgnC} = jj;
+            revAssign{jj} = bestAssgnC;
+            revAssign{FAlready} = newRevToAlreadyF;
+        end
+    else
+        % see if assigning both to bestAssgnC solves the problem
+        tempAssgn = [FAlready,jj];
+        areaF = areaFBefore + fArea(jj);
+        dAtmp = (areaF - areaC)/max(areaF,areaC);
+        if  setError(dABefore) > 0 && ...
+                ~setError(dAtmp)
+            assignments{bestAssgnC} = tempAssgn;
+            revAssign{jj} = bestAssgnC;
+        end
+    end
+    
+end
 
 end
 
@@ -193,7 +261,9 @@ for c = 1 : num_ass
 end
 end
 
-function errorR = setError(DA,minDA,maxDA)
+function errorR = setError(DA)
+global minDA
+global maxDA
 errorR = zeros(1, numel(DA));
 errorR (DA < minDA ) = 2;
 errorR (DA > maxDA) = 3;

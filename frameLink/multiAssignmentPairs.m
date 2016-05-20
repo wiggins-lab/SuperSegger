@@ -29,9 +29,9 @@ function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentP
 
 
 
-global str5
+global str8
 
-str5 = strel('square',5);
+str8 = strel('square',5);
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 
@@ -130,7 +130,6 @@ if ~isempty(data_c)
                 [BB_c_xx,BB_c_yy] = getBoxLimits (data_c,cRegs);
                 [maskC,areaC,centroidC] = regProperties (data_c,cRegs,BB_c_xx,BB_c_yy);
                 
-                
                 % colony it belongs to
                 colony_labels_temp = colony_labels(BB_c_yy,BB_c_xx);
                 colOverlap = colony_labels_temp(maskC);
@@ -145,15 +144,15 @@ if ~isempty(data_c)
                 end
                 
                 % dilate mask and get adjacent regions within dilated area
-                tmp_mask = imdilate(maskC, str5);
+                tmp_mask = imdilate(maskC, str8);
                 regs_label_f = data_f.regs.regs_label(BB_c_yy,BB_c_xx);
                 tmpregs2 = regs_label_f(tmp_mask);
                 possibleMapInd = unique(tmpregs2);
                 possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
                 
-                for uu = 1:numel(possibleMapInd)
+                for yy = 1:numel(possibleMapInd)
                     % one to one mapping
-                    idF = possibleMapInd(uu);
+                    idF = possibleMapInd(yy);
                     [maskF,areaF,centroidF] = regProperties (data_f,idF,BB_c_xx,BB_c_yy);
                     overlapMask = maskF(maskC);
                     areaOverlap = sum(overlapMask(:)); % area of overlap between jj and ii
@@ -165,7 +164,11 @@ if ~isempty(data_c)
                     
                     displacement = centroidC - centroidF;
                     centroidCost(ii,idF) = sqrt(sum((displacement).^2));
-                    outwardMot(ii,idF) = (distFromColony*displacement')/centroidCost(ii,idF);
+                    if centroidCost(ii,idF) == 0
+                        outwardMot(ii,idF) = 0;
+                    else
+                        outwardMot(ii,idF) = (distFromColony*displacement')/centroidCost(ii,idF);
+                    end
                     areaChange(ii,idF) = (areaF - areaC)/(areaC);
                     
                     % moved area
@@ -201,10 +204,10 @@ if ~isempty(data_c)
                 % pairs - to make faster
                 
                 if ~goodOneToOne(ii)
-                    for uu = 1:numel(possibleMapInd)
-                        for kk = (uu+1) : numel(possibleMapInd)
+                    for yy = 1:numel(possibleMapInd)
+                        for kk = (yy+1) : numel(possibleMapInd)
                             
-                            sis(1) = possibleMapInd(uu);
+                            sis(1) = possibleMapInd(yy);
                             sis(2) = possibleMapInd(kk);
                             
                             isItPair = all(ismember(allF,[sis(1),sis(2)]));
@@ -225,7 +228,11 @@ if ~isempty(data_c)
                                 displacement = centroidC - centroidF;
                                 centroidCost(ii,location) = sqrt(sum((displacement).^2));
                                 
-                                outwardMot(ii,location) = (distFromColony*displacement')/centroidCost(ii,location);
+                                if centroidCost == 0
+                                    outwardMot(ii,location) = 0;
+                                else
+                                    outwardMot(ii,location) = (distFromColony*displacement')/centroidCost(ii,location);
+                                end
                                 
                                 offset = round(displacement);
                                 maskOut = imtranslate(maskF,offset);
@@ -246,7 +253,6 @@ if ~isempty(data_c)
         end
         
         
-        
         if forward
             % area decreases
             areaChangePenalty((areaChange) < -0.1) = 100;
@@ -256,13 +262,13 @@ if ~isempty(data_c)
         end
         
         %  penalty for big area changes
-        areaChangePenalty(abs(areaChange) > 0.6) = 50;
-        areaChangePenalty(abs(areaChange) > 0.2) = 1000;
+        areaChangePenalty(abs(areaChange) > 0.6) = 1000;
+        areaChangePenalty(abs(areaChange) > 0.3) = 50;
         distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
         
         totCost = areaChangePenalty +  areaChangeFactor * 1./areaOverlapTransCost + ...
             centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange) + ...
-            areaFactor * distFromColonyMat * 1./areaOverlapCost + outwardMot / 10;
+            distFromColonyMat * areaFactor * 1./areaOverlapCost + outwardMot / 10 ;
         
         
         assignedInC = [];
@@ -280,11 +286,6 @@ if ~isempty(data_c)
             regionsInC = allC (:,asgnRow);
             
             assignments {regionsInC(1)} = assignTemp;
-            dA(regionsInC(1)) = areaChange(asgnRow,asgnCol);
-            if ~isnan(regionsInC(2))
-                assignments {regionsInC(2)} = assignTemp;
-                dA(regionsInC(2)) = areaChange(asgnRow,asgnCol);
-            end
             
             assignedInC  = [assignedInC;regionsInC'];
             assignedInF = [assignedInF;assignTemp'];
@@ -297,58 +298,21 @@ if ~isempty(data_c)
         
         
         
-        % find leftovers, give them max assignments, and put errors in them..
-        leftInC = setdiff (regsInC,assignedInC);
-        leftInF = setdiff (regsInF,assignedInF);
-        newleftInC = leftInC;
+        % make list of revAssign
+        revAssign = getRevAssign();
         
         % fix assignment error - best next assignments for those
         [~,minIndxF] = min(totCost,[],2);
+        [~,minIndxC] = min(totCost,[],1);
+        cArea = [data_c.regs.props.Area];
+        fArea = [data_f.regs.props.Area];
         
+        [assignments,revAssign] =fixProblems(assignments,revAssign,minIndxC, cArea, fArea);
+        [revAssign,assignments] =fixProblems(revAssign,assignments,minIndxF, fArea, cArea);
         
-        for kk = 1 : numel(leftInC)
-            leftC = leftInC(kk);
-            bestF = minIndxF(leftC);
-            
-            for badC = 1 : numel(assignments)
-                tempAss = assignments{badC};
-                if any(tempAss ==bestF)
-                    break
-                end
-            end
-            
-            % would second option be good enough?
-            totCostTemp = totCost(badC,:);
-            costBef = totCostTemp(bestF);
-            totCostTemp(bestF) = NaN;
-            [cost,badCSecondF] = min(totCostTemp);
-            
-            if any(leftInF == badCSecondF)
-                assignments{badC} = badCSecondF;
-                dA(badC) = areaChange(badC,badCSecondF);
-                assignments{leftC} = bestF;
-                dA(leftC) = areaChange(leftC,bestF);
-                newleftInC = setdiff(newleftInC,leftC);
-            end
-            
-        end
-        
+        dA = changeInArea(assignments, cArea,fArea);
         errorR = setError(dA,minDA,maxDA);
-        
         % make list of revAssign
-        revAssign = cell( 1, numRegs2);
-        for ll = 1 : numRegs1
-            tmpAss =  assignments{ll};
-            for uu = tmpAss
-                revAssign{uu} = [revAssign{uu},ll];
-            end
-        end
-        
-        
-        for ii = newleftInC
-            errorR (ii) = 1;
-        end
-        
         
         
         if debug_flag
@@ -357,11 +321,129 @@ if ~isempty(data_c)
         
     end
 end
+
+
+    function revAssign = getRevAssign()
+        revAssign = cell( 1, numRegs2);
+        for ll = 1 : numRegs1
+            tmpAss =  assignments{ll};
+            for yy = tmpAss
+                revAssign{yy} = [revAssign{yy},ll];
+            end
+        end
+    end
+
+end
+
+function dA = changeInArea(assignments, cArea,fArea)
+% change in area set for data_c
+numRegs1 = size(assignments,2);
+dA = nan*zeros(1,numRegs1);
+for ll = 1 : numRegs1
+    tmpAssgn =  assignments{ll};
+    carea_tmp =  (cArea(ll));
+    farea_tmp = sum(fArea(tmpAssgn));
+    dA(ll) = (farea_tmp - carea_tmp) / max(carea_tmp,farea_tmp);
+end
+
+end
+
+% need to include this back
+%    newleftInC = leftInC;
+%         % rewrite this for both data_f and data_c..
+%         % two options : is exchaning assgn fixed the problem
+%         % and does adding this to an errorenous assgn fix the problem
+%         for kk = 1 : numel(leftInC)
+%             leftC = leftInC(kk);
+%             bestF = minIndxF(leftC);
+%
+%             for badC = 1 : numel(assignments)
+%                 tempAss = assignments{badC};
+%                 if any(tempAss ==bestF)
+%                     break
+%                 end
+%             end
+%             % would second option be good enough?
+%             totCostTemp = totCost(badC,:);
+%             costBef = totCostTemp(bestF);
+%             totCostTemp(bestF) = NaN;
+%             [cost,badCSecondF] = min(totCostTemp);
+%
+%             if any(leftInF == badCSecondF)
+%                 assignments{badC} = badCSecondF;
+%                 dA(badC) = areaChange(badC,badCSecondF);
+%                 assignments{leftC} = bestF;
+%                 dA(leftC) = areaChange(leftC,bestF);
+%                 newleftInC = setdiff(newleftInC,leftC);
+%             end
+%         end
+%
+%         [~,minIndxC] = min(totCost,[],1);
+%         % check if it can be added to an assignment?
+%         for kk = 1 : numel(leftInF)
+%             fToAssign = leftInF(kk);
+%             bestAssgn = minIndxC(fToAssign);
+%             fAlready = assignments{bestAssgn};
+%             tempAssgn = [fAlready,fToAssign];
+%             areaF = data_f.regs.props(fAlready).Area + data_f.regs.props(fToAssign).Area;
+%             areaC = data_c.regs.props(bestAssgn).Area;
+%             dAtmp = (areaF - areaC)/(areaC);
+%
+%             if  setError(dA(bestAssgn),minDA,maxDA) > 0 && ...
+%                  ~setError(dAtmp,minDA,maxDA)
+%                 assignments{bestAssgn} = tempAssgn;
+%             end
+%         end
+
+
+function [assignments, revAssign] = fixProblems (assignments, revAssign, minIndxC, cArea, fArea)
+global minDA;
+global maxDA;
+
+leftInF = find(cellfun('isempty',revAssign));
+
+for jj = leftInF
+    bestAssgnC = minIndxC(jj);
+    FAlready = assignments{bestAssgnC};
+    revToAlreadyF = revAssign{FAlready};
+    areaC = sum(cArea(revToAlreadyF));
+    areaFBefore = sum(fArea(FAlready));
+    dABefore = (areaFBefore - areaC)/max(areaFBefore,areaC);
+    
+    if numel(revToAlreadyF) == 2 && ...
+            setError(dABefore,minDA,maxDA)>0
+        % two assigned to other f - steal one
+        areaFjj = fArea(jj);
+        newRevToAlreadyF = revToAlreadyF(revToAlreadyF~=bestAssgnC);
+        newAreaC = cArea(newRevToAlreadyF);
+        areaC = cArea(bestAssgnC);
+        newdAjj = (areaFjj - areaC)/max(areaFjj,areaC);
+        newdAalreadyF = (areaFBefore - newAreaC)/max(areaFBefore,areaC);;
+        if  ~setError(newdAjj,minDA,maxDA) && ...
+                ~setError(newdAalreadyF,minDA,maxDA)
+            assignments{bestAssgnC} = jj;
+            revAssign{jj} = bestAssgnC;
+            revAssign{FAlready} = newRevToAlreadyF;
+        end
+    else
+        % see if assigning both to bestAssgnC solves the problem
+        tempAssgn = [FAlready,jj];
+        areaF = areaFBefore + fArea(jj);
+        dAtmp = (areaF - areaC)/max(areaF,areaC);
+        if  setError(dABefore,minDA,maxDA) > 0 && ...
+                ~setError(dAtmp,minDA,maxDA)
+            assignments{bestAssgnC} = tempAssgn;
+            revAssign{jj} = bestAssgnC;
+        end
+    end
+    
+end
+
 end
 
 function pairsF = findNeighborPairs (data_f, numRegs2, regsInF)
 % finds neighboring regions to be considered as pairs
-global str5
+global str8
 
 counter = 1;
 pairsF = NaN * zeros(2,numRegs2 * numRegs2);
@@ -369,7 +451,7 @@ for jj = regsInF
     [bbx,bby] = getBoxLimits (data_f,jj);
     labels_f = data_f.regs.regs_label(bby,bbx);
     maskF = (labels_f==jj);
-    tmp_mask = imdilate(maskF, str5);
+    tmp_mask = imdilate(maskF, str8);
     neigh = labels_f(tmp_mask);% get neighbors
     ind_neigh = unique(neigh)'; % unique neighbors
     ind_neigh = ind_neigh(ind_neigh > jj); % not already made pairs
@@ -402,7 +484,8 @@ for ii = 1: numel(regNums)
     comboBoundingBox = addBB(comboBoundingBox,data_c.regs.props(reg).BoundingBox);
 end
 
-[bbx,bby] =  getBBpad(comboBoundingBox,ss,5);
+pad = 20;
+[bbx,bby] =  getBBpad(comboBoundingBox,ss,pad);
 
 end
 
@@ -456,5 +539,10 @@ for c = 1 : num_ass
         end
     end
 end
-       
+hold on;
+subplot(1,2,1)
+title('data-c')
+subplot(1,2,2)
+title('data-f')
+
 end

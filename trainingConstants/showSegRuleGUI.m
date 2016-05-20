@@ -14,21 +14,21 @@ function showSegRuleGUI( data, FLAGS, viewport )
 %           too)
 %       viewport : display axis
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -90,7 +90,7 @@ if im_flag == 1
         data.segs.Include = 0*data.segs.score+1;
     end
     
-    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));  
+    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
     segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,rawSegs))));
     segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~rawSegs))));
     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,rawSegs))));
@@ -119,15 +119,15 @@ if im_flag == 1
     
     
     imshow( cat(3, 0.2*phaseBackag + 0.3*segs3nag + uint8(segsGoodag+segsGoodFailag+0.5*segsBadFailag), ...
-         0.2*phaseBackag + 0.3*segs3nag + 0.8*uint8(segsGoodFailag+segsBadFailag) , ...
-       0.2*phaseBackag + 0.3*segs3nag + uint8(segsBadag+segsBadFailag + 0.5 * segsGoodFailag) ), 'InitialMagnification', 'fit');
-
+        0.2*phaseBackag + 0.3*segs3nag + 0.8*uint8(segsGoodFailag+segsBadFailag) , ...
+        0.2*phaseBackag + 0.3*segs3nag + uint8(segsBadag+segsBadFailag + 0.2 * segsGoodFailag) ), 'InitialMagnification', 'fit');
+    
     flagger = and( data.segs.Include, ~isnan(data.segs.score) );
     scoreRawTmp = data.segs.scoreRaw(flagger);
     scoreTmp    = data.segs.score(flagger);
     [y_good,x_good] = hist(scoreRawTmp(scoreTmp>0),[-40:2:40]);
     [y_bad,x_bad] = hist(scoreRawTmp(~scoreTmp),[-40:2:40]);
-
+    
     props = regionprops( data.segs.segs_label, 'Centroid'  );
     num_segs = numel(props);
     
@@ -167,38 +167,37 @@ elseif im_flag == 2 % region view
     num_regs = data.regs.num_regs;
     
     if isfield(data.regs,'score')
-    regs_good_agree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & round(data.regs.scoreRaw > 0)))));
-    regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~round(data.regs.scoreRaw > 0)))));
-    
-    regs_bad_agree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw > 0)))));
-    regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw > 0)))));
-    
-    imshow(cat(3, 0.5*backer + uint8(0.5*regs_bad_agree+regs_bad_disagree), ...
-        0.5*backer + uint8(0.5*regs_good_agree+regs_good_disagree+0.4*regs_bad_disagree), ...
-        0.5*backer + 0.6*uint8(regs_good_disagree)) , 'InitialMagnification', 'fit');
-    else
-     
-        imshow( cat(3, 0.8*backer + ag(data.mask_cell), ...
-        0.8*backer, ...
-        0.8*backer) , 'InitialMagnification', 'fit');
-  
+        regs_good_agree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & round(data.regs.scoreRaw > 0)))));
+        regs_good_disagree = double(ag(ismember(data.regs.regs_label,find(data.regs.score & ~round(data.regs.scoreRaw > 0)))));
         
+        regs_bad_agree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & ~round(data.regs.scoreRaw > 0)))));
+        regs_bad_disagree = double(ag(ismember(data.regs.regs_label,find(~data.regs.score & round(data.regs.scoreRaw > 0)))));
+        
+        
+        imshow( cat(3, 0.2*backer + uint8(regs_good_agree+regs_good_disagree+0.5*regs_bad_disagree),...
+            0.2*backer + 0.8 * uint8(regs_good_disagree+regs_bad_disagree),...
+            0.2*backer + uint8(regs_bad_agree + regs_bad_disagree + 0.2*regs_good_disagree)), 'InitialMagnification', 'fit');
+        
+    else
+        imshow( cat(3, 0.8*backer + ag(data.mask_cell), ...
+            0.8*backer, ...
+            0.8*backer) , 'InitialMagnification', 'fit');
     end
     
     
     if S_flag && (~t_flag)
-        for ii = 1:num_regs            
+        for ii = 1:num_regs
             r = data.regs.props(ii).Centroid;
             flagger = 1;
             if isfield (data.regs,'score')
-            flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii)); 
+                flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii));
             end
             if flagger
                 text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', 'w' );
             elseif ~Sj_flag
                 text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', [0.5,0.5,0.5] );
             end
-        end        
+        end
     end
     
     if t_flag
@@ -219,19 +218,19 @@ elseif im_flag == 4 % phase image
     imshow( cat(3,backer,backer,backer), 'InitialMagnification', 'fit' );
 elseif im_flag == 5
     
-cell_mask = data.mask_cell;
-segs_3n = data.segs.segs_3n ;
-segs_good = data.segs.segs_good;   
-segs_bad = data.segs.segs_bad  ;
-
-back = double(0.7*ag( data.phase ));
-outline = imdilate( cell_mask, strel( 'square',3) );
-outline = ag(outline-cell_mask);
-  
-        imshow(uint8(cat(3,back + 0.1*double(outline)+ double(ag(segs_good+segs_3n)),...
-            back ,...
-            back + 0.2*double(ag(segs_bad))+ 0.2*double(ag(~cell_mask)-outline))));
-
+    cell_mask = data.mask_cell;
+    segs_3n = data.segs.segs_3n ;
+    segs_good = data.segs.segs_good;
+    segs_bad = data.segs.segs_bad  ;
+    
+    back = double(0.7*ag( data.phase ));
+    outline = imdilate( cell_mask, strel( 'square',3) );
+    outline = ag(outline-cell_mask);
+    
+    imshow(uint8(cat(3,back + 0.1*double(outline)+ double(ag(segs_good+segs_3n)),...
+        back ,...
+        back + 0.2*double(ag(segs_bad))+ 0.2*double(ag(~cell_mask)-outline))));
+    
     drawnow;
 end
 

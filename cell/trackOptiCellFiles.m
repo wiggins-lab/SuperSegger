@@ -66,9 +66,9 @@ else
     
     % create a DA cell array for the number of cells in last frame
     num_im = length(contents);
-    data_c    = loaderInternal([dirname,contents(end).name]);
+    data_c = loaderInternal([dirname,contents(end).name]);
     MAX_NUM_CELLS = max(data_c.regs.ID)+100;
-    DA            = cell(1,MAX_NUM_CELLS);
+    DA  = cell(1,MAX_NUM_CELLS);
     
     if CONST.parallel.show_status
         h = waitbar( 0, 'Make Cell Files.');

@@ -638,21 +638,7 @@ function help_button_ClickedCallback(hObject, eventdata, handles)
 message = ({'SuperSeggerOpti - Modifying Constants Module'
     '------------------------------------------------------------'
     '   '
-    '   '
-    'Mask thresh1: intensity threshold used for background mask to separate cell clumps and background'
-    '   '
-    'Mask thresh2: intensity threshold used for background mask to separate regions between cell'
-    '   '
-    'Max width: Width threshold for the iterative segment refinement. More segments are added to the regions whose short axis is greater than this number. All other masked regions are assumed to be correctly defined as a cell.'
-    '   '
-    'Threshold: Intensities below this are set to 0, so that intensity differences within a cell region are minimized.'
-    '   '
-    'Magic Radius: radius for the contrast enhancing filter (proportional to the width of the cell)'
-    '   '
-    'Run : Runs segmentation with the chosen parameters.'
-    ' '
-    
-    'Min length region optimization : Cells with length smaller than this are considered for further optimization'
+    'Hover over the names to get more information about the different variables. Choose a constant, change the slider''s values and click run to see the result. Save the constants in the settings folder to use them immediately.  '
     '   '
     });
 

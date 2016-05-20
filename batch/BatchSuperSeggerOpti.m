@@ -198,7 +198,6 @@ else
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
-        cleanup = onCleanup( @()( delete( h ) ) );
     end
     
     parfor(j = 1:num_xy,workers)
@@ -227,7 +226,10 @@ else
     
     
     if ~workers
-        close(h);
+        if isvalid(h)
+            close(h);
+            
+        end
     end
     
 end
@@ -291,7 +293,6 @@ if ~CONST.parallel.show_status
     h = [];
 else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
-    %cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
@@ -302,10 +303,10 @@ end
 
 
 % does the segmentations for all the frames in parallel
-if SEGMENT_FLAG && ~exist( stamp_name, 'file' ) 
+if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
     parfor(i=1:num_t,workers) % through all frames
-    %for i = 1:num_t
-
+        %for i = 1:num_t
+        
         if isempty( crop_box )
             crop_box_tmp = [];
         else
@@ -329,7 +330,9 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
     save( stamp_name, 'time_stamp'); % saves that xydir was full segmented
 end
 if CONST.parallel.show_status
-    close(h);
+    if isvalid(h)
+        close(h);
+    end
 end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc

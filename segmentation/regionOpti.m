@@ -221,6 +221,7 @@ if disp_flag
     segs_tried = ((segs_good_off + segs_good)>0);
     
     try
+        figure(1);
         clf;
         
         imshow(uint8(cat(3,back + 1*double(outline),...

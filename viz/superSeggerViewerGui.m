@@ -112,7 +112,8 @@ end
 
 contents_xy = dir([dirname, 'xy*']);
 handles.num_xy = numel(contents_xy);
-direct_contents = dir([dirname, '*seg.mat']);
+direct_contents_seg = dir([dirname, '*seg.mat']);
+direct_contents_err = dir([dirname, '*err.mat']);
 
 
 if handles.num_xy~=0
@@ -129,7 +130,7 @@ if handles.num_xy~=0
         handles.clist = [];
     end
 else
-    if numel(direct_contents) == 0 % no images found abort.
+    if numel(direct_contents_err) == 0 &&  numel(direct_contents_seg) == 0   % no images found abort.
         cla(handles.axes1)
         handles.message.String = ['There are no xy dirs. Choose a different directory.'];
         disable_all_panels(hObject,handles);
@@ -138,8 +139,9 @@ else
         handles.dirname_cell = dirname;
         handles.dirname_seg  = dirname;
         dirnum = 1;
-        
-        handles.use_seg_files.Value = 1;
+        if numel(direct_contents_err) == 0
+            handles.use_seg_files.Value = 1;
+        end
     end
 end
 
@@ -214,6 +216,19 @@ else
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
+    if isfield(handles.clist,'def3d')
+        handles.time_clist.String = handles.clist.def3d';
+    end
+    if isfield(handles.clist,'idExclude')
+        handles.exclude_ids.String = num2str(handles.clist.idExclude);
+    else
+        handles.exclude_ids.String = '';
+    end
+    if isfield(handles.clist,'idInclude')
+        handles.include_ids.String = num2str(handles.clist.idInclude);
+    else
+        handles.include_ids.String = '';
+    end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 updateImage(hObject, handles)
@@ -243,12 +258,12 @@ if ~isempty(handles.FLAGS)
     end
     
     if  ~isempty(handles.clist) && ~isempty(handles.clist.gate)
-        handles.gate_text.String = 'Gates:';
-        cell_gates = struct2cell(handles.clist.gate);
-        for i=1:length(cell_gates(2,1,:));
-            handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
-        end
-        handles.gate_text.String = handles.gate_text.String(1:end-1);
+         handles.gate_text.String = 'Gates:';
+         cell_gates = struct2cell(handles.clist.gate);
+         for i=1:length(cell_gates(2,1,:));
+             handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
+         end
+         handles.gate_text.String = handles.gate_text.String(1:end-1);
     else
         handles.gate_text.String = '';
     end
@@ -258,7 +273,6 @@ if ~isempty(handles.FLAGS)
         handles.clist_text.String = 'No clist loaded, these commands will not work';
     end
     handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat'])))];
-    
     handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));
     
     %Use region IDs if cells IDs unavailable
@@ -275,12 +289,13 @@ if ~isempty(handles.FLAGS)
     forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS, handles.canUseErr);
     %Force cell flag to 0 when err files not present
     
-    
     delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
     [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
         nn, handles.num_im, handles.clist, forcedFlags);
     showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
     save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
+    clist = handles.clist;
+    save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
     guidata(hObject, handles);
     find_cell_no(handles);
 end
@@ -408,7 +423,7 @@ end
 function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
-handles.image_directory.String = getappdata(0, 'dirname');
+handles.image_directory.String = pwd;
 set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 
@@ -986,3 +1001,75 @@ input.Enable = 'off';
 
 function value = areCellsLoaded(handles)
 value =  isfield(handles.data_c.regs, 'ID');
+
+
+% --- Executes on selection change in time_clist.
+function time_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to time_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isempty(handles.FLAGS) && isfield(handles.clist,'data3D')
+    figure(2);
+    clf;
+    plotClist3D(handles.clist, handles.time_clist.Value);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function time_clist_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to time_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function clear_gate_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.clist = gateStrip(handles.clist, str2double(handles.clear_gate.String));
+    handles.clear_gate.String = '';
+    updateImage(hObject, handles)
+end
+
+function clear_gate_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function exclude_ids_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.clist.idExclude = str2double(strsplit(handles.exclude_ids.String));
+    if isnan(handles.clist.idExclude)
+        handles.exclude_ids.String = '';
+    end
+    if isempty(handles.exclude_ids.String)
+        handles.clist = rmfield(handles.clist, 'idExclude');
+    end
+    updateImage(hObject, handles)
+end
+
+function exclude_ids_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function include_ids_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    handles.clist.idInclude = str2double(strsplit(handles.include_ids.String));
+    if isnan(handles.clist.idInclude)
+        handles.include_ids.String = '';
+    end
+    if isempty(handles.include_ids.String)
+        handles.clist = rmfield(handles.clist, 'idInclude');
+    end
+    updateImage(hObject, handles)
+end
+
+function include_ids_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

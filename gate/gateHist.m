@@ -67,19 +67,19 @@ elseif nind == 1
     
     clf;
     
-    if (max(y) - min(y)) > 100
-        semilogy( xx, y, '.-', 'Color', cc );
+    if any(y==0)
+        plot( xx, y, '.-', 'Color', cc );       
     else
-        plot( xx, y, '.-', 'Color', cc );
+        semilogy( xx, y, '.-', 'Color', cc );
     end
     
     tmp = ishold;
     hold on;
     
-    if (max(y) - min(y)) > 100
-        semilogy( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );
-    else
+    if any(y==0)
         plot( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );
+    else
+        semilogy( mean(clist.data(:,ind))+[0,0], [max(y),min(y(y>0))], ':', 'Color', cc );       
     end
     
     if ~tmp
