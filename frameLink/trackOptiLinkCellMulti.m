@@ -66,7 +66,10 @@ time = 1;
 contents2=dir([dirname,'*',filt2]);
 
 if clean_flag
-    delete([dirname,'*err.mat'])
+    if numel(contents2) > 0
+        delete([dirname,'*',filt2]);
+    end
+    contents2=dir([dirname,'*',filt2]);
 elseif startFrom~=0 && numel(contents2)>startFrom
     time = startFrom;
     dataLast = load([dirname,contents2(time).name]);

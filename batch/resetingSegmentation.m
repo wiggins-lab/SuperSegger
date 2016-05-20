@@ -33,7 +33,7 @@ function resetingSegmentation(dirname, step)
 % GNU General Public License for more details.
 % 
 % You should have received a copy of the GNU General Public License
-% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/<.
 
 
 dirname = fixDir(dirname);
@@ -49,42 +49,42 @@ end
 
 removeOptiStrip = 0;
 removeOptiLink = 0;
-removeOptiCellMaker = 0;
+removeOptiCellMarker = 0;
 removeOptiFluor = 0;
 removeOptiMakeCell = 0;
 removeOptiFindFoci = 0;
 removeOptiClist = 0;
 removeOptiCellFiles = 0;
 
-if step >= 1
+if step <= 1
 removeOptiStrip = 1;
 end
 
-if step >= 2
+if step <= 2
 removeOptiLink = 1;
 end
 
-if step >= 3
-removeOptiCellMaker = 1;
+if step <= 3
+removeOptiCellMarker = 1;
 end
 
-if step >= 4
+if step <= 4
 removeOptiFluor = 1;
 end
 
-if step >= 5
+if step <= 5
 removeOptiMakeCell = 1;
 end
 
-if step >= 6
+if step <= 6
 removeOptiFindFoci = 1;
 end
 
-if step >= 7
+if step <= 7
 removeOptiClist = 1;
 end
 
-if step >= 8
+if step <= 8
 removeOptiCellFiles = 1;
 end
 
@@ -94,12 +94,12 @@ for i = 1 : numel(xydirs)
     dirname_seg = [dirname,curXyDir,filesep,'seg',filesep];
     intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripSmall-Step1.mat']);
     intDeleteFile (removeOptiLink, [dirname_seg,'.trackOptiLinkCell-Step2.mat']);
-    intDeleteFile (removeOptiCellMaker, [dirname_seg,'.trackOptiCellMarker-Step3.ma']);
+    intDeleteFile (removeOptiCellMarker, [dirname_seg,'.trackOptiCellMarker-Step3.mat']);
     intDeleteFile (removeOptiFluor, [dirname_seg,'.trackOptiFluor-Step4.mat']);
     intDeleteFile (removeOptiMakeCell, [dirname_seg,'.trackOptiMakeCell-Step5.mat']);
     intDeleteFile (removeOptiFindFoci, [dirname_seg,'.trackOptiFindFociCyto-Step6.mat']);
     intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist-Step7.mat']);
-    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiMakeCell-Step7.mat']);
+    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiMakeCell-Step8.mat']);
    
     
 end
