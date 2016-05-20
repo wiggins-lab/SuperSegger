@@ -218,14 +218,11 @@ else
         handles.time_clist.String = handles.clist.def3d';
     end
     if isfield(handles.clist,'idExclude')
-        handles.exclude_ids.String = num2str(handles.clist.idExclude);
-    else
-        handles.exclude_ids.String = '';
+        t = mat2str(handles.clist.idExclude);
+        handles.exclude_ids.String = t(2:end-1);
     end
     if isfield(handles.clist,'idInclude')
-        handles.include_ids.String = num2str(handles.clist.idInclude);
-    else
-        handles.include_ids.String = '';
+        handles.include_ids.String = mat2str(handles.clist.idInclude);
     end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
