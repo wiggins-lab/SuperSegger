@@ -60,13 +60,22 @@ assignmentFun = CONST.trackOpti.linkFun;
 filt = '*seg.mat'; % files loaded
 filt2 = 'err.mat'; % name of final files
 contents=dir([dirname,filt]);
-numIm = length(contents);
-cell_count = 0;
-time = 1;
 contents2=dir([dirname,'*',filt2]);
 
+if numel(contents) == 0 
+    numIm = length(contents2);
+    contents = contents2;
+else
+    numIm = length(contents);
+end
+
+cell_count = 0;
+time = 1;
+
 if clean_flag
-    %delete([dirname,'*err.mat'])
+    if numel(contents) ~=0
+        delete([dirname,'*err.mat'])
+    end
 elseif startFrom~=0 && numel(contents2)>startFrom
     time = startFrom;
     dataLast = load([dirname,contents2(time).name]);
