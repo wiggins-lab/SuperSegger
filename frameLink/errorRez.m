@@ -157,7 +157,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 end
-            elseif numel(sister2) == 1 && any(mapRC==regNum) && data_c.regs.map.r{sister2} ~= mother
+            elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r, mapCR, time, 0);
                 
@@ -183,16 +183,13 @@ for regNum =  1 : data_c.regs.num_regs;
                 if verbose
                     disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
                 end
-                % red is regNum, green is the ones mother maps to, blue is
-                % mother
+                % red : regNum, green : ones mother maps to, blue : mother
                 if debug_flag
                     imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                         ag((data_c.regs.regs_label == mapRC(1)) + ...
                         (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
                     keyboard;
                 end
-                
-                
             end
         elseif numel(mapCR) == 2
             % 1 in current maps to two in reverse

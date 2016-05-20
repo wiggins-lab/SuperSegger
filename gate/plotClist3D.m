@@ -36,6 +36,7 @@ function plotClist3D(clist, ind)
 clist = gate(clist);
 cc = 'b';
 nind = numel(ind);
+
 if ~isfield(clist,'data3D')
     disp('3D clist is not supported')
     return;

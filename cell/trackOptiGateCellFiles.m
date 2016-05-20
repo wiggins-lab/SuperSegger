@@ -2,7 +2,7 @@ function trackOptiGateCellFiles(dirname_cell, clist )
 % trackOptiGateCellFiles : moves cells not passing the gate to separate directory
 % the cells that pass the gate remain in the dirname_cell directory.
 % For the clist passed, create a gate for the cells that you would like to move
-% the notGated directory.
+% the outsideTheGate directory.
 %
 % INPUT :
 %       dirname_cell : directory with cell files
@@ -34,30 +34,32 @@ else
     ID_LIST = clist.data(:,1);
 end
 
-notGateddirname = [dirname_cell,'notGated',filesep];
+outsideTheGatedir = [dirname_cell,'outsideTheGate',filesep];
 
-if ~exist( notGateddirname, 'dir' ) % create notGated directory
-    mkdir(notGateddirname(1:end-1));
+if ~exist( outsideTheGatedir, 'dir' ) % create outsideTheGate directory
+    mkdir(outsideTheGatedir(1:end-1));
 end
 
 contents = dir( [dirname_cell,'*ell*.mat'] );
 
-if ~isempty( contents ) % move all cell files to notGated directory
-    movefile( [dirname_cell,'*ell*.mat'], notGateddirname ) 
+% all cell files are moved to the outsideTheGate directory
+if ~isempty( contents )
+    movefile( [dirname_cell,'*ell*.mat'], outsideTheGatedir )
 end
 
 if isempty( contents ) % check gated directory - maybe it was gated already in the past
-    contents = dir( [notGateddirname,'*ell*.mat'] );
+    contents = dir( [outsideTheGatedir,'*ell*.mat'] );
 end
 
 
+% move cell files in the ID_LIST from the outsideTheGate directory back to the original directory
 if ~isempty( contents )
     numPad = sum( ismember(contents(1).name,'0123456789')); % how many numbers in cell id's name
     nCells = numel( ID_LIST );
     for ii = 1:nCells % go through every cell
         numStr = num2str(  ID_LIST(ii), ['%0',num2str(numPad),'d'] );     
-        nameC = [notGateddirname,'Cell',numStr,'.mat'];
-        namec = [notGateddirname,'cell',numStr,'.mat'];
+        nameC = [outsideTheGatedir,'Cell',numStr,'.mat'];
+        namec = [outsideTheGatedir,'cell',numStr,'.mat'];
         if exist( nameC, 'file' )
             movefile( nameC, dirname_cell );
         elseif exist( namec, 'file' )

@@ -215,7 +215,7 @@ else
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
     if isfield(handles.clist,'def3d')
-        handles.histogram_clist.String = handles.clist.def3d';
+        handles.time_clist.String = handles.clist.def3d';
     end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
@@ -261,7 +261,6 @@ if ~isempty(handles.FLAGS)
         handles.clist_text.String = 'No clist loaded, these commands will not work';
     end
     handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat'])))];
-    
     handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));
     
     %Use region IDs if cells IDs unavailable
@@ -277,8 +276,7 @@ if ~isempty(handles.FLAGS)
     forcedFlags = FLAGS;
     forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS, handles.canUseErr);
     %Force cell flag to 0 when err files not present
-    
-    
+       
     delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
     [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
         nn, handles.num_im, handles.clist, forcedFlags);
@@ -411,7 +409,7 @@ end
 function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
-handles.image_directory.String = getappdata(0, 'dirname');
+handles.image_directory.String = pwd;
 set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 
@@ -997,7 +995,7 @@ function time_clist_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if ~isempty(handles.FLAGS)
+if ~isempty(handles.FLAGS) && isfield(handles.clist,'data3D')
     figure(2);
     clf;
     plotClist3D(handles.clist, handles.time_clist.Value);

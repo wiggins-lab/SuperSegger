@@ -31,7 +31,7 @@ function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentP
 
 global str8
 
-str8 = strel('square',8);
+str8 = strel('square',5);
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 
@@ -304,8 +304,7 @@ if ~isempty(data_c)
         
         
         % find leftovers, give them max assignments, and put errors in them..
-        
-leftInC = setdiff (regsInC,assignedInC);
+        leftInC = setdiff (regsInC,assignedInC);
         leftInF = setdiff (regsInF,assignedInF);
         newleftInC = leftInC;
         
@@ -344,19 +343,17 @@ leftInC = setdiff (regsInC,assignedInC);
         % check if it can be added to an assignment?
         for kk = 1 : numel(leftInF)
             fToAssign = leftInF(kk);
-            bestAssgn = minIndxC(fToAssign);
-            fAlready = assignments{bestAssgn};
-            tempAssgn = [fAlready,fToAssign];
-            areaF = data_f.regs.props(fAlready).Area + data_f.regs.props(fToAssign).Area;
-            areaC = data_c.regs.props(bestAssgn).Area;
+            bestAssgn = minIndxC(fToAssign)
+            tempAssgn = [assignments{bestAssgn},fToAssign];
+            areaF = data_f.regs.are
+            areaC = 
             dAtmp = (areaF - areaC)/(areaC);
                     
-            if  setError(dA(bestAssgn),minDA,maxDA) > 0 && ...
-                 ~setError(dAtmp,minDA,maxDA)
-                assignments{bestAssgn} = tempAssgn;
-            end
+            if  setError(dA(bestAssgn),minDA,maxDA) > 0 && 
+                 setError(tempAssgn,minDA,maxDA) 
+                assignments{bestAssgn} = badCSecondF;
         end
-
+        
         errorR = setError(dA,minDA,maxDA);
         
         % make list of revAssign
@@ -379,63 +376,6 @@ leftInC = setdiff (regsInC,assignedInC);
         
     end
 end
-end
-
-
-function fixAssignmentIssues(data_c)
-
-leftInC = setdiff (regsInC,assignedInC);
-        leftInF = setdiff (regsInF,assignedInF);
-        newleftInC = leftInC;
-        
-        % fix assignment error - best next assignments for those
-        [~,minIndxF] = min(totCost,[],2);
-        
-        % rewrite this for both data_f and data_c.. 
-        % two options : is exchaning assgn fixed the problem
-        % and does adding this to an errorenous assgn fix the problem
-        for kk = 1 : numel(leftInC)
-            leftC = leftInC(kk);
-            bestF = minIndxF(leftC);
-            
-            for badC = 1 : numel(assignments)
-                tempAss = assignments{badC};
-                if any(tempAss ==bestF)
-                    break
-                end
-            end           
-            % would second option be good enough?
-            totCostTemp = totCost(badC,:);
-            costBef = totCostTemp(bestF);
-            totCostTemp(bestF) = NaN;
-            [cost,badCSecondF] = min(totCostTemp);
-            
-            if any(leftInF == badCSecondF)
-                assignments{badC} = badCSecondF;
-                dA(badC) = areaChange(badC,badCSecondF);
-                assignments{leftC} = bestF;
-                dA(leftC) = areaChange(leftC,bestF);
-                newleftInC = setdiff(newleftInC,leftC);
-            end            
-        end
-        
-        [~,minIndxC] = min(totCost,[],1);
-        % check if it can be added to an assignment?
-        for kk = 1 : numel(leftInF)
-            fToAssign = leftInF(kk);
-            bestAssgn = minIndxC(fToAssign);
-            fAlready = assignments{bestAssgn};
-            tempAssgn = [fAlready,fToAssign];
-            areaF = data_f.regs.props(fAlready).Area + data_f.regs.props(fToAssign).Area;
-            areaC = data_c.regs.props(bestAssgn).Area;
-            dAtmp = (areaF - areaC)/(areaC);
-                    
-            if  setError(dA(bestAssgn),minDA,maxDA) > 0 && ...
-                 ~setError(dAtmp,minDA,maxDA)
-                assignments{bestAssgn} = tempAssgn;
-            end
-        end
-
 end
 
 function pairsF = findNeighborPairs (data_f, numRegs2, regsInF)

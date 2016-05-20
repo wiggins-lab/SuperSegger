@@ -9,7 +9,11 @@ function [clist] = trackOptiClist(dirname,CONST,header)
 %       CONST : segmentation constants
 %       header : string displayed with information
 % OUTPUT :
-%       clist : array with the above info for each cell in the frame
+%       clist :
+%           .data : array of cell variables versus cells.
+%           .def : definitions of variables in clist
+%           .data3D : variables vs cells vs time
+%           .def3d : definititions of variables used in data3D.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins.
@@ -262,7 +266,8 @@ function [setter,names_3dclist] = clistSetter ()
 % the first variable is the description, the second is the variabel to
 % which it will be set (needs to be calculated in the first function, and
 % the third is 0 if it is set at birth and 1 if it is set at death.
-
+% the fourth column is for whether the variable should be included in the 3d clist.
+                        
 setter = [{'Cell ID'},{'ID'},0,1;
     {'Region Num birth'},{'regnum'},0,0;
     {'Region Num death'},{'regnum'},1,0;

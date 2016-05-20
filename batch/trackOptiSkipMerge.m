@@ -37,7 +37,7 @@ if nargin < 2 || isempty( skip )
 end
 
 file_filter = '*.tif';
-dirname_xy = fixDir(dirname_xy)
+dirname_xy = fixDir(dirname_xy);
 
 % Reset n values in case directories have already been made.
 contents = dir([dirname_xy,'fluor*']);
@@ -88,8 +88,8 @@ else
     h=[];
 end
 
-parfor i=1:num_t;
-%for i=1:num_t;
+%parfor i=1:num_t;
+for i=1:num_t;
     intSkipPar(i,dirname_xy,nameInfo,nt,nc,nz,skip,num_c,num_z);
     if CONST.parallel.show_status
         waitbar(i/num_t,h,...
@@ -129,7 +129,7 @@ name                       = MakeFileName( nameInfo_tmp );
 nameInfo_tmp               = ReadFileName(name);
 name                       = name(1:max(nameInfo_tmp.npos(:,3)));
 
-dataname2 =[dirname_xy,'seg_full', filesep,name,'_err.mat'];
+dataname2 =[dirname_xy,'seg_full', filesep,name,'_seg.mat'];
 
 nameInfo_tmp = nameInfo;
 nameInfo_tmp.npos(1,1) = nt(i);
@@ -145,7 +145,7 @@ for k = 2:num_z
 end
 
 % Loads the reference _err file for the image already segmented
-i_ref = i-mod(i-1,skip);
+i_ref = nt(i)-mod(i-1,skip);
 nameInfo_tmp_ref = nameInfo;
 nameInfo_tmp_ref.npos([2,4],:) = 0;
 nameInfo_tmp_ref.npos(1,1) = i_ref;
