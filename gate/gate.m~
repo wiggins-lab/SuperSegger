@@ -31,15 +31,19 @@ clist0.def = clist.def;
 ss = size(clist.data);
 inflag = true(ss(1),1);
 
-if isfield( clist, 'idExclude' )
-    inflag = ~ismember(clist.data(:,1), clist.idExclude);
+if isfield( clist.gate, 'idExclude' ) && ~isempty(clist.gate.idExclude)
+    for i = clist.gate.idExclude
+        inflag(clist.data(:,1) == i) = 0;
+    end
 end
 
-if isfield( clist, 'idInclude' )
-    inflag = ismember(clist.data(:,1), clist.idInclude);
+if isfield( clist.gate, 'idInclude' ) && ~isempty(clist.gate.idInclude)
+    for i = clist.gate.idInclude
+        inflag(clist.data(:,1) == i) = 1;
+    end
 end
 
-if isfield( clist, 'gate' ) && ~isempty ('gate.clist')
+if isfield( clist, 'gate' ) && isfield( clist.gate, 'x' ) && ~isempty ('gate.clist')
     for ii = 1:numel(clist.gate)
         if numel(clist.gate(ii).ind) == 2
             inflag = and(inflag, inpolygon( clist.data(:,clist.gate(ii).ind(1)), ...
@@ -51,7 +55,6 @@ if isfield( clist, 'gate' ) && ~isempty ('gate.clist')
         end
     end
 end
-
 
 clist0.data = clist.data(inflag,:);
 if isfield(clist,'data3D')

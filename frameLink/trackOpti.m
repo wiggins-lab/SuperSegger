@@ -103,7 +103,7 @@ end
 stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2.mat'];
 if ~exist( stamp_name, 'file' );
     disp([header,'trackOpti - Step 2: Running trackOptiLinkCell.']);
-    trackOptiLinkCellMulti(dirname_seg, 0, CONST, header);
+    trackOptiLinkCellMulti(dirname_seg, 1, CONST, header);
     time_stamp = clock;
     save( stamp_name, 'time_stamp');
 else
