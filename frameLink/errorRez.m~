@@ -57,13 +57,10 @@ resetRegions = false;
 
 % set all ids to 0
 data_c.regs.ID = zeros(1,data_c.regs.num_regs);
-modRegions = [];
+
 for regNum =  1 : data_c.regs.num_regs;
-    if data_c.regs.ID(regNum) ~= 0
-          disp ([header, 'ErRes: already has an id ',num2str(regNum)]);
-    elseif ismember (regNum,modRegions)
-        disp ([header, 'ErRes: already modified ',num2str(regNum)]);
-    else
+    
+    if data_c.regs.ID(regNum) == 0 && 
         mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
         
         if ~isempty(mapCR)
@@ -88,12 +85,10 @@ for regNum =  1 : data_c.regs.num_regs;
                 [data_c] = deleteRegions( data_c,regNum);
                 resetRegions = true;
             else % maps to a region in the next frame, or time is 1
-                if time~=1
-                    data_c.regs.error.label{regNum} = ['Frame: ', num2str(time), ...
-                        ', reg: ', num2str(regNum), '. is a stray region.'];                   
-                    if verbose
-                        disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
-                    end
+                data_c.regs.error.label{regNum} = ['Frame: ', num2str(time), ...
+                    ', reg: ', num2str(regNum), '. is a stray region.'];
+                if verbose
+                    disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
                 end
                 [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
             end
@@ -258,6 +253,13 @@ for regNum =  1 : data_c.regs.num_regs;
             
         end
         
+    else
+        %         if verbose
+        %             disp([header, 'ErRes: Frame: ', num2str(time),...
+        %                 ', reg: ', num2str(regNum),' already has an ID.']);
+        %         end
+        %
+        
     end
 end
 end
@@ -403,7 +405,7 @@ data_c.regs.revmap.r{mapCR} = keeper;
 
 
 data_c.regs.error.r(remove) = 1;
-idsOfModRegions = [remove;keeper];
+idsOfModRegions = [remove]
 if ~REMOVE_STRAY
     [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
     data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
@@ -413,7 +415,7 @@ if ~REMOVE_STRAY
     end
 else
     data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
+        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.']);
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
     end

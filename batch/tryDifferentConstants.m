@@ -39,6 +39,7 @@ if ~exist('resFlags','var') || isempty(resFlags)
     [~,resFlags] = getConstantsList();
 end
 
+% imfinfo()
 
 if strcmp(filename(end-3:end), '.tif')
     tempImage = imread(filename);

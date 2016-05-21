@@ -54,7 +54,9 @@ if ~isempty(position1) && isempty(position2)
 
     [sub1, sub2] = ind2sub( pointSize, ind );
     ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
-    data = deleteRegions(data,ii);
+    if ii ~=0
+        data = deleteRegions(data,ii);
+    end
     
 elseif ~isempty(position1) && ~isempty(position2)
     xy = [position1(1:2); position2(1:2)];

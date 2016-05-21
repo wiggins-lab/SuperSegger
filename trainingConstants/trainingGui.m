@@ -149,8 +149,7 @@ only_seg = 1; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
-CONSTtemp.seg.OPTI_FLAG = 0;
-CONSTtemp.parallel.show_status = 1;
+CONSTtemp.seg.OPTI_FLAG = 1;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
 
 settings.frameNumber = 1;
@@ -171,7 +170,8 @@ if isempty(images) && ~isempty(dir([dirname,'/raw_im/*.tif']))
     dirname = [dirname, '/raw_im/'];
 end
 
-tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport_train.XLim, handles.viewport_train.YLim]), settings.frameNumber);
+tryDifferentConstants(dirname)
+%tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport_train.XLim, handles.viewport_train.YLim]), settings.frameNumber);
 
 
 
@@ -1068,7 +1068,7 @@ global settings;
 settings.axisFlag = 2;
 
 addUndo();
-settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], 1 );
+settings.currentData.regs.score = ones( settings.currentData.regs.num_regs, 1 );
 saveData();
 
 updateUI(handles);

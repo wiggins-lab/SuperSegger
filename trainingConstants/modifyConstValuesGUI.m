@@ -495,7 +495,7 @@ set(handles.cut_intensity,'SliderStep',[0.1 1])
 
 
 % gaussian smooth/blur width
-set(handles.gaus_wid,'Max',5,'Min',0.01)
+set(handles.gaus_wid,'Max',1,'Min',0.1)
 set(handles.gaus_wid,'SliderStep',[0.1 1])
 
 % mask_th1
@@ -698,6 +698,9 @@ function gaus_wid_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+handles.gaus_wid_text.String = num2str(hObject.Value);
+
 
 
 % --- Executes during object creation, after setting all properties.
