@@ -54,7 +54,7 @@ end
 
 
 clist0.data = clist.data(inflag,:);
-if isfield(clist,'data3D')
+if isfield(clist,'data3D') && isfield(clist,'def3d')
     clist0.def3d = clist.def3d;
     clist0.data3D = clist.data3D(inflag,:,:);
 end

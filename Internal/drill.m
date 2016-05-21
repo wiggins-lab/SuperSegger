@@ -49,6 +49,9 @@ for ii = 1:num
             tmp_array(ii) = {NaN};
         end
     end
+    if isempty(tmp_array{ii})
+        tmp_array(ii) = {NaN};
+    end
 end
 
 out = cell2mat(tmp_array);

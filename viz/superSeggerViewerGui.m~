@@ -112,7 +112,8 @@ end
 
 contents_xy = dir([dirname, 'xy*']);
 handles.num_xy = numel(contents_xy);
-direct_contents = dir([dirname, '*seg.mat']);
+direct_contents_seg = dir([dirname, '*seg.mat']);
+direct_contents_err = dir([dirname, '*err.mat']);
 
 
 if handles.num_xy~=0
@@ -129,7 +130,7 @@ if handles.num_xy~=0
         handles.clist = [];
     end
 else
-    if numel(direct_contents) == 0 % no images found abort.
+    if numel(direct_contents_err) == 0 &&  numel(direct_contents_seg) == 0   % no images found abort.
         cla(handles.axes1)
         handles.message.String = ['There are no xy dirs. Choose a different directory.'];
         disable_all_panels(hObject,handles);
@@ -138,8 +139,9 @@ else
         handles.dirname_cell = dirname;
         handles.dirname_seg  = dirname;
         dirnum = 1;
-        
-        handles.use_seg_files.Value = 1;
+        if numel(direct_contents_err) == 0
+            handles.use_seg_files.Value = 1;
+        end
     end
 end
 
@@ -204,7 +206,6 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
-handles.num_xy = 1;
 handles.FLAGS.f_flag = 0;
 handles.channel.String = 0;
 
@@ -218,11 +219,14 @@ else
         handles.time_clist.String = handles.clist.def3d';
     end
     if isfield(handles.clist,'idExclude')
-        t = mat2str(handles.clist.idExclude);
-        handles.exclude_ids.String = t(2:end-1);
+        handles.exclude_ids.String = num2str(handles.clist.idExclude);
+    else
+        handles.exclude_ids.String = '';
     end
     if isfield(handles.clist,'idInclude')
-        handles.include_ids.String = mat2str(handles.clist.idInclude);
+        handles.include_ids.String = num2str(handles.clist.idInclude);
+    else
+        handles.include_ids.String = '';
     end
 end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
@@ -711,6 +715,9 @@ if ~isempty(handles.FLAGS)
             clist_comp = clist_tmp;
         else
             clist_comp.data = [clist_comp.data; clist_tmp.data];
+            if isfield(clist_tmp,'data3D')
+                clist_comp.data3D = [clist_comp.data3D; clist_tmp.data3D];
+            end
         end
     end
     save( [handles.dirname0,'clist_comp.mat'], '-STRUCT', 'clist_comp' );

@@ -206,7 +206,6 @@ handles.dirSave = dirSave;
 handles.dirname0 = dirname0;
 handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
-handles.num_xy = 1;
 handles.FLAGS.f_flag = 0;
 handles.channel.String = 0;
 
@@ -495,21 +494,22 @@ if ~isempty(handles.FLAGS)
         handles.switch_xy_directory.String = num2str(ll_);
         if ~isempty(ll_) && (ll_ >= 1) && (ll_ <= handles.num_xy)
             try
-                save( [dirname0,contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+                clist = handles.clist;
+                save( [dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
             catch ME
                 printError(ME);
                 handles.message.String = 'Error writing clist file';
             end
             dirnum = ll_;
-            dirname_seg = [dirname0,handles.contents_xy(ll_).name,filesep,'seg',filesep];
-            dirname_cell = [dirname0,handles.contents_xy(ll_).name,filesep,'cell',filesep];
-            dirname_xy = [dirname0,handles.contents_xy(ll_).name,filesep];
+            handles.dirname_seg = [dirname0,handles.contents_xy(ll_).name,filesep,'seg',filesep];
+            handles.dirname_cell = [dirname0,handles.contents_xy(ll_).name,filesep,'cell',filesep];
+            handles.dirname_xy = [dirname0,handles.contents_xy(ll_).name,filesep];
             ixy = sscanf( handles.contents_xy(dirnum).name, 'xy%d' );
-            header = ['xy',num2str(ixy),': '];
-            contents = dir([dirname_seg, '*seg.mat']);
+            handles.header = ['xy',num2str(ixy),': '];
+            handles.contents = dir([handles.dirname_seg, '*seg.mat']);
             error_list = [];
-            clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
-            resetFlag = true;
+            handles.clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
+            updateImage(hObject, handles)
         else
             handles.message.String = 'Incorrect number for xy position';
         end
