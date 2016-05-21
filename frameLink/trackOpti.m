@@ -82,7 +82,7 @@ if CLEAN_FLAG
         delete ([dirname_full,'*.mat']);
         delete ([dirname_full,'.trackOpti*']);
     end
-    warning('on','MATLAB:DELETE:Permission')
+    
 end
 
 
@@ -237,7 +237,7 @@ else
     disp([header,'trackOpti: trackOptiCellFiles already run.']);
 end
 
-
+warning('on','MATLAB:DELETE:Permission')
 
 end
 
