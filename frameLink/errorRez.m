@@ -141,7 +141,7 @@ for regNum =  1 : data_c.regs.num_regs;
             sister2 = mapRC (mapRC~=regNum);
             sister2Mapping = data_c.regs.map.r{sister2};
             
-            if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && sister2Mapping == mother
+            if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && all(sister2Mapping) == mother
                 
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
