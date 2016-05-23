@@ -81,6 +81,7 @@ if isfield(CONST, 'imAlign') && isfield(CONST.imAlign, 'AlignChannel') && ...
 else
     CONST.imAlign.AlignChannel = 1;
     CONST.imAlign.medFilt      = false;
+    CONST.imAlign.AlignToFirst = false;
 end
 
 
@@ -99,7 +100,7 @@ end
 
 crop_box = cell(1, num_xy);
 
-% parallelized alignemnt for each xy
+% parallelized alignment for each xy
 parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
         dirname_, targetd, nameInfo, precision, CONST);
@@ -230,7 +231,7 @@ for it = nt;
             end
             
             if FOCUS_FLAG
-                if ic == nc(1)
+                if ic == nc(1) && ~CONST.imAlign.AlignToFirst
                     phaseBef = im; % set the previous image to current
                 end
                 out_name = [targetd, MakeFileName(nameInfo)];
