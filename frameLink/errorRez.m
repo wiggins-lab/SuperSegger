@@ -123,7 +123,7 @@ for regNum =  1 : data_c.regs.num_regs;
             end
             
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
-            totAreaR =  data_c.regs.props(mother).Area;
+            totAreaR =  data_r.regs.props(mother).Area;
             AreaChange = (totAreaC-totAreaR)/totAreaC;
             divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));

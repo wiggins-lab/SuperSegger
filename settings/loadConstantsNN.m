@@ -46,7 +46,7 @@ if ~exist('dispText','var') || isempty( dispText )
     dispText = true;
 end
 
-%% gets the list of all possible constants in the settings folder
+% gets the list of all possible constants in the settings folder
 [possibleConstants, ~, filepath] = getConstantsList();
 
 % default values for numbers
@@ -57,6 +57,7 @@ elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
 
+%% Parameters that are the same for all constants
 % Settings for alignment in differnt channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
 CONST.imAlign.mCherry = [-0.0512   -0.0000   -1.1500    1.0000];
@@ -66,7 +67,10 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
     CONST.imAlign.GFP};        % c3 channel name
 
-CONST.align.ALIGN_FLAG = 1;
+CONST.imAlign.AlignToFirst = false; % align all images to first image
+CONST.imAlign.AlignChannel = 1; % channel to use for alignment
+CONST.imAlign.medFilt = false; % use median filter during alignment
+CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
 
 % region optimization parameters
@@ -74,7 +78,6 @@ CONST.regionOpti.MAX_NUM_RESOLVE = 5000; % no region optimization above this num
 CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8; % max number of segments for systematic
 CONST.regionOpti.CutOffScoreHi = 10; % cut off score for segments
 CONST.regionOpti.CutOffScoreLo = -10; % cut off score for segments
-CONST.regionOpti.fignum =  1;
 CONST.regionOpti.Nt = 500; % max number of steps in simulated anneal
 CONST.regionOpti.minGoodRegScore = 10; % regions with score below this are optimized.
 CONST.regionOpti.neighMaxScore = 10; % max score for neighbor to be optimized with a bad region
@@ -98,7 +101,6 @@ CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap; % function used for l
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
-CONST.trackLoci.crop = 4;
 CONST.trackLoci.numSpots = []; % needs to be set to the number of spots per channel to find foci
 CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 CONST.trackLoci.gate = [];
@@ -161,10 +163,9 @@ CONST.SR.crop = 4;
 CONST.SR.Icut = 1000;
 CONST.SR.rcut = 10; % maximum distance between frames for two PSFs
 % to be considered two seperate PSFs.
-
 CONST.SR.Ithresh = 2; % threshold intensity in std for including loci in analysis
 
-
+%% Loading the constant
 % constants file is loaded here using input 'res'
 indexConst = find(strcmpi({possibleConstants.name},[res,'.mat']));
 if ~isempty(indexConst)
@@ -182,13 +183,11 @@ else
     return;
 end
 
-
-% these are the values that are set by the loaded constant.
-% you can add here values that you have changed from the default
-% and should be loaded from your constants file.
+%% Parameters overwritten separately for each constant : 
+% Set by the loaded constant. - you can add here values that you have changed 
+% from the default and should be loaded from your constants file.
 
 % segmentation parameters
-
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = ConstLoaded.superSeggerOpti.MAX_SEG_NUM;
 
@@ -219,23 +218,20 @@ CONST.superSeggerOpti.Amax = ConstLoaded.superSeggerOpti.Amax;
 
 % erosion size of disk at the creation of the background mask
 CONST.superSeggerOpti.crop_rad = ConstLoaded.superSeggerOpti.crop_rad;
-
 CONST.superSeggerOpti.A = ConstLoaded.superSeggerOpti.A; % neural network for segment scoring
 CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO; % number of parameters used
 
-% defines segments scoring functions
-CONST.seg = ConstLoaded.seg;
+CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 
+% region optimizing parameters parameters
 % regions with smaller length than min_length are optimized by using all segments surrounding them
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
-
-% defines region scoring functions
-CONST.regionScoreFun = ConstLoaded.regionScoreFun;
+CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
 % minimum area a cell region can have, otherwise it is discarded.
 CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
 
-% Parallel processing on multiple cores settings :
+%% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
     poolobj = gcp('nocreate'); % If no pool, do not create new one.
     if isempty(poolobj)
