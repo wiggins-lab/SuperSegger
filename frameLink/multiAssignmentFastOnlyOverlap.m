@@ -28,9 +28,6 @@ function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentF
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-global minDA
-global maxDA
-
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 OVERLAP_LIMIT_MIN = CONST.trackOpti.OVERLAP_LIMIT_MIN;

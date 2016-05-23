@@ -1067,11 +1067,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function edit_segments_Callback(hObject, eventdata, handles)
-choice = questdlg('Are you sure you want to edit the segments?', 'Edit segments?', 'Yes', 'No', 'No');
+choice = questdlg('Edit segments?', 'Are you sure you want to edit the segments?', 'Yes', 'No', 'No');
 if strcmp(choice, 'Yes')
-    setappdata(0, 'CONST', handles.CONST);
-    setappdata(0, 'dirname_seg', handles.dirname_seg);
-    setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
-    editSegmentsGui();
-%    segsTLEdit(handles.dirname_seg, str2double(handles.go_to_frame_no.String), handles.CONST);
+    segsTLEdit(handles.dirname_seg, str2double(handles.go_to_frame_no.String), handles.CONST);
 end
