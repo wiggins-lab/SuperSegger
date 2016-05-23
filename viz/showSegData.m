@@ -1,4 +1,4 @@
-function showSegData( data, im_flag )
+function showSegData( data, im_flag, gui_fig )
 % showSegData : draws the outlines for the regions in the data file.
 %
 % INPUT :
@@ -30,8 +30,6 @@ segs_good = data.segs.segs_good;
 segs_bad = data.segs.segs_bad;
 mask_bg = data.mask_bg;
 
-figure(1)
-
 if ~exist('im_flag')
     im_flag = 1;
 end
@@ -39,6 +37,7 @@ end
 backer = ag(phase);
 cell_mask = (mask_bg .* ~segs_good .* ~segs_3n);
 
+axes(gui_fig);
 if im_flag == 1 % displays good, 3n and bad segments
       imshow( cat(3,...
         0.4*backer+0.6*ag(segs_good+segs_3n), ...
