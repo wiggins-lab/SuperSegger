@@ -231,7 +231,7 @@ for regNum =  1 : data_c.regs.num_regs;
             end
             
             
-            if twoInRMapToCOnly
+            if twoInRMapToCOnly & ~ignoreError
                 [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,mapCR,CONST);
             else
                 success = false;

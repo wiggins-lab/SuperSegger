@@ -62,7 +62,7 @@ filt2 = 'err.mat'; % name of final files
 contents=dir([dirname,filt]);
 contents2=dir([dirname,'*',filt2]);
 
-if numel(contents) == 0 
+if numel(contents) == 0
     numIm = length(contents2);
     contents = contents2;
 else
@@ -98,7 +98,10 @@ end
 %resetRegions  = 1;
 ignoreError = 0;
 previousMasks ={};
+maxIterPerFrame = 3;
+curIter = 1;
 while time <= numIm
+    
     
     if (time == 1)
         data_r = [];
@@ -132,12 +135,16 @@ while time <= numIm
     [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
     
     for x = 1 : numel(previousMasks)
-     maskDif = xor(data_c.mask_cell,previousMasks{x});
-     if all(maskDif==0)
-         ignoreError = 1;
-     end
+        maskDif = xor(data_c.mask_cell,previousMasks{x});
+        if all(maskDif==0)
+            ignoreError = 1;
+        end
     end
-
+    
+    if curIter >= maxIterPerFrame
+        ignoreError = 1;
+    end
+    
     previousMasks  {end+1} = data_c.mask_cell;
     
     % error resolution and id assignment
@@ -150,10 +157,12 @@ while time <= numIm
         end
         cell_count = lastCellCount;
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
+        curIter = curIter + 1;
     else
         time = time + 1;
         previousMasks = {};
         ignoreError = 0;
+        curIter = 1;
     end
     
     if ~isempty(data_r)
