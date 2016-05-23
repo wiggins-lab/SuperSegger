@@ -134,7 +134,6 @@ if ~isempty(data_c)
                 colony_labels_temp = colony_labels(BB_c_yy,BB_c_xx);
                 colOverlap = colony_labels_temp(maskC);
                 if sum(colOverlap(:)) == 0
-                    disp ('No colony found');
                     distFromColony = [0 ,0];
                     distFromColn (ii) = sqrt(sum(distFromColony.^2));
                 else

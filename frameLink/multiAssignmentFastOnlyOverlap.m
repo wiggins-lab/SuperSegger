@@ -217,8 +217,6 @@ end
 end
 
 function errorR = setError(DA)
-global minDA
-global maxDA
 errorR = zeros(1, numel(DA));
 errorR (DA < minDA ) = 2;
 errorR (DA > maxDA) = 3;
