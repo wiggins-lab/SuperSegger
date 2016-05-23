@@ -73,7 +73,7 @@ nz  = sort(unique(nz));
 
 
 
-% set the align channel to be first, default is 1 (bright field)
+% set the align channel. Default is 1 (bright field)
 if isfield(CONST, 'imAlign') && isfield(CONST.imAlign, 'AlignChannel') && ...
         any(CONST.imAlign.AlignChannel == nc)
     nc = [CONST.imAlign.AlignChannel, ...
@@ -170,7 +170,7 @@ for it = nt;
             im = imread(in_name);
             
             if numel(size(im)) > 2
-                disp('Images are color - they need to be black and white.');
+                disp('Images are color - they need to be monochromatic.');
                 im = squeeze(im(:,:,1));
             end
             
