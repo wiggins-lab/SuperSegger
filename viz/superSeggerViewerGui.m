@@ -61,9 +61,41 @@ handles.next.Enable = 'on';
 handles.switch_xy_directory.Enable = 'on';
 handles.max_cell_no.Enable = 'on';
 
+
+function update_clist_panel(hObject, handles)
+
+
+if isempty(handles.clist)
+    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
+    handles.clist_text.String = 'No clist loaded, these commands will not work';
+    
+else
+    handles.clist_text.String = ['Clist: ' handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
+    
+    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
+    handles.make_gate.String = handles.clist.def';
+    handles.histogram_clist.String = handles.clist.def';
+    if isfield(handles.clist,'def3d')
+        handles.time_clist.String = handles.clist.def3d';
+    end
+    if isfield(handles.clist,'idExclude')
+        handles.exclude_ids.String = num2str(handles.clist.idExclude);
+    else
+        handles.exclude_ids.String = '';
+    end
+    if isfield(handles.clist,'idInclude')
+        handles.include_ids.String = num2str(handles.clist.idInclude);
+    else
+        handles.include_ids.String = '';
+    end
+end
+guidata(hObject, handles);
+
+
 function initImage(hObject, handles) % Not updated
 global dataImArray;
 % initialize
+guidata(hObject, handles);
 enable_all_panels(hObject,handles)
 handles.FLAGS = [];
 handles.dirnum = [];
@@ -74,7 +106,7 @@ handles.clist = [];
 handles.num_xy = 0;
 handles.num_errs = 0;
 handles.canUseErr = 0;
-guidata(hObject, handles);
+
 
 if (nargin<1 || isempty(handles.image_directory.String))
     handles.image_directory.String = pwd;
@@ -101,7 +133,6 @@ dirSave = [dirname, 'superSeggerViewer', filesep];
 % flags
 filename_flags = [dirname0,'.superSeggerViewer.mat'];
 FLAGS = [];
-
 if exist( filename_flags, 'file' )
     load(filename_flags);
     FLAGS = fixFlags(FLAGS);
@@ -134,6 +165,7 @@ else
         cla(handles.axes1)
         handles.message.String = ['There are no xy dirs. Choose a different directory.'];
         disable_all_panels(hObject,handles);
+        
         return;
     else % loading from the seg directory directly
         handles.dirname_cell = dirname;
@@ -189,7 +221,15 @@ handles.max_cell_no.String = '';
 handles.find_cell_no.String = '';
 
 handles.contents = dir([handles.dirname_seg, file_filter]);
-handles.num_im = length(handles.contents);
+handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
+handles.num_seg = length(handles.contents_seg);
+handles.num_err = length(handles.contents_seg);
+if handles.num_seg >= handles.num_err 
+    handles.num_im  = handles.num_seg;
+else
+    handles.num_im  = handles.num_err;
+end
+    
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
@@ -209,32 +249,15 @@ handles.filename_flags = filename_flags;
 handles.FLAGS.f_flag = 0;
 handles.channel.String = 0;
 
-if isempty(handles.clist)
-    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
-else
-    set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
-    handles.make_gate.String = handles.clist.def';
-    handles.histogram_clist.String = handles.clist.def';
-    if isfield(handles.clist,'def3d')
-        handles.time_clist.String = handles.clist.def3d';
-    end
-    if isfield(handles.clist,'idExclude')
-        handles.exclude_ids.String = num2str(handles.clist.idExclude);
-    else
-        handles.exclude_ids.String = '';
-    end
-    if isfield(handles.clist,'idInclude')
-        handles.include_ids.String = num2str(handles.clist.idInclude);
-    else
-        handles.include_ids.String = '';
-    end
-end
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
+update_clist_panel(hObject, handles)
 updateImage(hObject, handles)
+
+guidata(hObject, handles);
+
 
 
 function update_all_gui_vals (handles)
-
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.num_im = length(handles.contents);
 
@@ -243,155 +266,162 @@ function updateImage(hObject, handles)
 delete(get(handles.axes1, 'Children'))
 handles.previous.Enable = 'off';
 handles.next.Enable = 'off';
-if ~isempty(handles.FLAGS)
+
+if handles.num_im == 0
+    cla(handles.axes1)
+    handles.message.String = ['No images/seg/err files found in xy1.'];
+    disable_all_panels(hObject,handles);
+    handles.switch_xy_directory.Enable = 'on';
+else
+    if ~isempty(handles.FLAGS)
+        FLAGS = handles.FLAGS;
+        dirnum = handles.dirnum;
+        handles.message.String = '';
+        nn = str2double(handles.go_to_frame_no.String);
+        if nn > 1
+            handles.previous.Enable = 'on';
+        end
+        if nn < handles.num_im
+            handles.next.Enable = 'on';
+        end
+        
+        if  ~isempty(handles.clist) && ~isempty(handles.clist.gate)
+            handles.gate_text.String = 'Gates:';
+            cell_gates = struct2cell(handles.clist.gate);
+            for i=1:length(cell_gates(2,1,:));
+                handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
+            end
+            handles.gate_text.String = handles.gate_text.String(1:end-1);
+        else
+            handles.gate_text.String = '';
+        end
+        
+        handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat'])))];
+        handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));
+        
+        %Use region IDs if cells IDs unavailable
+        if nn > handles.num_errs || FLAGS.useSegs
+            handles.canUseErr = 0;
+            handles.contents=dir([handles.dirname_seg, '*seg.mat']);
+        else
+            handles.canUseErr = 1;
+            handles.contents=dir([handles.dirname_seg, '*err.mat']);
+        end
+        
+        %Force flags to required values when data is unavailable
+        forcedFlags = FLAGS;
+        forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS, handles.canUseErr);
+        %Force cell flag to 0 when err files not present
+        
+        delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
+        [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
+            nn, handles.num_im, handles.clist, forcedFlags);
+        showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
+        save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
+        clist = handles.clist;
+        if ~isempty(clist)
+            save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+        end
+        guidata(hObject, handles);
+        find_cell_no(handles);
+    end
     
-    FLAGS = handles.FLAGS;
-    dirnum = handles.dirnum;
+    
+    % messages
     handles.message.String = '';
-    nn = str2double(handles.go_to_frame_no.String);
-    if nn > 1
-        handles.previous.Enable = 'on';
+    if handles.FLAGS.p_flag
+        handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
     end
-    if nn < handles.num_im
-        handles.next.Enable = 'on';
+    if handles.FLAGS.P_flag
+        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |'];
     end
     
-    if  ~isempty(handles.clist) && ~isempty(handles.clist.gate)
-         handles.gate_text.String = 'Gates:';
-         cell_gates = struct2cell(handles.clist.gate);
-         for i=1:length(cell_gates(2,1,:));
-             handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
-         end
-         handles.gate_text.String = handles.gate_text.String(1:end-1);
+    if handles.num_errs == 0
+        handles.use_seg_files.Value = 1;
+        makeInactive(handles.use_seg_files);
     else
-        handles.gate_text.String = '';
-    end
-    if ~isempty(handles.clist)
-        handles.clist_text.String = ['Clist: ' handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
-    else
-        handles.clist_text.String = 'No clist loaded, these commands will not work';
-    end
-    handles.err_seg.String = ['No. of err. files: ' num2str(length(dir([handles.dirname_seg, '*err.mat']))) char(10) 'No. of seg. files: ' num2str(length(dir([handles.dirname_seg, '*seg.mat'])))];
-    handles.num_errs = length(dir([handles.dirname_seg, '*err.mat']));
-    
-    %Use region IDs if cells IDs unavailable
-    if nn > handles.num_errs || FLAGS.useSegs
-        handles.canUseErr = 0;
-        handles.contents=dir([handles.dirname_seg, '*seg.mat']);
-    else
-        handles.canUseErr = 1;
-        handles.contents=dir([handles.dirname_seg, '*err.mat']);
+        makeActive(handles.use_seg_files);
     end
     
-    %Force flags to required values when data is unavailable
-    forcedFlags = FLAGS;
-    forcedFlags.cell_flag = forcedFlags.cell_flag & shouldUseErrorFiles(FLAGS, handles.canUseErr);
-    %Force cell flag to 0 when err files not present
+    handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
     
-    delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
-    [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
-        nn, handles.num_im, handles.clist, forcedFlags);
-    showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
-    save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-    clist = handles.clist;
-    save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
-    guidata(hObject, handles);
-    find_cell_no(handles);
-end
-
-
-% messages
-handles.message.String = '';
-if handles.FLAGS.p_flag
-    handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-end
-if handles.FLAGS.P_flag
-    handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |'];
-end
-
-if handles.num_errs == 0
-    handles.use_seg_files.Value = 1;
-    makeInactive(handles.use_seg_files);
-else
-    makeActive(handles.use_seg_files);
-end
-
-handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
-
-f = 0;
-while true
-    if isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
-        f = f+1;
-    else
-        break
+    f = 0;
+    while true
+        if isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
+            f = f+1;
+        else
+            break
+        end
     end
-end
-handles.channel_text.String = ['Channel (', num2str(f), ')'];
-
-% Has cell files loaded
-if areCellsLoaded(handles)
-    makeActiveInput(handles.kymograph_cell_no);
-    makeActiveInput(handles.movie_cell_no);
-    makeActiveInput(handles.tower_cell_no);
-    makeActive(handles.consensus_kymograph);
-    makeActive(handles.mosaic_kymograph);
-    makeActive(handles.show_consensus);
-    makeActive(handles.tower_cells);
+    handles.channel_text.String = ['Channel (', num2str(f), ')'];
     
-else
-    handles.kymograph_cell_no.String = '';
-    makeInactiveInput(handles.kymograph_cell_no);
-    handles.movie_cell_no.String = '';
-    makeInactiveInput(handles.movie_cell_no);
-    handles.tower_cell_no.String = '';
-    makeInactiveInput(handles.tower_cell_no);
-    makeInactive(handles.consensus_kymograph);
-    makeInactive(handles.mosaic_kymograph);
-    makeInactive(handles.show_consensus);
-    makeInactive(handles.tower_cells);
-end
-
-if handles.FLAGS.f_flag >= 1 % Flour 
-    makeActive(handles.log_view);
-    makeActive(handles.false_color);
-    
-    if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
-        makeActive(handles.fluor_foci_scores);
-        makeActive(handles.filtered_fluorescence);
+    % Has cell files loaded
+    if areCellsLoaded(handles)
+        makeActiveInput(handles.kymograph_cell_no);
+        makeActiveInput(handles.movie_cell_no);
+        makeActiveInput(handles.tower_cell_no);
+        makeActive(handles.consensus_kymograph);
+        makeActive(handles.mosaic_kymograph);
+        makeActive(handles.show_consensus);
+        makeActive(handles.tower_cells);
+        
     else
+        handles.kymograph_cell_no.String = '';
+        makeInactiveInput(handles.kymograph_cell_no);
+        handles.movie_cell_no.String = '';
+        makeInactiveInput(handles.movie_cell_no);
+        handles.tower_cell_no.String = '';
+        makeInactiveInput(handles.tower_cell_no);
+        makeInactive(handles.consensus_kymograph);
+        makeInactive(handles.mosaic_kymograph);
+        makeInactive(handles.show_consensus);
+        makeInactive(handles.tower_cells);
+    end
+    
+    if handles.FLAGS.f_flag >= 1 % Flour
+        makeActive(handles.log_view);
+        makeActive(handles.false_color);
+        
+        if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
+            makeActive(handles.fluor_foci_scores);
+            makeActive(handles.filtered_fluorescence);
+        else
+            makeInactive(handles.fluor_foci_scores);
+            makeInactive(handles.filtered_fluorescence);
+        end
+    else
+        makeInactive(handles.log_view);
         makeInactive(handles.fluor_foci_scores);
         makeInactive(handles.filtered_fluorescence);
+        makeInactive(handles.false_color);
     end
-else
-    makeInactive(handles.log_view);
-    makeInactive(handles.fluor_foci_scores);
-    makeInactive(handles.filtered_fluorescence);
-    makeInactive(handles.false_color);
-end
-
-if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
-    makeActive(handles.cell_poles);
-    makeActive(handles.complete_cell_cycles);
     
-    if handles.FLAGS.showLinks
-        makeActive(handles.show_daughters);
-        makeActive(handles.show_mothers);
+    if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
+        makeActive(handles.cell_poles);
+        makeActive(handles.complete_cell_cycles);
+        
+        if handles.FLAGS.showLinks
+            makeActive(handles.show_daughters);
+            makeActive(handles.show_mothers);
+        else
+            makeInactive(handles.show_daughters);
+            makeInactive(handles.show_mothers);
+        end
+        
+        makeActive(handles.show_linking);
+        
     else
+        makeInactive(handles.cell_poles);
+        makeInactive(handles.complete_cell_cycles);
+        
         makeInactive(handles.show_daughters);
         makeInactive(handles.show_mothers);
+        makeInactive(handles.show_linking);
+        
     end
-    
-    makeActive(handles.show_linking);
-    
-else
-    makeInactive(handles.cell_poles);
-    makeInactive(handles.complete_cell_cycles);
-    
-    makeInactive(handles.show_daughters);
-    makeInactive(handles.show_mothers);
-    makeInactive(handles.show_linking);
-    
 end
+guidata(hObject, handles);
+
 
 function save_figure_ClickedCallback(hObject, eventdata, handles) % Do not save complete figure!
 [filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
@@ -411,6 +441,7 @@ if filename ~= 0
     close(fh);
 end
 
+
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
 folderName = uigetdir;
 
@@ -426,8 +457,8 @@ handles.image_directory.String = pwd;
 set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 
-
 % Main menu
+
 
 function image_directory_Callback(hObject, eventdata, handles)
 initImage(hObject, handles);
@@ -464,10 +495,10 @@ end
 
 function figure1_KeyPressFcn(hObject, eventdata, handles)
 if strcmpi(eventdata.Key,'leftarrow')
-	previous_Callback(hObject, eventdata, handles);
+    previous_Callback(hObject, eventdata, handles);
 end
 if strcmpi(eventdata.Key,'rightarrow')
-	next_Callback(hObject, eventdata, handles);
+    next_Callback(hObject, eventdata, handles);
 end
 
 function previous_Callback(hObject, eventdata, handles)
@@ -487,6 +518,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function switch_xy_directory_Callback(hObject, eventdata, handles) % Not tested
+
 if ~isempty(handles.FLAGS)
     ll_ = round(str2double(handles.switch_xy_directory.String));
     dirname0 = handles.dirname0;
@@ -495,20 +527,29 @@ if ~isempty(handles.FLAGS)
         if ~isempty(ll_) && (ll_ >= 1) && (ll_ <= handles.num_xy)
             try
                 clist = handles.clist;
-                save( [dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+                if ~isempty(clist)
+                    save( [dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+                end
             catch ME
                 printError(ME);
                 handles.message.String = 'Error writing clist file';
             end
-            dirnum = ll_;
+            handles.dirnum = ll_;
             handles.dirname_seg = [dirname0,handles.contents_xy(ll_).name,filesep,'seg',filesep];
             handles.dirname_cell = [dirname0,handles.contents_xy(ll_).name,filesep,'cell',filesep];
             handles.dirname_xy = [dirname0,handles.contents_xy(ll_).name,filesep];
-            ixy = sscanf( handles.contents_xy(dirnum).name, 'xy%d' );
+            ixy = sscanf( handles.contents_xy(handles.dirnum).name, 'xy%d' );
             handles.header = ['xy',num2str(ixy),': '];
             handles.contents = dir([handles.dirname_seg, '*seg.mat']);
-            error_list = [];
-            handles.clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
+            handles.num_im = numel(handles.contents);
+            enable_all_panels(hObject,handles)
+            if exist([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat'])
+                handles.clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
+                update_clist_panel(hObject, handles)
+            else
+                handles.clist = []
+                update_clist_panel(hObject, handles)
+            end
             updateImage(hObject, handles)
         else
             handles.message.String = 'Incorrect number for xy position';
@@ -517,6 +558,8 @@ if ~isempty(handles.FLAGS)
         handles.message.String = 'Number of xy position missing';
     end
 end
+guidata(hObject, handles);
+
 
 function switch_xy_directory_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))

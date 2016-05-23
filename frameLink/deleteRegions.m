@@ -12,10 +12,12 @@ function [data] = deleteRegions( data, list_c )
 % This file is part of SuperSeggerOpti.
 
 try
-    for mm = list_c        
+    for uu = 1:numel(list_c)   
+        mm = list_c(uu);
         [xx,yy] = getBB( data.regs.props(mm).BoundingBox);
         tmp = (data.regs.regs_label(yy,xx) == mm);
         data.regs.regs_label(yy,xx) = data.regs.regs_label(yy,xx)-mm*tmp;
+        data.mask_cell(yy,xx) = data.mask_cell(yy,xx)-(tmp);
     end
 catch ME
    printError(ME);

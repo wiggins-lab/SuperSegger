@@ -136,7 +136,7 @@ if ~isempty(data_c)
                 if sum(colOverlap(:)) == 0
                     disp ('No colony found');
                     distFromColony = [0 ,0];
-                    distFromColn (ii) = [0 ,0];
+                    distFromColn (ii) = sqrt(sum(distFromColony.^2));
                 else
                     colonyId =  max(colOverlap);
                     distFromColony = centroidC - colony_props(colonyId).Centroid;
@@ -279,13 +279,16 @@ if ~isempty(data_c)
         costMat (isnan(costMat)) = 0;
         
         while sum(costMat(:))>0
-            [minCost,ind] = max(costMat(:));
+            [~,ind] = max(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
             assignTemp = allF(:,asgnCol)';
             assignTemp = assignTemp (~isnan(assignTemp));
             regionsInC = allC (:,asgnRow);
-            
+           
             assignments {regionsInC(1)} = assignTemp;
+            if ~isnan(regionsInC(2))
+                 assignments {regionsInC(2)} = assignTemp;
+            end
             
             assignedInC  = [assignedInC;regionsInC'];
             assignedInF = [assignedInF;assignTemp'];
@@ -533,14 +536,16 @@ for c = 1 : num_ass
         randomMarker = markers{randi(numel(markers),1)};
         randjet = randi(256,1);
         color = randcolor(randjet,:);
+        randjet2 = randi(256,1);
+        color2 = randcolor(randjet2,:);
         figure(1);
         subplot(1,2,1)
         hold on;
-        plot(data_c.regs.props(c).Centroid(1),data_c.regs.props(c).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
+        plot(data_c.regs.props(c).Centroid(1),data_c.regs.props(c).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerEdgeColor',color2,'MarkerSize',8);
         subplot(1,2,2)
         for i = 1 : numel(assF)
             hold on;
-            plot(data_f.regs.props(assF(i)).Centroid(1),data_f.regs.props(assF(i)).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerSize',8);
+            plot(data_f.regs.props(assF(i)).Centroid(1),data_f.regs.props(assF(i)).Centroid(2),[randomMarker,'k'],'MarkerFaceColor',color,'MarkerEdgeColor',color2,'MarkerSize',8);
         end
     end
 end

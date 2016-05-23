@@ -43,7 +43,7 @@ global SCORE_LIMIT_MOTHER
 global SCORE_LIMIT_DAUGHTER
 global REMOVE_STRAY
 global header_string
-
+global regToDelete
 header_string = header;
 verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
@@ -52,17 +52,21 @@ SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
 SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
-
+regToDelete = [];
 resetRegions = false;
 
 % set all ids to 0
 data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
 for regNum =  1 : data_c.regs.num_regs;
+    
+    if regNum == 45
+        disp('');
+    end
     if data_c.regs.ID(regNum) ~= 0
-          disp ([header, 'ErRes: already has an id ',num2str(regNum)]);
+          disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);
     elseif ismember (regNum,modRegions)
-        disp ([header, 'ErRes: already modified ',num2str(regNum)]);
+        disp ([header, 'ErRes: Frame: ', num2str(time), ' already modified ',num2str(regNum)]);
     else
         mapCR = data_c.regs.map.r{regNum}; % where regNum maps in reverse
         
@@ -85,7 +89,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 if verbose
                     disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
                 end
-                [data_c] = deleteRegions( data_c,regNum);
+                regToDelete = [regToDelete;regNum];
                 resetRegions = true;
             else % maps to a region in the next frame, or time is 1
                 if time~=1
@@ -149,7 +153,7 @@ for regNum =  1 : data_c.regs.num_regs;
             sister2 = mapRC (mapRC~=regNum);
             sister2Mapping = data_c.regs.map.r{sister2};
             
-            if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && all(sister2Mapping) == mother
+            if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && all(sister2Mapping == mother)
                 
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
@@ -202,6 +206,14 @@ for regNum =  1 : data_c.regs.num_regs;
                         (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
                     keyboard;
                 end
+            else
+                data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
+                ', reg: ', num2str(regNum),'. Error not fixed - two to 1 but don''t know what to do.'];
+            
+            if verbose
+                disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+            end
+           
             end
         elseif numel(mapCR) == 2
             % 1 in current maps to two in reverse
@@ -252,7 +264,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
             end
             if debug_flag
-                intDisplay (data_r,mapCR,data_c,regNum)
+                intDisplay (data_r,mapCR,data_c,regNum);
                 keyboard;
             end
             
@@ -260,6 +272,9 @@ for regNum =  1 : data_c.regs.num_regs;
         
     end
 end
+%intDisplay (data_c,regToDelete,data_f,[]);
+[data_c] = deleteRegions( data_c,regToDelete);
+
 end
 
 
@@ -278,18 +293,19 @@ for c = 1 : numel(regC)
     end
 end
 
-maskF = data_f.regs.regs_label*0;
-
-if isempty(regF)
-    disp('nothing')
-    imshow (cat(3,0*ag(maskF),ag(maskC),ag(data_c.mask_cell)));
-else
-    for f = 1 : numel(regF)
-        if ~isnan(regF(f))
-            maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
+if ~isempty (data_f)
+    maskF = data_f.regs.regs_label*0;
+    if isempty(regF)
+        disp('nothing')
+        imshow (cat(3,0*ag(maskF),ag(maskC),ag(data_c.mask_cell)));
+    else
+        for f = 1 : numel(regF)
+            if ~isnan(regF(f))
+                maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
+            end
         end
+        imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
     end
-    imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
 end
 end
 
@@ -393,6 +409,7 @@ end
 function [data_c,data_r,cell_count,resetRegions,idsOfModRegions] = mapBestOfTwo ...
     (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
 % maps to best from two forward
+global regToDelete
 global REMOVE_STRAY
 resetRegions = 0;
 [~,minInd] = min (data_c.regs.dA.r(mapRC));
@@ -417,7 +434,7 @@ else
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
     end
-    [data_c] = deleteRegions( data_c,remove);
+     regToDelete = [regToDelete;remove];
     resetRegions = true;
 end
 

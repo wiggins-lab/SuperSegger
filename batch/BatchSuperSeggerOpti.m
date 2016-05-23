@@ -241,7 +241,7 @@ function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
     CONST, SEGMENT_FLAG, crop_box, ONLY_SEG)
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
-% processor all the information it needs to process the images..
+% processor all the information it needs to process the images.
 
 % Initialization
 file_filter = '*.tif';
