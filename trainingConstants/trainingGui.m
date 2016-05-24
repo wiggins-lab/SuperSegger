@@ -701,7 +701,12 @@ settings.frameNumber = 1;
 settings.axisFlag = 0;
 settings.dataSegmented = 0;
 
-settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+%Is in seg folder
+if ~isempty(regexpi(directory, [filesep, 'xy.', filesep, 'seg']))
+    settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+else
+    settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+end
 
 hasCONST = exist([settings.loadDirectory, '../../CONST.mat'], 'file');
 if clearCONST == 1 || hasCONST == 1
