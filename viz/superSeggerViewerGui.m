@@ -466,6 +466,9 @@ end
 if strcmpi(eventdata.Key,'rightarrow')
     next_Callback(hObject, eventdata, handles);
 end
+if strcmpi(eventdata.Key,'e')
+    intDispError(handles.data_c, handles.FLAGS, handles.canUseErr);
+end
 
 function previous_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
@@ -1074,4 +1077,25 @@ if strcmp(choice, 'Yes')
     setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
     editSegmentsGui();
 %    segsTLEdit(handles.dirname_seg, str2double(handles.go_to_frame_no.String), handles.CONST);
+end
+
+
+function intDispError( data_c, FLAGS, canUseErr)
+% intDispError
+    disp(  ' ' );
+    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+    disp(  '%     Errors for this frame     %' );
+    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+for kk = 1:data_c.regs.num_regs
+    if isfield(data_c,'regs') &&...
+            isfield(data_c.regs, 'error') && ...
+            isfield(data_c.regs.error,'label') && ...
+            ~isempty( data_c.regs.error.label{kk} )
+        if FLAGS.cell_flag && shouldUseErrorFiles(FLAGS, canUseErr) && isfield( data_c.regs, 'ID' )
+            disp(  ['Cell: ', num2str(data_c.regs.ID(kk)), ', ', ...
+                data_c.regs.error.label{kk}] );
+        else
+            disp(  [ data_c.regs.error.label{kk}] );
+        end
+    end
 end
