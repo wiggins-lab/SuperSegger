@@ -61,6 +61,7 @@ settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
 settings.loadDirectory = [];
+settings.currentDirectory = [];
 settings.currentData = [];
 settings.handles = handles;
 settings.oldData = [];
@@ -166,8 +167,8 @@ global settings;
 dirname = fixDir(handles.directory.String);
 images = dir([dirname,'*.tif']);
 
-if isempty(images) && ~isempty(dir([dirname,'/raw_im/*.tif']))
-    dirname = [dirname, '/raw_im/'];
+if isempty(images) && ~isempty(dir([dirname, filesep, 'raw_im', filesep, '*.tif']))
+    dirname = [dirname, filesep, 'raw_im', filesep];
 end
 
 tryDifferentConstants(dirname)
@@ -278,6 +279,11 @@ function train_segs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
+if isempty(settings.CONST)
+    dispError('You must load a CONST file to create bad regions')
+    return;
+end
+
 h = msgbox('Training segments, this will take a bit.' );
 handles.tooltip.String = 'Training segments... Please wait.';
 drawnow;
@@ -308,7 +314,7 @@ function bad_regs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+if ~isempty(settings.CONST)
     if settings.hasBadRegions
         answer = questdlg('Are you sure you want to remove bad region frames?.', 'Clear bad regions?', 'Yes', 'No', 'No');
         
@@ -332,6 +338,8 @@ if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
     setWorkingDirectory(handles.directory.String, 0, 0);
     
     updateUI(handles);
+else
+    dispError('You must load a CONST file to create bad regions')
 end
 
 
@@ -341,6 +349,11 @@ function train_regs_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
+
+if isempty(settings.CONST)
+    dispError('You must load a CONST file to create bad regions')
+    return;
+end
 
 if ~settings.hasBadRegions
     answer = questdlg(['You have not added bad regions. Do you wish to continue?'], 'Continue?', 'Yes', 'No', 'No');
@@ -437,8 +450,9 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to image_folder (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.directory.String = uigetdir;
-if handles.directory.String ~= 0
+newDir = uigetdir;
+if newDir ~= 0
+    handles.directory.String = newDir;
     setWorkingDirectory(handles.directory.String);
     updateUI(handles);
 end
@@ -587,7 +601,7 @@ end
 
 handles.currentConstants.String = ['Current: ', settings.nameCONST];
 handles.frameSkip.String = num2str(settings.frameSkip);
-handles.directory.String = settings.loadDirectory(1:end-9);
+handles.directory.String = settings.currentDirectory;
 numTrainingFrames = floor(numel(dir([settings.imageDirectory, '*c1*.tif'])) / settings.frameSkip);
 handles.totalFrames.String = ['Total frames: ', num2str(numTrainingFrames), ' / ', num2str(numel(dir([settings.imageDirectory, '*c1*.tif'])))];
 
@@ -710,66 +724,83 @@ end
 settings.frameNumber = 1;
 settings.axisFlag = 0;
 settings.dataSegmented = 0;
+settings.segmentsDirty = 0;
+settings.loadDirectory = [];
 
 %Is in seg folder
-if ~isempty(regexpi(directory, [filesep, 'xy.', filesep, 'seg']))
-    settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+settings.currentDirectory = [directory,filesep];
+settings.currentDirectory = settings.currentDirectory(1:(max(regexp(settings.currentDirectory, [filesep, '*$']))));
+isSegFolder = numel(dir([directory,filesep,'*seg.mat'])) > 0;
+if isSegFolder
+    settings.loadDirectory = [directory,filesep];
 else
-    settings.loadDirectory = [directory,filesep,'xy1',filesep,'seg',filesep];
+    xyPositions = dir([directory,filesep,'xy*',filesep]);
+    
+    if numel(xyPositions) > 0
+        settings.loadDirectory = [directory,filesep,xyPositions(1).name,filesep,'seg',filesep];
+        
+        settings.currentDirectory = settings.loadDirectory(1:end-9);
+    end
 end
 
-hasCONST = exist([settings.loadDirectory, '../../CONST.mat'], 'file');
+hasCONST = ~isSegFolder && exist([settings.loadDirectory, '..', filesep, '..', filesep, 'CONST.mat'], 'file');
 if clearCONST == 1 || hasCONST == 1
     settings.CONST = [];
     settings.nameCONST = 'none';
     settings.constantModified = 0;
     if hasCONST
-        settings.CONST = loadConstantsNN([settings.loadDirectory, '../../CONST.mat'], 0, 0);
+        settings.CONST = loadConstantsNN([settings.loadDirectory, '..', filesep, '..', filesep, 'CONST.mat'], 0, 0);
         settings.nameCONST = 'local';
     end
 end
 
 settings.imagesLoaded = 0;
 settings.imageDirectory = [];
-if numel(dir([settings.loadDirectory(1:end-8), '/*.tif'])) > 0
+if numel(dir([settings.loadDirectory(1:end-8), filesep, '*.tif'])) > 0
     settings.imagesLoaded = 1;
     settings.imageDirectory = settings.loadDirectory(1:end-8);
-elseif numel(dir([settings.loadDirectory(1:end-8), '/raw_im/*.tif'])) > 0
+elseif numel(dir([settings.loadDirectory(1:end-8), filesep, 'raw_im', filesep, '*.tif'])) > 0
     settings.imagesLoaded = 1;
-    settings.imageDirectory = [settings.loadDirectory(1:end-8), '/raw_im/'];
+    settings.imageDirectory = [settings.loadDirectory(1:end-8), filesep, 'raw_im', filesep];
 end
 
 if exist(settings.loadDirectory, 'dir')
-    settings.dataSegmented = 1;
-    settings.axisFlag = 4;
     settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
     settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
-    loadData(settings.frameNumber);
     
-    settings.hasBadRegions = 0;
-    if settings.numFrames < numel(settings.loadFiles)
-        settings.hasBadRegions = 1;
-    end
-    
-    if isempty(settings.CONST)
-        loadConstants_Callback([], [], settings.handles)
-    end
-    
-    %Make save folder
-    try
-        settings.saveFolder = [settings.loadDirectory(1:end-1), '_tmp/'];
-        if ~exist(settings.saveFolder, 'dir')
-            mkdir(settings.saveFolder);
-        else
-            delete([settings.saveFolder, '*']);
+    if settings.numFrames > 0
+        settings.dataSegmented = 1;
+        settings.axisFlag = 4;
+        loadData(settings.frameNumber);
+
+        settings.hasBadRegions = 0;
+        if settings.numFrames < numel(settings.loadFiles)
+            settings.hasBadRegions = 1;
         end
-    catch ME
-        warning(['Could not back up files: ', ME.message]);
+
+        if isempty(settings.CONST)
+            loadConstants_Callback([], [], settings.handles)
+        end
+
+        %Make save folder
+        try
+            settings.saveFolder = [settings.loadDirectory(1:end-1), '_tmp', filesep];
+            if ~exist(settings.saveFolder, 'dir')
+                mkdir(settings.saveFolder);
+            else
+                delete([settings.saveFolder, '*']);
+            end
+        catch ME
+            warning(['Could not back up files: ', ME.message]);
+        end
     end
 elseif settings.imagesLoaded
     settings.numFrames = numel(dir([settings.imageDirectory,'*.tif']));
     settings.loadFiles = dir([settings.imageDirectory,'*.tif']);
     loadData(settings.frameNumber);
+else
+    settings.numFrames = 0;
+    settings.loadFiles = [];
 end
 
 %Clear viewport_train
@@ -803,8 +834,6 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
         if numel(list) > 0
             settings.segmentsDirty = 1;
         end
-    else
-        settings.segmentsDirty = 0;
     end
 elseif settings.axisFlag == 3
     if numel(settings.firstPosition) == 0
@@ -992,7 +1021,7 @@ end
 
 maxFrames = numel(dir([settings.imageDirectory, '*c1*.tif']));
 
-newDir = uigetdir([settings.imageDirectory, '../'], 'Select empty folder for training data');
+newDir = uigetdir([settings.imageDirectory, '..', filesep], 'Select empty folder for training data');
 
 if newDir ~= 0
     if ~exist(newDir, 'dir')
@@ -1009,11 +1038,11 @@ if newDir ~= 0
     
     for i = 1:settings.frameSkip:maxFrames
         tempImage = imread([settings.imageDirectory,settings.loadFiles(i).name]);
-        saveName = [newDir, '/', settings.loadFiles(i).name];
+        saveName = [newDir, filesep, settings.loadFiles(i).name];
         imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
     end
     
-    setWorkingDirectory([newDir, '/'], 0);   
+    setWorkingDirectory([newDir, filesep], 0);   
     updateUI(handles);
 end
 
@@ -1056,7 +1085,7 @@ global settings;
 if FileName ~= 0
     settings.CONST = loadConstantsNN([PathName, FileName],0,0);
     settings.nameCONST = settings.CONST.ResFlag;
-    settings.nameCONST = settings.nameCONST((max(strfind(settings.nameCONST, '/')) + 1):end);
+    settings.nameCONST = settings.nameCONST((max(strfind(settings.nameCONST, filesep)) + 1):end);
     
     updateUI(handles);
 end
@@ -1118,9 +1147,17 @@ if get(hObject,'Value')
     handles.segs_radio.Value = 0;
     handles.mask_radio.Value = 0;
     
-    if settings.segmentsDirty == 1
-        settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-        settings.segmentsDirty = 0;
+    if isempty(settings.CONST)
+        loadConstants_Callback([], [], settings.handles)
+    end
+    
+    if ~isempty(settings.CONST)
+        if settings.segmentsDirty == 1
+            settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+            settings.segmentsDirty = 0;
+        end
+    else
+        questdlg('You must load a CONST file to update the regions', 'Error', 'Okay', 'Okay');
     end
     
     
