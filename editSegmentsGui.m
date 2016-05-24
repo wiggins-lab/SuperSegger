@@ -19,11 +19,12 @@ function varargout = editSegmentsGui_OutputFcn(hObject, eventdata, handles)
 
 % Global functions
 
-function axes1_ButtonDownFcn(hObject, eventdata, handles)
-FLAGS.im_flag = handles.im_flag;
-currentData = load([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
-[handles.currentData, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
-updateUI(hObject, handles);
+function clickOnImage(hObject, eventdata, handles) % Don't save the data !
+global settings
+FLAGS.im_flag = settings.handles.im_flag;
+currentData = load([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name]);
+[settings.handles.currentData, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+updateUI(settings.hObject, settings.handles);
 
 function data = loaderInternal(filename)
 data = load(filename);
@@ -39,9 +40,13 @@ handles.im_flag = 1;
 updateUI(hObject, handles);
 
 function updateUI(hObject, handles)
+global settings
 data = loaderInternal([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
 data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
 showSegData(data, handles.im_flag, handles.axes1);
+settings.handles = handles;
+settings.hObject = hObject;
+set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 guidata(hObject, handles);
 
 % Frame no.
