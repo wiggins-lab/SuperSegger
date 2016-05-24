@@ -236,8 +236,8 @@ for regNum =  1 : data_c.regs.num_regs;
 
             if partialMatch && numel(c_matches) == 1 && numel(r_matches) == 1
                [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, 0);
-                modRegions = [modRegions;c_matches];
-            elseif numel(rCellsFromC) == 1 && numel(cCellsFromR)  == 1 &&  numel (cCellsTransp) == 2
+             
+            if numel(rCellsFromC) == 1 && numel(cCellsFromR)  == 1 &&  numel (cCellsTransp) == 2
                 % c --> r 1, c--->r 1, two c's map to r : inconsistent numbers
                 sister1 = regNum;
                 sister2 = cCellsTransp (cCellsTransp~=regNum);

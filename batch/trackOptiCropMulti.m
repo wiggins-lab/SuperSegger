@@ -29,7 +29,7 @@ function trackOptiCropMulti(dirname,xydir)
 if ~isempty(dirname)
     
     file_filter = '*.tif';
-    dirname = fixDir(dirname)
+    dirname = fixDir(dirname);
     
     contents=dir([dirname,file_filter]);
     num_im = numel( contents );
@@ -52,7 +52,7 @@ if ~isempty(dirname)
     nz  = sort(unique(nz));    
     nxy = sort(unique(nxy));
     if exist('xydir','var')
-       nxy = xydir
+       nxy = xydir;
     end
     
     targetd = [dirname,'crop',filesep];
@@ -72,9 +72,9 @@ if ~isempty(dirname)
         imshow(im)
         
         % user picks two corners to crop the image
-        disp('Pick the two corners of the crop region.')
+        disp('Pick the two corners of the crop region.');
         ss = size(im);
-        corner1 = ginput (1)
+        corner1 = ginput (1);
         
         hold on; plot (corner1(1) * ones (1,ss(1)),1:ss(1),'r');
         hold on; plot (1:ss(2),corner1(2) * ones (1,ss(2)),'r');
@@ -106,7 +106,7 @@ if ~isempty(dirname)
             for ic = nc;
                 for iz = nz;
                     nameInfo.npos(:,1) = [it; ic; nnxy; iz];
-                    in_name = [dirname, MakeFileName(nameInfo)]
+                    in_name = [dirname, MakeFileName(nameInfo)];
                     im = imread( in_name );
                     out_name = [targetd, MakeFileName(nameInfo)];
                     imwrite( im(yy,xx), out_name, 'TIFF' );

@@ -336,7 +336,7 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-edit     trackOpti(dirname_xy,skip,CONST, clean_flag, header);
+     trackOpti(dirname_xy,skip,CONST, clean_flag, header);
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end
