@@ -19,11 +19,12 @@ function varargout = editSegmentsGui_OutputFcn(hObject, eventdata, handles)
 
 % Global functions
 
-function clickOnImage(hObject, eventdata, handles) % Don't save the data !
+function clickOnImage(hObject, eventdata, handles)
 global settings
 FLAGS.im_flag = settings.handles.im_flag;
 currentData = load([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name]);
-[settings.handles.currentData, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+[data, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+save([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name], '-STRUCT', 'data');
 updateUI(settings.hObject, settings.handles);
 
 function data = loaderInternal(filename)
@@ -102,10 +103,3 @@ handles.im_flag = 1;
 handles.mask.Value = 0;
 handles.phase.Value = 0;
 updateUI(hObject, handles);
-
-% Save segments
-
-function save_Callback(hObject, eventdata, handles)
-dataname=[handles.dirname, handles.contents(str2double(handles.frame_no.String)).name];
-currentData = handles.currentData;
-save(dataname,'-STRUCT','currentData');
