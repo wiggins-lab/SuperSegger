@@ -91,7 +91,8 @@ if ~isempty(x)
             end
 
             % updates cell mask
-            data.mask_cell   = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+            data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
+            data.regs.regs_label = bwlabel(data.mask_cell);
             touch_list = [touch_list, ii];
         end
     elseif im_flag == 2

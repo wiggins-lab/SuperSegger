@@ -37,8 +37,9 @@ function [regionScore,state] = calculateStateEnergy(cell_mask,vect,segs_list,dat
 
 state =  caclulateState(cell_mask,vect,segs_list,data,xx,yy,CONST);
 sigma = 1-2*double(state.seg_vect0);
-allGoodScore = double(all(state.reg_E> CONST.regionOpti.minGoodRegScore));
-regionScore = mean(-state.reg_E)+ mean(sigma.*state.seg_E) - allGoodScore * 50;
+allGoodScore = double(all(state.reg_E> 0));
+allWidth = double(all(CONST.superSeggerOpti.MAX_WIDTH < state.short_axis_mean));
+regionScore = mean(-state.reg_E)+ mean(sigma.*state.seg_E) - allGoodScore * 50 - allWidth * 10;
 
 end
 
@@ -57,7 +58,7 @@ end
 state.mask = state.mask>0;
 
 regs_label_mod = (bwlabel(state.mask, 4));
-regs_props_mod = regionprops( regs_label_mod, 'BoundingBox','Orientation','Centroid','Area');
+regs_props_mod = regionprops( regs_label_mod,'BoundingBox','Orientation','Centroid','Area');
 num_regs_mod = max(regs_label_mod(:));
 info = zeros(num_regs_mod, CONST.regionScoreFun.NUM_INFO);
 ss_regs_label_mod = size( regs_label_mod );
@@ -69,5 +70,6 @@ for mm = 1:num_regs_mod;
 end
 
 state.reg_E = CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
-
+state.short_axis_mean = info(:,2);
+state.long_axis = info(:,1);
 end

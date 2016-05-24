@@ -198,6 +198,7 @@ else
         h = [];
     else
         h = waitbar( 0, ['Data segmentation xy: 0/',num2str(num_xy)] );
+        cleanup = onCleanup( @()( delete( h ) ) );
     end
     
     parfor(j = 1:num_xy,workers)
@@ -228,7 +229,6 @@ else
     if ~workers
         if isvalid(h)
             close(h);
-            
         end
     end
     
@@ -293,6 +293,7 @@ if ~CONST.parallel.show_status
     h = [];
 else
     h = waitbar( 0, ['BatchSuperSeggerOpti : Frame 0/',num2str(num_t)] );
+    cleanup = onCleanup( @()( delete( h ) ) );
 end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];

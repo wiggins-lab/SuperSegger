@@ -19,29 +19,35 @@ function varargout = editSegmentsGui_OutputFcn(hObject, eventdata, handles)
 
 % Global functions
 
+function clickOnImage(hObject, eventdata, handles)
+global settings
+FLAGS.im_flag = settings.handles.im_flag;
+currentData = load([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name]);
+[data, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+save([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name], '-STRUCT', 'data');
+updateUI(settings.hObject, settings.handles);
+
 function data = loaderInternal(filename)
 data = load(filename);
 data.segs.segs_good = double(data.segs.segs_label>0).*double(~data.mask_cell);
 data.segs.segs_bad = double(data.segs.segs_label>0).*data.mask_cell;
 
 function editSegmentsGui_OpeningFcn(hObject, eventdata, handles, varargin)
-handles.dirname = getappdata(0, 'dirname_seg');
+handles.dirname = fixDir(getappdata(0, 'dirname_seg'));
 handles.frame_no.String = num2str(getappdata(0, 'nn'));
-touch_list = [];
-saved_touch_list = [];
-if(nargin<1 || isempty(handles.dirname))
-    handles.dirname = pwd;
-end
-handles.dirname = fixDir(handles.dirname);
 handles.contents = dir([handles.dirname '*_seg.mat']);
 handles.num_im = length(handles.contents);
 handles.im_flag = 1;
 updateUI(hObject, handles);
 
 function updateUI(hObject, handles)
+global settings
 data = loaderInternal([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
 data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
-showSegData( data, handles.im_flag, handles.axes1);
+showSegData(data, handles.im_flag, handles.axes1);
+settings.handles = handles;
+settings.hObject = hObject;
+set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 guidata(hObject, handles);
 
 % Frame no.
@@ -70,40 +76,30 @@ function next_Callback(hObject, eventdata, handles)
 handles.frame_no.String = num2str(str2double(handles.frame_no.String)+1);
 frame_no_Callback(hObject, eventdata, handles);
 
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+if strcmpi(eventdata.Key,'leftarrow')
+    previous_Callback(hObject, eventdata, handles);
+end
+if strcmpi(eventdata.Key,'rightarrow')
+    next_Callback(hObject, eventdata, handles);
+end
+
 % Radio buttons
 
 function mask_Callback(hObject, eventdata, handles)
-global settings
-if get(hObject,'Value')
-    settings.axisFlag = 5;
-    handles.segment.Value = 0;
-    handles.phase.Value = 0;
-end
+handles.im_flag = 3;
+handles.phase.Value = 0;
+handles.segment.Value = 0;
 updateUI(hObject, handles);
 
 function phase_Callback(hObject, eventdata, handles)
-global settings
-if get(hObject,'Value')
-    settings.axisFlag = 4;    
-    handles.segment.Value = 0;
-    handles.mask.Value = 0;
-end
+handles.im_flag = 2;
+handles.mask.Value = 0;
+handles.segment.Value = 0;
 updateUI(hObject, handles);
 
 function segment_Callback(hObject, eventdata, handles)
-global settings
-if get(hObject,'Value')
-    settings.axisFlag = 1;
-    handles.mask.Value = 0;
-    handles.phase.Value = 0;
-end
+handles.im_flag = 1;
+handles.mask.Value = 0;
+handles.phase.Value = 0;
 updateUI(hObject, handles);
-
-% Save segments
-
-function save_Callback(hObject, eventdata, handles)
-if any(touch_list==i)
-    saved_touch_list = unique([saved_touch_list,i]);
-end
-dataname=[dirname,contents(i).name];
-save(dataname,'-STRUCT','data');

@@ -205,13 +205,7 @@ while ~isempty(badReg)
         segmentMask = segmentMask + (segsLabelAll==segs_list(kk));
     end
     
-    if debug_flag
-        figure(1);
-        mod = mask_regs;
-        mod(yy,xx) = mod(yy,xx) + combMaskErode;
-        imshow(cat(3,0.5*ag(mask_regs),ag(mod),ag(mod)));
-    end
-    
+
     
     if isempty(segs_list)
         [vect] = [];
@@ -249,10 +243,23 @@ while ~isempty(badReg)
             segment_mask = segment_mask + vect(kk)*(segs_list(kk)==segsLabelAll);
         end
         
+
+        backer = 0.5*ag(mask_regs);      
+        segment_mask_small = ag(segment_mask(yy,xx));
+        backer_small = (backer(yy,xx));
+        backer_small = ag(((backer_small) - ag(combMask))>0);
+        all_segs = ag(ismember(segsLabelAll,segs_list));
+        all_segs_small = all_segs(yy,xx);
+        combMask_bef = data.mask_cell(yy,xx);
         figure (2);
-        backer = 0.5*ag(mask_regs);
-        imshow(cat(3,backer+ag(segment_mask) + 0.7*ag(ismember(segsLabelAll,segs_list)),backer + ag(mod>0), ag(mod>0) + backer))
-        keyboard;
+        subplot(1,2,1)
+        imshow(cat(3,0.5*(backer_small),backer_small + ag(combMask_bef), ...
+            ag(combMask_bef) + (backer_small)))
+        subplot(1,2,2)
+        imshow(cat(3,0.3*(backer_small)+ag(segment_mask_small)...
+            ,0.2*ag(all_segs_small-segment_mask_small) +  0.3*backer_small + 0.5*ag(combMask>0), ...
+           0.5* ag(combMask>0) +  0.3*(backer_small)));
+       keyboard;  
     end
 end
 

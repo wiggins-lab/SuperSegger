@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 18-May-2016 13:00:49
+% Last Modified by GUIDE v2.5 23-May-2016 17:45:12
 
 % Begin initialization code - DO NOT EDIT
 
@@ -245,7 +245,7 @@ function del_areas_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+if settings.dataSegmented
     settings.axisFlag = 3;
     settings.firstPosition = [];
     updateUI(handles);
@@ -261,7 +261,7 @@ function del_reg_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global settings
-if exist([settings.loadDirectory, '../../CONST.mat'], 'file')
+if settings.dataSegmented
     settings.axisFlag = 6;
     settings.firstPosition = [];
     updateUI(handles);
@@ -491,17 +491,17 @@ if settings.dataSegmented
         end
     elseif settings.axisFlag == 3
         % deleting areas in square
-        FLAGS.im_flag = 2;
-        
-        showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
-        
+        maskFigure()
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
         
         if numel(settings.firstPosition) > 0
             hold on;
-            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'k+','MarkerSize', 30)
         end
     elseif settings.axisFlag == 4
         % showing phase image
@@ -509,12 +509,14 @@ if settings.dataSegmented
         imshow(settings.currentData.phase, []);
     elseif settings.axisFlag == 5
         % mask image
-        backer = ag(settings.currentData.phase);
-        imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+        maskFigure()
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
     elseif settings.axisFlag == 6
         % deleting regions
-        backer = ag(settings.currentData.phase);
-        imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+        maskFigure()
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
        
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
@@ -534,11 +536,11 @@ handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
 handles.mask_radio.Value = 0;
-if settings.axisFlag == 5
+if settings.axisFlag == 5 || settings.axisFlag == 3 || settings.axisFlag == 6
     handles.mask_radio.Value = 1;
 elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
-elseif settings.axisFlag == 2 || settings.axisFlag == 3
+elseif settings.axisFlag == 2 
     handles.regions_radio.Value = 1;
 elseif settings.axisFlag == 1
     handles.segs_radio.Value = 1;
@@ -649,6 +651,14 @@ else
 end
 
 
+function maskFigure()
+global settings;
+regs_label = bwlabel(settings.currentData.mask_cell);
+%backer = ag(settings.currentData.phase);
+coloredLbl = label2rgb(regs_label);
+imshow(coloredLbl);
+%imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
 
 % numChildren = numel(viewport_train.Children);
 % for i = 1:numChildren
@@ -885,9 +895,7 @@ global settings;
 
 settings.frameNumber = str2num(handles.frameNumber.String);
 settings.frameNumber = max(1, min(settings.frameNumber, numel(settings.loadFiles)));
-
 loadData(settings.frameNumber);
-
 updateUI(handles);
 
 

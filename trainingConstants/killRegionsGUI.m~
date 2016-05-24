@@ -57,6 +57,7 @@ if ~isempty(position1) && isempty(position2)
     if ii ~=0
         [xx,yy] = getBB( data.regs.props(ii).BoundingBox);
         tmp_cell_mask = (data.regs.regs_label == ii);
+        data.mask_cell = 
         data.regs.regs_label = data.regs.regs_label-ii*tmp_cell_mask;       
         data.mask_cell = (data.regs.regs_label > 0);
         tmp_cell_mask = imdilate(tmp_cell_mask,strel('square',2));
