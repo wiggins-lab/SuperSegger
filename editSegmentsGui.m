@@ -19,6 +19,12 @@ function varargout = editSegmentsGui_OutputFcn(hObject, eventdata, handles)
 
 % Global functions
 
+function axes1_ButtonDownFcn(hObject, eventdata, handles)
+FLAGS.im_flag = handles.im_flag;
+currentData = load([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
+[handles.currentData, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+updateUI(hObject, handles);
+
 function data = loaderInternal(filename)
 data = load(filename);
 data.segs.segs_good = double(data.segs.segs_label>0).*double(~data.mask_cell);
@@ -96,4 +102,5 @@ updateUI(hObject, handles);
 
 function save_Callback(hObject, eventdata, handles)
 dataname=[handles.dirname, handles.contents(str2double(handles.frame_no.String)).name];
-save(dataname,'-STRUCT','data');
+currentData = handles.currentData;
+save(dataname,'-STRUCT','currentData');

@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 18-May-2016 13:00:49
+% Last Modified by GUIDE v2.5 23-May-2016 17:45:12
 
 % Begin initialization code - DO NOT EDIT
 
