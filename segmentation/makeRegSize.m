@@ -27,7 +27,7 @@ function [L1,L2] = makeRegSize( mask, props )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-imRot = logical(imrotate( uint8(mask), -props.Orientation+90 ));
+imRot = logical(fast_rotate_loose(uint8(mask), -props.Orientation+90 ));
 L1 = max(sum(imRot));
 L2 = max(sum(imRot,2));
 

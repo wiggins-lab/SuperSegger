@@ -183,12 +183,14 @@ function previous_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
-
+ 
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
 settings.frameNumber = settings.frameNumber - 1;
 settings.frameNumber = max(settings.frameNumber, 1);
-
 loadData(settings.frameNumber)
-
 updateUI(handles);
 
 
@@ -314,29 +316,23 @@ function bad_regs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-if ~isempty(settings.CONST)
+if settings.dataSegmented
     if settings.hasBadRegions
-        answer = questdlg('Are you sure you want to remove bad region frames?.', 'Clear bad regions?', 'Yes', 'No', 'No');
-        
+        answer = questdlg('Are you sure you want to remove bad region frames?.', 'Clear bad regions?', 'Yes', 'No', 'No');        
         if strcmp(answer, 'No')
             return;
-        end
-        
+        end        
         delete([settings.loadDirectory, '*seg_*_mod.mat']);
     else
         handles.tooltip.String = 'Adding bad regions, please wait.';
         drawnow;
-        
-        makeBadRegions( settings.loadDirectory, settings.CONST)
-        
+        makeBadRegions( settings.loadDirectory, settings.CONST)        
         settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
-        
         settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
         loadData(settings.frameNumber);
     end
     
     setWorkingDirectory(handles.directory.String, 0, 0);
-    
     updateUI(handles);
 else
     dispError('You must load a CONST file to create bad regions')
@@ -465,11 +461,15 @@ function next_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
+settings.currentData.regs
 settings.frameNumber = settings.frameNumber + 1;
 settings.frameNumber = min(settings.frameNumber, numel(settings.loadFiles));
 
 loadData(settings.frameNumber)
-
 updateUI(handles);
 
 
@@ -656,23 +656,21 @@ if settings.dataSegmented == 0
     handles.train_actions.Visible = 'off';
     handles.seg_actions.Visible = 'on';
     handles.cut_and_seg.Visible = 'on';
-    
 else
     handles.train_actions.Visible = 'on';
     handles.seg_actions.Visible = 'off';
     handles.cut_and_seg.Visible = 'off';
-    
 end
 
 
 function maskFigure()
 global settings;
-regs_label = bwlabel(settings.currentData.mask_cell);
-%backer = ag(settings.currentData.phase);
-coloredLbl = label2rgb(regs_label);
-imshow(coloredLbl);
-%imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-       
+cell_mask = settings.currentData.mask_cell;
+cc = bwconncomp(cell_mask, 4);
+labeled = labelmatrix(cc);
+RGB_label = label2rgb(labeled,'lines',[.7 .7 .7]);%,'shuffle');
+imshow(RGB_label);
+  
 
 % numChildren = numel(viewport_train.Children);
 % for i = 1:numChildren
@@ -921,7 +919,10 @@ function frameNumber_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of frameNumber as text
 %        str2double(get(hObject,'String')) returns contents of frameNumber as a double
 global settings;
-
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
 settings.frameNumber = str2num(handles.frameNumber.String);
 settings.frameNumber = max(1, min(settings.frameNumber, numel(settings.loadFiles)));
 loadData(settings.frameNumber);

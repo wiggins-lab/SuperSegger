@@ -39,7 +39,7 @@ debug = false;
 % region based on the angle of the majorAxis.
 Orientation = props.Orientation;
 
-imRot = (imrotate( mask, -Orientation+90 ));
+imRot = fast_rotate_loose_double( mask, -Orientation+90);
 ss = size(imRot);
 
 if debug

@@ -51,8 +51,6 @@ for i = 1 : numel(contents)
     if strcmp (xChoice,'segs')
         X = data.segs.info;
         [data.segs.scoreRaw] = scoreFunction (X,coefficients)';
-        % if you want to update the scores too..
-        % data.segs.score = double(data.segs.scoreRaw > 0)
     else
          X = data.regs.info;
         [data.regs.scoreRaw] = scoreFunction (X,coefficients)';

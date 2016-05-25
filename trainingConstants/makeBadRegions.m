@@ -146,7 +146,7 @@ for ii = 1:data.regs.num_regs
     
     [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
     mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii));
     
     testMask = zeros(size(mask));
     testMask = testMask | (~scoreMask(yy,xx) & (data.regs.regs_label(yy,xx)==ii));

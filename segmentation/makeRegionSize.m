@@ -1,6 +1,6 @@
 function [L1,L2] = makeRegionSize( mask,e1,e2 )
-% makeRegionSize : computes the projections lengths on e1 and e2
-%
+% makeRegionSize : computes the projections lengths on the principal axis.
+% 
 % INPUT :
 %       mask : masked region of interest
 %       e1 : orientation of major axis

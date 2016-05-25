@@ -17,10 +17,11 @@ try
         [xx,yy] = getBB( data.regs.props(mm).BoundingBox);
         tmp = (data.regs.regs_label(yy,xx) == mm);
         data.regs.regs_label(yy,xx) = data.regs.regs_label(yy,xx)-mm*tmp;
+        data.mask_cell(yy,xx) = data.mask_cell(yy,xx) - tmp;
     end
 catch ME
    printError(ME);
 end
-data.mask_cell = (data.regs.regs_label > 0);
+
 
 end

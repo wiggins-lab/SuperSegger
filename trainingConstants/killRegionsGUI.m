@@ -57,8 +57,7 @@ if ~isempty(position1) && isempty(position2)
     if ii ~=0
         [xx,yy] = getBB( data.regs.props(ii).BoundingBox);
         tmp_cell_mask = (data.regs.regs_label == ii);
-        data.regs.regs_label = data.regs.regs_label-ii*tmp_cell_mask;       
-        data.mask_cell = (data.regs.regs_label > 0);
+        
         tmp_cell_mask = imdilate(tmp_cell_mask,strel('square',2));
         data.segs.segs_good(tmp_cell_mask) = 0;
         data.segs.segs_bad(tmp_cell_mask) = 0;
@@ -66,6 +65,8 @@ if ~isempty(position1) && isempty(position2)
         data.segs.segs_label(tmp_cell_mask) = 0;
         data.mask_bg(tmp_cell_mask)= 0;
         data.mask_cell(tmp_cell_mask) = 0;
+        
+        data = intMakeRegs( data, CONST);
     end
     
 elseif ~isempty(position1) && ~isempty(position2)
@@ -87,12 +88,12 @@ elseif ~isempty(position1) && ~isempty(position2)
     ind_segs = ind_segs(logical(ind_segs));
     ind_segs = reshape(ind_segs,1,numel(ind_segs));
 
-    if isfield( data, 'regs' );
-        ind_regs = unique( data.regs.regs_label(yy,xx));
-        ind_regs = ind_regs(logical(ind_regs));
-        ind_regs = reshape(ind_regs,1,numel(ind_regs));
-        data = rmfield(data,'regs');
-    end
+%     if isfield( data, 'regs' );
+%         ind_regs = unique( data.regs.regs_label(yy,xx));
+%         ind_regs = ind_regs(logical(ind_regs));
+%         ind_regs = reshape(ind_regs,1,numel(ind_regs));
+%         data = rmfield(data,'regs');
+%     end
 
     mask = false(size(data.phase));
 
@@ -102,8 +103,7 @@ elseif ~isempty(position1) && ~isempty(position2)
         data.segs.scoreRaw(ii) = NaN;
         mask = logical(mask + (data.segs.segs_label==ii));
     end
-
-
+    
     data.segs.segs_good(yy,xx)  = 0;
     data.segs.segs_bad(yy,xx)   = 0;
     data.segs.segs_3n(yy,xx)    = 0;
@@ -117,7 +117,5 @@ elseif ~isempty(position1) && ~isempty(position2)
     data.segs.segs_label(mask) = 0;
     data.mask_cell(mask)       = 0;
     data.mask_bg(mask)         = 0;
-    
-% update region fields
-%data = intMakeRegs( data, CONST, [], [] );
+    data = intMakeRegs( data, CONST);
 end
