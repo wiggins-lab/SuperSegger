@@ -46,7 +46,7 @@ theta = (-props.Orientation)*pi/180;
 A = props.Area;
 mask= logical(celld.mask);
 
-imRot = (imrotate(uint8(mask), -props.Orientation));
+imRot = (fast_rotate_loose_double(uint8(mask), -props.Orientation));
 imRot = double(imRot);
 ss = size(imRot);
 ss_mask = size(mask);

@@ -115,7 +115,9 @@ end
 
 % align frames
 if exist( dirname_, 'dir' )
-    if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
+            (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
+            exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
         disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
@@ -150,8 +152,8 @@ end
 
 % setups the dir structure for analysis.
 trackOptiPD(dirname_, CONST);
-save( [dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Saves CONST set you used.
-save( [dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
+save([dirname_,'CONST.mat'],'-STRUCT', 'CONST' ); % Saves CONST set you used.
+save([dirname_,'raw_im',filesep,'cropbox.mat'], 'crop_box_array' );
 
 % Loop through xy directories
 % Reset n values in case directories have already been made.

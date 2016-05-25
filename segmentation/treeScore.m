@@ -1,16 +1,15 @@
-function [L1,L2] = makeRegSize( mask, props )
-% makeRegSize : computes the projections lengths after rotating.
-% The mask is rotated by the angle in props.Orientation. 
+function  [rawScore] = treeScore (x,treeClassifier)
+% treeScore : calculates the scores of regions/ segments using a classification tree. % Neural network was already trained using a trained Pattern Recognition Problem 
 %
-% INPUT :
-%       mask : masked region of interest
-%       props : contains information about the orientation of the region
-% OUTPUT:
-%       L1 : projection length of region on the major axis
-%       L2 : projection length of region on the minor axis
+% INPUT : 
+%   x : input to the network, quantities regarding the segment or region. 
+%   treeClassifier : treeClassifier object.
+%
+% OUTPUT :
+%  score : rawScore from -50 to 50. Above 0 is a good segment/region.
 %
 % Copyright (C) 2016 Wiggins Lab 
-% Written by Paul Wiggins.
+% Written by Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
 % 
@@ -27,8 +26,12 @@ function [L1,L2] = makeRegSize( mask, props )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-imRot = logical(fast_rotate_loose(uint8(mask), -props.Orientation+90 ));
-L1 = max(sum(imRot));
-L2 = max(sum(imRot,2));
+[~,prob_per_class] = treeClassifier.predict(x);
+prob = prob_per_class (:,2)';
+
+% because of the way scores were calculated in the past I will shift the
+% rawScore by .5 and multiply by 100 to make them spread out!
+rawScore = (prob - 0.5) * 100; 
 
 end
+
