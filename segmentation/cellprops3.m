@@ -57,7 +57,7 @@ debug = false;
 Orientation = props.Orientation;
 
 % rotated image
-imRot = (imrotate( mask, -Orientation+90 ));
+imRot = fast_rotate_loose_double( mask, -Orientation+90);
 ss = size(imRot);
 
 if debug

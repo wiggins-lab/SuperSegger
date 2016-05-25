@@ -1,30 +1,30 @@
 function [X,Y] =  getInfoScores (dirname, xChoice, CONST)
 % getInfoScores : gathers properties and predicted values to be used for
 % model training.
-%  
-% INPUT: 
+%
+% INPUT:
 %       dirname : directory with seg files
 %       xChoice : 'segs' or 'regs' for segments or regions
 %       CONST : segmentation constants
-% OUPUT : 
+% OUPUT :
 %       X : properties (info) for segments or regions
 %       Y : boolean array with two fields for bad or good segment/region
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -51,12 +51,12 @@ for i = 1 : numel(contents)
         X = [X;data.segs.info];
     else
         Y = [Y;data.regs.score];
-       
+        
         if exist('CONST','var')
             newInfo = calculateInfo (data);
             X = [X;newInfo];
         else
-             X = [X;data.regs.info];
+            X = [X;data.regs.info];
         end
     end
     
@@ -71,17 +71,21 @@ X = X(indices,:);
 Y = Y(indices);
 
 
-function newInfo = calculateInfo (data)
-ss = size( data.mask_cell );
-data.regs.info = [];
-for ii = 1:data.regs.num_regs 
-    [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
-    mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
-end
-  
-newInfo = data.regs.info;
-end
+    function newInfo = calculateInfo (data)
+        ss = size( data.mask_cell );
+        data.regs.regs_label = bwlabel(data.mask_cell);
+        data.regs.props = regionprops( data.regs.regs_label,'BoundingBox','Orientation','Centroid','Area');
+        data.regs.num_regs = max(data.regs.regs_label(:));
+        data.regs.info = [];
+     
+        for ii = 1:data.regs.num_regs
+            [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
+            mask = data.regs.regs_label(yy,xx)==ii;
+            data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+        end
+        
+        newInfo = data.regs.info;
+    end
 
 end
 

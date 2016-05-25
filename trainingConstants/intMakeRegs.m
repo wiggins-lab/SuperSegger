@@ -29,7 +29,7 @@ function data = intMakeRegs( data, CONST, mask_bad_regs, good_regs )
 
 E = CONST.regionScoreFun.E;
 
-% sets all scores to 1
+%sets all scores to 1
 if ~exist('good_regs','var') || isempty(good_regs)
     good_regs = false;
 end
