@@ -1103,13 +1103,13 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.data_c)
+if isempty(settings.handles.data_c)
     errordlg('Press find segments first');
 end
-if ~isfield(settings.data_c,'regs')
-    settings.data_c = intMakeRegs( settings.data_c, settings.CONST, [], [] );
+if ~isfield(settings.handles.data_c,'regs')
+    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
 end
-data = settings.data_c;
+data = settings.handles.data_c;
 ss = size(data.phase);
 tmp = zeros([51,51]);
 tmp(26,26) = 1;
@@ -1128,15 +1128,17 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 if ii ~=0
-    strcat(settings.exclude_ids.String, num2str(ii));
+    settings.handles.exclude_ids.String =  (['length : ', num2str(data.regs.info(ii,1)), ' max width : ',  num2str(data.regs.info(ii,4))]);
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
+disp('hej')
 global settings;
-settings = handles;
+settings.handles = handles; 
 set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 
 function from_img_include_Callback(hObject, eventdata, handles)
+disp('hej')
 global settings;
-settings = handles;
+settings.handles = handles; 
 set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
