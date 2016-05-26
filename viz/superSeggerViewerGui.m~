@@ -1128,17 +1128,30 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 if ii ~=0
-    settings.handles.exclude_ids.String =  (['length : ', num2str(data.regs.info(ii,1)), ' max width : ',  num2str(data.regs.info(ii,4))]);
+    settings.exclude_list(end+1) = data.regs.ID(ii);
+    settings.handles.exclude_ids.String = num2str(settings.exclude_list);
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
-disp('hej')
 global settings;
-settings.handles = handles; 
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.exclude_list = str2double(strsplit(handles.exclude_ids.String));
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.exclude_ids.String = settings.handles.exclude_ids.String;
+	exclude_ids_Callback(hObject, eventdata, handles);
+end
 
 function from_img_include_Callback(hObject, eventdata, handles)
-disp('hej')
 global settings;
-settings.handles = handles; 
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.include_list = str2double(strsplit(handles.include_ids.String));
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.include_ids.String = settings.handles.include_ids.String;
+	exclude_ids_Callback(hObject, eventdata, handles);
+end

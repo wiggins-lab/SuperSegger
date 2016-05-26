@@ -1103,13 +1103,13 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.data_c)
+if isempty(settings.handles.data_c)
     errordlg('Press find segments first');
 end
-if ~isfield(settings.data_c,'regs')
-    settings.data_c = intMakeRegs( settings.data_c, settings.CONST, [], [] );
+if ~isfield(settings.handles.data_c,'regs')
+    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
 end
-data = settings.data_c;
+data = settings.handles.data_c;
 ss = size(data.phase);
 tmp = zeros([51,51]);
 tmp(26,26) = 1;
@@ -1128,15 +1128,44 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 if ii ~=0
-    strcat(settings.exclude_ids.String, num2str(ii));
+    settings.id_list(end+1) = data.regs.ID(ii);
+    if strcmp(settings.function, 'exclude')
+        settings.handles.exclude_ids.String = num2str(settings.id_list);
+    else
+        settings.handles.include_ids.String = num2str(settings.id_list);
+    end
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
 global settings;
-settings = handles;
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'exclude';
+    if isnan(str2double(strsplit(handles.exclude_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.exclude_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.exclude_ids.String = settings.handles.exclude_ids.String;
+	exclude_ids_Callback(hObject, eventdata, handles);
+end
 
 function from_img_include_Callback(hObject, eventdata, handles)
 global settings;
-settings = handles;
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'include';
+    if isnan(str2double(strsplit(handles.include_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.include_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.include_ids.String = settings.handles.include_ids.String;
+	include_ids_Callback(hObject, eventdata, handles);
+end
