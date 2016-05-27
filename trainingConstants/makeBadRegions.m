@@ -61,7 +61,6 @@ end
 function [data] = intModRegions ( data,CONST )
 % intModRegions ; modifies regions to create bad regions
 
-
 % fraction of segments to be modified to create bad regions
 FRACTION_SEG_MOD = 0.5;
 num_segs = numel(data.segs.score);
@@ -148,19 +147,14 @@ for ii = 1:data.regs.num_regs
     mask = data.regs.regs_label(yy,xx)==ii;
     data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii));
     
-    testMask = zeros(size(mask));
-    testMask = testMask | (~scoreMask(yy,xx) & (data.regs.regs_label(yy,xx)==ii));
-    if max(any( testMask )) == 1
-        data.regs.score(ii) = 0;
-    else
-        data.regs.score(ii) = 1;
-    end
-    
 end
 
 E = CONST.regionScoreFun.E;
 data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, E)';
 
+bad_regs_before = unique( data.regs.regs_label( logical(mask_bad_regs) ) );
+bad_regs_before = bad_regs_before(logical(bad_regs_before));
+data.regs.score(bad_regs_before) = 0;
 mod_regs = unique( data.regs.regs_label( logical(mod_map) ) );
 mod_regs = mod_regs(logical(mod_regs));
 % sets scores of all regions which had modified segments to 0

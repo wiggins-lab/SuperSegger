@@ -32,7 +32,7 @@ function showSegRule( data, FLAGS, figNum,CONST )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if (~exist('FLAGS','var') || isempty(FLAGS)) || ~isfield( FLAGS, 'im_flag' )
-    FLAGS.im_flag=1;
+    FLAGS.im_flag=2;
 end
 
 im_flag = FLAGS.im_flag;
@@ -44,7 +44,7 @@ end
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 0;
+    FLAGS.t_flag = 1;
 end
 
 t_flag = FLAGS.t_flag;
@@ -81,14 +81,16 @@ backer = 0.7*ag(data.phase);
 
 if im_flag == 1
     
-    isnan_score = isnan(data.segs.scoreRaw);
-    data.segs.score(isnan_score) = 1;
+    isnan_scoreraw = isnan(data.segs.scoreRaw);
+    isnan_score = isnan(data.segs.score);
+    data.segs.score(isnan_score) = 0;
+    data.segs.scoreRaw(isnan_scoreraw) = 0;
     
     if ~isfield(data.segs, 'Include' )
         data.segs.Include = 0*data.segs.score+1;
     end
     
-    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
+    %segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
    
     segs_good      = ismember( data.segs.segs_label, find((data.segs.score)));
     segs_bad       = ismember( data.segs.segs_label, find((~data.segs.score)));
@@ -98,13 +100,13 @@ if im_flag == 1
 %     segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,round(data.segs.scoreRaw)))));
 %     segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~round(data.segs.scoreRaw)))));
 %     
-    segsInlcudeag  = ag(segs_Include);
+    %segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
     segsGoodFailag = ag(segs_good_fail);
     segs3nag = ag(data.segs.segs_3n  );
     segsBadag  = ag(segs_bad );
     segsBadFailag = ag(segs_bad_fail);
-    maskBgag = ag(~data.mask_bg);
+    %maskBgag = ag(~data.mask_bg);
     
     if FLAGS.phase
         phaseBackag = uint8(ag(data.segs.phaseMagic));

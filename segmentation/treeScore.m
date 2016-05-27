@@ -26,7 +26,7 @@ function  [rawScore] = treeScore (x,treeClassifier)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-[~,prob_per_class] = treeClassifier.predict(x);
+[s,prob_per_class] = treeClassifier.predict(x);
 prob = prob_per_class (:,2)';
 
 % because of the way scores were calculated in the past I will shift the

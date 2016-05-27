@@ -1,5 +1,5 @@
 function varargout = trainingGui(varargin)
-% modifyConstValuesGUI : gui to train for region and segment scores.
+% modifyConstValuesGUI : gui to interactively modify parameters in constants.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Connor Brennan and Stella Styliandou.
@@ -56,7 +56,7 @@ set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
 
 handles.directory.String = pwd;
-settings.trainFun = @trainTree;
+
 settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
@@ -69,6 +69,7 @@ settings.oldFrame = [];
 settings.maxData = 10;
 settings.firstPosition = [];
 settings.errorHandle = [];
+settings.segmentsDirty = 0;
 settings.numFrames = 0;
 settings.saveFolder = '';
 settings.dataSegmented = 0;
@@ -119,6 +120,13 @@ end
 
 trainingFrames = dir([settings.imageDirectory, '*c1*.tif']);
 numTrainingFrames = numel(trainingFrames);
+% if numTrainingFrames < 5
+%     answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
+%
+%     if strcmp(answer, 'No')
+%         return;
+%     end
+% end
 
 if numTrainingFrames > 50
     answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');    
@@ -165,6 +173,8 @@ if isempty(images) && ~isempty(dir([dirname, filesep, 'raw_im', filesep, '*.tif'
 end
 
 tryDifferentConstants(dirname)
+%tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport_train.XLim, handles.viewport_train.YLim]), settings.frameNumber);
+
 
 
 
@@ -175,6 +185,10 @@ function previous_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
  
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
 settings.frameNumber = settings.frameNumber - 1;
 settings.frameNumber = max(settings.frameNumber, 1);
 loadData(settings.frameNumber)
@@ -272,7 +286,7 @@ if isempty(settings.CONST)
     dispError('You must load a CONST file to create bad regions')
     return;
 end
-set(handles.figure1,'Pointer','watch');
+set(gcf,'Pointer','watch');
 h = msgbox('Training segments, this will take a bit.' );
 handles.tooltip.String = 'Training segments... Please wait.';
 drawnow;
@@ -282,13 +296,13 @@ saveData_Callback();
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
 save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
 
-[settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = settings.trainFun (Xsegs, Ysegs);
+[settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = trainTree (Xsegs, Ysegs);
 
 settings.constantModified = 1;
 
 % update scores and save data files again
 updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.seg.segmentScoreFun);
-set(handles.figure1,'Pointer','arrow');
+set(gcf,'Pointer','arrow');
 try
     close(h);
 catch
@@ -346,7 +360,7 @@ if ~settings.hasBadRegions
         return;
     end
 end
-set(handles.figure1,'Pointer','watch');
+set(gcf,'Pointer','watch');
 h = msgbox('Training regions, this will take a bit.' );
 handles.tooltip.String = 'Training regions... Please wait.';
 
@@ -356,7 +370,7 @@ saveData_Callback();
 
 [Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
 save([settings.currentDirectory,filesep,'regs_training_data'],'Xregs','Yregs');
-[settings.CONST.regionScoreFun.E,settings.CONST.regionScoreFun.fun] = settings.trainFun (Xregs, Yregs);
+[settings.CONST.regionScoreFun.E,settings.CONST.regionScoreFun.fun] = trainTree (Xregs, Yregs);
 
 settings.constantModified = 1;
 
@@ -368,7 +382,7 @@ try
     close(h);
 catch
 end
-set(handles.figure1,'Pointer','arrow');
+
 loadData(settings.frameNumber);
 
 updateUI(handles);
@@ -449,7 +463,10 @@ function next_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 
-
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
 
 settings.frameNumber = settings.frameNumber + 1;
 settings.frameNumber = min(settings.frameNumber, numel(settings.loadFiles));
@@ -667,7 +684,8 @@ function saveData()
 global settings
 
 try
-    data = settings.currentData;    
+    data = settings.currentData;
+    
     save([settings.saveFolder, settings.loadFiles(settings.frameNumber).name],'-STRUCT','data');
 catch ME
     warning(['Could not save changes: ', ME.message]);
@@ -706,6 +724,7 @@ end
 settings.frameNumber = 1;
 settings.axisFlag = 0;
 settings.dataSegmented = 0;
+settings.segmentsDirty = 0;
 settings.loadDirectory = [];
 
 %Is in seg folder
@@ -811,12 +830,13 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     
     addUndo();
     [settings.currentData, list] = updateTrainingImage(settings.currentData, FLAGS, eventdata.IntersectionPoint(1:2));
-    if settings.axisFlag == 1 && numel(list) > 0
-        settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-    end
     saveData();
     
-
+    if settings.axisFlag == 1
+        if numel(list) > 0
+            settings.segmentsDirty = 1;
+        end
+    end
 elseif settings.axisFlag == 3
     if numel(settings.firstPosition) == 0
         settings.firstPosition = eventdata.IntersectionPoint;
@@ -897,6 +917,10 @@ end
 
 function frameNumber_Callback(hObject, eventdata, handles)
 global settings;
+if settings.segmentsDirty == 1
+    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    settings.segmentsDirty = 0;
+end
 settings.frameNumber = str2num(handles.frameNumber.String);
 settings.frameNumber = max(1, min(settings.frameNumber, numel(settings.loadFiles)));
 loadData(settings.frameNumber);
@@ -1126,7 +1150,12 @@ if get(hObject,'Value')
         loadConstants_Callback([], [], settings.handles)
     end
     
-    if isempty(settings.CONST)
+    if ~isempty(settings.CONST)
+        if settings.segmentsDirty == 1
+            settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+            settings.segmentsDirty = 0;
+        end
+    else
         questdlg('You must load a CONST file to update the regions', 'Error', 'Okay', 'Okay');
     end
     
