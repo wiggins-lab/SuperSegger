@@ -920,12 +920,18 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'consensus_kymograph'], 'kymo', 'kymoMask');
+    end
 end
 
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'mosaic_kymograph'], 'im');
+    end
 end
 
 function show_consensus_Callback(hObject, eventdata, handles)
@@ -943,6 +949,9 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
+    if handles.save_output.Value
+        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    end        
     figure(2);
     imshow(imColor);
 end
@@ -981,6 +990,9 @@ function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    if handles.save_output.Value
+        save ([handles.dirSave,'tower_cells'],'imTot');
+    end        
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1169,3 +1181,5 @@ elseif state == get(hObject,'Min')
     handles.include_ids.String = settings.handles.include_ids.String;
 	include_ids_Callback(hObject, eventdata, handles);
 end
+
+function save_output_Callback(hObject, eventdata, handles)

@@ -981,6 +981,9 @@ function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    if handles.save_output.Value
+        save ([handles.dirSave,'tower_cells'],'imTot');
+    end        
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1128,8 +1131,12 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 if ii ~=0
-    settings.exclude_list(end+1) = data.regs.ID(ii);
-    settings.handles.exclude_ids.String = num2str(settings.exclude_list);
+    settings.id_list(end+1) = data.regs.ID(ii);
+    if strcmp(settings.function, 'exclude')
+        settings.handles.exclude_ids.String = num2str(settings.id_list);
+    else
+        settings.handles.include_ids.String = num2str(settings.id_list);
+    end
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
@@ -1137,7 +1144,12 @@ global settings;
 state = get(hObject,'Value');
 if state == get(hObject,'Max')
     settings.handles = handles;
-    settings.exclude_list = str2double(strsplit(handles.exclude_ids.String));
+    settings.function = 'exclude';
+    if isnan(str2double(strsplit(handles.exclude_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.exclude_ids.String));
+    end
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.exclude_ids.String = settings.handles.exclude_ids.String;
@@ -1149,9 +1161,16 @@ global settings;
 state = get(hObject,'Value');
 if state == get(hObject,'Max')
     settings.handles = handles;
-    settings.include_list = str2double(strsplit(handles.include_ids.String));
+    settings.function = 'include';
+    if isnan(str2double(strsplit(handles.include_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.include_ids.String));
+    end
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.include_ids.String = settings.handles.include_ids.String;
-	exclude_ids_Callback(hObject, eventdata, handles);
+	include_ids_Callback(hObject, eventdata, handles);
 end
+
+function save_output_Callback(hObject, eventdata, handles)
