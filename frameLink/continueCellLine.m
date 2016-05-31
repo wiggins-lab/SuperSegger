@@ -1,6 +1,8 @@
 function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
     regNumR, time, errorStat)
 % continueCellLine : continues a cell line with the same id.
+% The cell with region number regNumC in data_c gets the same id as the
+% cell with region number regNumR in data_r.
 %
 % INPUT :
 %       data_c : data file (err/seg file) in current frame
@@ -94,8 +96,8 @@ if ~any (data_c.regs.ID == data_r.regs.ID(regNumR))
     
 else
     if data_r.regs.ID(regNumR)~=0
-    disp (['FRAME :', num2str(time),' ID PROBLEM WITH ',num2str(regNumC), ' ', num2str(data_r.regs.ID(regNumR))]);
-    keyboard;
+        disp (['FRAME :', num2str(time),' ID PROBLEM WITH ',num2str(regNumC), ' ', num2str(data_r.regs.ID(regNumR))]);
+        keyboard;
     end
 end
 end

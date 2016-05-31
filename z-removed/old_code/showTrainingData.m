@@ -1,5 +1,5 @@
 function showTrainingData (data, FLAGS, viewport)
-% makeTrainingData : user can click on segments or regions to change score
+% showTrainingData : user can click on segments or regions to change score
 % from 0 to 1 or vice versa. It updates scores, cell mask, good and bad
 % segs.
 %
@@ -36,6 +36,4 @@ if ~exist('FLAGS','var') ||  ~isfield(FLAGS,'im_flag')
 end
 
 showSegRuleGUI( data, FLAGS ,1, viewport);
-
-%disp ('Click on segment/region to modify.');
 

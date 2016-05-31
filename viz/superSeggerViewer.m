@@ -117,7 +117,7 @@ if exist([dirname0,'CONST.mat'],'file')
 else
     disp(['Exiting. There is a CONST.mat file at the root', ...
         'level of the data directory. Loading default 60XEcLB']);
-    CONST = loadConstantsNN(60,0);
+    CONST = loadConstants(60,0);
 end
 
 contents=dir([dirname_seg, '*seg.mat']);

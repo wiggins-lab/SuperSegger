@@ -63,12 +63,11 @@ end
 if ~isfield(FLAGS,'filt')
     FLAGS.filt = 1;
 end
-if ~isfield(FLAGS,'lyse_flag')
-    FLAGS.lyse_flag = 0;
-end
+
 if ~isfield(FLAGS,'regionScores')
     FLAGS.regionScores = 0;
 end
+
 if ~isfield(FLAGS,'useSegs')
     FLAGS.useSegs = 0;
 end

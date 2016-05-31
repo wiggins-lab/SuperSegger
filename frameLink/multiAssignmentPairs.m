@@ -1,10 +1,18 @@
-function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentPairs (data_c, data_f,CONST, forward, debug_flag)
-% multiAssignmentPairs : links regions in data_c to regions in data_f.
-% Each row is assigned to one column only - starting by the minimum
-% possible cost and continuing to the next minimum possible cost.
+function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentPairs ...
+    (data_c, data_f,CONST, forward, debug_flag)
+% multiAssignmentPairs : assigns regions in data_c to regions in data_f.
+% Uses a combination of area overlap, centroid distance, and outward push
+% in colonies. Regions are assigned one-to-one or one-to-pair or
+% pair-to-one. Each cell is assigned only once - starting by the 
+% minimum possible cost and continuing to the next minimum possible cost.
 %
 % INPUT :
-%    (data_c, data_f,CONST, forward, debug_flag)
+%    data_c : current frame file
+%    data_f : forward frame file
+%    CONST : segmentation parameters
+%    forward : 1 for forward direction (e.g current to forward), 0 for
+%    reverse
+%    debug_flag : 1 to display assignment result.
 %
 % OUTPUT :
 %   [assignments,errorR,totCost,allC,allF]
@@ -28,13 +36,11 @@ function [assignments,errorR,totCost,allC,allF,dA,revAssign]  = multiAssignmentP
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 global str8
 
 str8 = strel('square',5);
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
-
 
 if forward
     sign = 1;
@@ -289,8 +295,6 @@ if ~isempty(data_c)
                 assignments {regionsInC(2)} = assignTemp;
             end
             
-            assignedInC  = [assignedInC;regionsInC'];
-            assignedInF = [assignedInF;assignTemp'];
             % find all columns to be set as nans
             colToDelF = any(ismember(allF,assignTemp));
             colToDelC = any(ismember(allC,regionsInC));
@@ -298,12 +302,11 @@ if ~isempty(data_c)
             costMat (:, colToDelF) = 0; % add nans to already assigned
         end
         
-        
-        
+               
         % make list of revAssign
         revAssign = getRevAssign();
         
-        % fix assignment error - best next assignments for those
+        % attempt to fix assignment error for cells left without assignment
         [~,minIndxF] = min(totCost,[],2);
         [~,minIndxC] = min(totCost,[],1);
         cArea = [data_c.regs.props.Area];
@@ -314,8 +317,6 @@ if ~isempty(data_c)
         
         dA = changeInArea(assignments, cArea,fArea);
         errorR = setError(dA);
-        % make list of revAssign
-        
         
         if debug_flag
             visualizeLinking(data_c,data_f,assignments);
@@ -329,8 +330,8 @@ end
         revAssign = cell( 1, numRegs2);
         for ll = 1 : numRegs1
             tmpAss =  assignments{ll};
-            for yy = tmpAss
-                revAssign{yy} = [revAssign{yy},ll];
+            for uu = tmpAss
+                revAssign{uu} = [revAssign{uu},ll];
             end
         end
     end
@@ -345,8 +346,10 @@ end
         end
     end
 
-    function [assignments, revAssign] =fixProblems (assignments, revAssign, minIndxC, cArea, fArea)
-        
+    function [assignments, revAssign] = fixProblems (assignments, revAssign, ...
+            minIndxC, cArea, fArea)
+        % fixProblems : used to fix cells not assigned to anything.
+
         leftInF = find(cellfun('isempty',revAssign));
         
         for jj = leftInF
@@ -460,9 +463,9 @@ end
 
 
 function pairsF = findNeighborPairs (data_f, numRegs2, regsInF)
-% finds neighboring regions to be considered as pairs
-global str8
+% findNeighborPairs : finds neighboring regions to be considered as pairs
 
+global str8
 counter = 1;
 pairsF = NaN * zeros(2,numRegs2 * numRegs2);
 for jj = regsInF
@@ -483,10 +486,13 @@ end
 
 cleanpairIDs = (nansum(pairsF)~=0);
 pairsF = pairsF(:,cleanpairIDs);
+
 end
 
 
 function [bbx,bby] = getBoxLimits (data_c,regNums)
+% getBoxLimits : returns the bounding box for regNums
+
 regNums = regNums(~isnan(regNums));
 comboBoundingBox = [];
 ss = size(data_c.phase);
@@ -504,10 +510,11 @@ end
 
 
 function [comboMask,comboArea,comboCentroid] = regProperties (data_c,regNums,bbx,bby)
+% regProperties :  calculates regNums properties : area, mask and centroid
+
 comboCentroid = 0;
 comboArea = 0;
 regNums = regNums(~isnan(regNums));
-
 regs_labels =  data_c.regs.regs_label(bby,bbx);
 comboMask = 0 * (regs_labels);
 
@@ -520,6 +527,7 @@ end
 
 comboCentroid = comboCentroid/numel(regNums); % mean centroid
 comboMask = (comboMask>0);
+
 end
 
 

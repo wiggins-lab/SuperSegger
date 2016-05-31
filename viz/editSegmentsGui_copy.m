@@ -709,7 +709,7 @@ if clearCONST == 1 || hasCONST == 1
     settings.nameCONST = 'none';
     settings.constantModified = 0;
     if hasCONST
-        settings.CONST = loadConstantsNN([settings.loadDirectory, '../../CONST.mat'], 0, 0);
+        settings.CONST = loadConstants([settings.loadDirectory, '../../CONST.mat'], 0, 0);
         settings.nameCONST = 'local';
     end
 end
@@ -1041,7 +1041,7 @@ global settings;
 [~, ~, constantsPath] = getConstantsList();
 [FileName,PathName] = uigetfile('.mat', 'Load CONST file', constantsPath);
 if FileName ~= 0
-    settings.CONST = loadConstantsNN([PathName, FileName],0,0);
+    settings.CONST = loadConstants([PathName, FileName],0,0);
     settings.nameCONST = settings.CONST.ResFlag;
     settings.nameCONST = settings.nameCONST((max(strfind(settings.nameCONST, '/')) + 1):end);
     

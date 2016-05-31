@@ -8,11 +8,9 @@ function fl = trackOptiCellFluor( fluor, mask, r_offset )
 % OUTPUT :
 %       fl.sum : sum of fluorescence of all pixels within cell mask
 %       fl.r : the coordinates of the center of mass of the fluorescence
-%       fl.Ixx : normalized sum of the square of background fluorescence 
-%       along the X direction of the cell
-%       fl.Iyy : normalized sum of the square of background fluorescence 
-%       along the Y direction of the cell
-%       fl.Ixy : normalized sum of fluorescence along the Y * X direction
+%       fl.Ixx : second moment of fluorescence along X 
+%       fl.Iyy : second moment of fluorescence along Y
+%       fl.Ixy : second moment of fluorescence along YX
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou & Paul Wiggins.
@@ -42,8 +40,8 @@ xx = (1:im_size_x)+r_offset(1)-1;
 yy = (1:im_size_y)+r_offset(2)-1;
 [X,Y] = meshgrid( xx, yy );
 
-Xcm = sum( X(mask(:)).*double(fluor(mask(:))))/fl.sum;
-Ycm = sum( Y(mask(:)).*double(fluor(mask(:))))/fl.sum;
+Xcm = sum(X(mask(:)).*double(fluor(mask(:))))/fl.sum;
+Ycm = sum(Y(mask(:)).*double(fluor(mask(:))))/fl.sum;
 
 fl.r = [Xcm,Ycm];
 fl.Ixx = sum(double(fluor(mask(:))).*(X(mask(:))-Xcm).^2)/fl.sum;

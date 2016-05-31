@@ -93,7 +93,7 @@ else
     if exist('loadConstantsMine','file');
         CONST = loadConstantsMine(res);
     else
-        CONST = loadConstantsNN(res,0);
+        CONST = loadConstants(res,0);
     end
 end
 

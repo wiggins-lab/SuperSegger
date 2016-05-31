@@ -1,5 +1,5 @@
 function displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-% intDisplay : displays linking
+% intDisplay : displays linking - used for debugging.
 % reg : maskF
 % green : maskC
 % blue : all cell masks  in c

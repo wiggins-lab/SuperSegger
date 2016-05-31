@@ -54,7 +54,7 @@ iptsetpref('ImshowInitialMagnification','fit');
 
 if ~exist('CONST','var') || isempty(CONST)
     disp ('No constants loaded - loading 60XEcLb');
-    CONST = loadConstantsNN(60,0);
+    CONST = loadConstants(60,0);
 end
 
 if ~isfield(CONST.view, 'falseColorFlag' )

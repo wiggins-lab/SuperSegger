@@ -318,7 +318,7 @@ else
         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
     end
     if handles.FLAGS.P_flag
-        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |'];
+        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
     end
     
     if handles.num_errs == 0

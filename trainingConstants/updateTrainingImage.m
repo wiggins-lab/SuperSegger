@@ -1,5 +1,5 @@
 function [data,touch_list] = updateTrainingImage (data, FLAGS, x)
-% makeTrainingData : user can click on segments or regions to change score
+% updateTrainingImage : user can click on segments or regions to change score
 % from 0 to 1 or vice versa. It updates scores, cell mask, good and bad
 % segs.
 %

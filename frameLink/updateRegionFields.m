@@ -29,6 +29,7 @@ function data  = updateRegionFields (data,CONST)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
+if ~isempty(data)
 % create regions
 data.regs.regs_label = bwlabel( data.mask_cell );
 num_regs =  max(data.regs.regs_label(:));
@@ -88,44 +89,11 @@ end
 
 data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, CONST.regionScoreFun.E);
 data.regs.score = data.regs.scoreRaw > 0;
-
 data.regs.eccentricity = drill(data.regs.props,'.MinorAxisLength')'...
     ./drill(data.regs.props,'.MajorAxisLength')';
+end
 
-% % add lysis detection if lysis flag is set
-% if CONST.trackOpti.LYSE_FLAG
-%  data.regs.lyse.errorColor1 = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
-%  data.regs.lyse.errorColor1Cum = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
-%  data.regs.lyse.errorColor2 = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-%  data.regs.lyse.errorColor2Cum = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error
-%  data.regs.lyse.errorColor1b = zeros(1,data.regs.num_regs); % Fluor1 intensity change error in this frame
-%  data.regs.lyse.errorColor1bCum = zeros(1,data.regs.num_regs); % Cum fluor1 intensity change error
-%  data.regs.lyse.errorColor2b = zeros(1,data.regs.num_regs); % Fluor2 intensity change error in this frame
-%  data.regs.lyse.errorColor2bCum = zeros(1,data.regs.num_regs); % Cum fluor2 intensity change error
-%  data.regs.lyse.errorShape = zeros(1,data.regs.num_regs); % Fluor intensity change error in this frame
-%  data.regs.lyse.errorShapeCum = zeros(1,data.regs.num_regs); % Cum intensity change error
-% end
-% if CONST.trackOpti.LYSE_FLAG
-%  % Fluor Ratio error is set if Fluor Ratio is less than
-%  % CONST.trackOpti.FLUOR1_CHANGE_MIN
-%  data.regs.lyse.errorColor1 = ...
-%  ( data.regs.dF1 < CONST.trackOpti.FLUOR1_CHANGE_MIN );
-%  data.regs.lyse.errorColor2 = ...
-%  ( data.regs.dF2 < CONST.trackOpti.FLUOR2_CHANGE_MIN );
-%  data.regs.lyse.errorColor1b = ...
-%  ( data.regs.dF1b < CONST.trackOpti.FLUOR1_CHANGE_MIN );
-%  data.regs.lyse.errorColor2b = ...
-%  ( data.regs.dF2b < CONST.trackOpti.FLUOR2_CHANGE_MIN );
-%
-%  % Shape error is defined by having both a eccentricity lower than the
-%  % limit CONST.trackOpti.ECCENTRICITY and a minor axis length greater
-%  % than CONST.trackOpti.LSPHEREMIN and smaller than
-%  % CONST.trackOpti.LSPHEREMAX
-%  data.regs.lyse.errorShape = ...
-%  and( (data.regs.eccentricity > CONST.trackOpti.ECCENTRICITY), and(...
-%  ( drill(data.regs.props,'.MinorAxisLength')' > CONST.trackOpti.LSPHEREMIN ),...
-%  ( drill(data.regs.props,'.MajorAxisLength')' < CONST.trackOpti.LSPHEREMAX )));
-% end
+
 
 
 

@@ -1,4 +1,4 @@
-function trackOptiFindFociCyto(dirname,CONST,header)
+function trackOptiFindFoci(dirname,CONST,header)
 % trackOptiFindFociCyto : Finds foci in cells. Note that this only
 % runs if the number of foci to be fit is set in CONST.trackLoci.numSpots.
 % It runs on the err.mat files and saves the new err.mat files with the

@@ -121,7 +121,7 @@ function getValuesFromConst(handles)
 global settings;
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,0,0);
+CONST = loadConstants (res,0,0);
 handles.cut_intensity.Value = CONST.superSeggerOpti.CUT_INT;
 handles.max_wid.Value = CONST.superSeggerOpti.MAX_WIDTH ;
 handles.mask_th2.Value = CONST.superSeggerOpti.THRESH2;

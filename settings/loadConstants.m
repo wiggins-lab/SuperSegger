@@ -1,4 +1,4 @@
-function CONST = loadConstantsNN( res, PARALLEL_FLAG, dispText )
+function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % loadConstants loads the parameters for the superSegger/trackOpti package.
 % If you want to customize the constants DO NOT CHANGE
 % THIS FILE! Rename this file loadConstantsMine.m and
@@ -91,7 +91,7 @@ CONST.trackOpti.NEIGHBOR_FLAG = 0; % finds cell neighbors
 CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
 CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.1; % minimum area change in linking from r->c
-CONST.trackOpti.LYSE_FLAG = 0;
+CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
 CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division

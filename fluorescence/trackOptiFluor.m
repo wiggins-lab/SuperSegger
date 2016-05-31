@@ -1,6 +1,6 @@
 function trackOptiFluor(dirname,CONST,header)
 % trackOptiFluor calculates the mean background fluorescence for each frame.
-% This is the fluroscence outside the cell mask. It does not do any focus
+% This is the fluroscence outside the background mask. It does not do any focus
 % fitting at this stage. It saves the information in the err/seg
 % files under data_c.fl1bg for channel 1 and data_c.fl2bg for channel 2.
 %

@@ -31,11 +31,11 @@ clist0.def = clist.def;
 ss = size(clist.data);
 inflag = true(ss(1),1);
 
-if isfield( clist, 'idExclude' )
+if isfield( clist, 'idExclude' ) && ~isempty(clist.idExclude)
     inflag = ~ismember(clist.data(:,1), clist.idExclude);
 end
 
-if isfield( clist, 'idInclude' )
+if isfield( clist, 'idInclude' ) && ~isempty(clist.idInclude)
     inflag = ismember(clist.data(:,1), clist.idInclude);
 end
 

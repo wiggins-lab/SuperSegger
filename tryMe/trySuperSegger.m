@@ -33,7 +33,7 @@ tryDifferentConstants([dirname,'/raw_im/']);
 %% Set constants
 % Load the constants and set the desired values
 
-CONST = loadConstantsNN ('60XEclb',0);
+CONST = loadConstants ('60XEclb',0);
 
 % fit up to 5 foci in each cell
 CONST.trackLoci.numSpots = [5]; % Max number of foci to fit in each fluorescence channel (default = [0 0])

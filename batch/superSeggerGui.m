@@ -119,7 +119,7 @@ end
 parallel = handles.parallel_flag.Value;
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
-CONST = loadConstantsNN (res,parallel);
+CONST = loadConstants (res,parallel);
 
 
 % set constants

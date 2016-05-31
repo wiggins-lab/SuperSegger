@@ -1,8 +1,8 @@
 function [ data ] = intFindFociCurve( data, CONST, channelID )
-% intFindFociCurve: finds the foci and assigns them to the cells.
-% It fits the cytoplasmic fluorescence to cell by cell.
-% The result of the global cytofluorescence model is added to the field
-% cyto[channelID] in data, where [channelID] is number of the channel. 
+% intFindFociCurve: finds the location of foci and assigns them to the cells.
+% The foci are found using the curve (L-) filtered image. The foci are the
+% identified using watershed. The foci regions are assigned to the closest cell
+% and the location of foci is found in subpixel resolution, using a gaussian fit.
 %
 % INPUT : 
 %       data : cell/regions file (err file)
@@ -42,9 +42,6 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 
 DEBUG_FLAG = false;
 fieldname = ['locus', num2str(channelID)];
-
-MIN_SCORE_CUTOFF = CONST.getLocusTracks.(['FLUOR', num2str(channelID),'_MIN_SCORE']);
-
 options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
 
 % Get images out of the structures.
@@ -63,12 +60,8 @@ normalizedImage(normalizedImage < 0) = 0; % logical mask of foci found
 
 [~,~,flourFiltered] = curveFilter(normalizedImage);
 data.(['flour',num2str(channelID),'_filtered']) = flourFiltered;
-%normalizedImage = flourFiltered/cytoplasmicFlourescenceSTD; % normalization so that intensities
-% so that 
 
 mask_mod = bwmorph (data.mask_bg, 'dilate', 1);
-
-
 
 fociWatershed = watershed(-flourFiltered); % watershed to identify foci
 maskedFociWatershed = logical(double(fociWatershed).*double(mask_mod));
@@ -85,8 +78,6 @@ focusInit.intensity = nan;
 focusInit.normIntensity = nan;
 focusInit.shortaxis = nan;
 focusInit.longaxis = nan;
-%focusInit.fitIntensity = nan;
-%focusInit.fitPosition = [nan, nan];
 focusInit.fitSigma = nan;
 focusInit.fitScore = nan;
 
@@ -140,7 +131,7 @@ for ii = 1:numFociRegions
         croppedImage = highPassImage(data.CellA{bestCellID}.yy, data.CellA{bestCellID}.xx);
         cellFlouresenseSTD = std(croppedImage(data.CellA{bestCellID}.mask));  
         
-        if tempData.intensity >0%/ cellFlouresenseSTD > MIN_SCORE_CUTOFF
+        if tempData.intensity >0
             %Initialize parameters
             backgroundIntensity = 0;
             gaussianIntensity = flourFiltered(fociY, fociX) - backgroundIntensity;
@@ -163,7 +154,6 @@ for ii = 1:numFociRegions
             imageTotal = sqrt(sum(sum(croppedImage)));
             guassianTotal = sqrt(sum(sum(gaussianApproximation)));
 
-
             fitScore = sum(sum(sqrt(croppedImage) .* sqrt(gaussianApproximation))) / (imageTotal * guassianTotal);
 
             if DEBUG_FLAG
@@ -177,23 +167,18 @@ for ii = 1:numFociRegions
                 imshow(gaussianApproximation, []);   
                 subplot(2, 2, 4);          
                 title(['Score: ', num2str(fitScore)]);
-
                 keyboard;
             end
 
             tempData.r(1) = parameters(1);
             tempData.r(2) = parameters(2);
-            %tempData.fitPosition(1) = parameters(1);
-            %tempData.fitPosition(2) = parameters(2);
             tempData.fitSigma = parameters(4);
-            %tempData.fitIntensity = parameters(3);
             tempData.intensity = parameters(3);
             tempData.fitScore = fitScore;
 
             %Calculate scores        
             tempData.normIntensity = tempData.intensity;
             tempData.score = tempData.intensity / (sqrt(pi)*tempData.fitSigma) * tempData.fitScore;
-
             tempData.shortaxis = ...
                 (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
             tempData.longaxis = ...
@@ -247,15 +232,16 @@ for ii = 1:data.regs.num_regs
     data.CellA{ii}.(['fluor',num2str(channelID),'_filtered'])=flourFiltered( yPad, xPad );
 end
 
-    %parameters store the values to optimize.
-    %parameter(1) - Sub-pixel resolution of foci position X
-    %parameter(2) - Sub-pixel resolution of foci position Y
-    %parameter(3) - Intensity of the gaussian
-    %parameter(4) - sigma of gaussian    
-    %parameter(5) - background intensity    
-    function error = doFit(parameters )
+    function error = doFit(parameters)
+        % doFit : does the gaussian fit to the foci and calculates the
+        % error.
+        %parameters are : 
+        %parameter(1) - Sub-pixel resolution of foci position X
+        %parameter(2) - Sub-pixel resolution of foci position Y
+        %parameter(3) - Intensity of the gaussian
+        %parameter(4) - sigma of gaussian
+        %parameter(5) - background intensity
         gaussian = makeGassianTestImage(meshX, meshY, parameters(1), parameters(2), parameters(3), backgroundIntensity, parameters(4));
-        
         tempImage = (double(imageToFit) - gaussian);
         error = sum(sum(tempImage.^2));
     end

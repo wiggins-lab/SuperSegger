@@ -82,7 +82,7 @@ res = '60XEcLB';
 parallel_flag = false;
 
 %% Load Constants
-CONST = loadConstantsNN(res,parallel_flag) ;
+CONST = loadConstants(res,parallel_flag) ;
 
 %% Calculation Options
 % after you load the constants you can modify them according to your needs
