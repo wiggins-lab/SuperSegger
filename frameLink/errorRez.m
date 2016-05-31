@@ -59,7 +59,6 @@ resetRegions = false;
 data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
 for regNum =  1 : data_c.regs.num_regs;
-    
 
     if data_c.regs.ID(regNum) ~= 0
           disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);

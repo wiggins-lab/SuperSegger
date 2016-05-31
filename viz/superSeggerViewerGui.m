@@ -920,12 +920,18 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'consensus_kymograph'], 'kymo', 'kymoMask');
+    end
 end
 
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'mosaic_kymograph'], 'im');
+    end
 end
 
 function show_consensus_Callback(hObject, eventdata, handles)
@@ -943,6 +949,9 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
+    if handles.save_output.Value
+        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    end        
     figure(2);
     imshow(imColor);
 end
@@ -981,6 +990,9 @@ function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    if handles.save_output.Value
+        save ([handles.dirSave,'tower_cells'],'imTot');
+    end        
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1099,3 +1111,75 @@ for kk = 1:data_c.regs.num_regs
         end
     end
 end
+
+function clickOnImage(hObject, eventdata, handles)
+global settings;
+point = round(eventdata.IntersectionPoint(1:2));
+if isempty(settings.handles.data_c)
+    errordlg('Press find segments first');
+end
+if ~isfield(settings.handles.data_c,'regs')
+    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
+end
+data = settings.handles.data_c;
+ss = size(data.phase);
+tmp = zeros([51,51]);
+tmp(26,26) = 1;
+tmp = 8000-double(bwdist(tmp));
+rmin = max([1,point(2)-25]);
+rmax = min([ss(1),point(2)+25]);
+cmin = max([1,point(1)-25]);
+cmax = min([ss(2),point(1)+25]);
+rrind = rmin:rmax;
+ccind = cmin:cmax;
+pointSize = [numel(rrind),numel(ccind)];
+tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
+[~,ind] = max( tmp(:) );
+[sub1, sub2] = ind2sub( pointSize, ind );
+ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+hold on;
+plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+if ii ~=0
+    settings.id_list(end+1) = data.regs.ID(ii);
+    if strcmp(settings.function, 'exclude')
+        settings.handles.exclude_ids.String = num2str(settings.id_list);
+    else
+        settings.handles.include_ids.String = num2str(settings.id_list);
+    end
+end
+
+function from_img_exclude_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'exclude';
+    if isnan(str2double(strsplit(handles.exclude_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.exclude_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.exclude_ids.String = settings.handles.exclude_ids.String;
+	exclude_ids_Callback(hObject, eventdata, handles);
+end
+
+function from_img_include_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'include';
+    if isnan(str2double(strsplit(handles.include_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.include_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.include_ids.String = settings.handles.include_ids.String;
+	include_ids_Callback(hObject, eventdata, handles);
+end
+
+function save_output_Callback(hObject, eventdata, handles)

@@ -88,13 +88,17 @@ for regNum =  1 : data_c.regs.num_regs;
             (numel(cCellsFromR) == numel(cCellsTransp));
         assignmentMatch = numberMatch && all(rCellsFromC == rCellsTransp) && ...
             all(cCellsFromR == cCellsTransp);
-        partialMatch = any(rCellsFromC == rCellsTransp) && any(cCellsFromR == cCellsTransp);
+        partialMatch = any(ismember(rCellsFromC,rCellsTransp)) && any(ismember(cCellsFromR, cCellsTransp));
         
         zeroToOne = numel(rCellsFromC) == 0 ;
         oneToOne = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 1 ;
         oneToTwo = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 2 ;
         twoToOne = numel(rCellsFromC) == 2 &&  numel (cCellsFromR) == 1 ;
         oneToThree = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 3 ;
+        
+        if regNum == 223 || regNum == 237
+            disp('165');
+        end
         
         if numberMatch && assignmentMatch
             
@@ -188,26 +192,36 @@ for regNum =  1 : data_c.regs.num_regs;
             elseif oneToThree
                  disp ('merge two?')
                   displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                keyboard;
+                  if debug_flag
+                    keyboard;
+                  end
             else
                 
                 disp ('there is another case of correctness?!?')
                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                keyboard;
+                 
+                 if debug_flag
+                    keyboard;
+                 end
             end
         elseif numberMatch
             if zeroToOne
                 % one to one but disagreement.
                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                    ', reg: ', num2str(regNum),'. 0->1 Error not fixed - misalign.'];            
-                keyboard;
+                    ', reg: ', num2str(regNum),'. 0->1 Error not fixed - misalign.'];     
+                
+                if debug_flag
+                    keyboard;
+                end
             elseif oneToOne
                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                     ', reg: ', num2str(regNum),'. 1->1 Error not fixed - misalign.'];
                 
-                keyboard;
+                if debug_flag
+                    keyboard;
+                end
             elseif oneToTwo &&  ~any(cCellsFromR==regNum)
                 % regNum maps to mother. but mother maps to two other cells.
                 % OTHER POSSIBLE RESOLUTIONS.. :
@@ -228,11 +242,14 @@ for regNum =  1 : data_c.regs.num_regs;
             else
                 disp ('there is another case of matching numbers & un-correctness?!?')
                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                keyboard;
+                
+                if debug_flag
+                    keyboard;
+                end
             end
         else % mistmatch of numbers and assignments
-            c_matches = cCellsFromR((cCellsFromR == cCellsTransp));
-            r_matches = rCellsFromC((rCellsFromC == rCellsTransp));
+            c_matches = cCellsFromR(ismember(cCellsFromR, cCellsTransp));
+            r_matches = rCellsFromC(ismember(rCellsFromC, rCellsTransp));
 
             if partialMatch && numel(c_matches) == 1 && numel(r_matches) == 1
                [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, 0);
@@ -269,17 +286,24 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
              
-                keyboard;
-            elseif oneToTwo && any(data_c.regs.map.r{cCellsFromR(cCellsFromR~=regNum)} ~= rCellsFromC)
+                if debug_flag
+                    keyboard;
+                end
+            elseif oneToTwo && any([data_c.regs.map.r{cCellsFromR(cCellsFromR~=regNum)}] ~= rCellsFromC)
                 % regNum -> mother, mother maps to two, second does not map to mother. 
                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                keyboard;
+                 
+                 if debug_flag
+                    keyboard;
+                 end
             else
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                     ', reg: ', num2str(regNum),'. Error not fixed mishmatch and misalign.'];
                 
-                keyboard;
+                if debug_flag
+                    keyboard;
+                end
                 
             end
             
