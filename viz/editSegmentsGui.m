@@ -107,13 +107,13 @@ end
 % Radio buttons
 
 function mask_Callback(hObject, eventdata, handles)
-handles.im_flag = 3;
+handles.im_flag = 2;
 handles.phase.Value = 0;
 handles.segment.Value = 0;
 updateUI(hObject, handles);
 
 function phase_Callback(hObject, eventdata, handles)
-handles.im_flag = 2;
+handles.im_flag = 3;
 handles.mask.Value = 0;
 handles.segment.Value = 0;
 updateUI(hObject, handles);
