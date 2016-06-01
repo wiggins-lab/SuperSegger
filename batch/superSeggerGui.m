@@ -200,50 +200,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on selection change in constants_list.
 function link_list_Callback(hObject, eventdata, handles)
-% hObject    handle to constants_list (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from constants_list
-
-
-
-% --- Executes during object creation, after setting all properties.
 function link_list_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to constants_list (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-% --- Executes on selection change in constants_list.
 function constants_list_Callback(hObject, eventdata, handles)
-% hObject    handle to constants_list (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns constants_list contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from constants_list
-
-
-% --- Executes during object creation, after setting all properties.
 function constants_list_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to constants_list (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
