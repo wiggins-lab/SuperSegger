@@ -212,6 +212,7 @@ cell_mask = data.mask_cell;
 data.segs.segs_good   = double(data.segs.segs_label>0).*double(~data.mask_cell);
 data.segs.segs_bad   = double(data.segs.segs_label>0).*data.mask_cell;
 
+data = intMakeRegs( data, CONST );
 
 if disp_flag
     back = double(0.7*ag( data.phase ));

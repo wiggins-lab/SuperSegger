@@ -64,6 +64,8 @@ end
 if CONST.seg.OPTI_FLAG
     data = regionOpti( data, 1, CONST,header);
     drawnow;
+else
+    data = intMakeRegs( data, CONST );
 end
 
 end
