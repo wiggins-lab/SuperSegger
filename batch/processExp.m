@@ -1,5 +1,5 @@
 function processExp( dirname )
-% processExp main function for running the segmentation software.
+% processExp : main function for running the segmentation software.
 % Used to choose the appropriate settings, and converting the images
 % filenames before running BatchSuperSeggerOpti.
 % Images need to have the NIS-Elements Format, or they can be converted 

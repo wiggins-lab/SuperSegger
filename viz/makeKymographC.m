@@ -1,5 +1,5 @@
 function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel, filt_channel )
-% makeKymographC creates a kymograph for given cell data file..
+% makeKymographC : creates a kymograph for given cell data file..
 % A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
 %

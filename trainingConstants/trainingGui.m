@@ -202,7 +202,7 @@ if settings.dataSegmented
 else
     warning(['Plese segment files first']);
 end
-.
+
 function del_reg_Callback(hObject, eventdata, handles)
 global settings
 if settings.dataSegmented

@@ -1,5 +1,5 @@
 function [xx,yy] = getBBpad( bb1,ss,pad )
-% getBB : coordinates of bounding box with extra 'pad' pixels along x & y.
+% getBBpad : coordinates of bounding box with extra 'pad' pixels along x & y.
 %
 % INPUT :
 %       bb1: bounding box [x, y, width, height]

@@ -1,11 +1,10 @@
 function trackOptiFindFoci(dirname,CONST,header)
-% trackOptiFindFociCyto : Finds foci in cells. Note that this only
+% trackOptiFindFoci : Finds foci in cells. Note that this only
 % runs if the number of foci to be fit is set in CONST.trackLoci.numSpots.
 % It runs on the err.mat files and saves the new err.mat files with the
-% found foci and cytoplasmic background.
-%
-% This is done using the curve filter to find the foci in the image and then
-% by fitting gaussians and and assigning the foci in all cells simultaneously.
+% found foci. This is done using the curve filter to find the foci in the 
+% image and then by fitting gaussians and and assigning the foci 
+% in all cells simultaneously.
 %
 % INPUT :
 %   dirname: is the seg directory in the xy directory
@@ -30,7 +29,7 @@ function trackOptiFindFoci(dirname,CONST,header)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 

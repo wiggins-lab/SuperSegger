@@ -146,7 +146,10 @@ handles.num_xy = numel(contents_xy);
 direct_contents_seg = dir([dirname, '*seg.mat']);
 direct_contents_err = dir([dirname, '*err.mat']);
 
-
+if dirnum > handles.num_xy
+    dirnum = 1;
+end
+    
 if handles.num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         handles.dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];

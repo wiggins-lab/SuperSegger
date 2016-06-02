@@ -1,5 +1,5 @@
 function trackOptiCropMulti(dirname,xydir)
-% trackOptiCropMulti user chooses two corners to crops multiple images
+% trackOptiCropMulti : user chooses two corners to crops multiple images
 % Images must be in NIS name-format. 
 % New cut images are saved in dirname/crop folder.
 %

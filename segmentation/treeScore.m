@@ -1,5 +1,5 @@
 function  [rawScore] = treeScore (x,treeClassifier)
-% treeScore : calculates the scores of regions/ segments using a classification tree. % Neural network was already trained using a trained Pattern Recognition Problem 
+% treeScore : calculates the scores of regions/ segments using given classification tree. 
 %
 % INPUT : 
 %   x : input to the network, quantities regarding the segment or region. 
@@ -26,7 +26,7 @@ function  [rawScore] = treeScore (x,treeClassifier)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-[s,prob_per_class] = treeClassifier.predict(x);
+[~,prob_per_class] = treeClassifier.predict(x);
 prob = prob_per_class (:,2)';
 
 % because of the way scores were calculated in the past I will shift the

@@ -1,5 +1,5 @@
 function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
-% loadConstants loads the parameters for the superSegger/trackOpti package.
+% loadConstants : loads the parameters for the superSegger/trackOpti package.
 % If you want to customize the constants DO NOT CHANGE
 % THIS FILE! Rename this file loadConstantsMine.m and
 % put in somehwere in the path.
@@ -65,7 +65,8 @@ CONST.imAlign.GFP     = [ 0.0000    0.0000    0.0000    0.0000];
 
 CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
     CONST.imAlign.GFP,...  % c2 channel name
-    CONST.imAlign.GFP};        % c3 channel name
+    CONST.imAlign.GFP,...  % c3 channel name
+    CONST.imAlign.GFP};    % c4 channel name
 
 CONST.imAlign.AlignToFirst = false; % align all images to first image
 CONST.imAlign.AlignChannel = 1; % channel to use for alignment
@@ -96,15 +97,19 @@ CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
-CONST.trackOpti.linkFun = @multiAssignmentFastOnlyOverlap; % function used for linking cells
+CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cells
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
 CONST.trackLoci.numSpots = []; % needs to be set to the number of spots per channel to find foci
 CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
-CONST.trackLoci.gate = [];
 
+% only cells with areas between 60 and 700 are made
+% if you want to keep all the cells use instead CONST.trackLoci.gate  = [];
+area_gate(1).x = [70 500];
+area_gate(1).ind = 14; % index for area
+CONST.trackLoci.gate = area_gate;
 
 % pixelsize
 if all(ismember('100X',res))
