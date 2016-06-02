@@ -40,7 +40,7 @@ if  nind == 1
     
     if ~exist( 'x0', 'var' ) || isempty( x0 )
         gxx = zeros( 2, 2 );
-        disp( 'Click on the max and min value to make a gate.');
+%        disp( 'Click on the max and min value to make a gate.');
         for i = 1:2
             try
                 tmp = ginput(1);
@@ -53,7 +53,7 @@ if  nind == 1
                 plot( gxx(i,1)+[0,0], [min(y(y>0)),max(y)], 'r--' );
             end
         end
-        gxx(:,1)
+        gxx(:,1);
     else
         gxx(:,1) = x0;
     end

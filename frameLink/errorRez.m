@@ -138,7 +138,7 @@ for regNum =  1 : data_c.regs.num_regs;
             else
                 % map to best, remove mapping from second
                 [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
-                resetRegions = xor(reset_tmp,resetRegions);
+                resetRegions = or(reset_tmp,resetRegions);
                 modRegions = [modRegions;modids_tmp];
             end
             
@@ -165,7 +165,7 @@ for regNum =  1 : data_c.regs.num_regs;
                         [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
                         modRegions = [modRegions;modids_tmp]; 
                     end
-                    resetRegions = xor(reset_tmp,resetRegions);
+                    resetRegions = or(reset_tmp,resetRegions);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                     modRegions = [modRegions;sister1;sister2]; 
