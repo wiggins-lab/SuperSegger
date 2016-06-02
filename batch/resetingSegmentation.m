@@ -96,7 +96,7 @@ for i = 1 : numel(xydirs)
     intDeleteFile (removeOptiStrip, [dirname_seg,'.trackOptiStripSmall-Step1.mat']);
     intDeleteFile (removeOptiLink, [dirname_seg,'.trackOptiLinkCell-Step2.mat']);
     if removeOptiLink
-        delete(dirname_seg,'.*err.mat');
+        delete([dirname_seg,'*err.mat']);
     end
     intDeleteFile (removeOptiCellMarker, [dirname_seg,'.trackOptiCellMarker-Step3.mat']);
     intDeleteFile (removeOptiFluor, [dirname_seg,'.trackOptiFluor-Step4.mat']);
@@ -105,10 +105,9 @@ for i = 1 : numel(xydirs)
     intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist-Step7.mat']);
     intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiMakeCell-Step8.mat']);
      if removeOptiCellFiles
-        delete(dirname_cell,'*ell.mat');
+        delete([dirname_cell,'*ell*.mat']);
     end
-   
-    
+
 end
 
     function intDeleteFile (flag, filename)

@@ -1,5 +1,5 @@
 function BatchSuperSeggerDebug(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG,showWarnings)
-% BatchSuperSeggerDebug is the same as BatchSuperSeggerOpti but without PARFOR making it possible to
+% BatchSuperSeggerDebug : same as BatchSuperSeggerOpti but without PARFOR making it possible to
 % debug the program.
 % BatchSuperSeggerOpti runs everything from start to finish,
 % including alignment, building the directory structure,

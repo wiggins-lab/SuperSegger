@@ -1,5 +1,5 @@
 function showSegDataPhase( data, viewport )
-% showSegDataPhase draws the outlines for the regions in the data file.
+% showSegDataPhase : draws the outlines for the regions in the data file.
 %
 % INPUT :
 %   data : data (seg.mat) file with permanent, good and bad segments

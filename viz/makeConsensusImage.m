@@ -1,6 +1,6 @@
 function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
     (dataImArray, CONST, skip, mag, disp_flag, fnum, clist)
-% makeConsIm : Computes consensus fluorescence localization from cells in a cell files
+% makeConsensusImage : Computes consensus fluorescence localization from cells in a cell files
 %
 % INPUT:
 %   dataImArray : cell image array made from makeConsensusArray

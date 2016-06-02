@@ -1,5 +1,5 @@
 function name = MakeFileName( nameInfo )
-% MakeFileName converts from nameInfo structure to the image filename.
+% MakeFileName : converts from nameInfo structure to the image filename.
 %
 % INPUT : 
 %       nameInfo : contains information about where numbers are found

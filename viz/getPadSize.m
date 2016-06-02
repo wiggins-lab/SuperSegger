@@ -1,5 +1,5 @@
 function padStr = getPadSize( dirname, handles )
-% fixFlags : returns how many numbers there are in each cell .mat file.
+% getPadSize : returns how many numbers there are in each cell .mat file.
 %
 %   INPUT :
 %       dirname : directory name

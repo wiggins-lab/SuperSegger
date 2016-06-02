@@ -95,9 +95,11 @@ if ~any (data_c.regs.ID == data_r.regs.ID(regNumR))
     end
     
 else
-    if data_r.regs.ID(regNumR)~=0
+    idThief = find(data_c.regs.ID == data_r.regs.ID(regNumR));
+    thiefIsCurReg = numel(idThief) == 1 && (idThief==regNumC);
+    if ~thiefIsCurReg && data_r.regs.ID(regNumR)~=0
         disp (['FRAME :', num2str(time),' ID PROBLEM WITH ',num2str(regNumC), ' ', num2str(data_r.regs.ID(regNumR))]);
-        keyboard;
+        %keyboard;
     end
 end
 end
