@@ -428,10 +428,8 @@ function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
 if getappdata(0, 'dirname')
     handles.image_directory.String = getappdata(0, 'dirname');
-    rmappdata(0,'dirname')
 else
-    handles.image_directory.String = pwd;
-end
+    
 set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 

@@ -71,9 +71,10 @@ set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 guidata(hObject, handles);
 
 function figure1_CloseRequestFcn(hObject, eventdata, handles)
-setappdata(0, 'dirname', handles.dirname(1:end-8));
+setappdata(0, 'dirname', handles.dirname);
+handles.dirname(0:e
 delete(hObject);
-superSeggerViewerGui();
+%superSeggerViewerGui();
 
 % Frame no.
 
