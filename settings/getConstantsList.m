@@ -31,6 +31,8 @@ filepath = FulllocationOfFile ( 1 :fileSepPosition-1);
 filepath = [filepath,filesep];
 possibleConstants = dir([filepath,'*.mat']);
 
+resFlagList = {};
+
 for i = 1 : numel (possibleConstants)
     cName = possibleConstants (i).name;
     possibleConstants(i).resFlag =cName (1:end-4);

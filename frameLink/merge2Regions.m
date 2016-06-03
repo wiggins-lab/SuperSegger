@@ -8,6 +8,10 @@ if verbose
     disp (['Merging regions ', num2str(reg1), ' ', num2str(reg2)]);
 end
 
+if reg1 == 15
+    disp('test')
+end
+
 mask1 = (data_c.regs.regs_label == reg1);
 mask2 = (data_c.regs.regs_label == reg2);
 masksum = (mask1+mask2);

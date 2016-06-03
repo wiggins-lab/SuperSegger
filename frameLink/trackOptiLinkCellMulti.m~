@@ -71,7 +71,6 @@ end
 
 cell_count = 0;
 time = 1;
-restartFlag = 0;
 
 if clean_flag
     if numel(contents) ~=0
@@ -81,14 +80,12 @@ elseif startFrom~=0 && numel(contents2)>startFrom
     time = startFrom;
     dataLast = load([dirname,contents2(time).name]);
     cell_count = max(dataLast.regs.ID);
-    restartFlag = 1;
-    for xx = startFrom:numel(contents2)
+    for xx = startFrom+1:numel(contents2)
         delete([dirname,contents2(xx).name])
     end
     disp (['starting from time : ', num2str(time)]);
 elseif ~isempty(contents2)
     time = numel(contents2);
-    restartFlag = 1;
     if time > 1
         disp (['continuing from where I stopped - time : ', num2str(time)]);
         %delete([dirname,contents2(end).name])
@@ -100,7 +97,7 @@ end
 
 %resetRegions  = 1;
 ignoreError = 0;
-ignoreAreaError = restartFlag; %Don't split big regions on restart (already done)
+ignoreAreaError = 0;
 previousMasks ={};
 maxIterPerFrame = 3;
 curIter = 1;

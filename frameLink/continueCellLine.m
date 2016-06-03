@@ -33,7 +33,6 @@ function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
 
 % set the death/deathF to current time. They are reset when cell is
 % visited again.
-
 if ~any (data_c.regs.ID == data_r.regs.ID(regNumR))
     data_c.regs.death(regNumC) = time; % Death/divide time
     data_c.regs.deathF(regNumC) = 1; % 1 if cell dies in this frame
@@ -93,7 +92,7 @@ if ~any (data_c.regs.ID == data_r.regs.ID(regNumR))
     end
     
 else
-    if data_r.regs.ID(regNumR)~=0
+    if data_r.regs.ID(regNumR)~=0 && find(data_c.regs.ID == data_r.regs.ID(regNumR)) ~= regNumC
     disp (['FRAME :', num2str(time),' ID PROBLEM WITH ',num2str(regNumC), ' ', num2str(data_r.regs.ID(regNumR))]);
     keyboard;
     end

@@ -32,19 +32,19 @@ function showSegRule( data, FLAGS, figNum,CONST )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if (~exist('FLAGS','var') || isempty(FLAGS)) || ~isfield( FLAGS, 'im_flag' )
-    FLAGS.im_flag=1;
+    FLAGS.im_flag=2;
 end
 
 im_flag = FLAGS.im_flag;
 
 if ~isfield( FLAGS, 'S_flag' ) % shows all segments scores
-    FLAGS.S_flag = 1;
+    FLAGS.S_flag = 0;
 end
 
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 0;
+    FLAGS.t_flag = 1;
 end
 
 t_flag = FLAGS.t_flag;
