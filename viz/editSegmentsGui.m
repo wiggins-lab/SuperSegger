@@ -58,10 +58,12 @@ handles.frame_no.String = num2str(getappdata(0, 'nn'));
 handles.contents = dir([handles.dirname '*_seg.mat']);
 handles.num_im = length(handles.contents);
 handles.im_flag = 1;
+axis tight;
 updateUI(hObject, handles);
 
 function updateUI(hObject, handles)
 global settings
+delete(get(handles.axes1, 'Children'));
 data = loaderInternal([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
 data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
 showSegData(data, handles.im_flag, handles.axes1);
@@ -115,16 +117,30 @@ function mask_Callback(hObject, eventdata, handles)
 handles.im_flag = 2;
 handles.phase.Value = 0;
 handles.segment.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
 
 function phase_Callback(hObject, eventdata, handles)
 handles.im_flag = 3;
 handles.mask.Value = 0;
 handles.segment.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
 
 function segment_Callback(hObject, eventdata, handles)
 handles.im_flag = 1;
 handles.mask.Value = 0;
 handles.phase.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
+
+function relink_Callback(hObject, eventdata, handles)
+choice = questdlg('Are you sure you want to relink and remake the cell files?', 'Re-link the cells?', 'Yes', 'No', 'No');
+if strcmp(choice, 'Yes')
+    delete([dirname_cell,'*.mat']);
+    delete([dirname,'*trk.mat*']);
+    delete([dirname,'*err.mat*']);
+    delete([dirname,'.trackOpti*']);
+    delete([dirname_xy,'clist.mat']);
+    skip = 1;
+    CLEAN_FLAG = false;
+    header = 'trackOptiView: ';
+    trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
+end

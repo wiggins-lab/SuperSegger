@@ -1098,9 +1098,7 @@ if strcmp(choice, 'Yes')
     setappdata(0, 'dirname_seg', handles.dirname_seg);
     setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
     editSegmentsGui();
-%    segsTLEdit(handles.dirname_seg, str2double(handles.go_to_frame_no.String), handles.CONST);
 end
-
 
 function intDispError( data_c, FLAGS, canUseErr)
 % intDispError
