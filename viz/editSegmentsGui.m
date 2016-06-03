@@ -19,7 +19,6 @@ function varargout = editSegmentsGui(varargin)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -55,14 +54,19 @@ data.segs.segs_bad = double(data.segs.segs_label>0).*data.mask_cell;
 
 function editSegmentsGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.dirname = fixDir(getappdata(0, 'dirname_seg'));
+handles.dirname_xy = fixDir(getappdata(0, 'dirname_xy'));
+handles.dirname_cell = fixDir(getappdata(0, 'dirname_cell'));
 handles.frame_no.String = num2str(getappdata(0, 'nn'));
+handles.CONST = getappdata(0, 'CONST');
 handles.contents = dir([handles.dirname '*_seg.mat']);
 handles.num_im = length(handles.contents);
 handles.im_flag = 1;
+axis tight;
 updateUI(hObject, handles);
 
 function updateUI(hObject, handles)
 global settings
+delete(get(handles.axes1, 'Children'));
 data = loaderInternal([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
 data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
 showSegData(data, handles.im_flag, handles.axes1);
@@ -70,6 +74,11 @@ settings.handles = handles;
 settings.hObject = hObject;
 set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 guidata(hObject, handles);
+
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+setappdata(0, 'dirname', handles.dirname(1:end-8));
+delete(hObject);
+superSeggerViewerGui();
 
 % Frame no.
 
@@ -111,16 +120,30 @@ function mask_Callback(hObject, eventdata, handles)
 handles.im_flag = 2;
 handles.phase.Value = 0;
 handles.segment.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
 
 function phase_Callback(hObject, eventdata, handles)
 handles.im_flag = 3;
 handles.mask.Value = 0;
 handles.segment.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
 
 function segment_Callback(hObject, eventdata, handles)
 handles.im_flag = 1;
 handles.mask.Value = 0;
 handles.phase.Value = 0;
-updateUI(hObject, handles);
+updateUI(hObject, handles)
+
+function relink_Callback(hObject, eventdata, handles)
+choice = questdlg('Are you sure you want to relink and remake the cell files?', 'Re-link the cells?', 'Yes', 'No', 'No');
+if strcmp(choice, 'Yes')
+    delete([handles.dirname_cell,'*.mat']);
+    delete([handles.dirname,'*trk.mat*']);
+    delete([handles.dirname,'*err.mat*']);
+    delete([handles.dirname,'.trackOpti*']);
+    delete([handles.dirname_xy,'clist.mat']);
+    skip = 1;
+    CLEAN_FLAG = false;
+    header = 'trackOptiView: ';
+    trackOpti(handles.dirname_xy,skip,handles.CONST, CLEAN_FLAG, header);
+end
