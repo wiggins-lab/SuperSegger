@@ -23,7 +23,9 @@ function FLAGS = fixFlags(FLAGS)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
+if ~isfield(FLAGS,'lyse_flag')
+    FLAGS.lyse_flag  = 0;
+end
 if ~isfield(FLAGS,'cell_flag')
     FLAGS.cell_flag  = 1;
 end
@@ -63,12 +65,16 @@ end
 if ~isfield(FLAGS,'filt')
     FLAGS.filt = 1;
 end
+
+
 if ~isfield(FLAGS,'lyse_flag')
     FLAGS.lyse_flag = 0;
 end
+
 if ~isfield(FLAGS,'regionScores')
     FLAGS.regionScores = 0;
 end
+
 if ~isfield(FLAGS,'useSegs')
     FLAGS.useSegs = 0;
 end

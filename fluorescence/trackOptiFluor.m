@@ -1,6 +1,6 @@
 function trackOptiFluor(dirname,CONST,header)
 % trackOptiFluor calculates the mean background fluorescence for each frame.
-% This is the fluroscence outside the cell mask. It does not do any focus
+% This is the fluroscence outside the background mask. It does not do any focus
 % fitting at this stage. It saves the information in the err/seg
 % files under data_c.fl1bg for channel 1 and data_c.fl2bg for channel 2.
 %
@@ -52,44 +52,48 @@ else
     h = [];
 end
 
+nc = 0;
+
+if numel(contents) > 0
+    data_c = loaderInternal([dirname,contents(1).name]);
+    datacFields = fieldnames(data_c);
+    nf = numel(datacFields);
+    % goes through the fields in data_c and calculates the number of fluorescence channels
+    for j = 1:nf;
+        if numel(strfind(datacFields{j},'fluor')==1) && ~numel((strfind(datacFields{j},'fluor0')))
+            nc = nc+1;
+        end
+    end
+end
+
+
 % loop through all the cells.
-for i = 1:num_im;
-    data_c = loaderInternal([dirname,contents(i  ).name]);
+for i = 1:num_im
+    data_c = loaderInternal([dirname,contents(i).name]);
         
     % Compute the background fluorescence level in both channel
     ss = size( data_c.mask_cell );
     
-    if isfield( data_c, 'fluor1' )        
+    for j = 1 : nc
+        fluor_name = ['fluor',num2str(j)];
+        fluor_field = data_c.(fluor_name);
         if isfield( data_c, 'crop_box' );           
             yycb = max([1,ceil(data_c.crop_box(1))]):min([ss(1),floor(data_c.crop_box(3))]);
             xxcb = max([1,ceil(data_c.crop_box(2))]):min([ss(2),floor(data_c.crop_box(4))]);
-            fluor_tmp = data_c.fluor1(yycb,xxcb);
+            fluor_tmp = fluor_field(yycb,xxcb);
             mask_bg   = data_c.mask_bg(yycb,xxcb);
         else
-            fluor_tmp = data_c.fluor1;
+            fluor_tmp = fluor_field;
             mask_bg   = data_c.mask_bg;
         end
         
-        back_mask = logical(imdilate(mask_bg,SE));        
-        data_c.fl1bg = mean(fluor_tmp( ~back_mask ));
-        
-        if isfield( data_c, 'fluor2' )            
-            if isfield( data_c, 'crop_box' );              
-                fluor_tmp = data_c.fluor2(yycb,xxcb);
-                mask_bg   = data_c.mask_bg(yycb,xxcb);
-            else
-                fluor_tmp = data_c.fluor2;
-                mask_bg   = data_c.mask_bg;
-            end
-            back_mask = logical(imdilate(mask_bg,SE));  
-            data_c.fl2bg = mean(fluor_tmp( ~back_mask ));
-        end
-    else
-        break;
+        bgFluorName = ['fl',num2str(j),'bg'];
+        back_mask = logical(imdilate(mask_bg,SE));  
+        data_c.(bgFluorName) = mean(fluor_tmp(~back_mask ));
     end
 
     % save the updated err files.
-    dataname = [dirname,contents(i  ).name];
+    dataname = [dirname,contents(i).name];
     save(dataname,'-STRUCT','data_c');
     
     if CONST.parallel.show_status

@@ -1,18 +1,14 @@
-function plotClist3D(clist, ind)
-% gateHist : makes a histogram for the list of cells
-% in the clist table for the given clist index.
-% It first gates the list if there is a gate field in clist.
+function x = plotClist3D(clist, ind)
+% gateHist : makes a plot for from the 3dclist for all cells with time. 
+% It uses the given clist index. It first gates the list if there is a 
+% gate field in clist.
 %
 % INPUT :
 %   clist : list of cells with time-independent info
-%   ind : indices of clist definition used for x and y label [x,y]
-%   xx : number of bins
-%   cc : color of plot
+%   ind : indices of clist 3d definition used for x and y label [x,y]
 %
 % OUTPUT :
-%   y : counts
-%   xx : values of clist(ind)
-%
+%   x : plot array
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins.
@@ -34,7 +30,6 @@ function plotClist3D(clist, ind)
 
 
 clist = gate(clist);
-cc = 'b';
 nind = numel(ind);
 
 if ~isfield(clist,'data3D')
@@ -44,11 +39,11 @@ end
 
 if nind == 1
     clf;
-    plot(squeeze(clist.data3D(:,ind,:))');
+    x = squeeze(clist.data3D(:,ind,:))';
+    plot(x);
     set( gca, 'YDir', 'normal' );
     ylabel( clist.def3d{ind} );
     xlabel( 'Time (frame)' );
-    nind = numel( ind );
 else
     disp('Error in plotClist3D: too many indices in ind');
 end

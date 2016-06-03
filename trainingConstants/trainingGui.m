@@ -1,5 +1,5 @@
 function varargout = trainingGui(varargin)
-% modifyConstValuesGUI : gui to interactively modify parameters in constants.
+% modifyConstValuesGUI : gui to train for region and segment scores.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Connor Brennan and Stella Styliandou.
@@ -44,19 +44,13 @@ end
 
 % --- Executes just before trainingGui is made visible.
 function trainingGui_OpeningFcn(hObject, eventdata, handles, varargin)
-% This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to trainingGui (see VARARGIN)
 global settings;
 
 handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
-
 handles.directory.String = pwd;
-
+settings.trainFun = @trainTree; % can change this to @neuralNetTrain
 settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
@@ -69,7 +63,6 @@ settings.oldFrame = [];
 settings.maxData = 10;
 settings.firstPosition = [];
 settings.errorHandle = [];
-settings.segmentsDirty = 0;
 settings.numFrames = 0;
 settings.saveFolder = '';
 settings.dataSegmented = 0;
@@ -87,27 +80,16 @@ setWorkingDirectory(handles.directory.String, 1, 0);
 updateUI(handles);
 guidata(hObject, handles);
 
-% UIWAIT makes trainingGui wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
 function varargout = trainingGui_OutputFcn(hObject, eventdata, handles)
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get default command line output from handles structure
 varargout{1} = handles.output;
 
 
 
 % --- Executes on button press in cut_and_seg.
 function cut_and_seg_Callback(hObject, eventdata, handles)
-% hObject    handle to cut_and_seg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 % set constants
 global settings;
 
@@ -120,13 +102,6 @@ end
 
 trainingFrames = dir([settings.imageDirectory, '*c1*.tif']);
 numTrainingFrames = numel(trainingFrames);
-% if numTrainingFrames < 5
-%     answer = questdlg('Your training set is very small (Number of frames). This will be hard to train well. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');
-%
-%     if strcmp(answer, 'No')
-%         return;
-%     end
-% end
 
 if numTrainingFrames > 50
     answer = questdlg('Your training set is very large (Number of frames). This will take a long time. Do you wish to continue?', 'Continue?', 'Yes', 'No', 'No');    
@@ -152,16 +127,14 @@ CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
 BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
-
+mkdir([settings.loadDirectory(1:end-1),'_backup'])
+copyfile ([settings.loadDirectory,'*seg.mat'],[settings.loadDirectory(1:end-1),'_backup'],'f')
 settings.frameNumber = 1;
 setWorkingDirectory(settings.loadDirectory(1:end-9));
 updateUI(handles);
 
 % --- Executes on button press in try_const.
 function try_const_Callback(hObject, eventdata, handles)
-% hObject    handle to try_const (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 dirname = fixDir(handles.directory.String);
@@ -172,40 +145,19 @@ if isempty(images) && ~isempty(dir([dirname, filesep, 'raw_im', filesep, '*.tif'
 end
 
 tryDifferentConstants(dirname)
-%tryDifferentConstantsGUI(dirname, [], ceil([handles.viewport_train.XLim, handles.viewport_train.YLim]), settings.frameNumber);
 
 
 
-
-% --- Executes on button press in next.
 function previous_Callback(hObject, eventdata, handles)
-% hObject    handle to next (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
  
-if settings.segmentsDirty == 1
-    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-    settings.segmentsDirty = 0;
-end
 settings.frameNumber = settings.frameNumber - 1;
 settings.frameNumber = max(settings.frameNumber, 1);
 loadData(settings.frameNumber)
 updateUI(handles);
 
 
-% --- Executes on button press in previous.
-function pushbutton6_Callback(hObject, eventdata, handles)
-% hObject    handle to previous (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in undo.
 function undo_Callback(hObject, eventdata, handles)
-% hObject    handle to undo (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 if numel(settings.oldData) > 0
@@ -228,7 +180,6 @@ else
 end
 
 
-
 function dispError(message)
 global settings;
 
@@ -241,11 +192,7 @@ settings.errorHandle = errordlg(message);
 
 
 
-% --- Executes on button press in del_areas.
 function del_areas_Callback(hObject, eventdata, handles)
-% hObject    handle to del_areas (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 if settings.dataSegmented
@@ -256,13 +203,7 @@ else
     warning(['Plese segment files first']);
 end
 
-
-
-% --- Executes on button press in del_reg.
 function del_reg_Callback(hObject, eventdata, handles)
-% hObject    handle to del_reg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings
 if settings.dataSegmented
     settings.axisFlag = 6;
@@ -273,19 +214,14 @@ else
 end
 
 
-
-% --- Executes on button press in train_segs.
 function train_segs_Callback(hObject, eventdata, handles)
-% hObject    handle to train_segs (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 if isempty(settings.CONST)
     dispError('You must load a CONST file to create bad regions')
     return;
 end
-
+set(handles.figure1,'Pointer','watch');
 h = msgbox('Training segments, this will take a bit.' );
 handles.tooltip.String = 'Training segments... Please wait.';
 drawnow;
@@ -293,13 +229,15 @@ drawnow;
 saveData_Callback();
 
 [Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
-[settings.CONST.superSeggerOpti.A] = neuralNetTrain (Xsegs, Ysegs, 5);
+save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
+
+[settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = settings.trainFun (Xsegs, Ysegs);
 
 settings.constantModified = 1;
 
 % update scores and save data files again
 updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.seg.segmentScoreFun);
-
+set(handles.figure1,'Pointer','arrow');
 try
     close(h);
 catch
@@ -308,12 +246,7 @@ end
 updateUI(handles);
 
 
-
-% --- Executes on button press in bad_regs.
 function bad_regs_Callback(hObject, eventdata, handles)
-% hObject    handle to bad_regs (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 if settings.dataSegmented
@@ -339,11 +272,8 @@ else
 end
 
 
-% --- Executes on button press in train_regs.
+
 function train_regs_Callback(hObject, eventdata, handles)
-% hObject    handle to train_regs (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 if isempty(settings.CONST)
@@ -357,18 +287,17 @@ if ~settings.hasBadRegions
         return;
     end
 end
-
+set(handles.figure1,'Pointer','watch');
 h = msgbox('Training regions, this will take a bit.' );
 handles.tooltip.String = 'Training regions... Please wait.';
+
 drawnow;
 
 saveData_Callback();
 
-%settings.CONST.regionScoreFun.props = @cellprops3;
-%settings.CONST.regionScoreFun.NUM_INFO = 21;
-
 [Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
-[settings.CONST.regionScoreFun.E] = neuralNetTrain (Xregs, Yregs, 5);
+save([settings.currentDirectory,filesep,'regs_training_data'],'Xregs','Yregs');
+[settings.CONST.regionScoreFun.E,settings.CONST.regionScoreFun.fun] = settings.trainFun (Xregs, Yregs);
 
 settings.constantModified = 1;
 
@@ -380,7 +309,7 @@ try
     close(h);
 catch
 end
-
+set(handles.figure1,'Pointer','arrow');
 loadData(settings.frameNumber);
 
 updateUI(handles);
@@ -392,25 +321,12 @@ updateUI(handles);
 
 
 function directory_Callback(hObject, eventdata, handles)
-% hObject    handle to directory (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of directory as text
-%        str2double(get(hObject,'String')) returns contents of directory as a double
-
 setWorkingDirectory(handles.directory.String);
 updateUI(handles);
 
 
 % --- Executes during object creation, after setting all properties.
 function directory_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to directory (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -418,9 +334,7 @@ end
 
 % --- Executes on button press in save.
 function save_Callback(hObject, eventdata, handles)
-% hObject    handle to save (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 CONST = settings.CONST;
@@ -443,9 +357,6 @@ end
 
 % --------------------------------------------------------------------
 function image_folder_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to image_folder (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 newDir = uigetdir;
 if newDir ~= 0
     handles.directory.String = newDir;
@@ -456,16 +367,9 @@ end
 
 % --- Executes on button press in next.
 function next_Callback(hObject, eventdata, handles)
-% hObject    handle to next (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
-if settings.segmentsDirty == 1
-    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-    settings.segmentsDirty = 0;
-end
-settings.currentData.regs
 settings.frameNumber = settings.frameNumber + 1;
 settings.frameNumber = min(settings.frameNumber, numel(settings.loadFiles));
 
@@ -672,18 +576,11 @@ RGB_label = label2rgb(labeled,'lines',[.7 .7 .7]);%,'shuffle');
 imshow(RGB_label);
   
 
-% numChildren = numel(viewport_train.Children);
-% for i = 1:numChildren
-%     viewport_train.Children(i).HitTest = 'off';
-% end
-
-
 function saveData()
 global settings
 
 try
-    data = settings.currentData;
-    
+    data = settings.currentData;    
     save([settings.saveFolder, settings.loadFiles(settings.frameNumber).name],'-STRUCT','data');
 catch ME
     warning(['Could not save changes: ', ME.message]);
@@ -722,22 +619,23 @@ end
 settings.frameNumber = 1;
 settings.axisFlag = 0;
 settings.dataSegmented = 0;
-settings.segmentsDirty = 0;
 settings.loadDirectory = [];
 
 %Is in seg folder
 settings.currentDirectory = [directory,filesep];
 settings.currentDirectory = settings.currentDirectory(1:(max(regexp(settings.currentDirectory, [filesep, '*$']))));
 isSegFolder = numel(dir([directory,filesep,'*seg.mat'])) > 0;
+
+
 if isSegFolder
     settings.loadDirectory = [directory,filesep];
 else
     xyPositions = dir([directory,filesep,'xy*',filesep]);
-    
     if numel(xyPositions) > 0
-        settings.loadDirectory = [directory,filesep,xyPositions(1).name,filesep,'seg',filesep];
-        
-        settings.currentDirectory = settings.loadDirectory(1:end-9);
+        settings.loadDirectory = [directory,filesep,xyPositions(1).name,filesep,'seg',filesep];        
+        settings.currentDirectory = settings.loadDirectory(1:end-9);      
+    else
+       settings.loadDirectory = [directory,filesep,'xy1/seg/']; 
     end
 end
 
@@ -747,7 +645,7 @@ if clearCONST == 1 || hasCONST == 1
     settings.nameCONST = 'none';
     settings.constantModified = 0;
     if hasCONST
-        settings.CONST = loadConstantsNN([settings.loadDirectory, '..', filesep, '..', filesep, 'CONST.mat'], 0, 0);
+        settings.CONST = loadConstants([settings.loadDirectory, '..', filesep, '..', filesep, 'CONST.mat'], 0, 0);
         settings.nameCONST = 'local';
     end
 end
@@ -814,9 +712,7 @@ end
 
 % --- Executes on mouse press over axes background.
 function imageButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to viewport_train (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 if settings.axisFlag == 1 || settings.axisFlag == 2
@@ -826,13 +722,12 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     
     addUndo();
     [settings.currentData, list] = updateTrainingImage(settings.currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+    if settings.axisFlag == 1 && numel(list) > 0
+        settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
+    end
     saveData();
     
-    if settings.axisFlag == 1
-        if numel(list) > 0
-            settings.segmentsDirty = 1;
-        end
-    end
+
 elseif settings.axisFlag == 3
     if numel(settings.firstPosition) == 0
         settings.firstPosition = eventdata.IntersectionPoint;
@@ -870,7 +765,7 @@ else
     settings.currentData = imread([settings.imageDirectory,settings.loadFiles(frameNumber).name]);
 end
 
-settings.currentIsBad = strfind(settings.loadFiles(frameNumber).name, '_mod');
+settings.currentIsBad = strfind(settings.loadFiles(frameNumber).name, '_mod.mat');
 
 
 function shouldCancel = checkIfSave()
@@ -910,19 +805,8 @@ end
 
 
 
-
 function frameNumber_Callback(hObject, eventdata, handles)
-% hObject    handle to frameNumber (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of frameNumber as text
-%        str2double(get(hObject,'String')) returns contents of frameNumber as a double
 global settings;
-if settings.segmentsDirty == 1
-    settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-    settings.segmentsDirty = 0;
-end
 settings.frameNumber = str2num(handles.frameNumber.String);
 settings.frameNumber = max(1, min(settings.frameNumber, numel(settings.loadFiles)));
 loadData(settings.frameNumber);
@@ -931,24 +815,14 @@ updateUI(handles);
 
 % --- Executes during object creation, after setting all properties.
 function frameNumber_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to frameNumber (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 
-
-
-% --- Executes on button press in saveData.
 function saveData_Callback(hObject, eventdata, handles)
-% hObject    handle to saveData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 try
@@ -964,11 +838,7 @@ if exist('hObject', 'var') && ~isempty(hObject)
 end
 
 
-% --- Executes during object deletion, before destroying properties.
 function figure1_DeleteFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 checkIfSave();
 
 
@@ -980,20 +850,12 @@ checkIfSave();
 % settings.CONST = CONST;
 
 
-% --- Executes on button press in modifyConstants.
 function modifyConstants_Callback(hObject, eventdata, handles)
-% hObject    handle to modifyConstants (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 modifyConstValuesGUI();
 
 
-% --- Executes on button press in makeData.
 function makeData_Callback(hObject, eventdata, handles)
-% hObject    handle to makeData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 xSize = handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1);
@@ -1049,42 +911,26 @@ end
 
 
 function frameSkip_Callback(hObject, eventdata, handles)
-% hObject    handle to frameSkip (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of frameSkip as text
-%        str2double(get(hObject,'String')) returns contents of frameSkip as a double
 global settings;
 
 settings.frameSkip = str2num(handles.frameSkip.String);
 
 updateUI(handles);
 
-% --- Executes during object creation, after setting all properties.
 function frameSkip_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to frameSkip (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 
-% --- Executes on button press in loadConstants.
 function loadConstants_Callback(hObject, eventdata, handles)
-% hObject    handle to loadConstants (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 [~, ~, constantsPath] = getConstantsList();
 [FileName,PathName] = uigetfile('.mat', 'Load CONST file', constantsPath);
 if FileName ~= 0
-    settings.CONST = loadConstantsNN([PathName, FileName],0,0);
+    settings.CONST = loadConstants([PathName, FileName],0,0);
     settings.nameCONST = settings.CONST.ResFlag;
     settings.nameCONST = settings.nameCONST((max(strfind(settings.nameCONST, filesep)) + 1):end);
     
@@ -1101,15 +947,11 @@ button.Enable = 'inactive';
 button.ForegroundColor = [.5, .5, .5];
 
 
-% --- Executes on button press in makeGoodRegions.
 function makeGoodRegions_Callback(hObject, eventdata, handles)
-% hObject    handle to makeGoodRegions (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 global settings;
 
 settings.axisFlag = 2;
-
 addUndo();
 settings.currentData.regs.score = ones( settings.currentData.regs.num_regs, 1 );
 saveData();
@@ -1117,13 +959,8 @@ saveData();
 updateUI(handles);
 
 
-% --- Executes on button press in phase_radio.
 function phase_radio_Callback(hObject, eventdata, handles)
-% hObject    handle to phase_radio (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of phase_radio
 global settings
 if get(hObject,'Value')
     settings.axisFlag = 4;    
@@ -1133,13 +970,9 @@ if get(hObject,'Value')
 end
 updateUI(handles);
 
-% --- Executes on button press in regions_radio.
-function regions_radio_Callback(hObject, eventdata, handles)
-% hObject    handle to regions_radio (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of regions_radio
+function regions_radio_Callback(hObject, eventdata, handles)
+
 global settings
 if get(hObject,'Value')
     settings.axisFlag = 2;
@@ -1152,12 +985,7 @@ if get(hObject,'Value')
         loadConstants_Callback([], [], settings.handles)
     end
     
-    if ~isempty(settings.CONST)
-        if settings.segmentsDirty == 1
-            settings.currentData = intMakeRegs( settings.currentData, settings.CONST, [], [] );
-            settings.segmentsDirty = 0;
-        end
-    else
+    if isempty(settings.CONST)
         questdlg('You must load a CONST file to update the regions', 'Error', 'Okay', 'Okay');
     end
     
@@ -1167,11 +995,7 @@ updateUI(handles);
 
 % --- Executes on button press in segs_radio.
 function segs_radio_Callback(hObject, eventdata, handles)
-% hObject    handle to segs_radio (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of segs_radio
 global settings
 if get(hObject,'Value')
     settings.axisFlag = 1;
@@ -1182,20 +1006,9 @@ end
 updateUI(handles);
 
 
-% --- Executes during object creation, after setting all properties.
 function frame_text_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to frame_text (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% --- Executes on button press in mask_radio.
 function mask_radio_Callback(hObject, eventdata, handles)
-% hObject    handle to mask_radio (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of mask_radio
 global settings
 if get(hObject,'Value')
     settings.axisFlag = 5;
@@ -1206,22 +1019,11 @@ end
 updateUI(handles);
 
 
-% --- Executes on button press in crop.
+
 function crop_Callback(hObject, eventdata, handles)
-% hObject    handle to crop (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in save_cut.
 function save_cut_Callback(hObject, eventdata, handles)
-% hObject    handle to save_cut (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% hObject    handle to makeData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings;
 
 xSize = handles.viewport_train.XLim(2) - handles.viewport_train.XLim(1);

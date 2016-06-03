@@ -45,7 +45,7 @@ end
 S_flag = FLAGS.S_flag;
 
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
-    FLAGS.t_flag = 0;
+    FLAGS.t_flag = 1;
 end
 
 t_flag = FLAGS.t_flag;
@@ -72,30 +72,38 @@ num_segs = numel( data.segs.score(:) );
 sz = size(segs_good);
 backer = 0.7*ag(data.phase);
 
-axes(viewport);
+if ~exist('viewport','var') || isempty(viewport)
+    figure;
+else
+    axes(viewport);
+end
+
 
 if im_flag == 1
     
-    rawSegs = data.segs.scoreRaw;
-    if size(rawSegs, 2) > size(rawSegs, 1)
-        rawSegs = rawSegs';
+    rawSegScore = data.segs.scoreRaw;
+    if size(rawSegScore, 2) > size(rawSegScore, 1)
+        rawSegScore = rawSegScore';
     end
     
-    isnan_score = isnan(rawSegs);
-    data.segs.score(isnan_score) = 1;
     
-    rawSegs = round(rawSegs > 0);
+    rawSegScore = round(rawSegScore > 0);
+    isnan_rawscore = isnan(rawSegScore);
+    rawSegScore(isnan_rawscore) = 0;
+    isnan_score = isnan(data.segs.score);
+    data.segs.score(isnan_score) = 0;
     
-    if ~isfield(data.segs, 'Include' )
-        data.segs.Include = 0*data.segs.score+1;
+    if isempty(data.segs.score)
+        segs_good      = data.segs.segs_label*0;
+        segs_good_fail = data.segs.segs_label*0;
+        segs_bad_fail  = data.segs.segs_label*0;
+        segs_bad  =data.segs.segs_label*0;
+    else
+        segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,rawSegScore))));
+        segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~rawSegScore))));
+        segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,rawSegScore))));
+        segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~rawSegScore))));
     end
-    
-    segs_Include   = ismember( data.segs.segs_label, find(~data.segs.Include));
-    segs_good      = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,rawSegs))));
-    segs_good_fail = ismember( data.segs.segs_label, find(and( ~isnan_score, and(data.segs.score,~rawSegs))));
-    segs_bad_fail  = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,rawSegs))));
-    segs_bad       = ismember( data.segs.segs_label, find(and( ~isnan_score, and(~data.segs.score,~rawSegs))));
-    
     str = strel('square',2);
     
     segs_good = imdilate(double(segs_good), str);
@@ -103,13 +111,11 @@ if im_flag == 1
     segs_bad_fail = imdilate(double(segs_bad_fail), str);
     segs_bad = imdilate(double(segs_bad),str);
     
-    segsInlcudeag  = ag(segs_Include);
     segsGoodag  = ag(segs_good);
     segsGoodFailag = ag(segs_good_fail);
-    segs3nag = ag(data.segs.segs_3n  );
+    segs3nag = ag(data.segs.segs_3n);
     segsBadag  = ag(segs_bad );
     segsBadFailag = ag(segs_bad_fail);
-    maskBgag = ag(~data.mask_bg);
     
     if FLAGS.phase
         phaseBackag = uint8(ag(data.segs.phaseMagic));
@@ -121,12 +127,6 @@ if im_flag == 1
     imshow( cat(3, 0.2*phaseBackag + 0.3*segs3nag + uint8(segsGoodag+segsGoodFailag+0.5*segsBadFailag), ...
         0.2*phaseBackag + 0.3*segs3nag + 0.8*uint8(segsGoodFailag+segsBadFailag) , ...
         0.2*phaseBackag + 0.3*segs3nag + uint8(segsBadag+segsBadFailag + 0.2 * segsGoodFailag) ), 'InitialMagnification', 'fit');
-    
-    flagger = and( data.segs.Include, ~isnan(data.segs.score) );
-    scoreRawTmp = data.segs.scoreRaw(flagger);
-    scoreTmp    = data.segs.score(flagger);
-    [y_good,x_good] = hist(scoreRawTmp(scoreTmp>0),[-40:2:40]);
-    [y_bad,x_bad] = hist(scoreRawTmp(~scoreTmp),[-40:2:40]);
     
     props = regionprops( data.segs.segs_label, 'Centroid'  );
     num_segs = numel(props);

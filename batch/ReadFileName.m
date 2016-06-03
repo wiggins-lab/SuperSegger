@@ -1,5 +1,5 @@
 function nameInfo = ReadFileName( str )
-% ReadFileName extracts the numbers after t,x,y,z in a string *t*c*xy*z* 
+% ReadFileName : extracts the numbers after t,x,y,z in a string *t*c*xy*z* 
 %
 % INPUT :
 %       str : String that contains any of the the strings in strD

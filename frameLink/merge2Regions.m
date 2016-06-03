@@ -2,6 +2,35 @@ function [data_c,resetRegions] = merge2Regions (data_c, reg1, reg2, CONST)
 % merge2Regions : merges reg1 and reg2 into one in the mask_cell
 % regions need to be remade after this in order to have the right
 % properties.
+% INPUT :
+%      data_c : current data (seg/err) file.
+%      reg1 : id of region 1
+%      reg2 : id of region 2 
+%      CONST : segmentation parameters
+%
+% OUTPUT :
+%      data_c : data_c with merged regions
+%      resetRegions : true if regions were merged and linking should
+%      re-run.
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou, Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+
+
+
+
 verbose = CONST.parallel.verbose;
 
 if verbose

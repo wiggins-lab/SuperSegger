@@ -59,7 +59,7 @@ while ~any(ismember(resFlags,res))
 end
 disp (['Loading constants ', res]);
 
-CONST = loadConstantsNN(res,parallel);disp ('Croppping images - choose a small region with a couple of colonies');
+CONST = loadConstants(res,parallel);disp ('Croppping images - choose a small region with a couple of colonies');
 % only xy1
 trackOptiCropMulti(dirname,1)
 segTrainingDir = [dirname,'crop',filesep];

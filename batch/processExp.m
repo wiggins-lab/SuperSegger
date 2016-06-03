@@ -1,5 +1,5 @@
 function processExp( dirname )
-% processExp main function for running the segmentation software.
+% processExp : main function for running the segmentation software.
 % Used to choose the appropriate settings, and converting the images
 % filenames before running BatchSuperSeggerOpti.
 % Images need to have the NIS-Elements Format, or they can be converted 
@@ -82,7 +82,7 @@ res = '60XEcLB';
 parallel_flag = false;
 
 %% Load Constants
-CONST = loadConstantsNN(res,parallel_flag) ;
+CONST = loadConstants(res,parallel_flag) ;
 
 %% Calculation Options
 % after you load the constants you can modify them according to your needs

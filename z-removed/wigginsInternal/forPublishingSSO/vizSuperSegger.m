@@ -11,7 +11,7 @@
 
 %%
 
-CONST = loadConstantsNN('60XEcLB');
+CONST = loadConstants('60XEcLB');
 dirname = '/Users/Stella/Documents/MATLAB/forPublishingSSO/'
 filename = '2014_05_30_controlagaint105xy1_seg.mat'
 data = load([dirname,filename]);

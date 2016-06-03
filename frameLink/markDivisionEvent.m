@@ -1,6 +1,9 @@
 function [data_c, data_r, cell_count] = markDivisionEvent( ...
     data_c, sister1, data_r, regR, time, errorStat, sister2, cell_count)
 % markDivisionEvent : marks a division event from regR to sister 1 and 2.
+% regR is the region in data_c (the mother) and sister 1 and sister 2
+% are the two daughter cells in data_c. They will be given cell ids 
+% cell count + 1 and cell_count + 2.
 %
 % INPUT :
 %       data_c : data file (err/seg file) in current frame

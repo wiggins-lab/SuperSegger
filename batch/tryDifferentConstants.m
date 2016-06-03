@@ -68,7 +68,7 @@ numRows = ceil(numFlags / numCols);
 for i = 1:numFlags
     res = resFlags{i};
     disp(['Segmenting with ', res]);
-    CONST = loadConstantsNN(res, 0);
+    CONST = loadConstants(res, 0);
     CONST.parallel.verbose = 0;
     dataname = 'test';
     data.SegFile {i} = CONST.seg.segFun( phase, CONST, '', dataname, []);

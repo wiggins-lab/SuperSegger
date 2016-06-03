@@ -1,5 +1,5 @@
 function [rightNames] = isRightNameFormat(dirname)
-% isRightNameFormat returns true if .tif images in the directory have the
+% isRightNameFormat : returns true if .tif images in the directory have the
 % right naming convention.
 % INPUT : 
 %       dirname : directory name with images

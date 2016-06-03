@@ -183,7 +183,7 @@ end
 
 % here is the output from superSegger
 % the red lines are the outlines of the cells
-CONST = loadConstantsNN('60XPA');
+CONST = loadConstants('60XPA');
 data = ssoSegFunPerReg(I,CONST);
 
 

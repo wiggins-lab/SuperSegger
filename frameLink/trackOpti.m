@@ -182,14 +182,14 @@ end
 
 %% Finds loci in each fluorescent channel
 if sum(CONST.trackLoci.numSpots(:))
-    stamp_name = [dirname_seg,'.trackOptiFindFociCyto-Step6.mat'];
+    stamp_name = [dirname_seg,'.trackOptiFindFoci-Step6.mat'];
     if ~exist( stamp_name, 'file' );
-        disp([header,'trackOpti - Step 6: Running trackOptiFindFociCyto.']); 
-        trackOptiFindFociCyto(dirname_seg, CONST, header);
+        disp([header,'trackOpti - Step 6: Running trackOptiFindFoci.']); 
+        trackOptiFindFoci(dirname_seg, CONST, header);
         time_stamp = clock;
         save( stamp_name, 'time_stamp');
     else
-        disp([header,'trackOpti: trackOptiFindFociCyto already run.']);
+        disp([header,'trackOpti: trackOptiFindFoci already run.']);
     end
 end
 

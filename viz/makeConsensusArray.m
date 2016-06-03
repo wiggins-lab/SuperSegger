@@ -1,5 +1,6 @@
 function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, clist )
-% makeConsIm : Computes consensus fluorescence localization from cells in a cell files
+% makeConsensusArray : Computes consensus dataImArray array used to make 
+% consensus images and kymographs (average fluorescence localization).
 %
 % INPUT:
 %   cellDir : (string) directory to load cell files from

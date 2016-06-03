@@ -32,9 +32,9 @@ if ~exist('ind','var') || isempty(ind) || isempty(clist.gate)
 else      
    loc = find( cellfun(@(x)isequal(x,ind),{clist.gate.ind}) ); 
    if isempty (loc)
-       disp (['index : ', num2str(ind), ' not found in the gate']);
+%       disp (['index : ', num2str(ind), ' not found in the gate']);
    else
-        disp (['removing : ', num2str(ind), ' from gate']);
+%        disp (['removing : ', num2str(ind), ' from gate']);
         clist.gate(loc) = [];
    end
 end

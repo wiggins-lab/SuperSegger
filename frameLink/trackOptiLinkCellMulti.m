@@ -1,5 +1,5 @@
 function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,startFrom)
-% trackOptiCellLink : links the cells frame-to-frame and resolves errors.
+% trackOptiLinkCellMulti : links the cells frame-to-frame and resolves errors.
 %
 % INPUT :
 %       dirname    : seg folder eg. maindirectory/xy1/seg

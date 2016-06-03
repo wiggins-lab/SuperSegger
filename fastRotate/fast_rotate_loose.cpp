@@ -1,3 +1,9 @@
+/* fast_rotate_loose : replaces imrotate(image,angle,'crop') for any 3 dims image, UINT8 class.
+ Work ten times faster, tested on matlab 7, VC6.
+ Compile it using the mex tools -
+ mex fast_rotate.cpp.
+*/ 
+
 #include <mex.h>
 #include <math.h>
 
@@ -5,12 +11,6 @@ const double PI = 3.14159265358979323846;
 
 inline float Max( float x, float y );
 
-/*
- This function will replace imrotate(image,angle,'crop') for any 3 dims image, UINT8 class.
- Work ten times faster, tested on matlab 7, VC6.
- Compile it using the mex tools -
- mex fast_rotate.cpp.
-*/ 
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {

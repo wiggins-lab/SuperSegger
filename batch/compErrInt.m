@@ -1,5 +1,5 @@
 function errNum = compErrInt( fftA, fftB, lamMin, lamMax )
-% Computes the error of alignment between two fourier transformed images
+% compErrInt : Computes the error of alignment between two fourier transformed images
 % using lamMin and lamMax to calculate the masks
 %
 % INPUT :

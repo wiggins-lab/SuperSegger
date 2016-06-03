@@ -1,5 +1,5 @@
 function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG,showWarnings)
-% BatchSuperSeggerOpti runs everything from start to finish,
+% BatchSuperSeggerOpti : runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
 % fluorescence analysis, and cell files.
@@ -93,7 +93,7 @@ else
     if exist('loadConstantsMine','file');
         CONST = loadConstantsMine(res);
     else
-        CONST = loadConstantsNN(res,0);
+        CONST = loadConstants(res,0);
     end
 end
 
@@ -113,8 +113,10 @@ end
 
 % align frames
 if exist( dirname_, 'dir' )
-    if exist( [dirname_,filesep,'raw_im'] ,'dir') && numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif']))
-        disp('BatchSuperSeggerOpti : images already aligned');
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
+            (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
+            exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
+         disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
             crop_box_array = tmp.crop_box_array;
@@ -227,9 +229,7 @@ else
     
     
     if ~workers
-        if isvalid(h)
-            close(h);
-        end
+        close(h);
     end
     
 end
@@ -338,7 +338,7 @@ end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
 if ~ONLY_SEG
-      trackOpti(dirname_xy,skip,CONST, clean_flag, header);
+    trackOpti(dirname_xy,skip,CONST, clean_flag, header);
 else
     disp ('Only segmentation was set to true - Linking and cell files were not made');
 end

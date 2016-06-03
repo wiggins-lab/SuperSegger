@@ -3,9 +3,10 @@ function [clist, clist_def] = trackOptiCellMarker(dirname, CONST, header)
 %  It goes through the dirname/*err.mat files and determines which
 %  cells go through complete cell cycles (i.e. cells in which both birth and 
 %  division are observed) Clist contains information about complete cell cycles 
-%  (see information in clist_def). Note that this has to be run twice to get 
-%  the pole information since this is set by the next step in the process. 
-%  Complete clist is made by trackOptiClist.m
+%  (see information in clist_def). Note that the complete clist is made later
+%  by trackOptiClist.m this to get the pole information. Since this is set 
+%  by the next step in the process. 
+%  
 %
 % INPUT : 
 %       dirname: seg folder eg. maindirectory/xy1/seg

@@ -1,6 +1,6 @@
 function [data_c, data_r, cell_count,resetRegions] =  errorRezNew (time, ...
     data_c, data_r, data_f, CONST, cell_count, header, ignoreError, debug_flag)
-% errorRez : links cells from the frame before to the current and attempts to
+% errorRezNew : links cells from the frame before to the current and attempts to
 % resolve segmentation errors if the linking is inconsistent.
 %
 % INPUT :

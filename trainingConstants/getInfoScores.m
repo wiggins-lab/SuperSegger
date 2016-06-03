@@ -53,7 +53,7 @@ for i = 1 : numel(contents)
         Y = [Y;data.regs.score];
         
         if exist('CONST','var')
-            newInfo = calculateInfo (data);
+            newInfo = calculateInfo (data,CONST);
             X = [X;newInfo];
         else
             X = [X;data.regs.info];
@@ -71,8 +71,9 @@ X = X(indices,:);
 Y = Y(indices);
 
 
-    function newInfo = calculateInfo (data)
-        ss = size( data.mask_cell );
+    function newInfo = calculateInfo (data,CONST)
+        oldInfo = data.regs.info;
+        ss = size(data.mask_cell);
         data.regs.regs_label = bwlabel(data.mask_cell);
         data.regs.props = regionprops( data.regs.regs_label,'BoundingBox','Orientation','Centroid','Area');
         data.regs.num_regs = max(data.regs.regs_label(:));
@@ -84,7 +85,14 @@ Y = Y(indices);
             data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
         end
         
+       
+       
         newInfo = data.regs.info;
+        if all(size (oldInfo)~=size(newInfo))
+            error('size')
+        elseif all (oldInfo~=newInfo)
+            error('hi')
+        end
     end
 
 end

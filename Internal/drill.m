@@ -54,8 +54,12 @@ for ii = 1:num
     end
 end
 
-out = cell2mat(tmp_array);
-ss  = size(dataA);
-out = reshape(out, ss);
+try
+    out = cell2mat(tmp_array);
+    ss  = size(dataA);
+    out = reshape(out, ss);
+catch
+    out=tmp_array;
+end
 
 end

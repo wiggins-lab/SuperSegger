@@ -1,5 +1,5 @@
 function  [rawScore] = treeScore (x,treeClassifier)
-% treeScore : calculates the scores of regions/ segments using a classification tree. % Neural network was already trained using a trained Pattern Recognition Problem 
+% treeScore : calculates the scores of regions/ segments using given classification tree. 
 %
 % INPUT : 
 %   x : input to the network, quantities regarding the segment or region. 

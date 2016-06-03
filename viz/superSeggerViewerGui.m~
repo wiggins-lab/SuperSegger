@@ -48,6 +48,7 @@ handles.previous.Enable = 'off';
 handles.next.Enable = 'off';
 handles.switch_xy_directory.Enable = 'off';
 handles.max_cell_no.Enable = 'off';
+handles.edit_segments.Enable = 'off';
 
 function enable_all_panels (hObject,handles)
 set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
@@ -60,6 +61,7 @@ handles.previous.Enable = 'on';
 handles.next.Enable = 'on';
 handles.switch_xy_directory.Enable = 'on';
 handles.max_cell_no.Enable = 'on';
+handles.edit_segments.Enable = 'on';
 
 
 function update_clist_panel(hObject, handles)
@@ -146,7 +148,10 @@ handles.num_xy = numel(contents_xy);
 direct_contents_seg = dir([dirname, '*seg.mat']);
 direct_contents_err = dir([dirname, '*err.mat']);
 
-
+if dirnum > handles.num_xy
+    dirnum = 1;
+end
+    
 if handles.num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         handles.dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
@@ -318,7 +323,7 @@ else
         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
     end
     if handles.FLAGS.P_flag
-        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Tirquaz : birth , Blue : both birth and division, Purple : errors |'];
+        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
     end
     
     if handles.num_errs == 0
@@ -421,7 +426,12 @@ end
 function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
 
 function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
-handles.image_directory.String = pwd;
+if getappdata(0, 'dirname')
+    handles.image_directory.String = getappdata(0, 'dirname');
+    rmappdata(0,'dirname')
+else
+    handles.image_directory.String = pwd;
+end
 set(handles.figure1, 'units', 'normalized', 'position', [0 0 1 1])
 initImage(hObject, handles);
 
@@ -920,12 +930,18 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'consensus_kymograph'], 'kymo', 'kymoMask');
+    end
 end
 
 function mosaic_kymograph_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'mosaic_kymograph'], 'im');
+    end
 end
 
 function show_consensus_Callback(hObject, eventdata, handles)
@@ -943,6 +959,9 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         handles.message.String = 'dataImArray already calculated';
     end
     [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
+    if handles.save_output.Value
+        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    end        
     figure(2);
     imshow(imColor);
 end
@@ -981,6 +1000,9 @@ function tower_cells_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    if handles.save_output.Value
+        save ([handles.dirSave,'tower_cells'],'imTot');
+    end        
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1073,12 +1095,12 @@ function edit_segments_Callback(hObject, eventdata, handles)
 choice = questdlg('Are you sure you want to edit the segments?', 'Edit segments?', 'Yes', 'No', 'No');
 if strcmp(choice, 'Yes')
     setappdata(0, 'CONST', handles.CONST);
+    setappdata(0, 'dirname_xy', handles.dirname_xy);
     setappdata(0, 'dirname_seg', handles.dirname_seg);
+    setappdata(0, 'dirname_cell', handles.dirname_cell);
     setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
     editSegmentsGui();
-%    segsTLEdit(handles.dirname_seg, str2double(handles.go_to_frame_no.String), handles.CONST);
 end
-
 
 function intDispError( data_c, FLAGS, canUseErr)
 % intDispError
@@ -1128,17 +1150,46 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 if ii ~=0
-    settings.handles.exclude_ids.String =  (['length : ', num2str(data.regs.info(ii,1)), ' max width : ',  num2str(data.regs.info(ii,4))]);
+    settings.id_list(end+1) = data.regs.ID(ii);
+    if strcmp(settings.function, 'exclude')
+        settings.handles.exclude_ids.String = num2str(settings.id_list);
+    else
+        settings.handles.include_ids.String = num2str(settings.id_list);
+    end
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
-disp('hej')
 global settings;
-settings.handles = handles; 
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'exclude';
+    if isnan(str2double(strsplit(handles.exclude_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.exclude_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.exclude_ids.String = settings.handles.exclude_ids.String;
+	exclude_ids_Callback(hObject, eventdata, handles);
+end
 
 function from_img_include_Callback(hObject, eventdata, handles)
-disp('hej')
 global settings;
-settings.handles = handles; 
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'include';
+    if isnan(str2double(strsplit(handles.include_ids.String)))
+        settings.id_list = [];
+    else
+        settings.id_list = str2double(strsplit(handles.include_ids.String));
+    end
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    handles.include_ids.String = settings.handles.include_ids.String;
+	include_ids_Callback(hObject, eventdata, handles);
+end
+
+function save_output_Callback(hObject, eventdata, handles)

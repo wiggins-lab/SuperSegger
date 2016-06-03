@@ -1,5 +1,6 @@
 function [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count)
-% createNewCell : creates a new cell for regNum with region id cell_count + 1
+% createNewCell : starts a new cell line with cell id : cell_count + 1.
+% The cell assigned this id is the one with region id : regNum in data_c.
 %
 % INPUT :
 %       data_c : data file (err/seg file) in current frame
