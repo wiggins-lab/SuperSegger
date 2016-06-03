@@ -54,7 +54,10 @@ data.segs.segs_bad = double(data.segs.segs_label>0).*data.mask_cell;
 
 function editSegmentsGui_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.dirname = fixDir(getappdata(0, 'dirname_seg'));
+handles.dirname_xy = fixDir(getappdata(0, 'dirname_xy'));
+handles.dirname_cell = fixDir(getappdata(0, 'dirname_cell'));
 handles.frame_no.String = num2str(getappdata(0, 'nn'));
+handles.CONST = getappdata(0, 'CONST');
 handles.contents = dir([handles.dirname '*_seg.mat']);
 handles.num_im = length(handles.contents);
 handles.im_flag = 1;
@@ -134,13 +137,13 @@ updateUI(hObject, handles)
 function relink_Callback(hObject, eventdata, handles)
 choice = questdlg('Are you sure you want to relink and remake the cell files?', 'Re-link the cells?', 'Yes', 'No', 'No');
 if strcmp(choice, 'Yes')
-    delete([dirname_cell,'*.mat']);
-    delete([dirname,'*trk.mat*']);
-    delete([dirname,'*err.mat*']);
-    delete([dirname,'.trackOpti*']);
-    delete([dirname_xy,'clist.mat']);
+    delete([handles.dirname_cell,'*.mat']);
+    delete([handles.dirname,'*trk.mat*']);
+    delete([handles.dirname,'*err.mat*']);
+    delete([handles.dirname,'.trackOpti*']);
+    delete([handles.dirname_xy,'clist.mat']);
     skip = 1;
     CLEAN_FLAG = false;
     header = 'trackOptiView: ';
-    trackOpti(dirname_xy,skip,CONST, CLEAN_FLAG, header);
+    trackOpti(handles.dirname_xy,skip,handles.CONST, CLEAN_FLAG, header);
 end
