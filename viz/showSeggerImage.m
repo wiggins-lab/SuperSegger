@@ -126,6 +126,22 @@ else
 end
 hold on;
 
+
+b = gca; legend(b,'off');
+if FLAGS.P_flag
+        hold on;
+        light_blue = [20,97,199]/255;
+        cyan = [36 113 125]/255;
+        green = [18 95 63]/255;
+        purple = [79 41 86]/255;
+        ha(1) = plot(1,1,'color',green);
+        ha(2) = plot(1,1,'color',cyan);
+        ha(3) = plot(1,1,'color',light_blue);
+        ha(4) = plot(1,1,'color',purple);       
+        [~,objh,~,~] = legend('No birth', 'No division', 'Full cell cycle', 'Errors','Location','southoutside','Orientation','horizontal');
+        set(objh,'linewidth',2);
+end
+
 % Displays linking information
 if FLAGS.showLinks
     intPlotLinks(data, data_r, data_f, -xx(1)+1, -yy(1)+1, FLAGS, ID_LIST, CONST );
@@ -142,6 +158,9 @@ else
     doFrameMerge( -xx(1)+xx(end)-xx(1)+1+1, -yy(1)+yy(end)-yy(1)+1+1);
 end
 
+
+
+    
     function doAnnotation( data_, x_, y_ )
         % doAnnotation : annotates spots, cell numbers and poles
         if ~isempty(data_)
@@ -764,10 +783,10 @@ else
             if (FLAGS.axis(1)<r(1)) && (FLAGS.axis(2)>r(1)) && ...
                     (FLAGS.axis(3)<r(2)) && (FLAGS.axis(4)>r(2))
                 
-                plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
+                line = plot([r(1),new_pole(1)], [r(2),new_pole(2)], 'r' );
                 
-                plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
-                plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
+                p_old = plot( old_pole(1)+x_, old_pole(2)+y_, 'ro','MarkerSize',6);
+                p_new = plot( new_pole(1)+x_, new_pole(2)+y_, 'r*','MarkerSize',6);
                 
                 
                 if ~isempty(ind) && ID && tmp.pole.op_ori
@@ -781,6 +800,7 @@ else
             end
         end
     end
+   legend([p_old,p_new,line],{'Old Pole', 'New pole','Sisters'});
 end
 end
 
