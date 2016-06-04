@@ -33,8 +33,8 @@ function [data] = regionOpti( data, disp_flag, CONST,header)
 
 MAX_WIDTH = CONST.superSeggerOpti.MAX_WIDTH;
 MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
-CutOffScoreHi = 30;%CONST.regionOpti.CutOffScoreHi;
-CutOffScoreLo = -30%;CONST.regionOpti.CutOffScoreLo;
+CutOffScoreHi = 30; %CONST.regionOpti.CutOffScoreHi;
+CutOffScoreLo = -30; %;CONST.regionOpti.CutOffScoreLo;
 MAX_NUM_RESOLVE = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
 CONST.regionOpti.Emin  = .2;

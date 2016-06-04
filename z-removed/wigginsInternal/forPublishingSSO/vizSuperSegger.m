@@ -1,5 +1,34 @@
 %% vizulizations for superSegger
 
+
+%% error figure
+% make segment mosaic
+
+dirname = '/Users/Stella/Documents/MATLAB/phase/minlengnew_sml_reg_opy/xy1/seg/'
+files = dir([dirname,'*err.mat']);
+tmp_axis = [50  192 19 188];
+figure(1);
+clf;
+time = 1:5:121;
+num_time = numel(time)
+x = 6;
+y = round(num_time/x);
+ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
+
+counter = 0;
+for i = time
+    counter = counter  + 1;
+     
+     data = load([dirname,files(i).name]);
+     
+     axes(ha(counter));
+     showSegDataPhase(data)
+     axis( tmp_axis );
+    
+    
+end
+
+
 %% figure for explaining segmentation
 %contents = dir([dirname,'*seg.mat']);
 
@@ -372,14 +401,14 @@ imshow(uint8(cat(3,back2 + 0.9*double(ag(outline))...
     back2 + 0.1*double(ag(~cell_mask)-outline))));
 axis(tmp_axis);
 
-
-figure(2);
-clf;
-backphase =  double(ag(data.phase));
-imshow(uint8(cat(3,backphase + double(ag(outline))...
-    ,backphase)...
-    ,backphase +  0.2 * double(ag(~cell_mask)-outline))));
-axis(tmp_axis);
+% 
+% figure(2);
+% clf;
+% backphase =  double(ag(data.phase));
+% imshow(uint8(cat(3,backphase + double(ag(outline))...
+%     ,backphase)...
+%     ,backphase +  0.2 * double(ag(~cell_mask)-outline))));
+% axis(tmp_axis);
 
 
 
