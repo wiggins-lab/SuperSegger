@@ -4,26 +4,26 @@ function trackOptiFluor(dirname,CONST,header)
 % fitting at this stage. It saves the information in the err/seg
 % files under data_c.fl1bg for channel 1 and data_c.fl2bg for channel 2.
 %
-% INPUT : 
+% INPUT :
 %   dirname: seg folder eg. maindirectory/xy1/seg
 %   CONST: are the segmentation constants.
 %   header : string displayed with information
-% 
-% Copyright (C) 2016 Wiggins Lab 
+%
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -68,40 +68,42 @@ end
 
 
 % loop through all the cells.
-for i = 1:num_im
-    data_c = loaderInternal([dirname,contents(i).name]);
+if nc > 0
+    for i = 1:num_im
+        data_c = loaderInternal([dirname,contents(i).name]);
         
-    % Compute the background fluorescence level in both channel
-    ss = size( data_c.mask_cell );
-    
-    for j = 1 : nc
-        fluor_name = ['fluor',num2str(j)];
-        fluor_field = data_c.(fluor_name);
-        if isfield( data_c, 'crop_box' );           
-            yycb = max([1,ceil(data_c.crop_box(1))]):min([ss(1),floor(data_c.crop_box(3))]);
-            xxcb = max([1,ceil(data_c.crop_box(2))]):min([ss(2),floor(data_c.crop_box(4))]);
-            fluor_tmp = fluor_field(yycb,xxcb);
-            mask_bg   = data_c.mask_bg(yycb,xxcb);
-        else
-            fluor_tmp = fluor_field;
-            mask_bg   = data_c.mask_bg;
+        % Compute the background fluorescence level in both channel
+        ss = size( data_c.mask_cell );
+        
+        for j = 1 : nc
+            fluor_name = ['fluor',num2str(j)];
+            fluor_field = data_c.(fluor_name);
+            if isfield( data_c, 'crop_box' );
+                yycb = max([1,ceil(data_c.crop_box(1))]):min([ss(1),floor(data_c.crop_box(3))]);
+                xxcb = max([1,ceil(data_c.crop_box(2))]):min([ss(2),floor(data_c.crop_box(4))]);
+                fluor_tmp = fluor_field(yycb,xxcb);
+                mask_bg   = data_c.mask_bg(yycb,xxcb);
+            else
+                fluor_tmp = fluor_field;
+                mask_bg   = data_c.mask_bg;
+            end
+            
+            bgFluorName = ['fl',num2str(j),'bg'];
+            back_mask = logical(imdilate(mask_bg,SE));
+            data_c.(bgFluorName) = mean(fluor_tmp(~back_mask ));
         end
         
-        bgFluorName = ['fl',num2str(j),'bg'];
-        back_mask = logical(imdilate(mask_bg,SE));  
-        data_c.(bgFluorName) = mean(fluor_tmp(~back_mask ));
+        % save the updated err files.
+        dataname = [dirname,contents(i).name];
+        save(dataname,'-STRUCT','data_c');
+        
+        if CONST.parallel.show_status
+            waitbar(i/num_im,h,['Fluor Comp--Frame: ',num2str(i),'/',num2str(num_im)]);
+        else
+            disp([header, 'Fluor Comp frame: ',num2str(i),' of ',num2str(num_im)]);
+        end
+        
     end
-
-    % save the updated err files.
-    dataname = [dirname,contents(i).name];
-    save(dataname,'-STRUCT','data_c');
-    
-    if CONST.parallel.show_status
-        waitbar(i/num_im,h,['Fluor Comp--Frame: ',num2str(i),'/',num2str(num_im)]);
-    else
-        disp([header, 'Fluor Comp frame: ',num2str(i),' of ',num2str(num_im)]);
-    end
-    
 end
 
 if CONST.parallel.show_status

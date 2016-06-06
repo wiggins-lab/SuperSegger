@@ -14,7 +14,6 @@ end
 
 back = double(ag( data.phase ));
 segs_good = data.segs.segs_good;
-segs_bad  = data.segs.segs_bad;
 mask_bg   = data.mask_bg;
 segs_3n   = data.segs.segs_3n;
 cell_mask = (mask_bg .* ~segs_good .* ~segs_3n);
