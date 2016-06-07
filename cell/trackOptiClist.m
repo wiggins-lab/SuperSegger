@@ -125,7 +125,7 @@ else
         zz = zeros( data_c.regs.num_regs, 1);
         
         ehist = data_c.regs.ehist;
-        set_error_this_frame = and( logical(ehist),isnan(errorFrameOld) );
+        set_error_this_frame = and( logical(ehist),isnan(error_frame) );
         error_frame(set_error_this_frame) = i;
   
         
