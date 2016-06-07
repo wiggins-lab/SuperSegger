@@ -107,7 +107,7 @@ CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 
 % only cells with areas between 60 and 700 are made
 % if you want to keep all the cells use instead CONST.trackLoci.gate  = [];
-area_gate(1).x = [70 500];
+area_gate(1).x = [70 700];
 area_gate(1).ind = 14; % index for area
 CONST.trackLoci.gate = area_gate;
 
