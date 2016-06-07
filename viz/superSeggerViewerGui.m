@@ -151,7 +151,7 @@ direct_contents_err = dir([dirname, '*err.mat']);
 if dirnum > handles.num_xy
     dirnum = 1;
 end
-    
+
 if handles.num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         handles.dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
@@ -229,12 +229,12 @@ handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
 handles.num_seg = length(handles.contents_seg);
 handles.num_err = length(handles.contents_seg);
-if handles.num_seg >= handles.num_err 
+if handles.num_seg >= handles.num_err
     handles.num_im  = handles.num_seg;
 else
     handles.num_im  = handles.num_err;
 end
-    
+
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
@@ -318,13 +318,13 @@ else
         find_cell_no(handles);
     end
     % messages
-%     handles.message.String = '';
-%     if handles.FLAGS.p_flag
-%         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-%     end
-%     if handles.FLAGS.P_flag
-%         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
-%     end
+    %     handles.message.String = '';
+    %     if handles.FLAGS.p_flag
+    %         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
+    %     end
+    %     if handles.FLAGS.P_flag
+    %         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
+    %     end
     
     if handles.num_errs == 0
         handles.use_seg_files.Value = 1;
@@ -947,7 +947,7 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
     if handles.save_output.Value
         save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
-    end        
+    end
     figure(2);
     imshow(imColor);
 end
@@ -966,6 +966,7 @@ if ~isempty(handles.FLAGS)
         drawnow;
         mov(ii) = getframe;
         handles.message.String = ['Frame number: ', num2str(ii)];
+        delete(get(handles.axes1, 'Children'))
     end
     choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
     if strcmp(choice, 'Yes')
@@ -980,6 +981,7 @@ if ~isempty(handles.FLAGS)
             handles.message.String = ['Saved movie at ', saveFilename];
         end
     end
+    updateImage(hObject, handles)
 end
 
 function tower_cells_Callback(hObject, eventdata, handles)
@@ -988,7 +990,7 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
     if handles.save_output.Value
         save ([handles.dirSave,'tower_cells'],'imTot');
-    end        
+    end
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1090,10 +1092,10 @@ end
 
 function intDispError( data_c, FLAGS, canUseErr)
 % intDispError
-    disp(  ' ' );
-    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
-    disp(  '%     Errors for this frame     %' );
-    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+disp(  ' ' );
+disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+disp(  '%     Errors for this frame     %' );
+disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
 for kk = 1:data_c.regs.num_regs
     if isfield(data_c,'regs') &&...
             isfield(data_c.regs, 'error') && ...
@@ -1158,7 +1160,7 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.exclude_ids.String = settings.handles.exclude_ids.String;
-	exclude_ids_Callback(hObject, eventdata, handles);
+    exclude_ids_Callback(hObject, eventdata, handles);
 end
 
 function from_img_include_Callback(hObject, eventdata, handles)
@@ -1175,7 +1177,7 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.include_ids.String = settings.handles.include_ids.String;
-	include_ids_Callback(hObject, eventdata, handles);
+    include_ids_Callback(hObject, eventdata, handles);
 end
 
 function save_output_Callback(hObject, eventdata, handles)
