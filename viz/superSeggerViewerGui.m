@@ -1111,8 +1111,10 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if settings.handles.use_seg_files.Value == 1
-    errordlg('Untick use regions!');
+if settings.handles.use_seg_files.Value == 1 
+    errordlg('Untick use regions');
+elseif ~isfield(settings.handles,'data_c')
+	errordlg('Reload frame first');
 else
     data = settings.handles.data_c;
     if ~isfield(data,'regs')
@@ -1144,6 +1146,9 @@ else
             settings.handles.include_ids.String = num2str(settings.id_list);
         else
             disp(data.CellA{ii});
+            updateImage(settings.hObject, settings.handles)
+            plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+            lineage_Callback(settings.hObject, settings.eventdata, settings.handles)
         end
     end
 end
@@ -1152,9 +1157,13 @@ function lineage_Callback(hObject, eventdata, handles)
 global settings;
 state = get(hObject,'Value');
 if state == get(hObject,'Max')
+    settings.hObject = hObject;
     settings.handles = handles;
     settings.function = 'lineage';
+    settings.eventdata = eventdata;
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    updateImage(hObject, handles)
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
