@@ -1111,37 +1111,59 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.handles.data_c)
-    errordlg('Press find segments first');
-end
-if ~isfield(settings.handles.data_c,'regs')
-    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
-end
-data = settings.handles.data_c;
-ss = size(data.phase);
-tmp = zeros([51,51]);
-tmp(26,26) = 1;
-tmp = 8000-double(bwdist(tmp));
-rmin = max([1,point(2)-25]);
-rmax = min([ss(1),point(2)+25]);
-cmin = max([1,point(1)-25]);
-cmax = min([ss(2),point(1)+25]);
-rrind = rmin:rmax;
-ccind = cmin:cmax;
-pointSize = [numel(rrind),numel(ccind)];
-tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
-[~,ind] = max( tmp(:) );
-[sub1, sub2] = ind2sub( pointSize, ind );
-ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
-hold on;
-plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-if ii ~=0
-    settings.id_list(end+1) = data.regs.ID(ii);
-    if strcmp(settings.function, 'exclude')
-        settings.handles.exclude_ids.String = num2str(settings.id_list);
-    else
-        settings.handles.include_ids.String = num2str(settings.id_list);
+if settings.handles.use_seg_files.Value == 1 
+    errordlg('Untick use regions');
+elseif ~isfield(settings.handles,'data_c')
+	errordlg('Reload frame first');
+else
+    data = settings.handles.data_c;
+    if ~isfield(data,'regs')
+        data = intMakeRegs( data, settings.handles.CONST, [], [] );
     end
+    ss = size(data.phase);
+    tmp = zeros([51,51]);
+    tmp(26,26) = 1;
+    tmp = 8000-double(bwdist(tmp));
+    rmin = max([1,point(2)-25]);
+    rmax = min([ss(1),point(2)+25]);
+    cmin = max([1,point(1)-25]);
+    cmax = min([ss(2),point(1)+25]);
+    rrind = rmin:rmax;
+    ccind = cmin:cmax;
+    pointSize = [numel(rrind),numel(ccind)];
+    tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
+    [~,ind] = max( tmp(:) );
+    [sub1, sub2] = ind2sub( pointSize, ind );
+    ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+    hold on;
+    plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+    if ii ~=0
+        if strcmp(settings.function, 'exclude')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.exclude_ids.String = num2str(settings.id_list);
+        elseif strcmp(settings.function, 'include')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.include_ids.String = num2str(settings.id_list);
+        else
+            disp(data.CellA{ii});
+            updateImage(settings.hObject, settings.handles)
+            plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+            lineage_Callback(settings.hObject, settings.eventdata, settings.handles)
+        end
+    end
+end
+
+function lineage_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.hObject = hObject;
+    settings.handles = handles;
+    settings.function = 'lineage';
+    settings.eventdata = eventdata;
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    updateImage(hObject, handles)
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
