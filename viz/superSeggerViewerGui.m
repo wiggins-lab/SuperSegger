@@ -151,7 +151,7 @@ direct_contents_err = dir([dirname, '*err.mat']);
 if dirnum > handles.num_xy
     dirnum = 1;
 end
-
+    
 if handles.num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         handles.dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
@@ -229,12 +229,12 @@ handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
 handles.num_seg = length(handles.contents_seg);
 handles.num_err = length(handles.contents_seg);
-if handles.num_seg >= handles.num_err
+if handles.num_seg >= handles.num_err 
     handles.num_im  = handles.num_seg;
 else
     handles.num_im  = handles.num_err;
 end
-
+    
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
@@ -318,13 +318,13 @@ else
         find_cell_no(handles);
     end
     % messages
-    %     handles.message.String = '';
-    %     if handles.FLAGS.p_flag
-    %         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-    %     end
-    %     if handles.FLAGS.P_flag
-    %         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
-    %     end
+%     handles.message.String = '';
+%     if handles.FLAGS.p_flag
+%         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
+%     end
+%     if handles.FLAGS.P_flag
+%         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
+%     end
     
     if handles.num_errs == 0
         handles.use_seg_files.Value = 1;
@@ -947,7 +947,7 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
     if handles.save_output.Value
         save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
-    end
+    end        
     figure(2);
     imshow(imColor);
 end
@@ -966,7 +966,6 @@ if ~isempty(handles.FLAGS)
         drawnow;
         mov(ii) = getframe;
         handles.message.String = ['Frame number: ', num2str(ii)];
-        delete(get(handles.axes1, 'Children'))
     end
     choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
     if strcmp(choice, 'Yes')
@@ -981,7 +980,6 @@ if ~isempty(handles.FLAGS)
             handles.message.String = ['Saved movie at ', saveFilename];
         end
     end
-    updateImage(hObject, handles)
 end
 
 function tower_cells_Callback(hObject, eventdata, handles)
@@ -990,7 +988,7 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
     if handles.save_output.Value
         save ([handles.dirSave,'tower_cells'],'imTot');
-    end
+    end        
 end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
@@ -1092,10 +1090,10 @@ end
 
 function intDispError( data_c, FLAGS, canUseErr)
 % intDispError
-disp(  ' ' );
-disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
-disp(  '%     Errors for this frame     %' );
-disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+    disp(  ' ' );
+    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+    disp(  '%     Errors for this frame     %' );
+    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
 for kk = 1:data_c.regs.num_regs
     if isfield(data_c,'regs') &&...
             isfield(data_c.regs, 'error') && ...
@@ -1113,37 +1111,50 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.handles.data_c)
-    errordlg('Press find segments first');
-end
-if ~isfield(settings.handles.data_c,'regs')
-    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
-end
-data = settings.handles.data_c;
-ss = size(data.phase);
-tmp = zeros([51,51]);
-tmp(26,26) = 1;
-tmp = 8000-double(bwdist(tmp));
-rmin = max([1,point(2)-25]);
-rmax = min([ss(1),point(2)+25]);
-cmin = max([1,point(1)-25]);
-cmax = min([ss(2),point(1)+25]);
-rrind = rmin:rmax;
-ccind = cmin:cmax;
-pointSize = [numel(rrind),numel(ccind)];
-tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
-[~,ind] = max( tmp(:) );
-[sub1, sub2] = ind2sub( pointSize, ind );
-ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
-hold on;
-plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-if ii ~=0
-    settings.id_list(end+1) = data.regs.ID(ii);
-    if strcmp(settings.function, 'exclude')
-        settings.handles.exclude_ids.String = num2str(settings.id_list);
-    else
-        settings.handles.include_ids.String = num2str(settings.id_list);
+if settings.handles.use_seg_files.Value == 1
+    errordlg('Untick use regions!');
+else
+    data = settings.handles.data_c;
+    if ~isfield(data,'regs')
+        data = intMakeRegs( data, settings.handles.CONST, [], [] );
     end
+    ss = size(data.phase);
+    tmp = zeros([51,51]);
+    tmp(26,26) = 1;
+    tmp = 8000-double(bwdist(tmp));
+    rmin = max([1,point(2)-25]);
+    rmax = min([ss(1),point(2)+25]);
+    cmin = max([1,point(1)-25]);
+    cmax = min([ss(2),point(1)+25]);
+    rrind = rmin:rmax;
+    ccind = cmin:cmax;
+    pointSize = [numel(rrind),numel(ccind)];
+    tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
+    [~,ind] = max( tmp(:) );
+    [sub1, sub2] = ind2sub( pointSize, ind );
+    ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+    hold on;
+    plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+    if ii ~=0
+        if strcmp(settings.function, 'exclude')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.exclude_ids.String = num2str(settings.id_list);
+        elseif strcmp(settings.function, 'include')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.include_ids.String = num2str(settings.id_list);
+        else
+            disp(data.CellA{ii});
+        end
+    end
+end
+
+function lineage_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.handles = handles;
+    settings.function = 'lineage';
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
@@ -1160,7 +1171,7 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.exclude_ids.String = settings.handles.exclude_ids.String;
-    exclude_ids_Callback(hObject, eventdata, handles);
+	exclude_ids_Callback(hObject, eventdata, handles);
 end
 
 function from_img_include_Callback(hObject, eventdata, handles)
@@ -1177,7 +1188,7 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.include_ids.String = settings.handles.include_ids.String;
-    include_ids_Callback(hObject, eventdata, handles);
+	include_ids_Callback(hObject, eventdata, handles);
 end
 
 function save_output_Callback(hObject, eventdata, handles)
