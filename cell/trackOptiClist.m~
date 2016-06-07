@@ -114,8 +114,9 @@ else
         dlmaxOld      = nan(1,numel(ID));
         dlminOld      = nan(1,numel(ID));
         error_frame   = nan(1,numel(ID));
+        errorFrameOld = nan( 1,numel(ID));
         
-        error_frame(IDlog) = clist_tmp(ID_non_zero,index_ehist);
+        errorFrameOld(IDlog) = clist_tmp(ID_non_zero,index_ehist);
         lold(IDlog) = clist_tmp(ID_non_zero,index_lold);
         lbirth(IDlog) = clist_tmp(ID_non_zero,index_lbirth);
         dlmaxOld(IDlog) = clist_tmp(ID_non_zero,index_dlmaxOld);
@@ -126,7 +127,12 @@ else
         
         ehist = data_c.regs.ehist;
         set_error_this_frame = and( logical(ehist),isnan(errorFrameOld) );
-        error_frame(set_error_this_frame) = i;
+
+        errorFrameOld(set_error_this_frame) = 
+        idsWithError = find(ehist > 0); % regions ids
+        errorbefore = find(~isnan (errorFrameOld)); 
+        error_cells = setdiff(idsWithError,errorbefore);   
+        error_frame(error_cells) = i;
   
         
         cell_dist = drill(data_c.CellA,'.cell_dist');
@@ -281,9 +287,10 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'Cell birth Time'},{'i + zz'},0,0;
     {'Cell Division Time'},{'i + zz'},1,0;
     {'Cell Age'},{'i - data_c.regs.birth'},1,0;
+    {'Cell Dist to edge'},{'cell_dist'},0,0;
     {'Old Pole Age'},{'pole_age'},0,0;
-    {'Error Frame'},{'error_frame'},1,0;
     {'stat0'},{'data_c.regs.stat0'},1,0;
+    {'error_frame'},{'error_frame'},1,0;
     {'Long Axis'},{'data_c.regs.L1'},0,1;
     {'Long Axis death'},{'data_c.regs.L1'},1,0;
     {'Short Axis birth'},{'data_c.regs.L2'},0,1;
@@ -372,7 +379,6 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'long axis/short axis death'},{'longOverShort'},1,0;
     {'Neck Width'},{'neckWidth'},0,1;
     {'Maximum Width'},{'maxWidth'},0,1;
-    {'Cell Dist to edge'},{'cell_dist'},0,0;
     ];
 
 % used to add numbers in front of the description
