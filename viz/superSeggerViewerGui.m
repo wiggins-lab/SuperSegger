@@ -318,13 +318,13 @@ else
         find_cell_no(handles);
     end
     % messages
-    handles.message.String = '';
-    if handles.FLAGS.p_flag
-        handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-    end
-    if handles.FLAGS.P_flag
-        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
-    end
+%     handles.message.String = '';
+%     if handles.FLAGS.p_flag
+%         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
+%     end
+%     if handles.FLAGS.P_flag
+%         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
+%     end
     
     if handles.num_errs == 0
         handles.use_seg_files.Value = 1;
@@ -400,21 +400,7 @@ else
 end
 guidata(hObject, handles);
 
-function save_figure_ClickedCallback(hObject, eventdata, handles)
-[filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
-if ~isempty(strfind(filename, '.'))
-    filename = filename(1:(max(strfind(filename, '.')) - 1));
-end
-if filename ~= 0
-    fh = figure('visible', 'off');
-    copyobj(handles.axes1, fh);
-    savename = sprintf('%s/%s',pathName,filename);
-    saveas(fh,(savename),'fig');
-    print(fh,'-depsc',[(savename),'.eps'])
-    saveas(fh,(savename),'png');
-    handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
-    close(fh);
-end
+
 
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
 folderName = uigetdir;

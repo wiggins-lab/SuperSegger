@@ -130,16 +130,17 @@ hold on;
 b = gca; legend(b,'off');
 if FLAGS.P_flag
         hold on;
-        light_blue = [20,97,199]/255;
+        light_blue = [20 97 199]/255;
         cyan = [36 113 125]/255;
         green = [18 95 63]/255;
-        purple = [79 41 86]/255;
-        ha(1) = plot(1,1,'color',green);
-        ha(2) = plot(1,1,'color',cyan);
-        ha(3) = plot(1,1,'color',light_blue);
-        ha(4) = plot(1,1,'color',purple);       
-        [~,objh,~,~] = legend('No birth', 'No division', 'Full cell cycle', 'Errors','Location','southoutside','Orientation','horizontal');
-        set(objh,'linewidth',2);
+        purple = [105 60 106]/255;
+        ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
+        ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
+        ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
+        ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
+        ha(5) = plot(1,1,'-r','visible', 'off');
+        legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
+
 end
 
 % Displays linking information
@@ -800,7 +801,7 @@ else
             end
         end
     end
-   legend([p_old,p_new,line],{'Old Pole', 'New pole','Sisters'});
+   legend([p_old,p_new,line],{'Old Pole', 'New pole','Sisters'},'location','BestOutside');
 end
 end
 

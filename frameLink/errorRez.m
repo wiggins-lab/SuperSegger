@@ -102,7 +102,8 @@ for regNum =  1 : data_c.regs.num_regs;
         elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && all(data_r.regs.map.f{rCellsFromC} == regNum)
             % MAPS TO ONE AND AGREES
             % sets cell ID from mapped reg, updates death in data_r
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+            errorStat = (data_c.regs.error.r(regNum)>0);
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
             
         elseif numel(rCellsFromC) == 1 && numel(data_r.regs.map.f{rCellsFromC}) == 1 &&  numel (cCellsTransp) == 2
             %% regNum maps to mapCR, mapCR maps to two in current, but mapCR maps to one otherwise, but disagreement
@@ -172,7 +173,8 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
             elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
-                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+                errorStat = (data_c.regs.error.r(regNum)>0);
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
                 
             elseif  ~any(mapRC==regNum)
                 % ERROR NOT FIXED :  mapCR maps to mother. but mother maps to
@@ -412,7 +414,8 @@ resetRegions = 0;
 [~,minInd] = min (data_c.regs.dA.r(mapRC));
 keeper = mapRC(minInd);
 remove = mapRC(mapRC~=keeper);
-[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
+errorStat = (data_c.regs.error.r(keeper)>0);
+[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, errorStat);
 data_c.regs.revmap.r{mapCR} = keeper;
 
 
