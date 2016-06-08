@@ -310,12 +310,17 @@ else
         [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
             nn, handles.num_im, handles.clist, forcedFlags);
         showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
-        save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-        clist = handles.clist;
-        if ~isempty(clist)
-            save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+        try
+            save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
+            clist = handles.clist;
+            if ~isempty(clist)
+                save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+            end
+            find_cell_no(handles);
+        catch
+            disp('Error saving.' );
         end
-        find_cell_no(handles);
+        
     end
     
     if handles.num_errs == 0
@@ -401,9 +406,9 @@ if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
     savename = sprintf('%s/%s',pathName,filename);
-    saveas(fh,(savename),'fig');
+    %saveas(fh,[(savename),'.fig'],'fig');
     print(fh,'-depsc',[(savename),'.eps'])
-    saveas(fh,(savename),'png');
+    saveas(fh,[(savename),'.png'],'png');
     handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
     close(fh);
 end
