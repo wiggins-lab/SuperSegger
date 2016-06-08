@@ -85,6 +85,10 @@ stat_0_index = grabClistIndex(clist,'stat0');
 cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
 cell_error_index = grabClistIndex(clist,'Error Frame');
 
+if isempty(cell_error_index)
+    disp ('no error frame found in clist')
+end
+
 if isempty( ID_ )
     for ii = 1: num
         
@@ -190,7 +194,10 @@ else
     
     error_ = clist.data(ind,cell_error_index);
     death_ = clist.data(ind,cell_div_index);
-
+    
+    if isempty(error_)
+        error_ = nan;
+    end
 
     if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0) || ~isnan(error_)
         starter = [starter,ID];
