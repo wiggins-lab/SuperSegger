@@ -1,4 +1,4 @@
-function makeLineage( clist, ID_, min_width )
+function data = makeLineage( clist, ID_, min_width )
 % makeLineage : creates a lineage tree for the cells with ID_.
 %
 % INPUT :
@@ -26,9 +26,10 @@ function makeLineage( clist, ID_, min_width )
 
 global daughter1_index;
 global daughter2_index;
-global cell_birth_index
-global cell_div_index
-global stat_0_index
+global cell_birth_index;
+global cell_div_index;
+global stat_0_index;
+global cell_error_index;
 
 figure(1)
 clf;
@@ -36,6 +37,12 @@ figure(2);
 clf;
 figure(3);
 clf;
+
+
+clist_ = gate( clist );
+gated  = clist_.data(:,1); 
+
+
 
 if isempty(clist) 
     return;
@@ -58,6 +65,15 @@ starter = [];
 hh = [];
 hh2 = [];
 
+data.n0 = [];
+data.n  = {};
+data.t0 = [];
+data.t  = {};
+
+data.n1_max = [];
+data.n2_max = [];
+
+
 legend_text = {};
 count = 0;
 
@@ -67,6 +83,11 @@ daughter2_index = grabClistIndex(clist, 'daughter2 id');
 cell_div_index = grabClistIndex(clist, 'Cell Division Time');
 stat_0_index = grabClistIndex(clist,'stat0');
 cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
+cell_error_index = grabClistIndex(clist,'Error Frame');
+
+if isempty(cell_error_index)
+    disp ('no error frame found in clist')
+end
 
 if isempty( ID_ )
     for ii = 1: num
@@ -76,10 +97,12 @@ if isempty( ID_ )
             % Make new lineage
             ID = clist.data(ii,1);
             
-            [width,list,time,death,stat0,starter] = intGetWidth(ID, clist, starter);
+            [width,list,time,death,stat0,starter,error] ...
+                = intGetWidth(ID, clist, starter);
             
             if width >= min_width
-                [hh, hh2] = intDoDraw( clist, list, time, death, stat0, starter, hh, hh2 );
+                [hh, hh2, data] = intDoDraw( clist, list, time, death, ...
+                    stat0, starter, hh, hh2, error, gated, data );
                 count = count + 1;
                 
                 legend_text{count} = ['Cell ',num2str( ID )];
@@ -91,10 +114,12 @@ if isempty( ID_ )
 else
     for ii = 1:numel(ID_)
         
-        ID = ID_(ii)
-        [width,list,time,death,stat0,starter] = intGetWidth(ID, clist, starter);
+        ID = ID_(ii);
+        [width,list,time,death,stat0,starter,error] = ...
+            intGetWidth(ID, clist, starter);
         
-        [hh,hh2] = intDoDraw( clist, list, time, death, stat0, starter, hh, hh2 );
+        [hh,hh2,data] = intDoDraw( clist, list, time, death, stat0, starter, ...
+            hh, hh2, error, gated, data );
         
         legend_text{ii} = ['Cell ',num2str( ID )];
     end
@@ -122,8 +147,8 @@ legend( hh, legend_text, 'Location' , 'NorthWest' );
 set( gca, 'YScale', 'log'  );
 title( 'Cummulative  Number of Cells' );
 
-ylim_ = ylim;
-ylim( [0.5,ylim_(end)]);
+ylim_ = data.n1_max;
+ylim( [0.5,2*ylim_]);
 xlim( [-.1,1.1]*height1 );
 
 
@@ -137,17 +162,23 @@ title( 'Number of Cells' );
 legend( hh2, legend_text, 'Location' , 'NorthWest' );
 
 
-ylim_ = ylim;
-ylim( [0.5,ylim_(end)]);
+ylim_ = data.n2_max;
+ylim( [0.5,2*ylim_(end)]);
 xlim( [-.1,1.1]*height1 );
 
 
 end
 
-function [width,list,time,death,stat0,starter] = intGetWidth(ID, clist, starter)
-global cell_birth_index
-global cell_div_index
-global stat_0_index
+function [width,list,time,death,stat0,starter,error] = ...
+    intGetWidth(ID, clist, starter)
+global cell_birth_index;
+global cell_div_index;
+global stat_0_index;
+global cell_error_index;
+
+
+end_time = max( clist.data(:,cell_div_index) );
+
 
 ind = find( clist.data(:,1)==ID );
 
@@ -157,18 +188,30 @@ if isempty(ind) || (ID == 0) || isnan(ID)
     time  = [];
     death = [];
     stat0 = [];
+    error = [];
 else
-    [ID1,ID2] = intGetDaughter( ID, clist )
+    [ID1,ID2] = intGetDaughter( ID, clist );
     
-    if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0)
+    error_ = clist.data(ind,cell_error_index);
+    death_ = clist.data(ind,cell_div_index);
+    
+    if isempty(error_)
+        error_ = nan;
+    end
+
+    if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0) || ~isnan(error_)
         starter = [starter,ID];
+        
+        if death_ ~= end_time && isnan(error_);
+            error_ = death_;
+        end
+            
     end
     
-    [w1,l1,t1,d1,s1,starter] = intGetWidth( ID1, clist, starter );
-    [w2,l2,t2,d2,s2,starter] = intGetWidth( ID2, clist, starter );
+    [w1,l1,t1,d1,s1,starter,e1] = intGetWidth( ID1, clist, starter );
+    [w2,l2,t2,d2,s2,starter,e2] = intGetWidth( ID2, clist, starter );
     
     stat0_ = clist.data(ind,stat_0_index);
-    death_ = clist.data(ind,cell_div_index);
     time_  = clist.data(ind,cell_birth_index);
     
     %death_ = death_ + time_;
@@ -178,11 +221,13 @@ else
     time  = [time_,t1,t2];
     death = [death_,d1,d2];
     stat0 = [stat0_,s1,s2];
+    error = [error_,e1,e2];
 end
 end
 
 
-function [hh,hh2] = intDoDraw( clist, list, time, death, stat0, starter, hh, hh2  )
+function [hh,hh2,data] = intDoDraw( clist, list, time, death, stat0, starter,...
+    hh, hh2, error, gated, data  )
 
 %% Show the lineages
 figure(1);
@@ -195,16 +240,25 @@ for ii = 1:num
     elseif stat0(ii) == 1
         cc = 'g';
     else
-        cc = 'r';
+        cc = 'g';
     end
     
     ID = list(ii);
     
     pos = intGetPos( ID, clist, starter );
     
+    if ismember( ID, gated )
+        style = '-';
+    else
+        style = ':';    
+    end
     
-    plot( pos+[0,0], [time(ii)-1,death(ii)], '-', 'Color', cc, 'MarkerSize', 20 );
+    plot( pos+[0,0], [time(ii)-1,death(ii)], style, 'Color', cc, 'LineWidth', 1);
     hold on;
+    
+    if ~isnan(error(ii))
+            plot( pos, error(ii), '.', 'Color', 'r', 'MarkerSize', 20 );
+    end
     
     
     [ID1,ID2] = intGetDaughter( ID, clist );
@@ -221,7 +275,8 @@ for ii = 1:num
         pos2 = intGetPos( ID2, clist, starter );
     end
     
-    plot( [pos1,pos2], [0,0] + death(ii), 'Color', 'b' );
+    plot( [pos1,pos2], [0,0] + death(ii), style, 'Color', 'b', ...
+        'LineWidth', .5 );
     
     
     h = text( pos, time(ii)-1, [' ',num2str( ID )], ...
@@ -240,13 +295,16 @@ nn = 1:numel(tt);
 
 h_ = stairs( tt, nn );
 
+data.n1_max = max( [data.n1_max, max(nn) ] );
+
+
 hh = [hh, h_];
 
 hold on;
 
 cc = get(h_,'Color' );
 
-first_death_time = min(death(ismember( list, starter )));
+first_death_time = min(error);
 
 ind = sum(first_death_time>tt);
 if ~ind
@@ -255,6 +313,13 @@ end
 
 plot( first_death_time, nn(ind), '.', ...
     'MarkerSize', 20, 'Color', cc );
+
+data.t = { data.t{:}, tt };
+data.n = { data.n{:}, nn };
+
+data.t0 = [ data.t0, first_death_time];
+data.n0 = [ data.n0, nn(ind) ];
+
 
 
 figure(3);
@@ -275,6 +340,8 @@ nn = nn(ord);
 
 h_ = stairs( ttt, nn, '-', 'Color', cc );
 hold on;
+
+data.n2_max = max( [data.n2_max, max(nn) ] );
 
 ind = sum(first_death_time>ttt);
 if ~ind

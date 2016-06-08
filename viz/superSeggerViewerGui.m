@@ -310,21 +310,18 @@ else
         [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
             nn, handles.num_im, handles.clist, forcedFlags);
         showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
-        save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-        clist = handles.clist;
-        if ~isempty(clist)
-            save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+        try
+            save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
+            clist = handles.clist;
+            if ~isempty(clist)
+                save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+            end
+            find_cell_no(handles);
+        catch
+            disp('Error saving.' );
         end
-        find_cell_no(handles);
+        
     end
-    % messages
-%     handles.message.String = '';
-%     if handles.FLAGS.p_flag
-%         handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-%     end
-%     if handles.FLAGS.P_flag
-%         handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
-%     end
     
     if handles.num_errs == 0
         handles.use_seg_files.Value = 1;
@@ -400,6 +397,21 @@ else
 end
 guidata(hObject, handles);
 
+function save_figure_ClickedCallback(hObject, eventdata, handles)
+[filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
+if ~isempty(strfind(filename, '.'))
+    filename = filename(1:(max(strfind(filename, '.')) - 1));
+end
+if filename ~= 0
+    fh = figure('visible', 'off');
+    copyobj(handles.axes1, fh);
+    savename = sprintf('%s/%s',pathName,filename);
+    %saveas(fh,[(savename),'.fig'],'fig');
+    print(fh,'-depsc',[(savename),'.eps'])
+    saveas(fh,[(savename),'.png'],'png');
+    handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
+    close(fh);
+end
 
 
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
