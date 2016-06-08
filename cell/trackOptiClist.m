@@ -109,11 +109,11 @@ else
         IDlog = ID>0;
         ID_non_zero = ID(IDlog);
    
-        lold          = nan(1,numel(ID));
-        lbirth        = nan(1,numel(ID));
-        dlmaxOld      = nan(1,numel(ID));
-        dlminOld      = nan(1,numel(ID));
-        error_frame   = nan(1,numel(ID));
+        lold = nan(1,numel(ID));
+        lbirth = nan(1,numel(ID));
+        dlmaxOld = nan(1,numel(ID));
+        dlminOld = nan(1,numel(ID));
+        error_frame = nan(1,numel(ID));
         
         error_frame(IDlog) = clist_tmp(ID_non_zero,index_ehist);
         lold(IDlog) = clist_tmp(ID_non_zero,index_lold);
@@ -127,7 +127,6 @@ else
         ehist = data_c.regs.ehist;
         set_error_this_frame = and( logical(ehist),isnan(error_frame) );
         error_frame(set_error_this_frame) = i;
-  
         
         cell_dist = drill(data_c.CellA,'.cell_dist');
         pole_age  = drill(data_c.CellA,'.pole.op_age');

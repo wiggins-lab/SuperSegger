@@ -1148,18 +1148,18 @@ else
             disp(data.CellA{ii});
             updateImage(settings.hObject, settings.handles)
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-            lineage_Callback(settings.hObject, settings.eventdata, settings.handles)
+            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
         end
     end
 end
 
-function lineage_Callback(hObject, eventdata, handles)
+function cell_info_Callback(hObject, eventdata, handles)
 global settings;
 state = get(hObject,'Value');
 if state == get(hObject,'Max')
     settings.hObject = hObject;
     settings.handles = handles;
-    settings.function = 'lineage';
+    settings.function = 'cell_info';
     settings.eventdata = eventdata;
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
@@ -1201,3 +1201,37 @@ elseif state == get(hObject,'Min')
 end
 
 function save_output_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in lineage_clist.
+function lineage_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to lineage_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+min_width = 3;
+ids = str2num(handles.lineage_text.String);
+if (~ids)
+    ids = [];
+end
+makeLineage( handles.clist, ids, min_width );
+
+function lineage_text_Callback(hObject, eventdata, handles)
+% hObject    handle to lineage_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of lineage_text as text
+%        str2double(get(hObject,'String')) returns contents of lineage_text as a double
+ 
+
+% --- Executes during object creation, after setting all properties.
+function lineage_text_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to lineage_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
