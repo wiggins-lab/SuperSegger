@@ -23,12 +23,8 @@ function makeLineage( clist, ID_, min_width )
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-
 global daughter1_index;
 global daughter2_index;
-global cell_birth_index
-global cell_div_index
-global stat_0_index
 
 figure(1)
 clf;
