@@ -172,6 +172,9 @@ end
 mask_halos = (magicPhase>CUT_INT);
 mask_bg = logical((mask_bg_-mask_halos)>0);
 
+mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig );
+
+
 % C2phase is the Principal curvature 2 of the image without negative values
 % it also enhances subcellular contrast. We subtract the magic threshold
 % to remove the variation in intesnity within a cell region.
