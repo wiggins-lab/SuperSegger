@@ -95,11 +95,7 @@ for regNum =  1 : data_c.regs.num_regs;
         oneToTwo = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 2 ;
         twoToOne = numel(rCellsFromC) == 2 &&  numel (cCellsFromR) == 1 ;
         oneToThree = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 3 ;
-        
-        if regNum == 27
-            disp('165');
-        end
-        
+                
         if numberMatch && assignmentMatch
             
             if zeroToOne % maps to 0 in the previous frame - stray
@@ -127,7 +123,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 
             elseif oneToOne
                 % one to one and agreement
-                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, hasError(data_c, regNum));
                 
                 
             elseif oneToTwo
@@ -253,7 +249,7 @@ for regNum =  1 : data_c.regs.num_regs;
             r_matches = rCellsFromC(ismember(rCellsFromC, rCellsTransp));
 
             if partialMatch && numel(c_matches) == 1 && numel(r_matches) == 1
-               [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, 0);
+               [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, hasError(data_c, c_matches));
                 modRegions = [modRegions;c_matches];
                 
                 
@@ -294,7 +290,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
             elseif oneToTwo && any([data_c.regs.map.r{cCellsFromR(cCellsFromR~=regNum)}] ~= rCellsFromC)
                 % regNum -> mother, mother maps to two, second does not map to mother. 
-                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, hasError(data_c, regNum));
                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                  
                  if debug_flag
@@ -457,7 +453,7 @@ resetRegions = 0;
 [~,minInd] = min (data_c.regs.dA.r(mapRC));
 keeper = mapRC(minInd);
 remove = mapRC(mapRC~=keeper);
-[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
+[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, hasError(data_c, keeper));
 data_c.regs.revmap.r{mapCR} = keeper;
 
 
@@ -479,4 +475,9 @@ else
     end
 end
 
+end
+
+function isError = hasError(data_c, regNum)
+    isError = 0; % FIX ME
+    %isError = data_c.regs.error.r(regNum) ~= 0 || data_c.regs.error.f(regNum) ~= 0;
 end

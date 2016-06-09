@@ -27,6 +27,9 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,star
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+USE_NEW_ERROR_REZ = 0;
+USE_LARGE_REGION_SPLITTING = 0;
+
 
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir();
@@ -141,7 +144,7 @@ while time <= numIm
     %Split any regions that have too much growth
     resetRegions = 1;
     madeChanges = 0;
-    if ~ignoreAreaError && ~isempty(data_r)
+    if USE_LARGE_REGION_SPLITTING && ~ignoreAreaError && ~isempty(data_r)
         [madeChanges, data_c, data_r] = splitAreaErrors(data_c, data_r, CONST, time, verbose);
         
         %Only split cells once
@@ -165,8 +168,12 @@ while time <= numIm
         previousMasks  {end+1} = data_c.mask_cell;
 
         % error resolution and id assignment
-        [data_c,data_r,cell_count,resetRegions] = errorRezNew (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
-    
+        if USE_NEW_ERROR_REZ
+            [data_c,data_r,cell_count,resetRegions] = errorRezNew (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
+        else
+            [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
+        end
+        
         curIter = curIter + 1;
     end
     
