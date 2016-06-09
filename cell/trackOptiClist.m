@@ -82,7 +82,7 @@ else
     index_ID= find(strcmp(tmpFields,'ID'));
     index_dlmaxOld = find(strcmp(tmpFields,'dlmax'));
     index_dlminOld = find(strcmp(tmpFields,'dlmin'));
-    
+    index_ehist = find(strcmp(tmpFields,'error_frame'));
     % loop through all the images (*err.mat files)
     for i = 1:num_im
         
@@ -106,14 +106,16 @@ else
         
         ci = and( ~birthID_flag, logical(ID));
         
-        ID_non_zero = ID(ID>0);
         IDlog = ID>0;
+        ID_non_zero = ID(IDlog);
    
-        lold     = nan(1,numel(ID));
-        lbirth   = nan(1,numel(ID));
+        lold = nan(1,numel(ID));
+        lbirth = nan(1,numel(ID));
         dlmaxOld = nan(1,numel(ID));
         dlminOld = nan(1,numel(ID));
+        error_frame = nan(1,numel(ID));
         
+        error_frame(IDlog) = clist_tmp(ID_non_zero,index_ehist);
         lold(IDlog) = clist_tmp(ID_non_zero,index_lold);
         lbirth(IDlog) = clist_tmp(ID_non_zero,index_lbirth);
         dlmaxOld(IDlog) = clist_tmp(ID_non_zero,index_dlmaxOld);
@@ -121,6 +123,10 @@ else
         
         regnum = (1:data_c.regs.num_regs)';
         zz = zeros( data_c.regs.num_regs, 1);
+        
+        ehist = data_c.regs.ehist;
+        set_error_this_frame = and( logical(ehist),isnan(error_frame) );
+        error_frame(set_error_this_frame) = i;
         
         cell_dist = drill(data_c.CellA,'.cell_dist');
         pole_age  = drill(data_c.CellA,'.pole.op_age');
@@ -192,7 +198,7 @@ else
         dlmax = nan(size(dl));
         
         indTmp = isnan(dlminOld);
-        dlmin( indTmp ) = dl( indTmp);
+        dlmin( indTmp ) = dl(indTmp);
         
         indTmp = isnan(dlmaxOld);
         dlmax( indTmp ) = dl( indTmp);
@@ -202,7 +208,7 @@ else
         dlmax( indTmp ) = dlmaxOld( indTmp);
         
         indTmp = ~isnan(dl+dlminOld);
-        dlmin( indTmp ) = min( [dl( indTmp);dlminOld( indTmp )]);
+        dlmin( indTmp ) = min( [dl(indTmp);dlminOld( indTmp )]);
         
         indTmp = ~isnan(dl+dlmaxOld);
         dlmax( indTmp ) = max( [dl( indTmp);dlmaxOld( indTmp )]);
@@ -224,7 +230,7 @@ else
                   
         % keeping from tmp only the cell that were just born
         try
-            clist_tmp(ID(birthID_flag), : )     = tmp(birthID_flag, :);
+            clist_tmp(ID(birthID_flag), : ) = tmp(birthID_flag, :);
             clist_3D(ID(ID_non_zero_flag), :, i ) = tmp(ID_non_zero_flag, clist3d_ind);
             
         catch ME
@@ -274,8 +280,8 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'Cell birth Time'},{'i + zz'},0,0;
     {'Cell Division Time'},{'i + zz'},1,0;
     {'Cell Age'},{'i - data_c.regs.birth'},1,0;
-    {'Cell Dist to edge'},{'cell_dist'},0,0;
     {'Old Pole Age'},{'pole_age'},0,0;
+    {'Error Frame'},{'error_frame'},1,0;
     {'stat0'},{'data_c.regs.stat0'},1,0;
     {'Long Axis'},{'data_c.regs.L1'},0,1;
     {'Long Axis death'},{'data_c.regs.L1'},1,0;
@@ -365,6 +371,7 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'long axis/short axis death'},{'longOverShort'},1,0;
     {'Neck Width'},{'neckWidth'},0,1;
     {'Maximum Width'},{'maxWidth'},0,1;
+    {'Cell Dist to edge'},{'cell_dist'},0,0;
     ];
 
 % used to add numbers in front of the description

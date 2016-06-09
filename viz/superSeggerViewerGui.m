@@ -310,20 +310,17 @@ else
         [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
             nn, handles.num_im, handles.clist, forcedFlags);
         showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
-        save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-        clist = handles.clist;
-        if ~isempty(clist)
-            save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+        try
+            save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
+            clist = handles.clist;
+            if ~isempty(clist)
+                save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+            end
+            find_cell_no(handles);
+        catch
+            disp('Error saving.' );
         end
-        find_cell_no(handles);
-    end
-    % messages
-    handles.message.String = '';
-    if handles.FLAGS.p_flag
-        handles.message.String = [handles.message.String,'| * : new poles, o : old poles |'];
-    end
-    if handles.FLAGS.P_flag
-        handles.message.String = [handles.message.String,'| Red outlines : dividing, Green : no birth or division observed, Turquoise : birth , Blue : both birth and division, Purple : errors |'];
+        
     end
     
     if handles.num_errs == 0
@@ -409,12 +406,13 @@ if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
     savename = sprintf('%s/%s',pathName,filename);
-    saveas(fh,(savename),'fig');
+    %saveas(fh,[(savename),'.fig'],'fig');
     print(fh,'-depsc',[(savename),'.eps'])
-    saveas(fh,(savename),'png');
+    saveas(fh,[(savename),'.png'],'png');
     handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
     close(fh);
 end
+
 
 function select_image_directory_ClickedCallback(hObject, eventdata, handles)
 folderName = uigetdir;
@@ -1125,37 +1123,59 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.handles.data_c)
-    errordlg('Press find segments first');
-end
-if ~isfield(settings.handles.data_c,'regs')
-    settings.handles.data_c = intMakeRegs( settings.handles.data_c, settings.handles.CONST, [], [] );
-end
-data = settings.handles.data_c;
-ss = size(data.phase);
-tmp = zeros([51,51]);
-tmp(26,26) = 1;
-tmp = 8000-double(bwdist(tmp));
-rmin = max([1,point(2)-25]);
-rmax = min([ss(1),point(2)+25]);
-cmin = max([1,point(1)-25]);
-cmax = min([ss(2),point(1)+25]);
-rrind = rmin:rmax;
-ccind = cmin:cmax;
-pointSize = [numel(rrind),numel(ccind)];
-tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
-[~,ind] = max( tmp(:) );
-[sub1, sub2] = ind2sub( pointSize, ind );
-ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
-hold on;
-plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-if ii ~=0
-    settings.id_list(end+1) = data.regs.ID(ii);
-    if strcmp(settings.function, 'exclude')
-        settings.handles.exclude_ids.String = num2str(settings.id_list);
-    else
-        settings.handles.include_ids.String = num2str(settings.id_list);
+if settings.handles.use_seg_files.Value == 1 
+    errordlg('Untick use regions');
+elseif ~isfield(settings.handles,'data_c')
+	errordlg('Reload frame first');
+else
+    data = settings.handles.data_c;
+    if ~isfield(data,'regs')
+        data = intMakeRegs( data, settings.handles.CONST, [], [] );
     end
+    ss = size(data.phase);
+    tmp = zeros([51,51]);
+    tmp(26,26) = 1;
+    tmp = 8000-double(bwdist(tmp));
+    rmin = max([1,point(2)-25]);
+    rmax = min([ss(1),point(2)+25]);
+    cmin = max([1,point(1)-25]);
+    cmax = min([ss(2),point(1)+25]);
+    rrind = rmin:rmax;
+    ccind = cmin:cmax;
+    pointSize = [numel(rrind),numel(ccind)];
+    tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
+    [~,ind] = max( tmp(:) );
+    [sub1, sub2] = ind2sub( pointSize, ind );
+    ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+    hold on;
+    plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+    if ii ~=0
+        if strcmp(settings.function, 'exclude')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.exclude_ids.String = num2str(settings.id_list);
+        elseif strcmp(settings.function, 'include')
+            settings.id_list(end+1) = data.regs.ID(ii);
+            settings.handles.include_ids.String = num2str(settings.id_list);
+        else
+            disp(data.CellA{ii});
+            updateImage(settings.hObject, settings.handles)
+            plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
+        end
+    end
+end
+
+function cell_info_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.hObject = hObject;
+    settings.handles = handles;
+    settings.function = 'cell_info';
+    settings.eventdata = eventdata;
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    updateImage(hObject, handles)
 end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
@@ -1193,3 +1213,37 @@ elseif state == get(hObject,'Min')
 end
 
 function save_output_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in lineage_clist.
+function lineage_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to lineage_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+min_width = 3;
+ids = str2num(handles.lineage_text.String);
+if (~ids)
+    ids = [];
+end
+makeLineage( handles.clist, ids, min_width );
+
+function lineage_text_Callback(hObject, eventdata, handles)
+% hObject    handle to lineage_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of lineage_text as text
+%        str2double(get(hObject,'String')) returns contents of lineage_text as a double
+ 
+
+% --- Executes during object creation, after setting all properties.
+function lineage_text_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to lineage_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -1,3 +1,4 @@
+
 function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header) 
 % trackOpti : calls the rest of the functions for segmentation
 % After each sub-function is called, is creates a file in the seg directory

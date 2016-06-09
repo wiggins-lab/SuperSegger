@@ -2,6 +2,35 @@
 
 
 %% error figure
+
+
+
+dirname = '/Users/Stella/Documents/MATLAB/phase/minlengnew_sml_reg_opy/xy1/seg/'
+files = dir([dirname,'*err.mat']);
+tmp_axis = [50  192 19 188];
+figure(1);
+clf;
+end_time = 136;
+time = 1:5:end_time;
+x = 7;
+num_time = numel(time)
+y = ceil(num_time/x);
+ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
+
+counter = 0;
+for i = time
+    counter = counter  + 1;     
+     data = load([dirname,files(i).name]);
+     axes(ha(counter));
+     showSegDataPhase(data)
+     axis( tmp_axis );
+     hold on;
+     text(tmp_axis(2) - 70,tmp_axis (4) - 15,[num2str(i), ' min'],'color','w') 
+end
+
+
+
+%% error figure
 % make segment mosaic
 
 dirname = '/Users/Stella/Documents/MATLAB/phase/minlengnew_sml_reg_opy/xy1/seg/'

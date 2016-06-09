@@ -1,5 +1,7 @@
 function showSegDataPhase( data, viewport )
 % showSegDataPhase : draws the outlines for the regions in the data file.
+% Displays in red the fixed segments, in orange the good/true segments
+% and in blue the bad/false segments.
 %
 % INPUT :
 %   data : data (seg.mat) file with permanent, good and bad segments

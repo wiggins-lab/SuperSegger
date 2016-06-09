@@ -102,7 +102,8 @@ for regNum =  1 : data_c.regs.num_regs;
         elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && all(data_r.regs.map.f{rCellsFromC} == regNum)
             % MAPS TO ONE AND AGREES
             % sets cell ID from mapped reg, updates death in data_r
-            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+            errorStat = (data_c.regs.error.r(regNum)>0);
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
             
         elseif numel(rCellsFromC) == 1 && numel(data_r.regs.map.f{rCellsFromC}) == 1 &&  numel (cCellsTransp) == 2
             %% regNum maps to mapCR, mapCR maps to two in current, but mapCR maps to one otherwise, but disagreement
@@ -172,7 +173,8 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
             elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
-                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, 0);
+                errorStat = (data_c.regs.error.r(regNum)>0);
+                [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
                 
             elseif  ~any(mapRC==regNum)
                 % ERROR NOT FIXED :  mapCR maps to mother. but mother maps to
@@ -310,23 +312,24 @@ end
 
 
 function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time, header, verbose)
-global SCORE_LIMIT_MOTHER
-global SCORE_LIMIT_DAUGHTER
+%global SCORE_LIMIT_MOTHER
+%global SCORE_LIMIT_DAUGHTER
 
 
-errorM  = (data_r.regs.scoreRaw(mother) < SCORE_LIMIT_MOTHER );
-errorD1 = (data_c.regs.scoreRaw(sister1) < SCORE_LIMIT_DAUGHTER);
-errorD2 = (data_c.regs.scoreRaw(sister2) < SCORE_LIMIT_DAUGHTER);
-
-% if debug_flag && ~data_c.regs.ID(sister1)
-%     figure(1);
-%     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
-%     keyboard;
-% end
-
-if ~(errorM || errorD1 || errorD2)
+% errorM  = (data_r.regs.scoreRaw(mother) < SCORE_LIMIT_MOTHER );
+% errorD1 = (data_c.regs.scoreRaw(sister1) < SCORE_LIMIT_DAUGHTER);
+% errorD2 = (data_c.regs.scoreRaw(sister2) < SCORE_LIMIT_DAUGHTER);
+% 
+% % if debug_flag && ~data_c.regs.ID(sister1)
+% %     figure(1);
+% %     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
+% %     keyboard;
+% % end
+% 
+% if ~(errorM || errorD1 || errorD2)
     % good scores for mother and daughters
     % sets ehist to 0 (no error) and stat0 to 1 (successful division)
+    
     data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
         ', reg: ', num2str(sister1),' and ', num2str(sister2),' . good cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
         num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
@@ -340,29 +343,29 @@ if ~(errorM || errorD1 || errorD2)
     [data_c, data_r, cell_count] = markDivisionEvent( ...
         data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
     
-else
-    % bad scores for mother or daughters
-    % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
-    errorStat = 1;
-    %data_c.regs.error.r(sister1) = 1;
-    data_r.regs.error.r(mother) = 0;
-    data_c.regs.error.r(sister1) = 0;
-    data_c.regs.error.r(sister2) = 0;
-    
-    data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),' and ', num2str(sister2),...
-        '. 1 -> 2 mapping  from mother reg', num2str(mother),', but not good cell [sm,sd1,sd2,slim] = [',...
-        num2str(data_r.regs.scoreRaw(mother),2),', ',...
-        num2str(data_c.regs.scoreRaw(sister1),2),', ',...
-        num2str(data_c.regs.scoreRaw(sister2),2)]);
-    
-    if verbose
-        disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
-    end
-    [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
-    
-end
+% else
+%     % bad scores for mother or daughters
+%     % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
+%     errorStat = 1;
+%     %data_c.regs.error.r(sister1) = 1;
+%     data_r.regs.error.r(mother) = 0;
+%     data_c.regs.error.r(sister1) = 0;
+%     data_c.regs.error.r(sister2) = 0;
+%     
+%     data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
+%         ', reg: ', num2str(sister1),' and ', num2str(sister2),...
+%         '. 1 -> 2 mapping  from mother reg', num2str(mother),', but not good cell [sm,sd1,sd2,slim] = [',...
+%         num2str(data_r.regs.scoreRaw(mother),2),', ',...
+%         num2str(data_c.regs.scoreRaw(sister1),2),', ',...
+%         num2str(data_c.regs.scoreRaw(sister2),2)]);
+%     
+%     if verbose
+%         disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
+%     end
+%     [data_c, data_r, cell_count] = markDivisionEvent( ...
+%         data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
+%     
+% end
 end
 
 
@@ -412,7 +415,8 @@ resetRegions = 0;
 [~,minInd] = min (data_c.regs.dA.r(mapRC));
 keeper = mapRC(minInd);
 remove = mapRC(mapRC~=keeper);
-[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, 0);
+errorStat = (data_c.regs.error.r(keeper)>0);
+[data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, errorStat);
 data_c.regs.revmap.r{mapCR} = keeper;
 
 

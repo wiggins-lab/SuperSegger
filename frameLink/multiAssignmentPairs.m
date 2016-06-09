@@ -279,12 +279,11 @@ if ~isempty(data_c)
         assignedInC = [];
         assignedInF = [];
         costMat= totCost;
-        maxVal = max(totCost(:));
-        costMat = maxVal-costMat;
-        costMat (isnan(costMat)) = 0;
+ 
+        flagger = ~isnan(costMat);
         
-        while sum(costMat(:))>0
-            [~,ind] = max(costMat(:));
+        while any( flagger(:)) >0
+            [~,ind] = min(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
             assignTemp = allF(:,asgnCol)';
             assignTemp = assignTemp (~isnan(assignTemp));
@@ -298,8 +297,11 @@ if ~isempty(data_c)
             % find all columns to be set as nans
             colToDelF = any(ismember(allF,assignTemp));
             colToDelC = any(ismember(allC,regionsInC));
-            costMat (colToDelC, :) = 0; % add nans to already assigned
-            costMat (:, colToDelF) = 0; % add nans to already assigned
+            costMat (colToDelC, :) = NaN; % add nans to already assigned
+            costMat (:, colToDelF) = NaN; % add nans to already assigned
+
+            flagger(colToDelC, :) = 0;
+            flagger(:, colToDelF) = 0;
         end
         
                

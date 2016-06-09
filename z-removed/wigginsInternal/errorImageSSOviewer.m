@@ -1,4 +1,4 @@
-function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
+function im = errorImageSSOviewer( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
 % showSeggerImage : produces the superSeggerViewer image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
@@ -69,7 +69,7 @@ FLAGS.axis = axis;
 
 if ~exist('gui_fig','var') || isempty(gui_fig)
     gui_fig = [];
-    clf;
+    %clf;
 end
 
 % fix are any missing flags
@@ -126,22 +126,22 @@ else
 end
 hold on;
 
-
-b = gca; legend(b,'off');
-if FLAGS.P_flag
-        hold on;
-        light_blue = [20 97 199]/255;
-        cyan = [36 113 125]/255;
-        green = [18 95 63]/255;
-        purple = [105 60 106]/255;
-        ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
-        ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
-        ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
-        ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
-        ha(5) = plot(1,1,'-r','visible', 'off');
-        legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
-
-end
+% 
+% b = gca; legend(b,'off');
+% if FLAGS.P_flag
+%         hold on;
+%         light_blue = [20 97 199]/255;
+%         cyan = [36 113 125]/255;
+%         green = [18 95 63]/255;
+%         purple = [105 60 106]/255;
+%         ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
+%         ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
+%         ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
+%         ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
+%         ha(5) = plot(1,1,'-r','visible', 'off');
+%         legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
+% 
+% end
 
 % Displays linking information
 if FLAGS.showLinks
@@ -389,7 +389,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         % outline the ones that were just born with stat0 == 2
         map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
-        map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
+        map_stat0_2_Outline = 0*intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
         
         
         % in list, cell was not born in this frame with good division or divided
@@ -399,7 +399,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         % outline the ones that were just born with stat0 == 1
         map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
-        map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
+        map_stat0_1_Outline =0* intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
         
         
         % in list, cell was not born in this frame with good division or divided
@@ -409,7 +409,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         % outline the ones that were just born with stat0 == 1
         map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
-        map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
+        map_stat0_0_Outline = 0*intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
         
         
         redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_ehist_noErRev)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
@@ -532,11 +532,11 @@ text( xpos_id, ypos_id,str_id,...
     'FontWeight', 'Bold',...
     'HorizontalAlignment','Center',...
     'VerticalAlignment','Middle');
-if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
-    title('Cell ID');
-else
-    title('Region Number');
-end
+% if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
+%     title('Cell ID');
+% else
+%     title('Region Number');
+% end
 end
 
 function intPlotSpot( data, x_, y_, FLAGS, ID_LIST, CONST )
