@@ -91,7 +91,7 @@ CONST.trackOpti.NEIGHBOR_FLAG = 0; % finds cell neighbors
 % trackOpti : linking constants
 CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
 CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
-CONST.trackOpti.DA_MIN = -0.1; % minimum area change in linking from r->c
+CONST.trackOpti.DA_MIN = -0.15; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
 CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
