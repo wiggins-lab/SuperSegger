@@ -35,7 +35,6 @@ function [data_c, data_r] = continueCellLine( data_c, regNumC, data_r,...
 
 % set the death/deathF to current time. They are reset when cell is
 % visited again.
-
 if ~any (data_c.regs.ID == data_r.regs.ID(regNumR))
     data_c.regs.death(regNumC) = time; % Death/divide time
     data_c.regs.deathF(regNumC) = 1; % 1 if cell dies in this frame

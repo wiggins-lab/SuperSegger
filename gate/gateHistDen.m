@@ -45,7 +45,7 @@ else
     xx = start:dx:stop;
 end
 
-if ~exist( 'cc', 'var' );
+if ~exist( 'cc', 'var' ) || isempty(cc)
     cc = 'b';
 end
 

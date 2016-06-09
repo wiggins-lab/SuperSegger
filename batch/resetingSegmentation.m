@@ -103,7 +103,7 @@ for i = 1 : numel(xydirs)
     intDeleteFile (removeOptiMakeCell, [dirname_seg,'.trackOptiMakeCell-Step5.mat']);
     intDeleteFile (removeOptiFindFoci, [dirname_seg,'.trackOptiFindFoci-Step6.mat']);
     intDeleteFile (removeOptiClist, [dirname_seg,'.trackOptiClist-Step7.mat']);
-    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiMakeCell-Step8.mat']);
+    intDeleteFile (removeOptiCellFiles, [dirname_seg,'.trackOptiCellFiles-Step8.mat']);
      if removeOptiCellFiles
         delete([dirname_cell,'*ell*.mat']);
     end
