@@ -191,7 +191,11 @@ if nargin<2 || isempty(file_filter);
 end
 
 if ~exist(dirSave, 'dir')
-    mkdir(dirSave);
+    try
+        mkdir(dirSave);
+    catch
+        disp( 'Cant write.' );
+    end
 else
     if exist([dirSave, 'dataImArray.mat'], 'file')
         load([dirSave, 'dataImArray'],'dataImArray');

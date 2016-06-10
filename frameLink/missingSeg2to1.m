@@ -73,7 +73,7 @@ end
 % add the long axis thing as a constant..
 % if this thing are not true don't even try to segment this again.
 % or size of cell too small to be divided..
-if numel(segs_list) == 0  || (longAxis < 30 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
+if numel(segs_list) == 0  || (longAxis < CONST.regionOpti.MIN_LENGTH * 1.5 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
     return
 end
 if debug_flag
