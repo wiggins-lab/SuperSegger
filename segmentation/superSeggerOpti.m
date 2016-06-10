@@ -157,16 +157,16 @@ phaseNormFilt = ag(phaseNormFilt);
 magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
 %phase_mg = double(uint16(magicPhase_-MAGIC_THRESHOLD));
 
-% % this is to remove small object - it keeps only objects with bright halos
-filled_halos = fillHolesAround(magicPhase,CONST,crop_box);
-
-% make sure that not too much was discarded
-if sum(phaseNormFilt(:)>0) < 1.5 * sum(filled_halos(:))
-    if verbose
-        disp('keeping only objects with bright halos');
-    end
-    mask_bg_ = filled_halos & mask_bg_;
-end
+% % % this is to remove small object - it keeps only objects with bright halos
+% filled_halos = fillHolesAround(magicPhase,CONST,crop_box);
+% 
+% % make sure that not too much was discarded
+% if sum(phaseNormFilt(:)>0) < 1.5 * sum(filled_halos(:))
+%     if verbose
+%         disp('keeping only objects with bright halos');
+%     end
+%     mask_bg_ = filled_halos & mask_bg_;
+% end
 
 % remove bright halos from the mask
 mask_halos = (magicPhase>CUT_INT);

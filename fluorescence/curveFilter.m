@@ -35,7 +35,8 @@ function [M_, G_, C1_, C2_, M, G, C1, C2] = curveFilter( im, filterWidth )
 im = double(im);
 
 % Make filter 
-x = -10:10;
+x = -floor(7*filterWidth):floor(7*filterWidth);
+%x = -10:10;
 [X,Y] = meshgrid( x, x);
 R2 = X.^2+Y.^2;
 

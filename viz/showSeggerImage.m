@@ -255,7 +255,7 @@ end
 
 
 % this code highlights the lysed cells
-if isfield( data.regs, 'lyse' ) && FLAGS.lyse_flag
+if isfield( data, 'regs' ) && isfield( data.regs, 'lyse' ) && FLAGS.lyse_flag
     is_lyse = and( or( data.regs.lyse.errorColor1bCum, ...
         data.regs.lyse.errorColor2bCum), data.regs.lyse.errorShapeCum);
     lyse_im = intDoOutline2(ismember( ...

@@ -117,7 +117,6 @@ for regNum =  1 : data_c.regs.num_regs;
                 % red in c maps to blue in r, blue in r maps to green in c
                 imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==sister1),...
                     ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
-                keyboard;
             end
             
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
@@ -203,7 +202,6 @@ for regNum =  1 : data_c.regs.num_regs;
                     imshow(cat(3,0.5*ag(data_c.phase) + 0.5*ag(data_c.regs.regs_label==regNum), ...
                         ag((data_c.regs.regs_label == mapRC(1)) + ...
                         (data_c.regs.regs_label==mapRC(2))),ag(data_r.regs.regs_label==mother)));
-                    keyboard;
                 end
             else
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
@@ -226,7 +224,6 @@ for regNum =  1 : data_c.regs.num_regs;
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==rCellsFromC(1)) + (data_r.regs.regs_label==rCellsFromC(2)))));
-                keyboard;
             end
             
             
@@ -248,7 +245,6 @@ for regNum =  1 : data_c.regs.num_regs;
                     imshow(cat(3,ag(data_c.regs.regs_label == regNum)+0.5*ag(data_c.phase),...
                         ag(data_r.regs.regs_label == rCellsFromC(1)),...
                         ag(data_r.regs.regs_label == rCellsFromC(2))));
-                    keyboard;
                 end
                 resetRegions = true;
             else
@@ -264,7 +260,7 @@ for regNum =  1 : data_c.regs.num_regs;
             end
             if debug_flag
                 intDisplay (data_r,rCellsFromC,data_c,regNum);
-                keyboard;
+
             end
             
         end

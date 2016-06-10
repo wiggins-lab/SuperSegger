@@ -22,10 +22,15 @@ ind_er = unique(label_er(:));
 
 kill_l = ind_bg(~ismember( ind_bg, ind_er));
 
+[M,K,L1,L2] = curveFilter( -double(phase), 3 );
+props = regionprops( label_er, double(L2), 'MeanIntensity' );
+vals = [props.MeanIntensity];
+
 
 props = regionprops( label_er, double(phase), 'MeanIntensity' );
+vals0 = [props.MeanIntensity];
 
-vals = [props.MeanIntensity];
+
 mean_noncell = mean( phase( ~mask_bg ));
 mean_cell    = mean( phase( mask_bg ));
 
