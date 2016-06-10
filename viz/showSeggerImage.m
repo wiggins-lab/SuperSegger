@@ -128,19 +128,19 @@ hold on;
 
 
 b = gca; legend(b,'off');
-if FLAGS.P_flag
-        hold on;
-        light_blue = [20 97 199]/255;
-        cyan = [36 113 125]/255;
-        green = [18 95 63]/255;
-        purple = [105 60 106]/255;
-        ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
-        ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
-        ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
-        ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
-        ha(5) = plot(1,1,'-r','visible', 'off');
-        legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
-
+if FLAGS.P_flag && FLAGS.legend
+    hold on;
+    light_blue = [20 97 199]/255;
+    cyan = [36 113 125]/255;
+    green = [18 95 63]/255;
+    purple = [105 60 106]/255;
+    ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
+    ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
+    ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
+    ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
+    ha(5) = plot(1,1,'-r','visible', 'off');
+    legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
+    
 end
 
 % Displays linking information
@@ -161,7 +161,7 @@ end
 
 
 
-    
+
     function doAnnotation( data_, x_, y_ )
         % doAnnotation : annotates spots, cell numbers and poles
         if ~isempty(data_)
@@ -558,7 +558,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
     locus2_y = [];
     for kk = 1:data.regs.num_regs
         % only plot spots in the cell that are gated.
-        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))            
+        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
             % locus 1
             if isfield( data.CellA{kk}, 'locus1') &&  ( FLAGS.f_flag == 1 );
                 num_spot = numel( data.CellA{kk}.locus1);
@@ -575,7 +575,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                             counter1 = counter1 + 1;
                             locus_1_txt{end+1} = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
                             locus1_x = [locus1_x;xpos];
-                            locus1_y = [locus1_y;ypos];                  
+                            locus1_y = [locus1_y;ypos];
                         end
                     end
                 end
@@ -588,16 +588,16 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
                 while mm < num_spot && counter2 < maxCounter2
                     mm = mm + 1;
                     r = data.CellA{kk}.locus2(mm).r;
-                       if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
+                    if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
                             data.CellA{kk}.locus2(mm).b < 3
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)                     
+                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
                             counter2 = counter2 + 1;
-                            locus_2_txt{end+1} = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];        
+                            locus_2_txt{end+1} = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];
                             locus2_x = [locus2_x;xpos];
-                            locus2_y = [locus2_y;ypos];                  
+                            locus2_y = [locus2_y;ypos];
                         end
                     end
                 end
@@ -605,10 +605,10 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
         end
     end
     
-      
+    
     text( locus2_x+1, locus2_y, locus_2_txt, 'Color', [1,0.5,0.5]);
     plot( locus2_x, locus2_y, '.', 'Color', [1,0.5,0.5]);
-      
+    
     text( locus1_x+1, locus1_y, locus_1_txt, 'Color', [0.5,1,0.5]);
     plot( locus1_x, locus1_y, '.', 'Color', [0.5,1,0.5]);
     
@@ -801,7 +801,9 @@ else
             end
         end
     end
-   legend([p_old,p_new,line],{'Old Pole', 'New pole','Sisters'},'location','BestOutside');
+    if FLAGS.legend
+        legend([p_old,p_new,line],{'Old Pole', 'New pole','Sisters'},'location','BestOutside');
+    end
 end
 end
 
@@ -857,52 +859,57 @@ function FLAGS = intFixFlags( FLAGS )
 % m_flag
 % c_flag
 
+if ~isfield(FLAGS, 'legend');
+    disp('there is no flag field legend');
+    FLAGS.legend = 1;
+end
+
 if ~isfield(FLAGS, 'Outline_flag');
-    disp('there is no field Outline_flag');
+    disp('there is no flag field Outline_flag');
     FLAGS.Outline_flag = 0;
 end
 if ~isfield(FLAGS, 'ID_flag');
-    disp('there is no field ID_flag');
+    disp('there is no flag field ID_flag');
     FLAGS.ID_flag = 1;
 end
 
 if ~isfield(FLAGS, 'lyse_flag');
-    disp('there is no field lyse_flag')
+    disp('there is no flag field lyse_flag')
     FLAGS.lyse_flag = 0;
 end
 
 if ~isfield(FLAGS,'m_flag');
-    disp('there is no field m_flag')
+    disp('there is no flag field m_flag')
     FLAGS.m_flag = 0;
 end
 
 if ~isfield(FLAGS, 'c_flag');
-    disp('there is no field c_flag')
+    disp('there is no flag field c_flag')
     FLAGS.c_flag = 0;
 end
 
 if ~isfield(FLAGS, 'P_flag');
-    disp('there is no field P_flag')
+    disp('there is no flag field P_flag')
     FLAGS.P_flag = 1;
 end
 
 if ~isfield(FLAGS, 'cell_flag' );
-    disp('there is no field cell_flag')
+    disp('there is no flag field cell_flag')
     FLAGS.cell_flag = 0;
 end
 
 if ~isfield(FLAGS, 'f_flag');
-    disp('there is no field f_flag')
+    disp('there is no flag field f_flag')
     FLAGS.f_flag = 0;
 end
 
 if ~isfield(FLAGS, 's_flag');
-    disp('there is no field s_flag')
+    disp('there is no flag field s_flag')
     FLAGS.s_flag = 0;
 end
 
 if ~isfield(FLAGS, 'T_flag');
-    disp('there is no field T_flag')
+    disp('there is no flag field T_flag')
     FLAGS.T_flag = 0;
 end
 

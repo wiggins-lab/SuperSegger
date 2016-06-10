@@ -45,6 +45,7 @@ gated  = clist_.data(:,1);
 
 
 if isempty(clist) 
+    disp ('No clist found');
     return;
 end
 

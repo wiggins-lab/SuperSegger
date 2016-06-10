@@ -191,11 +191,7 @@ if nargin<2 || isempty(file_filter);
 end
 
 if ~exist(dirSave, 'dir')
-    try
-        mkdir(dirSave);
-    catch
-        disp( 'Cant write.' );
-    end
+    mkdir(dirSave);
 else
     if exist([dirSave, 'dataImArray.mat'], 'file')
         load([dirSave, 'dataImArray'],'dataImArray');
@@ -208,6 +204,7 @@ FLAGS.cell_flag = 1; %This is handled by useSegs now
 handles.channel.String = num2str(FLAGS.f_flag);
 handles.cell_numbers.Value = FLAGS.ID_flag;
 handles.cell_poles.Value = FLAGS.p_flag;
+handles.legend_box.Value = FLAGS.legend;
 handles.outline_cells.Value = FLAGS.Outline_flag;
 handles.fluor_foci_scores.Value = FLAGS.s_flag;
 handles.filtered_fluorescence.Value = FLAGS.filt;
@@ -970,6 +967,7 @@ end
 
 
 function show_movie_Callback(hObject, eventdata, handles)
+%makes field movie
 if ~isempty(handles.FLAGS)
     clear mov;
     mov.cdata = [];
@@ -1243,6 +1241,94 @@ function lineage_text_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function lineage_text_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to lineage_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in field_mosaic.
+function field_mosaic_Callback(hObject, eventdata, handles)
+% hObject    handle to field_mosaic (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isempty(handles.FLAGS)
+    clear mov;
+    mov.cdata = [];
+    mov.colormap = [];
+    delete(get(handles.axes1, 'Children'))
+    skip = str2double(handles.skip_film_mosaic.String);
+    if skip == 0
+        skip = 1;
+    end
+
+    counter = 0;
+    for ii = 1:skip:handles.num_im
+        counter = counter  + 1;   
+        [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
+            handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
+        showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+        drawnow;
+        mov(counter) = getframe;
+        handles.message.String = ['Frame number: ', num2str(ii)];
+    end
+   disp ('Mosaic loaded');
+   
+   
+figure(1);
+clf;
+time = 1:skip:handles.num_im
+num_time = numel(time)
+x = 6;
+y = round(num_time/x);
+ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
+ss = size(mov(1).cdata);
+counter = 0;
+ for ii = 1:skip:handles.num_im
+    counter = counter  + 1;     
+    axes(ha(counter));
+    imshow(mov(counter).cdata);   
+    hold on;
+    text( 30,30,[num2str(ii)],'color','b') 
+end
+   
+   
+   
+end
+
+
+
+
+% --- Executes on button press in legend_box.
+function legend_box_Callback(hObject, eventdata, handles)
+% hObject    handle to legend_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of legend_box
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.legend = handles.legend_box.Value;
+    updateImage(hObject, handles)
+end
+
+
+function skip_film_mosaic_Callback(hObject, eventdata, handles)
+% hObject    handle to skip_film_mosaic (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of skip_film_mosaic as text
+%        str2double(get(hObject,'String')) returns contents of skip_film_mosaic as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function skip_film_mosaic_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to skip_film_mosaic (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
