@@ -155,6 +155,7 @@ end
 % Minimum constrast filter to enhance inter-cellular image contrast
 phaseNormFilt = ag(phaseNormFilt);
 magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
+
 %phase_mg = double(uint16(magicPhase_-MAGIC_THRESHOLD));
 
 % % % this is to remove small object - it keeps only objects with bright halos
