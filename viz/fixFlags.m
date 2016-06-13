@@ -24,79 +24,115 @@ function FLAGS = fixFlags(FLAGS)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
+% displays legend for regions/ poles
 if ~isfield(FLAGS,'legend')
     FLAGS.legend = 1;
 end
-if ~isfield(FLAGS,'lyse_flag')
-    FLAGS.lyse_flag  = 0;
-end
+
+
+% displays cell numbers instead of region numbers
 if ~isfield(FLAGS,'cell_flag')
     FLAGS.cell_flag  = 1;
 end
+
 if ~isfield(FLAGS,'m_flag')
     FLAGS.m_flag  = 0;
 end
+
+% displays cell ids/regions ids
 if ~isfield(FLAGS,'ID_flag')
     FLAGS.ID_flag  = 0;
 end
+
+% tight - does not allow modification of segments
 if ~isfield(FLAGS,'T_flag')
     FLAGS.T_flag  = 0;
 end
+
+% shows region fills
 if ~isfield(FLAGS,'P_flag')
     FLAGS.P_flag  = 0;
 end
+
+% shows region outlines
 if ~isfield(FLAGS,'Outline_flag')
     FLAGS.Outline_flag  = 1;
 end
+
+% shows errors
 if ~isfield(FLAGS,'e_flag')
     FLAGS.e_flag  = 0;
 end
+
+% shows fluorescence channel given in f_flag 
 if ~isfield(FLAGS,'f_flag')
     FLAGS.f_flag  = 0;
 end
+
+% shows composite image of all fluor channels found
+if ~isfield(FLAGS,'composite')
+    FLAGS.composite  = 0;
+end
+
+% shows poles
 if ~isfield(FLAGS,'p_flag')
     FLAGS.p_flag  = 0;
 end
+
+% shows foci scores
 if ~isfield(FLAGS,'s_flag')
     FLAGS.s_flag  = 1;
 end
+
+
 if ~isfield(FLAGS,'c_flag')
     FLAGS.c_flag  = 1;
 end
-if ~isfield(FLAGS,'P_val')
-    FLAGS.P_val = 0.2;
-end
+
+
+% shows filtered fluorescence
 if ~isfield(FLAGS,'filt')
     FLAGS.filt = 1;
 end
 
-
+% shows phase image or mask if it is 0
 if ~isfield(FLAGS, 'phase_flag');
     FLAGS.phase_flag = 1;
 end
 
+% modifies the transparency of the phase/mask - use as double from 0 - 1
 if ~isfield(FLAGS, 'phase_level');
     FLAGS.phase_level = 1;
 end
 
-
+% not used
 if ~isfield(FLAGS,'lyse_flag')
     FLAGS.lyse_flag = 0;
 end
 
+% shows regions scores
 if ~isfield(FLAGS,'regionScores')
     FLAGS.regionScores = 0;
 end
 
+% uses seg files 
 if ~isfield(FLAGS,'useSegs')
     FLAGS.useSegs = 0;
 end
+
+% shows linking from frame to frame 
 if ~isfield(FLAGS,'showLinks')
     FLAGS.showLinks = 0;
 end
+
+% shows linking with mothers
 if ~isfield(FLAGS,'showMothers')
     FLAGS.showMothers = 0;
 end
+
+% shows linking with daughters
 if ~isfield(FLAGS,'showDaughters')
     FLAGS.showDaughters = 0;
+end
+
 end

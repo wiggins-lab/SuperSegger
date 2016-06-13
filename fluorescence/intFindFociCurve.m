@@ -59,12 +59,12 @@ normalizedImage = normalizedImage - 1;
 normalizedImage(normalizedImage < 0) = 0; % logical mask of foci found
 
 filter_width = 1.5;
-[~,~,flourFiltered] = curveFilter(normalizedImage,filter_width);
-data.(['flour',num2str(channelID),'_filtered']) = flourFiltered;
+[~,~,fluorFiltered] = curveFilter(normalizedImage,filter_width);
+data.(['fluor',num2str(channelID),'_filtered']) = fluorFiltered;
 
 mask_mod = bwmorph (data.mask_bg, 'dilate', 1);
 
-fociWatershed = watershed(-flourFiltered); % watershed to identify foci
+fociWatershed = watershed(-fluorFiltered); % watershed to identify foci
 maskedFociWatershed = logical(double(fociWatershed).*double(mask_mod));
 
 fociRegionLabels = bwlabel(maskedFociWatershed);
@@ -97,7 +97,7 @@ for ii = 1:numFociRegions
     [meshX,meshY] = meshgrid(xPad, yPad);
     
     maskToFit = (fociRegionLabels(yPad, xPad) == ii); % foci region
-    imageToFit  = flourFiltered(yPad, xPad);  % filtered image 
+    imageToFit  = fluorFiltered(yPad, xPad);  % filtered image 
     imageToFit = imageToFit .* double(maskToFit);
     
     [~, maxIndex] = max(imageToFit(maskToFit));
@@ -135,7 +135,7 @@ for ii = 1:numFociRegions
         if tempData.intensity >0
             %Initialize parameters
             backgroundIntensity = 0;
-            gaussianIntensity = flourFiltered(fociY, fociX) - backgroundIntensity;
+            gaussianIntensity = fluorFiltered(fociY, fociX) - backgroundIntensity;
             sigmaValue = 1;
 
             parameters(1) = fociX;
@@ -230,7 +230,7 @@ for ii = 1:data.regs.num_regs
     % creates a filtered image of the cell
     xPad = data.CellA{ii}.xx;
     yPad = data.CellA{ii}.yy;
-    data.CellA{ii}.(['fluor',num2str(channelID),'_filtered'])=flourFiltered( yPad, xPad );
+    data.CellA{ii}.(['fluor',num2str(channelID),'_filtered'])=fluorFiltered( yPad, xPad );
 end
 
     function error = doFit(parameters)

@@ -131,7 +131,9 @@ CONST.getLocusTracks.TimeStep         = 1; % used for time axis when towers and 
 CONST.view.showFullCellCycleOnly = false; % only uses full cell cycle for analysis tools
 CONST.view.orientFlag = true; % to orient the cells along the horizontal axis for the analysis tools
 CONST.view.falseColorFlag = false;
+CONST.view.fluorColor = {'g','r','b','c','o','y'}; % order of channel colors to be used for display
 CONST.view.LogView = false;
+CONST.view.filtered = 1;
 CONST.view.maxNumCell = []; % maximum number of cells used for analysis tools
 
 

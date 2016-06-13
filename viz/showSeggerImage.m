@@ -10,22 +10,10 @@ function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fi
 %         data : current frame data (*err usually data)
 %         data_r : reverse frame data
 %         data_f : forward frame data
-%         FLAGS : see below
+%         FLAGS : controls what is displays, for more information look at fixFlags
 %         clist : list of cell files, could have a gate field.
 %         CONST : segmentation constants
 %
-%   FLAGS :
-%         P_Flag : shows regions
-%         ID_flag : shows the cell numbers
-%         lyse_flag : outlines cell that lysed
-%         m_flag : shows mask
-%         c_flag : ? does absolutely nothing
-%         v_flag : shows cells outlines
-%         f_flag : shows flurescence image
-%         s_flag : shows the foci and their score
-%         T_flag : tight flag, locks it so that regions/links can not be edited.
-%         p_flag : shows pole positions and connects daughter cells to each other
-%         regionScores : shows scores of regions
 %
 % OUTPUT :
 %         im : trackOptiView outlined image
@@ -130,25 +118,25 @@ hold on;
 b = gca; legend(b,'off');
 
 if FLAGS.P_flag && FLAGS.legend
-        hold on;
-        light_blue = [20 97 199]/255;
-        cyan = [36 113 125]/255;
-        green = [18 95 63]/255;
-        purple = [105 60 106]/255; 
-        ha(1) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green);
-        ha(2) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan);
-        ha(3) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue);
-        ha(4) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple);
-        ha(5) = plot(nan,nan,'-r');
-        
-        hhh = legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},...
-            'Location','NorthEast',...
-            ... %'BestOutside',
-            'Orientation','vertical');
-       set( hhh, 'EdgeColor', [ 0,   0,   0],...
-                 'Color',     [ 0.8, 0.8, 0.8],...
-                 'TextColor', [ 0,   0,   0] ); 
-        
+    hold on;
+    light_blue = [20 97 199]/255;
+    cyan = [36 113 125]/255;
+    green = [18 95 63]/255;
+    purple = [105 60 106]/255;
+    ha(1) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green);
+    ha(2) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan);
+    ha(3) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue);
+    ha(4) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple);
+    ha(5) = plot(nan,nan,'-r');
+    
+    hhh = legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},...
+        'Location','NorthEast',...
+        ... %'BestOutside',
+        'Orientation','vertical');
+    set( hhh, 'EdgeColor', [ 0,   0,   0],...
+        'Color',     [ 0.8, 0.8, 0.8],...
+        'TextColor', [ 0,   0,   0] );
+    
 end
 
 % Displays linking information
@@ -272,76 +260,17 @@ else
 end
 
 
-% if you are in fluorescence mode (f_flag ==true) then just draw the fluor
-% channels but not the regions.
-if FLAGS.f_flag > 0
-    
-    % make the background subtracted fluor
-    if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
-        if FLAGS.filt && isfield( data, 'flour1_filtered' )
-            fluor1 =  data.flour1_filtered;
-        else
-            fluor1 = data.fluor1;
-            if isfield( data, 'fl1bg' )
-                fluor1 = fluor1 - data.fl1bg;
-                fluor1( fluor1< 0 ) = 0;
-            else
-                fluor1 = fluor1-mean(fluor1(:));
-                fluor1( fluor1< 0 ) = 0;
-            end
-        end
-    else
-        fluor1 = 0*data.phase;
-    end
-    
-    if isfield( data, 'fluor2' )  && ( FLAGS.f_flag == 2 );
-        if FLAGS.filt && isfield( data, 'flour2_filtered' )
-            fluor2 =  data.flour2_filtered;
-        else
-            fluor2 = data.fluor2;
-            if isfield( data, 'fl2bg' )
-                fluor2 = fluor2 - data.fl2bg;
-                fluor2( fluor2< 0 ) = 0;
-            else
-                fluor2 = fluor2-mean(fluor2(:));
-                fluor2( fluor2< 0 ) = 0;
-            end
-        end
-    else
-        fluor2 = 0*data.phase;
-    end
-    
-    if isfield( CONST.view, 'LogView' ) && CONST.view.LogView
-        fluor1 =   ag( double(fluor1).^.6 );
-        fluor2 =   ag( double(fluor2).^.6 );
-    end
-    
-    if isfield( data, 'fluor1')
-        minner = medfilt2( fluor1, [2,2], 'symmetric' );
-        maxxer = max( minner(:));
-        minner = min( minner(:));
-        if CONST.view.falseColorFlag
-            im = doColorMap( ag(fluor1,minner,maxxer), uint8(255*jet(256)) );
-        else
-            im(:,:,2) = 0.8*ag(fluor1,minner,maxxer) + im(:,:,2);
-        end
-    end
-    
-    if isfield( data, 'fluor2' )
-        if FLAGS.filt && isfield( data, 'flour2_filtered' )
-            fluor2 =  data.flour2_filtered;
-        end
-        im(:,:,1) = im(:,:,1) + 0.8*ag( fluor2 );
-    end
-    
-    % add the lysis outline to the fluor image.
-    im(:,:,1) = 255*uint8(lyse_im) + im(:,:,1);
-    im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
-    im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
-    
-    data.mask_cell
-    
 
+% if you are in fluorescence mode (f_flag) draw the fluor channels
+if FLAGS.composite
+    nc = numel(find(~cellfun('isempty',strfind(fieldnames(data),'fluor'))));
+    
+    for i = 1 : nc
+        im = updateFluorImage(data, im, i, FLAGS, CONST);
+    end
+    
+elseif FLAGS.f_flag > 0
+    im = updateFluorImage(data, im, FLAGS.f_flag, FLAGS, CONST);
 end
 
 if FLAGS.Outline_flag  % it just outlines the cells
@@ -426,21 +355,8 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
         
-        %im = im*0;
-        
         im = reg_color + im;
         
-        %tmp1 = im(:,:,1);
-        %tmp1(~data.mask_cell) = 255;
-    
-        %tmp2 = im(:,:,2);
-        %tmp2(~data.mask_cell) = 255;
- 
-        %tmp3 = im(:,:,3);
-        %tmp3(~data.mask_cell) = 255;
-      
-        %im = cat( 3, tmp1, tmp2, tmp3);
-    
     end
     %% colors :
     % baby-blue : no errors, stat0=2 cells
@@ -452,6 +368,54 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
 end
 
+end
+
+
+function im = updateFluorImage(data, im, channel, FLAGS, CONST)
+
+fluorName =  ['fluor',num2str(channel)];
+
+fluorName =  ['fluor',num2str(channel)];
+flbgName =  ['fl',num2str(channel),'bg'];
+if isfield(data, fluorName )
+    if ~isfield (CONST.view,'fluorColor')
+        CONST.view.fluorColor = {'g','r','b'};
+    end
+    
+    curColor = getRGBColor( CONST.view.fluorColor{channel});
+    
+    if FLAGS.filt && isfield( data, [fluorName,'_filtered'] )
+        fluor_tmp =  data.([fluorName,'_filtered']);
+    else
+        fluor_tmp = data.(fluorName);
+        if isfield( data, 'fl1bg' )
+            fluor_tmp = fluor_tmp - data.(flbgName);
+            fluor_tmp( fluor_tmp< 0 ) = 0;
+        else
+            fluor_tmp = fluor_tmp-mean(fluor_tmp(:));
+            fluor_tmp( fluor_tmp< 0 ) = 0;
+        end
+    end
+    
+    if isfield( CONST.view, 'LogView' ) && CONST.view.LogView && ~FLAGS.composite
+        fluor_tmp =   ag( double(fluor_tmp).^.6 );
+    end
+    
+    
+    minner = medfilt2( fluor_tmp, [2,2], 'symmetric' );
+    maxxer = max( minner(:));
+    minner = min( minner(:));
+    if CONST.view.falseColorFlag
+        im = doColorMap( ag(fluor_tmp,minner,maxxer), uint8(255*jet(256)) );
+    else
+        imFluor = 0.8*ag(fluor_tmp,minner,maxxer);
+        im(:,:,1) = im(:,:,1) + curColor(1) * imFluor;
+        im(:,:,2) = im(:,:,2) + curColor(2) * imFluor;
+        im(:,:,3) = im(:,:,3) + curColor(3) * imFluor;
+    end
+    
+    
+end
 end
 
 
@@ -554,19 +518,19 @@ if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
     hhh = title('Cell ID');
     set(hhh, 'Color', [0,0,0] );
     text( xpos_id, ypos_id,str_id,...
-    'color','w',...
-    'FontWeight', 'Bold',...
-    'HorizontalAlignment','Center',...
-    'VerticalAlignment','Middle',...
-    'FontSize', 8);
+        'color','w',...
+        'FontWeight', 'Bold',...
+        'HorizontalAlignment','Center',...
+        'VerticalAlignment','Middle',...
+        'FontSize', 8);
 else
     hhh = title('Region Number');
     set(hhh, 'Color', [0,0,0] );
     text( xpos_id, ypos_id,str_id,...
-    'color','w',...
-    'HorizontalAlignment','Center',...
-    'VerticalAlignment','Middle',...
-    'FontSize', 8);
+        'color','w',...
+        'HorizontalAlignment','Center',...
+        'VerticalAlignment','Middle',...
+        'FontSize', 8);
 end
 end
 
@@ -964,6 +928,12 @@ if ~isfield(FLAGS, 'p_flag');
     disp('there is not field p_flag')
     FLAGS.p_flag = 0;
 end
+
+if ~isfield(FLAGS,'composite')
+    disp('there is not field composite')
+    FLAGS.composite  = 0;
+end
+
 
 if ~isfield(FLAGS, 'showLinks');
     disp('there is not field showLinks')

@@ -1,4 +1,4 @@
-function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel, filt_channel )
+function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel )
 % makeKymographC : creates a kymograph for given cell data file..
 % A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
@@ -8,7 +8,6 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       disp_flag : 1 to display image, 0 to not display image
 %       CONST : segmentation parameters
 %       which_channel : binarry array of fluorescence channels to be plotted eg. [1,1,1]
-%       filt_channel : 1 to filter fluorescence images 
 %
 % OUTPUT :
 %       Kymo: Kymo has images at .r .g and .b fields. The (autogained)
@@ -50,9 +49,12 @@ if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
     which_channel = [1,1,1];
 end
 
-if ~exist( 'filt_channel', 'var' ) || isempty(filt_channel)
-    filt_channel = 1;
+if ~isfield(CONST.view, 'filtered' )
+    CONST.view.filtered = true;
 end
+
+filt_channel =  CONST.view.filtered ;
+
 
 
 persistent colormap_;

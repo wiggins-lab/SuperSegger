@@ -200,6 +200,7 @@ else
 end
 
 
+% flags and checkboxes are initialized here
 FLAGS.cell_flag = 1; %This is handled by useSegs now
 handles.channel.String = num2str(FLAGS.f_flag);
 handles.cell_numbers.Value = FLAGS.ID_flag;
@@ -214,6 +215,9 @@ handles.use_seg_files.Value = FLAGS.useSegs;
 handles.show_daughters.Value = FLAGS.showDaughters;
 handles.show_mothers.Value = FLAGS.showMothers;
 handles.show_linking.Value = FLAGS.showLinks;
+handles.phase_flag.Value = FLAGS.phase_flag;
+handles.phase_level_txt.String = num2str(FLAGS.phase_level);
+handles.composite.Value = FLAGS.composite;
 if exist('nn','var');
     handles.go_to_frame_no.String = num2str(nn);
 else
@@ -229,7 +233,7 @@ handles.find_cell_no.String = '';
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
 handles.num_seg = length(handles.contents_seg);
-handles.num_err = length(handles.contents_seg);
+handles.num_err = length(handles.contents);
 if handles.num_seg >= handles.num_err 
     handles.num_im  = handles.num_seg;
 else
@@ -361,7 +365,7 @@ else
         makeInactive(handles.show_consensus);
         makeInactive(handles.tower_cells);
     end
-    if handles.FLAGS.f_flag >= 1 % Flour
+    if handles.FLAGS.f_flag >= 1 % Fluorescence
         makeActive(handles.log_view);
         makeActive(handles.false_color);
         if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
@@ -657,6 +661,7 @@ end
 function filtered_fluorescence_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.filt = handles.filtered_fluorescence.Value;
+    handles.CONST.view.filtered = handles.filtered_fluorescence.Value;
     updateImage(hObject, handles)
 end
 
@@ -812,7 +817,7 @@ if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
         if ~isempty( data_cell )
             figure(2);
             clf;
-            makeKymographC(data_cell, 1, handles.CONST,[],handles.FLAGS.filt);
+            makeKymographC(data_cell, 1, handles.CONST,[]);
             ylabel('Long Axis (pixels)');
             xlabel('Time (frames)' );
         end
@@ -1031,7 +1036,8 @@ input.ForegroundColor = [.5, .5, .5];
 input.Enable = 'off';
 
 function value = areCellsLoaded(handles)
-value =  isfield(handles.data_c.regs, 'ID');
+%value =  isfield(handles.data_c.regs, 'ID');
+value = numel(dir([handles.dirname_cell,'*ell*']))>0;
 
 function time_clist_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS) && isfield(handles.clist,'data3D')
@@ -1159,7 +1165,26 @@ else
             settings.id_list(end+1) = data.regs.ID(ii);
             settings.handles.include_ids.String = num2str(settings.id_list);
         else
-            disp(data.CellA{ii});
+            disp(['ID : ', num2str(data.regs.ID(ii))]);
+            disp(['Area : ', num2str(data.CellA{ii}.coord.A)]);
+            disp(['Orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
+            disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
+            disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
+            disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
+            disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
+            disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
+           
+            if isfield(data.CellA{ii},'fl1')
+                disp('fluorescence 1 statistics: ')
+                disp( (data.CellA{ii}.fl1));
+            end
+              if isfield(data.CellA{ii},'fl2')
+                disp('fluorescence 2 statistics : ')
+                disp( (data.CellA{ii}.fl1));
+            end
+     
+           % disp(data.CellA{ii});
+
             updateImage(settings.hObject, settings.handles)
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
             cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
@@ -1345,7 +1370,7 @@ function phase_flag_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of phase_flag
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.phase_flag = handles.phase_flag.Value;
+    handles.FLAGS.phase_flag = get(hObject,'Value');
     updateImage(hObject, handles)
 end
 
@@ -1372,4 +1397,17 @@ function phase_level_txt_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in composite.
+function composite_Callback(hObject, eventdata, handles)
+% hObject    handle to composite (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of composite
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.composite = get(hObject,'Value') ;
+    updateImage(hObject, handles)
 end
