@@ -1,4 +1,4 @@
-function trackOptiCropMulti(dirname,xydir)
+function trackOptiCropMulti(dirname,xydir,targetd)
 % trackOptiCropMulti : user chooses two corners to crops multiple images
 % Images must be in NIS name-format. 
 % New cut images are saved in dirname/crop folder.
@@ -51,37 +51,54 @@ if ~isempty(dirname)
     nc  = sort(unique(nc));
     nz  = sort(unique(nz));    
     nxy = sort(unique(nxy));
-    if exist('xydir','var')
+    if exist('xydir','var') && ~isempty( xydir )
        nxy = xydir;
     end
     
-    targetd = [dirname,'crop',filesep];
+    if ~exist( 'targetd','var' ) || isempty( targetd )
+        targetd = [dirname,'crop',filesep];
+    else
+         targetd = fixDir(targetd);
+    end
+    
     mkdir(targetd);
     
     for nnxy = nxy;
         
         % displays the first and last image on top of each other
         nameInfo.npos(:,1) = [nt(1); nc(1); nnxy; nz(1)];
+        
         im1   = imread( [dirname, MakeFileName(nameInfo) ]);
         
         nameInfo.npos(:,1) = [nt(end); nc(1); nnxy; nz(1)];
         imEnd = imread( [dirname, MakeFileName(nameInfo) ]);
         figure(1);
         clf;
-        im = cat(3, ag(im1), ag(imEnd), 0*ag(imEnd));
-        imshow(im)
         
-        % user picks two corners to crop the image
-        disp('Pick the two corners of the crop region.');
+        maxer = max( [im1(:);imEnd(:)]);
+        miner = min( [im1(:);imEnd(:)]);
+        im = cat(3, ag(im1,miner,maxer), ag(im1,miner,maxer)/2+ag(imEnd,miner,maxer)/2, ag(imEnd,miner,maxer));
+%         imshow(im)
+%         
+%         % user picks two corners to crop the image
+%         disp('Pick the two corners of the crop region.');
         ss = size(im);
-        corner1 = ginput (1);
+%         corner1 = ginput (1);
+%         
+%         hold on; plot (corner1(1) * ones (1,ss(1)),1:ss(1),'r');
+%         hold on; plot (1:ss(2),corner1(2) * ones (1,ss(2)),'r');
+%         
+%         corner2 = ginput (1);
+
+[~,C] = imcrop( im );
+      C = floor( C );  
         
-        hold on; plot (corner1(1) * ones (1,ss(1)),1:ss(1),'r');
-        hold on; plot (1:ss(2),corner1(2) * ones (1,ss(2)),'r');
+        %x = floor(sort([corner1(1),corner2(1)]));
+        %y = floor(sort([corner1(2),corner2(2)]));
         
-        corner2 = ginput (1);
-        x = floor(sort([corner1(1),corner2(1)]));
-        y = floor(sort([corner1(2),corner2(2)]));
+        x = [C(1),C(1)+C(3)];
+        y = [C(2),C(2)+C(4)];
+
         
         if x(1)<1
             x(1) = 1;
@@ -100,6 +117,7 @@ if ~isempty(dirname)
         figure(1);
         clf;
         imshow(im(yy,xx,:));
+        drawnow;
         
         % reads all the images, crops them and saves them
         for it = nt;
@@ -107,6 +125,9 @@ if ~isempty(dirname)
                 for iz = nz;
                     nameInfo.npos(:,1) = [it; ic; nnxy; iz];
                     in_name = [dirname, MakeFileName(nameInfo)];
+                    
+                    disp( in_name );
+                    
                     im = imread( in_name );
                     out_name = [targetd, MakeFileName(nameInfo)];
                     imwrite( im(yy,xx), out_name, 'TIFF' );

@@ -128,19 +128,27 @@ hold on;
 
 
 b = gca; legend(b,'off');
+
 if FLAGS.P_flag && FLAGS.legend
-    hold on;
-    light_blue = [20 97 199]/255;
-    cyan = [36 113 125]/255;
-    green = [18 95 63]/255;
-    purple = [105 60 106]/255;
-    ha(1) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green,'visible', 'off');
-    ha(2) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan,'visible', 'off');
-    ha(3) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue,'visible', 'off');
-    ha(4) = plot(1,1,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple,'visible', 'off');
-    ha(5) = plot(1,1,'-r','visible', 'off');
-    legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},'Location','BestOutside','Orientation','vertical');
-    
+        hold on;
+        light_blue = [20 97 199]/255;
+        cyan = [36 113 125]/255;
+        green = [18 95 63]/255;
+        purple = [105 60 106]/255; 
+        ha(1) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green);
+        ha(2) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan);
+        ha(3) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue);
+        ha(4) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple);
+        ha(5) = plot(nan,nan,'-r');
+        
+        hhh = legend(ha',{'No birth', 'No division', 'Full cell cycle', 'Errors','Dividing'},...
+            'Location','NorthEast',...
+            ... %'BestOutside',
+            'Orientation','vertical');
+       set( hhh, 'EdgeColor', [ 0,   0,   0],...
+                 'Color',     [ 0.8, 0.8, 0.8],...
+                 'TextColor', [ 0,   0,   0] ); 
+        
 end
 
 % Displays linking information
@@ -334,6 +342,9 @@ if FLAGS.f_flag > 0
     im(:,:,2) = 255*uint8(lyse_im) + im(:,:,2);
     im(:,:,3) = 255*uint8(lyse_im) + im(:,:,3);
     
+    data.mask_cell
+    
+
 end
 
 if FLAGS.Outline_flag  % it just outlines the cells
@@ -418,7 +429,21 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
         
+        %im = im*0;
+        
         im = reg_color + im;
+        
+        %tmp1 = im(:,:,1);
+        %tmp1(~data.mask_cell) = 255;
+    
+        %tmp2 = im(:,:,2);
+        %tmp2(~data.mask_cell) = 255;
+ 
+        %tmp3 = im(:,:,3);
+        %tmp3(~data.mask_cell) = 255;
+      
+        %im = cat( 3, tmp1, tmp2, tmp3);
+    
     end
     %% colors :
     % baby-blue : no errors, stat0=2 cells
@@ -527,15 +552,24 @@ while (counter > 0 && kk < data.regs.num_regs)
     
 end
 
-text( xpos_id, ypos_id,str_id,...
+
+if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
+    hhh = title('Cell ID');
+    set(hhh, 'Color', [0,0,0] );
+    text( xpos_id, ypos_id,str_id,...
     'color','w',...
     'FontWeight', 'Bold',...
     'HorizontalAlignment','Center',...
-    'VerticalAlignment','Middle');
-if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
-    title('Cell ID');
+    'VerticalAlignment','Middle',...
+    'FontSize', 8);
 else
-    title('Region Number');
+    hhh = title('Region Number');
+    set(hhh, 'Color', [0,0,0] );
+    text( xpos_id, ypos_id,str_id,...
+    'color','w',...
+    'HorizontalAlignment','Center',...
+    'VerticalAlignment','Middle',...
+    'FontSize', 8);
 end
 end
 
