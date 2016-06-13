@@ -34,6 +34,9 @@ function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+
+if exist( dirname_, 'dir' )
+
 if ~exist('workers', 'var') || isempty( workers )
     workers = 0;
 end
@@ -104,6 +107,8 @@ crop_box = cell(1, num_xy);
 parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
         dirname_, targetd, nameInfo, precision, CONST);
+end
+
 end
 
 end
@@ -208,11 +213,13 @@ for it = nt;
             if SHOW_FLAG
                 if ic == nc(1) % phase image
                     if ic>0
+                        try
                         figure(ic)
                         clf;
                         imshow( cat( 3, ag(im), ...
                             double(FOCUS_FLAG)*(0.5*ag(im)+0.5*ag(phaseBef)), ...
                             double(FOCUS_FLAG)*ag(phaseBef) ));
+                        end
                     end
                 else % fluorescence channel
                     backer = .8*ag(phaseBef);

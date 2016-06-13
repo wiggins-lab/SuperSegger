@@ -275,11 +275,11 @@ for ii = 1:num
         pos2 = intGetPos( ID2, clist, starter );
     end
     
-    plot( [pos1,pos2], [0,0] + death(ii), style, 'Color', 'b', ...
+    plot( [min(pos1),max(pos2)], [0,0] + death(ii), style, 'Color', 'b', ...
         'LineWidth', .5 );
     
     
-    h = text( pos, time(ii)-1, [' ',num2str( ID )], ...
+    h = text( pos(1), time(ii)-1, [' ',num2str( ID )], ...
         'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left' );
     
     set( h, 'rotation', 90 );
