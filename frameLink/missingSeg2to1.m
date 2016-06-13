@@ -175,7 +175,13 @@ for jj = 1:nsegs
 end
 
 % sort distances and keep only distances < 5
+
 segs_close = segs_list(dist_segs_c<DIST_CUT);
+
+if numel(segs_close) > 8 
+   [~,ord_segs] = sort(dist_segs_c);
+   segs_close = segs_list(ord_segs(1:8));
+end
 
 % turn on each segment until the regions become more than 1
 num_segs = numel( segs_close );
