@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>trySuperSegger</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="trySuperSegger.m"><style type="text/css">
+      --><title>trySuperSegger</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-06-13"><meta name="DC.source" content="trySuperSegger.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -106,7 +106,7 @@ Segmenting with 60XEcLB
 loading Constants : 60XEcLB.mat
 Segmenting with 60XPa
 loading Constants : 60XPa.mat
-</pre><img vspace="5" hspace="5" src="trySuperSegger_03.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="trySuperSegger_04.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="trySuperSegger_05.png" style="width:560px;height:420px;" alt=""> <h2>Set constants<a name="5"></a></h2><p>Load the constants and set the desired values</p><pre class="codeinput">CONST = loadConstantsNN (<span class="string">'60XEclb'</span>,0);
+</pre><img vspace="5" hspace="5" src="trySuperSegger_03.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="trySuperSegger_04.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="trySuperSegger_05.png" style="width:560px;height:420px;" alt=""> <h2>Set constants<a name="5"></a></h2><p>Load the constants and set the desired values</p><pre class="codeinput">CONST = loadConstants (<span class="string">'60XEclb'</span>,0);
 
 <span class="comment">% fit up to 5 foci in each cell</span>
 CONST.trackLoci.numSpots = [5]; <span class="comment">% Max number of foci to fit in each fluorescence channel (default = [0 0])</span>
@@ -123,12 +123,32 @@ BatchSuperSeggerOpti (dirname,1,clean_flag,CONST);
 </pre><pre class="codeoutput">Clean flag is set to true.
 BatchSuperSeggerOpti : images already aligned
 xy1: BatchSuperSeggerOpti : Segmenting Cells
+Warning: File
+'/Users/Stella/Documents/MATLAB/SuperSeggerRelease/tryMe/60mrnaCropped/xy1/clist.mat'
+not found. 
 xy1: trackOpti - Step 1: Running trackOptiStripSmall.
 xy1: trackOpti - Step 2: Running trackOptiLinkCell.
+xy1: ErRes: Frame: 4 already has an id 12
+xy1: ErRes: Frame: 8 already has an id 7
+xy1: ErRes: Frame: 9 already has an id 8
+xy1: ErRes: Frame: 15 already has an id 8
+xy1: ErRes: Frame: 15 already has an id 13
+xy1: ErRes: Frame: 23 already has an id 11
+xy1: ErRes: Frame: 37 already has an id 3
+xy1: ErRes: Frame: 38 already has an id 19
+xy1: ErRes: Frame: 41 already has an id 3
+xy1: ErRes: Frame: 41 already has an id 17
+xy1: ErRes: Frame: 46 already has an id 8
+xy1: ErRes: Frame: 46 already has an id 8
+xy1: ErRes: Frame: 48 already has an id 24
+xy1: ErRes: Frame: 50 already has an id 12
+xy1: ErRes: Frame: 53 already has an id 10
+xy1: ErRes: Frame: 60 already has an id 12
+xy1: ErRes: Frame: 60 already has an id 24
 xy1: trackOpti - Step 3: Running trackOptiCellMarker.
 xy1: trackOpti - Step 4: Running trackOptiFluor.
 xy1: trackOpti - Step 5: Running trackOptiMakeCell.
-xy1: trackOpti - Step 6: Running trackOptiFindFociCyto.
+xy1: trackOpti - Step 6: Running trackOptiFindFoci.
 xy1: trackOpti - Step 7: Running trackOptiClist.
 xy1: trackOpti - Step 8: Running trackOptiCellFiles.
 </pre><img vspace="5" hspace="5" src="trySuperSegger_06.png" style="width:560px;height:420px;" alt=""> <h2>Load an individual cell file<a name="7"></a></h2><pre class="codeinput">cell_dir = [dirname,filesep,<span class="string">'xy1'</span>,filesep,<span class="string">'cell'</span>,filesep];
@@ -194,7 +214,7 @@ tryDifferentConstants([dirname,'/raw_im/']);
 %% Set constants
 % Load the constants and set the desired values
 
-CONST = loadConstantsNN ('60XEclb',0);
+CONST = loadConstants ('60XEclb',0);
 
 % fit up to 5 foci in each cell
 CONST.trackLoci.numSpots = [5]; % Max number of foci to fit in each fluorescence channel (default = [0 0])

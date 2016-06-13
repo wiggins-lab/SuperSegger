@@ -37,24 +37,25 @@ end
 
 for ii = 1:num_im
     clf;
-    back  = ag(data.CellA{ii}.phase);
+    dataA = data.CellA{ii};
+    back  = ag(dataA.phase);
     
-    if isfield( data, 'fluor1' )        
-        fluo  = ag(data.CellA{ii}.fluor1);
+    if isfield( dataA, 'fluor1' )        
+        fluo  = ag(dataA.fluor1);
     else
         fluo = back*0;
     end;
     
     
-    if isfield( data, 'fluor2' )        
-        fluo2 = ag(data.CellA{ii}.fluor2);
+    if isfield( dataA, 'fluor2' )        
+        fluo2 = ag(dataA.fluor2);
     else
         fluo2 = fluo*0;
     end;
     
     
-    mask_ = imdilate(data.CellA{ii}.mask,strel('square',3));
-    mask  = data.CellA{ii}.mask;
+    mask_ = imdilate(dataA.mask,strel('square',3));
+    mask  = dataA.mask;
     outline= mask_-mask;
     maski = ag(outline);
     
@@ -77,35 +78,35 @@ for ii = 1:num_im
     
     imshow( cat(3, rChan, gChan, bChan), [],'InitialMagnification','fit');
     hold on;
-    ro = data.CellA{ii}.r_offset;    
-    r = data.CellA{ii}.r;
+    ro = dataA.r_offset;    
+    r = dataA.r;
     plot( r(1)-ro(1)+1+roffset(1), r(2)-ro(2)+1+roffset(2), 'w.' );
 
-    ll = data.CellA{ii}.length;
+    ll = dataA.length;
     llmaj = [ll(1),-ll(1)];
     llmin = [ll(2),-ll(2)];    
     
-    xx = llmaj*data.CellA{ii}.coord.e1(1)/2;
-    yy = llmaj*data.CellA{ii}.coord.e1(2)/2;
+    xx = llmaj*dataA.coord.e1(1)/2;
+    yy = llmaj*dataA.coord.e1(2)/2;
     plot( r(1)-ro(1)+1+xx+roffset(1), r(2)-ro(2)+1+yy+roffset(2), 'b:' );
     
-    xx =  llmin*data.CellA{ii}.coord.e2(1)/2;
-    yy = llmin*data.CellA{ii}.coord.e2(2)/2;
+    xx =  llmin*dataA.coord.e2(1)/2;
+    yy = llmin*dataA.coord.e2(2)/2;
     plot( r(1)-ro(1)+1+xx+roffset(1), r(2)-ro(2)+1+yy+roffset(2), 'b:' );
     
     
-    if isfield( data.CellA{ii}, 'locus1'  )
-        num_spot = numel( data.CellA{ii}.locus1 );
+    if isfield(dataA, 'locus1'  )
+        num_spot = numel( dataA.locus1 );
         for jj = 1:num_spot;
-            r = data.CellA{ii}.locus1(jj).r;
+            r = dataA.locus1(jj).r;
             plot( r(1)-ro(1)+1+roffset(1), r(2)-ro(2)+1+roffset(2), 'go' );
         end
     end
     
-    if isfield( data.CellA{ii}, 'locus2'  )
-        num_spot = numel( data.CellA{ii}.locus2 );
+    if isfield(dataA, 'locus2'  )
+        num_spot = numel(dataA.locus2 );
         for jj = 1:num_spot;
-            r = data.CellA{ii}.locus2(jj).r;
+            r = dataA.locus2(jj).r;
             plot( r(1)-ro(1)+1+roffset(1), r(2)-ro(2)+1+roffset(2), 'ro' );
         end
     end
