@@ -18,17 +18,17 @@ end
 %%
 dirname = '/Users/Stella/Dropbox/C_crop/xy1/seg/'
 files = dir([dirname,'*err.mat']);
-tmp_axis = [17.5000  140.5000    15.5000  277.5000];
+tmp_axis = [30.5000  144.5000    35.5000  274.5000];
 figure(1);
 clf;
 end_time = 361;
-skip = 42
-time = 25:skip:end_time;
-x = 5;
+skip = 50
+time = 20:skip:end_time;
+x = 7;
 num_time = numel(time)
 y = ceil(num_time/x);
 
-ha = tight_subplot(y,x,[0.01 0.01],[0 0],[0 0])%,0.3,0.3,0.3)
+ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
 
 counter = 0;
 for i = time
@@ -38,7 +38,7 @@ for i = time
      showSegDataPhase(data)
      axis( tmp_axis );
      hold on;
-     text(25,tmp_axis (4) - 15,[num2str(i), ' min'],'color','w') 
+     text(35,tmp_axis (4) - 15,[num2str(i), ' min'],'color','w') 
 end
 
 %% error figure

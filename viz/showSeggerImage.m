@@ -251,14 +251,13 @@ ss = size(data.phase);
 
 % if the phase image exists use this as the background, else use the cell
 % masks
-if isfield(data,'phase');
-    back = ag(data.phase);
+phase_level = FLAGS.phase_level;
+if isfield(data,'phase') && FLAGS.phase_flag
+    back = phase_level * ag(data.phase);
     im = cat(3,back,back,back);
 else
-    im = 0*cat(3, ...
-        ag(data.mask_cell),...
-        ag(data.mask_cell),...
-        ag(data.mask_cell));
+    mask = phase_level * ag(~data.mask_cell);
+    im = cat(3, mask,mask,mask);
 end
 
 
@@ -276,8 +275,6 @@ end
 % if you are in fluorescence mode (f_flag ==true) then just draw the fluor
 % channels but not the regions.
 if FLAGS.f_flag > 0
-    im = 0.3*im;
-    im = FLAGS.P_val*im;
     
     % make the background subtracted fluor
     if isfield( data, 'fluor1' ) && ( FLAGS.f_flag == 1 );
@@ -925,6 +922,17 @@ end
 if ~isfield(FLAGS, 'P_flag');
     disp('there is no flag field P_flag')
     FLAGS.P_flag = 1;
+end
+
+
+if ~isfield(FLAGS, 'phase_flag');
+    disp('there is no flag field P_flag')
+    FLAGS.phase_flag = 1;
+end
+
+if ~isfield(FLAGS, 'phase_level');
+    disp('there is no flag field P_flag')
+    FLAGS.phase_level = 1;
 end
 
 if ~isfield(FLAGS, 'cell_flag' );

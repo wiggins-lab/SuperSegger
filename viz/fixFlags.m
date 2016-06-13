@@ -71,6 +71,15 @@ if ~isfield(FLAGS,'filt')
 end
 
 
+if ~isfield(FLAGS, 'phase_flag');
+    FLAGS.phase_flag = 1;
+end
+
+if ~isfield(FLAGS, 'phase_level');
+    FLAGS.phase_level = 1;
+end
+
+
 if ~isfield(FLAGS,'lyse_flag')
     FLAGS.lyse_flag = 0;
 end

@@ -1302,8 +1302,6 @@ end
 end
 
 
-
-
 % --- Executes on button press in legend_box.
 function legend_box_Callback(hObject, eventdata, handles)
 % hObject    handle to legend_box (see GCBO)
@@ -1329,6 +1327,44 @@ function skip_film_mosaic_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function skip_film_mosaic_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to skip_film_mosaic (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in phase_flag.
+function phase_flag_Callback(hObject, eventdata, handles)
+% hObject    handle to phase_flag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of phase_flag
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.phase_flag = handles.phase_flag.Value;
+    updateImage(hObject, handles)
+end
+
+function phase_level_txt_Callback(hObject, eventdata, handles)
+% hObject    handle to phase_level_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of phase_level_txt as text
+%        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.phase_level = str2double(get(hObject,'String'));
+    updateImage(hObject, handles)
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function phase_level_txt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to phase_level_txt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
