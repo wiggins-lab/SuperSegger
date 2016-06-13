@@ -58,7 +58,8 @@ normalizedImage = originalImage/cytoplasmicFlourescenceSTD; % normalization so t
 normalizedImage = normalizedImage - 1;
 normalizedImage(normalizedImage < 0) = 0; % logical mask of foci found
 
-[~,~,flourFiltered] = curveFilter(normalizedImage);
+filter_width = 1.5;
+[~,~,flourFiltered] = curveFilter(normalizedImage,filter_width);
 data.(['flour',num2str(channelID),'_filtered']) = flourFiltered;
 
 mask_mod = bwmorph (data.mask_bg, 'dilate', 1);
