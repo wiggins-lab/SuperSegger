@@ -137,13 +137,8 @@ updateUI(hObject, handles)
 function relink_Callback(hObject, eventdata, handles)
 choice = questdlg('Are you sure you want to relink and remake the cell files?', 'Re-link the cells?', 'Yes', 'No', 'No');
 if strcmp(choice, 'Yes')
-    delete([handles.dirname_cell,'*.mat']);
-    delete([handles.dirname,'*trk.mat*']);
-    delete([handles.dirname,'*err.mat*']);
-    delete([handles.dirname,'.trackOpti*']);
-    delete([handles.dirname_xy,'clist.mat']);
     skip = 1;
-    CLEAN_FLAG = false;
+    CLEAN_FLAG = true;
     header = 'trackOptiView: ';
-    trackOpti(handles.dirname_xy,skip,handles.CONST, CLEAN_FLAG, header);
+    trackOpti(handles.dirname_xy,skip, handles.CONST, CLEAN_FLAG, header);
 end

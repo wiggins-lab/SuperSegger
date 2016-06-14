@@ -65,7 +65,7 @@ if T0 > 0
     end
     
     if disp_flag
-        figure(7);
+        figure(2);
         clf;
         ss = size( kymo );
         tt = (0:(ss(2)-1))/(ss(2)-1);

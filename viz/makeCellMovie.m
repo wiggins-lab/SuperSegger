@@ -24,7 +24,7 @@ function mov = makeCellMovie(data)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-figure(1);
+figure(2);
 num_im = numel(data.CellA);
 
 ss = [0,0];
@@ -36,6 +36,7 @@ end
 
 
 for ii = 1:num_im
+    figure(2);
     clf;
     dataA = data.CellA{ii};
     back  = ag(dataA.phase);

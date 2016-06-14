@@ -51,6 +51,8 @@ end
 
 if ~exist( 'ID_', 'var' );
     ID_ = [];
+else
+    ID_ = unique(ID_);
 end
 
 if ~exist( 'min_width' ) || isempty( min_width )

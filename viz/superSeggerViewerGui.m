@@ -1,5 +1,5 @@
-function varargout = superSeggerViewerGui(varargin)
-% superSeggerViewerGui : gui used to visualize the results of segmentation
+function varargout = superSeggerViewerGui_list(varargin)
+% superSeggerViewerGui_list : gui used to visualize the results of segmentation
 % and use the superSegger analysis tools.
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -23,8 +23,8 @@ function varargout = superSeggerViewerGui(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @superSeggerViewerGui_OpeningFcn, ...
-    'gui_OutputFcn',  @superSeggerViewerGui_OutputFcn, ...
+    'gui_OpeningFcn', @superSeggerViewerGui_list_OpeningFcn, ...
+    'gui_OutputFcn',  @superSeggerViewerGui_list_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -67,12 +67,10 @@ handles.edit_segments.Enable = 'on';
 function update_clist_panel(hObject, handles)
 if isempty(handles.clist)
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
-    handles.lineage_clist.Enable = 'off'
     handles.clist_text.String = 'No clist loaded, these commands will not work';
     
 else
     handles.clist_text.String = ['Clist: ' handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
-    handles.lineage_clist.Enable = 'on'
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
@@ -91,6 +89,28 @@ else
     end
 end
 guidata(hObject, handles);
+
+function handles = updateOutputPanel (handles)
+
+output_options = list_output_strings ();
+names = output_options(:,1);
+needCellFiles = find([output_options{:,2}]);
+needClist = find([output_options{:,3}]);
+cellFilesFound = areCellsLoaded(handles);
+stringList = [];
+counter = 0;
+for i = 1 : numel(names)
+    if any(needClist == i) && isempty(handles.clist)
+        % skip
+    elseif any(needCellFiles == i) && ~cellFilesFound
+        % skip
+    else
+        counter = counter + 1;
+        stringList {counter} = names{i};
+    end
+end
+handles.output_list.String = stringList;
+handles.output_list.Value = 1;
 
 
 function initImage(hObject, handles) % Not updated
@@ -150,7 +170,7 @@ direct_contents_err = dir([dirname, '*err.mat']);
 if dirnum > handles.num_xy
     dirnum = 1;
 end
-    
+
 if handles.num_xy~=0
     if isdir([dirname0,contents_xy(dirnum).name,filesep,'seg_full'])
         handles.dirname_seg = [dirname0,contents_xy(dirnum).name,filesep,'seg_full',filesep];
@@ -225,7 +245,7 @@ end
 
 handles.kymograph_cell_no.String = '';
 handles.movie_cell_no.String = '';
-handles.tower_cell_no.String = '';
+handles.cell_no.String = '';
 handles.max_cell_no.String = '';
 handles.find_cell_no.String = '';
 
@@ -233,7 +253,7 @@ handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
 handles.num_seg = length(handles.contents_seg);
 handles.num_err = length(handles.contents);
-if handles.num_seg >= handles.num_err 
+if handles.num_seg >= handles.num_err
     handles.num_im  = handles.num_seg;
 else
     handles.num_im  = handles.num_err;
@@ -259,14 +279,11 @@ handles.FLAGS.f_flag = 0;
 handles.channel.String = 0;
 handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
 update_clist_panel(hObject, handles)
-updateImage(hObject, handles)
+handles = updateOutputPanel (handles);
+handles = updateImage(hObject, handles);
 guidata(hObject, handles);
 
-function update_all_gui_vals (handles)
-handles.contents = dir([handles.dirname_seg, file_filter]);
-handles.num_im = length(handles.contents);
-
-function updateImage(hObject, handles)
+function handles = updateImage(hObject, handles)
 delete(get(handles.axes1, 'Children'))
 handles.previous.Enable = 'off';
 handles.next.Enable = 'off';
@@ -333,9 +350,9 @@ else
     else
         makeActive(handles.use_seg_files);
     end
-
+    
     if handles.num_seg  == 0
-        handles.use_seg_files.Enable = 'off'
+        handles.use_seg_files.Enable = 'off';
     end
     
     handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
@@ -348,28 +365,7 @@ else
         end
     end
     handles.channel_text.String = ['Channel (', num2str(f), ')'];
-    % Has cell files loaded
-    if areCellsLoaded(handles)
-        makeActiveInput(handles.kymograph_cell_no);
-        makeActiveInput(handles.movie_cell_no);
-        makeActiveInput(handles.tower_cell_no);
-        makeActive(handles.consensus_kymograph);
-        makeActive(handles.mosaic_kymograph);
-        makeActive(handles.show_consensus);
-        makeActive(handles.tower_cells);
-    else
-        handles.kymograph_cell_no.String = '';
-        makeInactiveInput(handles.kymograph_cell_no);
-        handles.movie_cell_no.String = '';
-        makeInactiveInput(handles.movie_cell_no);
-        handles.tower_cell_no.String = '';
-        makeInactiveInput(handles.tower_cell_no);
-        makeInactive(handles.consensus_kymograph);
-        makeInactive(handles.mosaic_kymograph);
-        makeInactive(handles.show_consensus);
-        makeInactive(handles.tower_cells);
-    end
-    if handles.FLAGS.f_flag >= 1 || handles.FLAGS.composite% Fluorescence
+    if handles.FLAGS.f_flag >= 1 && ~handles.FLAGS.composite% Fluorescence
         makeActive(handles.log_view);
         makeActive(handles.false_color);
         if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
@@ -433,11 +429,12 @@ folderName = uigetdir;
 if folderName ~= 0
     handles.image_directory.String = folderName;
     initImage(hObject, handles);
+    
 end
 
-function varargout = superSeggerViewerGui_OutputFcn(hObject, eventdata, handles)
+function varargout = superSeggerViewerGui_list_OutputFcn(hObject, eventdata, handles)
 
-function superSeggerViewerGui_OpeningFcn(hObject, eventdata, handles, varargin)
+function superSeggerViewerGui_list_OpeningFcn(hObject, eventdata, handles, varargin)
 if getappdata(0, 'dirname')
     handles.image_directory.String = getappdata(0, 'dirname');
     rmappdata(0,'dirname')
@@ -451,6 +448,7 @@ initImage(hObject, handles);
 
 function image_directory_Callback(hObject, eventdata, handles)
 initImage(hObject, handles);
+ 
 
 function image_directory_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -467,7 +465,7 @@ if ~isempty(handles.FLAGS)
     else
         handles.go_to_frame_no.String = num2str(c);
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function go_to_frame_no_CreateFcn(hObject, eventdata, handles)
@@ -540,7 +538,7 @@ if ~isempty(handles.FLAGS)
                 handles.clist = []
                 update_clist_panel(hObject, handles)
             end
-            updateImage(hObject, handles)
+            updateImage(hObject, handles);
         else
             handles.message.String = 'Incorrect number for xy position';
         end
@@ -574,7 +572,7 @@ if ~isempty(handles.FLAGS)
         handles.channel.String = num2str(c);
     end
     handles.FLAGS.f_flag = c;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function channel_CreateFcn(hObject, eventdata, handles)
@@ -584,7 +582,7 @@ end
 
 function find_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function find_cell_no(handles)
@@ -633,7 +631,7 @@ end
 function cell_poles_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.p_flag = handles.cell_poles.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function complete_cell_cycles_Callback(hObject, eventdata, handles)
@@ -654,7 +652,7 @@ if ~isempty(handles.FLAGS)
         
         handles.message.String = 'Showing incomplete Cell Cycles';
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function false_color_Callback(hObject, eventdata, handles)
@@ -664,20 +662,20 @@ if ~isempty(handles.FLAGS)
     else
         handles.CONST.view.falseColorFlag = handles.false_color.Value;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function filtered_fluorescence_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.filt = handles.filtered_fluorescence.Value;
     handles.CONST.view.filtered = handles.filtered_fluorescence.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function fluor_foci_scores_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.s_flag = handles.fluor_foci_scores.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function log_view_Callback(hObject, eventdata, handles)
@@ -687,7 +685,7 @@ if ~isempty(handles.FLAGS)
     else
         handles.CONST.view.LogView = handles.log_view.Value;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function outline_cells_Callback(hObject, eventdata, handles)
@@ -697,7 +695,7 @@ if ~isempty(handles.FLAGS)
         handles.FLAGS.P_flag = 0;
         handles.region_outlines.Value = 0;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function region_outlines_Callback(hObject, eventdata, handles)
@@ -707,7 +705,7 @@ if ~isempty(handles.FLAGS)
         handles.FLAGS.Outline_flag = 0;
         handles.outline_cells.Value = 0;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function region_scores_Callback(hObject, eventdata, handles)
@@ -717,14 +715,14 @@ if ~isempty(handles.FLAGS)
         handles.FLAGS.ID_flag = 0;
         handles.cell_numbers.Value = 0;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function use_seg_files_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     if handles.num_errs > 0
         handles.FLAGS.useSegs = handles.use_seg_files.Value;
-        updateImage(hObject, handles)
+        updateImage(hObject, handles);
     else
         handles.use_seg_files.Value = 1;
     end
@@ -774,7 +772,7 @@ function make_gate_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     figure(2);
     handles.clist = gateMake(handles.clist, handles.make_gate.Value);
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function make_gate_CreateFcn(hObject, eventdata, handles)
@@ -798,230 +796,24 @@ end
 function show_daughters_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.showDaughters = handles.show_daughters.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function show_mothers_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.showMothers = handles.show_mothers.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function show_linking_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.FLAGS.showLinks = handles.show_linking.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
-% Output options
-
-function kymograph_cell_no_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    c = round(str2double(handles.kymograph_cell_no.String));
-    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID);
-        handles.kymograph_cell_no.String = '';
-    else
-        handles.kymograph_cell_no.String = num2str(c);
-        data_cell = loadCellData(c, handles.dirname_cell, handles);
-        if ~isempty( data_cell )
-            figure(2);
-            clf;
-            makeKymographC(data_cell, 1, handles.CONST,[]);
-            ylabel('Long Axis (pixels)');
-            xlabel('Time (frames)' );
-        end
-    end
-end
-
-function kymograph_cell_no_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function movie_cell_no_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    c = round(str2double(handles.movie_cell_no.String));
-    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-        handles.movie_cell_no.String = '';
-    else
-        handles.movie_cell_no.String = num2str(c);
-        [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
-        if ~isempty(data_cell)
-            mov = makeCellMovie(data_cell);
-            choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
-            if strcmp(choice, 'Yes')
-                saveFilename = [handles.dirSave,cell_name(1:end-4),'.avi'];
-                v = VideoWriter(saveFilename);
-                open(v)
-                writeVideo(v,mov)
-                close(v)
-                handles.message.String = ['Saved movie at ', saveFilename];
-            end
-        end
-    end
-end
-
-function movie_cell_no_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function no_columns_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
-    c = round(str2double(handles.no_columns.String));
-    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-        handles.no_columns.String = '';
-    else
-        handles.no_columns.String = num2str(c);
-    end
-    if ~isempty(handles.tower_cell_no.String)
-        tower_cell_no_Callback(hObject, eventdata, handles);
-    end
-end
-
-function no_columns_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function tower_cell_no_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
-    c = round(str2double(handles.tower_cell_no.String));
-    if isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-        handles.tower_cell_no.String = '';
-    else
-        handles.tower_cell_no.String = num2str(c);
-        xdim__ = str2double(handles.no_columns.String);
-        padStr = getPadSize( handles.dirname_cell, handles );
-        if ~isempty( padStr )
-            data_cell = [];
-            filename_cell_C = [handles.dirname_cell,'Cell',num2str(c,padStr),'.mat'];
-            filename_cell_c = [handles.dirname_cell,'cell',num2str(c,padStr),'.mat'];
-            if exist(filename_cell_C, 'file' )
-                filename_cell = filename_cell_C;
-            elseif exist(filename_cell_c, 'file' )
-                filename_cell = filename_cell_c;
-            else
-                filename_cell = [];
-            end
-            if isempty( filename_cell )
-                handles.message.String = ['Files: ',filename_cell_C,' and ',filename_cell_c,' do not exist.'];
-            else
-                try
-                    data_cell = load( filename_cell );
-                catch ME
-                    printError(ME);
-                    handles.message.String = ['Error loading: ', filename_cell];
-                end
-                if ~isempty( data_cell )
-                    figure(2);
-                    clf;
-                    makeFrameMosaic(data_cell, handles.CONST, xdim__);
-                end
-            end
-        end
-    end
-end
-
-function tower_cell_no_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function consensus_kymograph_Callback(hObject, eventdata, handles)
-global dataImArray
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    if ~exist('dataImArray','var') || isempty(dataImArray)
-        fnum = handles.FLAGS.f_flag;
-        if fnum == 0
-            fnum = 1;
-        end
-        [dataImArray] = makeConsensusArray( handles.dirname_cell, handles.CONST...
-            , 5,[], fnum, handles.clist);
-        save ([handles.dirSave,'dataImArray'],'dataImArray');
-    else
-        handles.message.String = 'dataImArray already calculated';
-    end
-    [kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
-    if handles.save_output.Value
-        save ([handles.dirSave, 'consensus_kymograph'], 'kymo', 'kymoMask');
-    end
-end
-
-function mosaic_kymograph_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    figure(2);
-    im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
-    if handles.save_output.Value
-        save ([handles.dirSave, 'mosaic_kymograph'], 'im');
-    end
-end
-
-function show_consensus_Callback(hObject, eventdata, handles)
-global dataImArray
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    if ~exist('dataImArray','var') || isempty(dataImArray)
-        fnum = handles.FLAGS.f_flag;
-        if fnum == 0
-            fnum = 1;
-        end
-        [dataImArray] = makeConsensusArray( handles.dirname_cell, handles.CONST...
-            , 5,[], fnum, handles.clist);
-        save ([handles.dirSave,'dataImArray'],'dataImArray');
-    else
-        handles.message.String = 'dataImArray already calculated';
-    end
-    [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
-    if handles.save_output.Value
-        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
-    end        
-    figure(2);
-    imshow(imColor);
-end
-
-
-function show_movie_Callback(hObject, eventdata, handles)
-%makes field movie
-if ~isempty(handles.FLAGS)
-    clear mov;
-    mov.cdata = [];
-    mov.colormap = [];
-    delete(get(handles.axes1, 'Children'))
-    for ii = 1:handles.num_im
-        [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
-            handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
-        showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
-        drawnow;
-        mov(ii) = getframe;
-        handles.message.String = ['Frame number: ', num2str(ii)];
-    end
-    choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
-    if strcmp(choice, 'Yes')
-        filename = inputdlg('Filename', 'Filename:', 1);
-        if ~isempty(filename)
-            saveFilename = [handles.dirSave,filename{1},'.avi'];
-            v = VideoWriter(saveFilename);
-            v.FrameRate = 2;
-            open(v)
-            writeVideo(v,mov)
-            close(v)
-            handles.message.String = ['Saved movie at ', saveFilename];
-        end
-    end
-end
-
-function tower_cells_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
-    figure(2);
-    imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
-    if handles.save_output.Value
-        save ([handles.dirSave,'tower_cells'],'imTot');
-    end        
-end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
-% use handles to look at the variables (for example handles.CONST)
-% if you want to exit click the continue button on the toolbar.
+% button on toolstrip to debug
 keyboard;
 
 
@@ -1064,7 +856,7 @@ function clear_gate_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     handles.clist = gateStrip(handles.clist, str2double(handles.clear_gate.String));
     handles.clear_gate.String = '';
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function clear_gate_CreateFcn(hObject, eventdata, handles)
@@ -1081,7 +873,7 @@ if ~isempty(handles.FLAGS)
     if isempty(handles.exclude_ids.String)
         handles.clist = rmfield(handles.clist, 'idExclude');
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function exclude_ids_CreateFcn(hObject, eventdata, handles)
@@ -1098,7 +890,7 @@ if ~isempty(handles.FLAGS)
     if isempty(handles.include_ids.String)
         handles.clist = rmfield(handles.clist, 'idInclude');
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function include_ids_CreateFcn(hObject, eventdata, handles)
@@ -1119,10 +911,10 @@ end
 
 function intDispError( data_c, FLAGS, canUseErr)
 % intDispError
-    disp(  ' ' );
-    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
-    disp(  '%     Errors for this frame     %' );
-    disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+disp(  ' ' );
+disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
+disp(  '%     Errors for this frame     %' );
+disp(  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%' );
 for kk = 1:data_c.regs.num_regs
     if isfield(data_c,'regs') &&...
             isfield(data_c.regs, 'error') && ...
@@ -1140,10 +932,10 @@ end
 function clickOnImage(hObject, eventdata, handles)
 global settings;
 point = round(eventdata.IntersectionPoint(1:2));
-if settings.handles.use_seg_files.Value == 1 
+if settings.handles.use_seg_files.Value == 1
     errordlg('Untick use regions');
 elseif ~isfield(settings.handles,'data_c')
-	errordlg('Reload frame first');
+    errordlg('Reload frame first');
 else
     data = settings.handles.data_c;
     if ~isfield(data,'regs')
@@ -1176,24 +968,27 @@ else
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
             disp(['Area : ', num2str(data.CellA{ii}.coord.A)]);
-            disp(['Orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
+            disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
             disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
             disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
             disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
             disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
             disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
-           
+            disp(['Cell Old Pole Age : ', num2str(data.CellA{ii}.pole)]);
+            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole)]);
+            
+            
             if isfield(data.CellA{ii},'fl1')
                 disp('fluorescence 1 statistics: ')
                 disp( (data.CellA{ii}.fl1));
             end
-              if isfield(data.CellA{ii},'fl2')
+            if isfield(data.CellA{ii},'fl2')
                 disp('fluorescence 2 statistics : ')
                 disp( (data.CellA{ii}.fl1));
             end
-     
-           % disp(data.CellA{ii});
-
+            
+            % disp(data.CellA{ii});
+            
             updateImage(settings.hObject, settings.handles)
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
             cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
@@ -1201,18 +996,6 @@ else
     end
 end
 
-function cell_info_Callback(hObject, eventdata, handles)
-global settings;
-state = get(hObject,'Value');
-if state == get(hObject,'Max')
-    settings.hObject = hObject;
-    settings.handles = handles;
-    settings.function = 'cell_info';
-    settings.eventdata = eventdata;
-    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
-elseif state == get(hObject,'Min')
-    updateImage(hObject, handles)
-end
 
 function from_img_exclude_Callback(hObject, eventdata, handles)
 global settings;
@@ -1228,7 +1011,7 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.exclude_ids.String = settings.handles.exclude_ids.String;
-	exclude_ids_Callback(hObject, eventdata, handles);
+    exclude_ids_Callback(hObject, eventdata, handles);
 end
 
 function from_img_include_Callback(hObject, eventdata, handles)
@@ -1245,95 +1028,11 @@ if state == get(hObject,'Max')
     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
 elseif state == get(hObject,'Min')
     handles.include_ids.String = settings.handles.include_ids.String;
-	include_ids_Callback(hObject, eventdata, handles);
+    include_ids_Callback(hObject, eventdata, handles);
 end
 
 function save_output_Callback(hObject, eventdata, handles)
 
-
-% --- Executes on button press in lineage_clist.
-function lineage_clist_Callback(hObject, eventdata, handles)
-% hObject    handle to lineage_clist (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-min_width = 3;
-ids = str2num(handles.lineage_text.String);
-if (~ids)
-    ids = [];
-end
-makeLineage( handles.clist, ids, min_width );
-
-function lineage_text_Callback(hObject, eventdata, handles)
-% hObject    handle to lineage_text (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of lineage_text as text
-%        str2double(get(hObject,'String')) returns contents of lineage_text as a double
- 
-
-% --- Executes during object creation, after setting all properties.
-function lineage_text_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to lineage_text (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in field_mosaic.
-function field_mosaic_Callback(hObject, eventdata, handles)
-% hObject    handle to field_mosaic (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-if ~isempty(handles.FLAGS)
-    clear mov;
-    mov.cdata = [];
-    mov.colormap = [];
-    delete(get(handles.axes1, 'Children'))
-    skip = str2double(handles.skip_film_mosaic.String);
-    if skip == 0
-        skip = 1;
-    end
-
-    counter = 0;
-    for ii = 1:skip:handles.num_im
-        counter = counter  + 1;   
-        [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
-            handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
-        showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
-        drawnow;
-        mov(counter) = getframe;
-        handles.message.String = ['Frame number: ', num2str(ii)];
-    end
-   disp ('Mosaic loaded');
-   
-   
-figure(1);
-clf;
-time = 1:skip:handles.num_im
-num_time = numel(time)
-x = 6;
-y = round(num_time/x);
-ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
-ss = size(mov(1).cdata);
-counter = 0;
- for ii = 1:skip:handles.num_im
-    counter = counter  + 1;     
-    axes(ha(counter));
-    imshow(mov(counter).cdata);   
-    hold on;
-    text( 30,30,[num2str(ii)],'color','b') 
-end
-   
-   
-   
-end
 
 
 % --- Executes on button press in legend_box.
@@ -1345,30 +1044,9 @@ function legend_box_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of legend_box
 if ~isempty(handles.FLAGS)
     handles.FLAGS.legend = handles.legend_box.Value;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
-
-function skip_film_mosaic_Callback(hObject, eventdata, handles)
-% hObject    handle to skip_film_mosaic (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of skip_film_mosaic as text
-%        str2double(get(hObject,'String')) returns contents of skip_film_mosaic as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function skip_film_mosaic_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to skip_film_mosaic (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 % --- Executes on button press in phase_flag.
@@ -1380,7 +1058,7 @@ function phase_flag_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of phase_flag
 if ~isempty(handles.FLAGS)
     handles.FLAGS.phase_flag = get(hObject,'Value');
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function phase_level_txt_Callback(hObject, eventdata, handles)
@@ -1392,7 +1070,7 @@ function phase_level_txt_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
 if ~isempty(handles.FLAGS)
     handles.FLAGS.phase_level = str2double(get(hObject,'String'));
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 
@@ -1418,7 +1096,7 @@ function composite_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of composite
 if ~isempty(handles.FLAGS)
     handles.FLAGS.composite = get(hObject,'Value') ;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 
@@ -1431,6 +1109,380 @@ function region_ids_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of region_ids
 if ~isempty(handles.FLAGS)
     handles.FLAGS.cell_flag = ~get(hObject,'Value') ;
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
+
+
+% Output options
+function names = list_output_strings ()
+% strings that will be included in the output
+% format is :  name, needsCellFiles, needsClist
+names = [{'Cell Kymo'},1,0;
+    {'Cell Movie'},1,0;
+    {'Cell Tower'},1,0;
+    {'Kymograph Mosaic'},1,0;
+    {'Cell Tower Mosaic'},1,0;
+    {'Lineage'},0,1;
+    {'Field Movie'},0,0;
+    {'Field Mosaic'},0,0;
+    {'Consensus'},1,0;
+    {'Consensus Kymo'},1,0];
+
+
+
+% --- Executes on selection change in output_list.
+function output_list_Callback(hObject, eventdata, handles)
+% Executes on double click of output options :
+% make sure names here match with names above.
+
+contents = cellstr(get(hObject,'String'));
+value = contents{get(hObject,'Value')};
+handles.message.String = '';
+
+if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject, 'Value')
+    if strcmp('Cell Kymo',value)
+        makeCellKymo(handles);
+    elseif strcmp('Cell Movie',value)
+        intMakeCellMovie(handles);
+    elseif strcmp('Kymograph Mosaic',value)
+        if ~areCellsLoaded(handles)
+            errordlg('No cell files found');
+        else
+            figure(2);
+            im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
+            if handles.save_output.Value
+                savename = [handles.dirSave, 'mosaic_kymograph'];
+                save (savename, 'im');
+                handles.message.String = ['Saved mosaic kymograph at ', savename];
+            end
+        end
+    elseif strcmp('Cell Tower',value)
+        makeCellTower(handles);
+    elseif strcmp('Cell Tower Mosaic',value)
+        cell_tower_mosaic(handles);
+    elseif strcmp('Lineage',value)
+        if isempty(handles.clist)
+            errordlg('No clist found');
+        else
+            min_width = 3;
+            ids = str2num(handles.cell_no.String);
+            if isnan(ids)
+                ids = [];
+            end
+            makeLineage( handles.clist, ids, min_width );
+        end
+    elseif strcmp('Field Movie',value)
+        makeFieldMovie(handles);
+    elseif strcmp('Field Mosaic',value)
+        handles = field_mosaic( handles)
+    elseif strcmp('Consensus',value);
+        handles = consensus_image(handles)
+    elseif strcmp('Consensus Kymo',value)
+        handles = consensus_kymo(handles);
+    end
+else
+    set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
+end
+
+function cell_info_Callback(hObject, eventdata, handles)
+global settings;
+state = get(hObject,'Value');
+if state == get(hObject,'Max')
+    settings.hObject = hObject;
+    settings.handles = handles;
+    settings.function = 'cell_info';
+    settings.eventdata = eventdata;
+    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+elseif state == get(hObject,'Min')
+    updateImage(hObject, handles);
+end
+
+function handles = consensus_kymo(handles)
+global dataImArray
+if ~areCellsLoaded(handles)
+    errordlg('No cell files found');
+else
+    if ~exist('dataImArray','var') || isempty(dataImArray)
+        fnum = handles.FLAGS.f_flag;
+        if fnum == 0
+            fnum = 1;
+        end
+        [dataImArray] = makeConsensusArray( handles.dirname_cell, handles.CONST...
+            , 5,[], fnum, handles.clist);
+        save ([handles.dirSave,'dataImArray'],'dataImArray');
+    else
+        handles.message.String = 'dataImArray already calculated';
+    end
+    [kymo,kymoMask ] = makeConsensusKymo(dataImArray.imCellNorm, dataImArray.maskCell , 1 );
+    if handles.save_output.Value
+        save ([handles.dirSave, 'consensus_kymograph'], 'kymo', 'kymoMask');
+    end
+end
+
+
+
+function handles = consensus_image(handles)
+global dataImArray
+if ~areCellsLoaded(handles)
+    errordlg('No cell files found');
+else
+    if ~exist('dataImArray','var') || isempty(dataImArray)
+        fnum = handles.FLAGS.f_flag;
+        if fnum == 0
+            fnum = 1;
+        end
+        [dataImArray] = makeConsensusArray( handles.dirname_cell, handles.CONST...
+            , 5,[], fnum, handles.clist);
+        save ([handles.dirSave,'dataImArray'],'dataImArray');
+    else
+        handles.message.String = 'dataImArray already calculated';
+    end
+    [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
+    if handles.save_output.Value
+        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    end
+    figure(2);
+    clf;
+    imshow(imColor);
+    
+end
+
+
+function makeCellKymo(handles)
+if ~areCellsLoaded(handles)
+    errordlg('No cell files found');
+else
+    c = str2num(handles.cell_no.String);
+    if numel(c) > 1
+        c = c(1);
+    end
+    if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+        handles.message.String = ['Invalid cell number'];
+    else
+        handles.kymograph_cell_no.String = num2str(c);
+        [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
+        handles.message.String = ['Kymograph for cell ', cell_name];
+        if ~isempty( data_cell )
+            figure(2);
+            clf;
+            makeKymographC(data_cell, 1, handles.CONST,[]);
+            title(cell_name);
+            ylabel('Long Axis (pixels)');
+            xlabel('Time (frames)' );
+        end
+    end
+end
+
+function intMakeCellMovie(handles)
+if ~areCellsLoaded(handles)
+    errordlg('No cell files found');
+else
+    c = str2num(handles.cell_no.String);
+    if numel(c) > 1
+        c = c(1);
+    end
+    if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+        handles.message.String = ['Invalid cell number'];
+    else
+        
+        handles.movie_cell_no.String = num2str(c);
+        [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
+        
+        if ~isempty(data_cell)
+            handles.message.String = ['Movie for cell ', cell_name];
+            mov = makeCellMovie(data_cell);
+            choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
+            if strcmp(choice, 'Yes')
+                saveFilename = [handles.dirSave,cell_name(1:end-4),'.avi'];
+                v = VideoWriter(saveFilename);
+                open(v)
+                writeVideo(v,mov)
+                close(v)
+                handles.message.String = ['Saved movie at ', saveFilename];
+            end
+        end
+    end
+end
+
+
+function hanldes = makeCellTower( handles)
+if ~areCellsLoaded(handles)
+    errordlg('No cell files found');
+else
+    if ~isempty(handles.FLAGS)
+        c = str2num(handles.cell_no.String);
+        if numel(c) > 1
+            c = c(1);
+        end
+        if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+            handles.message.String = ['Invalid cell number'];
+        else
+            
+            handles.cell_no.String = num2str(c);
+            xdim = 2; %str2double(handles.no_columns.String);
+            [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
+            if ~isempty( data_cell )
+                handles.message.String = ['Cell Tower for cell ', cell_name];
+                figure(2);
+                clf;
+                makeFrameMosaic(data_cell, handles.CONST, xdim);
+                title(cell_name);
+            end
+        end
+    end
+end
+
+
+function [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
+prompt = {'Start frame:', 'End frame:','Every # frames :'};
+dlg_title = 'Make Field Movie';
+num_lines = 1;
+a = inputdlg(prompt,dlg_title,num_lines);
+
+if ~isempty(a) % did not press cancel
+    startFr = str2double(a(1));
+    endFr =  str2double(a(2));
+    skip =  str2double(a(3));
+    if isnan(skip)
+        skip = 1;
+    end
+    
+    if isnan(endFr) || endFr < startFr || endFr > handles.num_im
+        endFr = handles.num_im;
+    end
+    
+    if  isnan(startFr) ||startFr < 1 || startFr > handles.num_im
+        startFr = 1;
+    end
+else
+    startFr = [];
+    endFr = [];
+    skip =  [];
+    
+end
+
+
+
+function handles = field_mosaic( handles)
+
+if ~isempty(handles.FLAGS)
+    clear mov;
+    mov.cdata = [];
+    mov.colormap = [];
+    [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
+    if ~isempty(startFr)
+        counter = 0;
+        for ii = startFr : skip : endFr
+            delete(get(handles.axes1, 'Children'))
+            counter = counter  + 1;
+            [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
+                handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
+            showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+            drawnow;
+            mov(counter) = getframe;
+            handles.message.String = ['Frame number: ', num2str(ii)];
+        end
+        handles.message.String = ('Field mosaic loaded');
+        
+        figure(2);
+        clf;
+        time = startFr : skip : endFr;
+        num_time = numel(time)
+        x = 6;
+        y = round(num_time/x);
+        if y == 0
+            y = 1;
+        end
+        ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
+        counter = 0;
+        for ii = startFr : skip : endFr;
+            counter = counter  + 1;
+            axes(ha(counter));
+            imshow(mov(counter).cdata);
+            hold on;
+            text( 30,30,[num2str(ii)],'color','b')
+        end
+    end
+end
+
+
+
+
+function makeFieldMovie(handles)
+% makes field movie
+if ~isempty(handles.FLAGS)
+    clear mov;
+    [startFr,endFr,skip] = dialogBoxStartEndSkip (handles);
+    if ~isempty(startFr)
+        mov.cdata = [];
+        mov.colormap = [];
+        
+        for ii = startFr:skip: endFr
+            delete(get(handles.axes1, 'Children'))
+            [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
+                handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
+            showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
+            drawnow;
+            mov(ii) = getframe;
+            handles.message.String = ['Frame number: ', num2str(ii)];
+        end
+        choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
+        if strcmp(choice, 'Yes')
+            filename = inputdlg('Filename', 'Filename:', 1);
+            if ~isempty(filename)
+                saveFilename = [handles.dirSave,filename{1},'.avi'];
+                v = VideoWriter(saveFilename);
+                v.FrameRate = 2;
+                open(v)
+                writeVideo(v,mov)
+                close(v)
+                handles.message.String = ['Saved movie at ', saveFilename];
+            end
+        end
+    end
+end
+
+function cell_tower_mosaic(handles)
+if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
+    figure(2);
+    clf;
+    imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    if handles.save_output.Value
+        save ([handles.dirSave,'tower_cells'],'imTot');
+    end
+end
+
+% --- Executes during object creation, after setting all properties.
+function output_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to output_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function cell_no_Callback(hObject, eventdata, handles)
+% hObject    handle to cell_no (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of cell_no as text
+%        str2double(get(hObject,'String')) returns contents of cell_no as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function cell_no_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to cell_no (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
