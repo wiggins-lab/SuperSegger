@@ -13,17 +13,15 @@ Some basic information here to get you started with :
 Setting the Path
 =================
 
-In order for Matlab to be able to find the different pieces of the code the SuperSeggerRelease folder needs to be in your path. In the Home tab, in the Environment section, click Set Path. The Set Path dialog box appears. Click add folder with subfolders and add the SuperSeggerRelease folder. We suggest you keep the SuperSeggerRelease / z-removed folder out of your path if it exists in the folders.
-
-
+In order for Matlab to be able to find the different pieces of the code the SuperSegger folder needs to be in your path. In the Home tab, in the Environment section, click Set Path. The Set Path dialog box appears. Click add folder with subfolders and add the SuperSegger folder. 
 
 Main functions you may need
 ===========================
 
 GUIs :
-superSeggerGui : to run segmentation on your images
+superSeggerGui : to segment your images
 superSeggerViewerGui : to see the final result after segmentation and use the post processing tools.
-training : to train your own constants.
+trainingGui : to train your own constants.
 
 Non - GUI :
 ProcessExp : set your parameters and run BatchSuperSeggerOpti. (You can use this instead of superSeggerGui)
