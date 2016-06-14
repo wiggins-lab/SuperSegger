@@ -58,7 +58,7 @@ elseif isa(res,'double' ) && res == 100
 end
 
 %% Parameters that are the same for all constants
-% Settings for alignment in differnt channels - modify for your microscope
+% Settings for alignment in different channels - modify for your microscope
 CONST.imAlign.DAPI    = [-0.0354   -0.0000    1.5500   -0.3900];
 CONST.imAlign.mCherry = [-0.0512   -0.0000   -1.1500    1.0000];
 CONST.imAlign.GFP     = [ 0.0000    0.0000    0.0000    0.0000];

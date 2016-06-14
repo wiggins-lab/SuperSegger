@@ -91,14 +91,7 @@ CONST = loadConstants(res,parallel_flag) ;
 CONST.trackLoci.numSpots = [5 0]; % Max number of foci to fit in each fluorescence channel (default = [0 0])
 CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (default = true)
 CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
-CONST.consensus = false; % calculate consensus images for each XY position (Default = true)
 CONST.imAlign.AlignChannel = 1; % change this if you want the images to be aligned to fluorescence channel
-
-% Linking method : 
-% @multiAssignmentPairs : (slower) better for linking cells that are pushed outwards at the edges of a colony
-% @multiAssignmentFastOnlyOverlap : (faster), for high frame rate, cells
-% with high area overlap from frame-to-frame
-CONST.trackOpti.linkFun =  @multiAssignmentFastOnlyOverlap;
 
 
 %% Skip Frames for Segmentation

@@ -107,6 +107,20 @@ convertImageNames(handles.directory.String, handles.basename.String, ...
     handles.timeBefore.String, handles.timeAfter.String, handles.xyBefore.String, ...
     handles.xyAfter.String, strsplit(handles.channels.String, ','));
 
+
+function crop_images_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function crop_images_Callback(hObject, eventdata, handles)
+tmp_name = trackOptiCropMulti(handles.directory.String);
+if ~isempty(tmp_name)
+    handles.directory.String = tmp_name;
+end
+
+
+
 function segment_images_Callback(hObject, eventdata, handles)
 
 dirname = handles.directory.String;
@@ -157,8 +171,6 @@ function bthai60_Callback(hObject, eventdata, handles)
 % tries different constants
 function try_constants_Callback(hObject, eventdata, handles)
 tryDifferentConstants(handles.directory.String);
-
-
 
 % opens superSeggerViewer
 function view_button_Callback(hObject, eventdata, handles)
