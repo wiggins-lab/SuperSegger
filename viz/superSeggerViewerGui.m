@@ -65,15 +65,14 @@ handles.edit_segments.Enable = 'on';
 
 
 function update_clist_panel(hObject, handles)
-
-
 if isempty(handles.clist)
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
+    handles.lineage_clist.Enable = 'off'
     handles.clist_text.String = 'No clist loaded, these commands will not work';
     
 else
     handles.clist_text.String = ['Clist: ' handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'];
-    
+    handles.lineage_clist.Enable = 'on'
     set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'on')
     handles.make_gate.String = handles.clist.def';
     handles.histogram_clist.String = handles.clist.def';
@@ -239,7 +238,8 @@ if handles.num_seg >= handles.num_err
 else
     handles.num_im  = handles.num_err;
 end
-    
+
+
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
@@ -321,7 +321,6 @@ else
             if ~isempty(clist)
                 save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
             end
-            find_cell_no(handles);
         catch
             disp('Error saving.' );
         end
@@ -334,6 +333,11 @@ else
     else
         makeActive(handles.use_seg_files);
     end
+
+    if handles.num_seg  == 0
+        handles.use_seg_files.Enable = 'off'
+    end
+    
     handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
     f = 0;
     while true
@@ -365,7 +369,7 @@ else
         makeInactive(handles.show_consensus);
         makeInactive(handles.tower_cells);
     end
-    if handles.FLAGS.f_flag >= 1 % Fluorescence
+    if handles.FLAGS.f_flag >= 1 || handles.FLAGS.composite% Fluorescence
         makeActive(handles.log_view);
         makeActive(handles.false_color);
         if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
@@ -398,6 +402,11 @@ else
         makeInactive(handles.show_daughters);
         makeInactive(handles.show_mothers);
         makeInactive(handles.show_linking);
+    end
+    if handles.FLAGS.ID_flag
+        handles.region_ids.Enable = 'on';
+    else
+        handles.region_ids.Enable = 'off';
     end
 end
 guidata(hObject, handles);
@@ -618,7 +627,7 @@ if ~isempty(handles.FLAGS)
         handles.FLAGS.regionScores = 0;
         handles.region_scores.Value = 0;
     end
-    updateImage(hObject, handles)
+    updateImage(hObject, handles);
 end
 
 function cell_poles_Callback(hObject, eventdata, handles)
@@ -1411,3 +1420,17 @@ if ~isempty(handles.FLAGS)
     handles.FLAGS.composite = get(hObject,'Value') ;
     updateImage(hObject, handles)
 end
+
+
+% --- Executes on button press in region_ids.
+function region_ids_Callback(hObject, eventdata, handles)
+% hObject    handle to region_ids (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of region_ids
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.cell_flag = ~get(hObject,'Value') ;
+    updateImage(hObject, handles)
+end
+

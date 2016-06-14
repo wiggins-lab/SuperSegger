@@ -406,7 +406,7 @@ if isfield(data, fluorName )
     maxxer = max( minner(:));
     minner = min( minner(:));
     if CONST.view.falseColorFlag
-        im = doColorMap( ag(fluor_tmp,minner,maxxer), uint8(255*jet(256)) );
+        im = im + doColorMap( ag(fluor_tmp,minner,maxxer), uint8(255*jet(256)) );
     else
         imFluor = 0.8*ag(fluor_tmp,minner,maxxer);
         im(:,:,1) = im(:,:,1) + curColor(1) * imFluor;
@@ -737,7 +737,7 @@ end
 function intPlotPole( data, x_, y_,FLAGS )
 % intPlotPole shows pole positions and connects daughter cells to each other
 if ~isfield(data,'CellA')
-    disp ('Showing poles is not supported in this mode');
+    disp ('Showing poles is not supported in this mode (seg files)');
     return;
 else
     for kk = 1:data.regs.num_regs
