@@ -30,8 +30,40 @@ ProcessExp : set your parameters and run BatchSuperSeggerOpti. (You can use this
 You can download a sample dataset and a bootcamp folder from our website to try the software.
 
 
+General Process and output 
+==========================
+
+The fluorescence and phase images are processed and aligned. During segmentation the image cells are partitioned from the background. Then each cell is linked to one cell or a pair of cells in the next frame and the cells receive ID numbers. Next, the properties and fluorescence characteristics of each cell are calculated. Finally, the program outputs the Clist, a table with pertaining information during the cell lifetime, and a file for each cell with all the characteristics during its lifetime. 
+
+
+Images - Naming Convention
+===========================
+In order to segment your images they need to follow our naming convention. 
+The naming convention of the image files must be of the following format
+base_name_t[frame-number]xy[xy-number]c*.tif. c1 must be the bright field 
+and c2,c3 etc are different fluorescent channels.
+
+Example of two time points, two xy positions and one fluorescent channel
+ filename_t001xy1c1.tif
+ filename_t001xy1c2.tif
+ filename_t001xy2c1.tif
+ filename_t001xy2c2.tif
+ filename_t002xy1c1.tif
+ filename_t002xy1c2.tif
+ filename_t002xy2c1.tif
+ filename_t002xy2c2.tif
+
+superSeggerGui provides a function to rename your images
+
+
+Collecting Images
+==================
+
+SuperSegger is unable to correctly segment images where the cell outlines are not clear to the user by eye. Care should still be taken in collecting the best possible focused phase images that are focused. We recommend that users crop out-of-focus regions of the image before the segmentation process since these parts of the image are unlikely to yield usable data. superSeggerGui provides a function to crop your images.
+
+
 Software Requirements
-=================
+=====================
 
 In order to use SuperSegger you need to have the MATLAB software with the following toolboxes:
 Image Processing Toolbox
