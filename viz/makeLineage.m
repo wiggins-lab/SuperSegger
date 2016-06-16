@@ -30,6 +30,8 @@ global cell_birth_index;
 global cell_div_index;
 global stat_0_index;
 global cell_error_index;
+global cell_age_index;
+global pole_age_index;
 
 figure(1)
 clf;
@@ -87,6 +89,8 @@ cell_div_index = grabClistIndex(clist, 'Cell Division Time');
 stat_0_index = grabClistIndex(clist,'stat0');
 cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
 cell_error_index = grabClistIndex(clist,'Error Frame');
+cell_age_index = grabClistIndex(clist,'Cell Age' );
+pole_age_index = grabClistIndex(clist,'Old Pole Age' );
 
 if isempty(cell_error_index)
     disp ('no error frame found in clist')
@@ -100,13 +104,23 @@ if isempty( ID_ )
             % Make new lineage
             ID = clist.data(ii,1);
             
-            [width,list,time,death,stat0,starter,error] ...
-                = intGetWidth(ID, clist, starter);
+            [width,list,time,death,stat0,starter,error,age,gen,pole] ...
+                = intGetWidth(ID, clist, starter,1);
             
-            if width >= min_width
+            if (width >= min_width) || time(1) == 1
                 [hh, hh2, data] = intDoDraw( clist, list, time, death, ...
                     stat0, starter, hh, hh2, error, gated, data );
                 count = count + 1;
+                
+                data.width = width;
+                data.ID    = list;
+                data.birth = time;
+                data.death = death;
+                data.stat0 = stat0;
+                data.error = error;
+                data.age   = age;
+                data.gen   = gen;
+                data.pole  = pole;
                 
                 legend_text{count} = ['Cell ',num2str( ID )];
             end
@@ -118,11 +132,21 @@ else
     for ii = 1:numel(ID_)
         
         ID = ID_(ii);
-        [width,list,time,death,stat0,starter,error] = ...
-            intGetWidth(ID, clist, starter);
+        [width,list,time,death,stat0,starter,error,age,gen,pole] = ...
+            intGetWidth(ID, clist, starter, 1);
         
         [hh,hh2,data] = intDoDraw( clist, list, time, death, stat0, starter, ...
             hh, hh2, error, gated, data );
+        
+        data.width = width;
+        data.ID    = list;
+        data.birth = time;
+        data.death = death;
+        data.stat0 = stat0;
+        data.error = error;
+        data.age   = age;
+        data.gen   = gen;
+        data.pole  = pole;
         
         legend_text{ii} = ['Cell ',num2str( ID )];
     end
@@ -150,34 +174,39 @@ legend( hh, legend_text, 'Location' , 'NorthWest' );
 set( gca, 'YScale', 'log'  );
 title( 'Cummulative  Number of Cells' );
 
+try
 ylim_ = data.n1_max;
 ylim( [0.5,2*ylim_]);
 xlim( [-.1,1.1]*height1 );
-
+end
 
 figure(3);
-ylabel( 'Number of cells' );
-xlabel( 'time (frames)' );
+ylabel( 'Log_2 Number of cells' );
+xlabel( 'Time (frames)' );
 legend( hh, legend_text, 'Location' , 'NorthWest' );
-set( gca, 'YScale', 'log'  );
+%set( gca, 'YScale', 'log'  );
 title( 'Number of Cells' );
 
 legend( hh2, legend_text, 'Location' , 'NorthWest' );
 
-
+try
 ylim_ = data.n2_max;
-ylim( [0.5,2*ylim_(end)]);
+ylim( ceil(log([0.5,2*ylim_(end)])/log(2)) );
 xlim( [-.1,1.1]*height1 );
+end
 
+set( gca, 'YGrid', 'on')
 
 end
 
-function [width,list,time,death,stat0,starter,error] = ...
-    intGetWidth(ID, clist, starter)
+function [width,list,time,death,stat0,starter,error,age,gen,pole] = ...
+    intGetWidth(ID, clist, starter, gen__)
 global cell_birth_index;
 global cell_div_index;
+global cell_age_index;
 global stat_0_index;
 global cell_error_index;
+global pole_age_index;
 
 
 end_time = max( clist.data(:,cell_div_index) );
@@ -192,11 +221,16 @@ if isempty(ind) || (ID == 0) || isnan(ID)
     death = [];
     stat0 = [];
     error = [];
+    age   = [];
+    gen   = [];
+    pole  = [];
 else
     [ID1,ID2] = intGetDaughter( ID, clist );
     
     error_ = clist.data(ind,cell_error_index);
     death_ = clist.data(ind,cell_div_index);
+    age_   = clist.data(ind,cell_age_index);
+    gen_   = gen__;
     
     if isempty(error_)
         error_ = nan;
@@ -211,12 +245,12 @@ else
             
     end
     
-    [w1,l1,t1,d1,s1,starter,e1] = intGetWidth( ID1, clist, starter );
-    [w2,l2,t2,d2,s2,starter,e2] = intGetWidth( ID2, clist, starter );
+    [w1,l1,t1,d1,s1,starter,e1,a1,g1,p1] = intGetWidth( ID1, clist, starter,gen__ + 1 );
+    [w2,l2,t2,d2,s2,starter,e2,a2,g2,p2] = intGetWidth( ID2, clist, starter,gen__ + 1  );
     
     stat0_ = clist.data(ind,stat_0_index);
     time_  = clist.data(ind,cell_birth_index);
-    
+    pole_  = clist.data(ind,pole_age_index);
     %death_ = death_ + time_;
     
     width =  1 + w1 + w2;
@@ -225,6 +259,9 @@ else
     death = [death_,d1,d2];
     stat0 = [stat0_,s1,s2];
     error = [error_,e1,e2];
+    age   = [age_,a1,a2];
+    gen   = [gen_,g1,g2];
+    pole  = [pole_,p1,p2];
 end
 end
 
@@ -341,7 +378,7 @@ nn = cumsum( ntt );
 [ttt,ord] = unique( ttt );
 nn = nn(ord);
 
-h_ = stairs( ttt, nn, '-', 'Color', cc );
+h_ = stairs( ttt, log(nn)/log(2), '-', 'Color', cc );
 hold on;
 
 data.n2_max = max( [data.n2_max, max(nn) ] );
@@ -351,7 +388,7 @@ if ~ind
     ind = 1;
 end
 
-plot( first_death_time, nn(ind), '.', ...
+plot( first_death_time, log(nn(ind))/log(2), '.', ...
     'MarkerSize', 20, 'Color', cc );
 
 hh2 = [hh2, h_];
@@ -396,4 +433,8 @@ else
 end
 
 end
+
+
+
+
 
