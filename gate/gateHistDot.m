@@ -61,66 +61,57 @@ end
 % 3d histogram
 % y : number of elements in each bin
 % xx : 1x2 cell array with positions of bin centers
+x2 = clist.data(:,ind(2));
+x1 = clist.data(:,ind(1));
+
+x1_min = min(x1);
+x1_max = max(x1);
+x1_mean  = (x1_max+x1_min)/2;
+x1_delta = 1.33*(x1_max-x1_min);
+
+x1_dd = ((0:xx(1))/xx(1)-0.5)*x1_delta + x1_mean;
+
+x2_min = min(x2);
+x2_max = max(x2);
+x2_mean  = (x2_max+x2_min)/2;
+x2_delta = 1.33*(x2_max-x2_min);
+
+x2_dd = ((0:xx(2))/xx(2)-0.5)*x2_delta + x2_mean;
+
+
+xx = {x2_dd,x1_dd};
+
+
 [y,xx] =hist3([clist.data(:,ind(2)),clist.data(:,ind(1))], xx );
 
-y((y==0))=NaN;
-cutoff = 50*min(y(:));
-if max(y(:))>cutoff
-    y((y>cutoff))=cutoff;
-end
 
 % xvasl, yvals : positions of bin centers
-xvals = xx{1};
-yvals = xx{2};
-dim=length(y);
-zvals = nan(1,(dim*dim)); % number of elements in bin
-xarr = nan(1,(dim*dim)); % positions of x bin centers
-yarr = nan(1,(dim*dim)); % positions of y bin centers
+xvals = x2;
+yvals = x1;
+y2 = interp2( xx{1}, xx{2}, y', xvals, yvals, 'linear');
+y = y2;
 
 
-for jj=1:size(y,1)
-    for ii=1:size(y,2)
-        if ~isnan(y(jj,ii)) && ~y(jj,ii)==0
-            index = jj+(dim*(ii-1));
-            xarr(index)=xvals(jj);
-            yarr(index)=yvals(ii);
-            zvals(index)=y(jj,ii);
-        end
-    end
-end
+[y,ord] = sort(y, 'ascend');
+xvals = xvals(ord);
+yvals = yvals(ord);
 
-% Sort datapoints by z values so highest hits
-% will be plotted last (on top)
-[sorted,newind,what]=unique(zvals);
-inds=[];
+%y = log(y);
 
-for ii=1:length(sorted)
-    tmp = find(zvals==sorted(ii));
-    for jj=1:length(tmp)
-        inds=[inds,tmp(jj)];
-    end
-end
+scatter( yvals, xvals, 10, y, 'filled' );
 
-xarr_s = xarr(inds);
-yarr_s = yarr(inds);
-zvals_s = zvals(inds);
-
-yname = clist.def{ind(2)};
-xname = clist.def{ind(1)};
-zvals_log = log(zvals_s);
-
-clf;
-sameSize = false;
-if sameSize
-     scatter (yarr_s,xarr_s,20,zvals_log,'o','filled');
-else
-    scatter (yarr_s,xarr_s,10*zvals_s,zvals_log,'o','filled');
-end
-   
 colormap(jet)
-ylabel( yname );
-xlabel( xname );
+
+if size(clist.def,2) >= ind
+    yname = clist.def{ind(2)};
+    xname = clist.def{ind(1)};
+    ylabel( yname );
+    xlabel( xname );
+end
+
 set(gca,'Box','on');
+set(gca,'YScale','log');
+
 
 
 end
