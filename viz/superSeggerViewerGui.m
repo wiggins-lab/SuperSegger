@@ -416,10 +416,9 @@ if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
     savename = sprintf('%s/%s',pathName,filename);
-    %saveas(fh,[(savename),'.fig'],'fig');
     print(fh,'-depsc',[(savename),'.eps'])
     saveas(fh,[(savename),'.png'],'png');
-    handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
+    handles.message.String = ['Figure is saved in eps and png format at ',savename];
     close(fh);
 end
 
