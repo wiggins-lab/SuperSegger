@@ -1334,7 +1334,7 @@ end
 
 
 function [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
-prompt = {'Start frame:', 'End frame:','Every # frames :'};
+prompt = {'Start frame:', 'End frame:','Choose Total # frames :','or Skip Frames :'};
 dlg_title = 'Make Field Movie';
 num_lines = 1;
 a = inputdlg(prompt,dlg_title,num_lines);
@@ -1342,11 +1342,8 @@ a = inputdlg(prompt,dlg_title,num_lines);
 if ~isempty(a) % did not press cancel
     startFr = str2double(a(1));
     endFr =  str2double(a(2));
-    skip =  str2double(a(3));
-    if isnan(skip)
-        skip = 1;
-    end
-    
+    numFrm =  str2double(a(3));
+    skip =  str2double(a(4));
     if isnan(endFr) || endFr < startFr || endFr > handles.num_im
         endFr = handles.num_im;
     end
@@ -1354,6 +1351,19 @@ if ~isempty(a) % did not press cancel
     if  isnan(startFr) ||startFr < 1 || startFr > handles.num_im
         startFr = 1;
     end
+    
+    if isnan(skip) && ~isnan(numFrm)
+        skip = (endFr-startFr)/(numFrm-1);
+    end
+    
+     if isnan(numFrm) && ~isnan(skip)
+        skip = skip;
+     end
+     
+     if isnan(skip) && isnan(numFrm)
+        skip = 1; % default value
+    end
+
 else
     startFr = [];
     endFr = [];
@@ -1369,11 +1379,12 @@ if ~isempty(handles.FLAGS)
     clear mov;
     mov.cdata = [];
     mov.colormap = [];
-    [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
+    [startFr,endFr,skip] = dialogBoxStartEndSkip (handles);
     if ~isempty(startFr)
         counter = 0;
-        for ii = startFr : skip : endFr
-            delete(get(handles.axes1, 'Children'))
+        time = round(startFr:skip: endFr);
+        for ii = time
+            delete(get(handles.axes1, 'Children'));
             counter = counter  + 1;
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
                 handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
@@ -1386,25 +1397,24 @@ if ~isempty(handles.FLAGS)
         
         figure(2);
         clf;
-        time = startFr : skip : endFr;
-        num_time = numel(time)
-        x = 6;
+        
+        num_time = numel(time);
+        x = min(6,num_time);
         y = round(num_time/x);
         if y == 0
             y = 1;
         end
-        ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0])%,0.3,0.3,0.3)
+        ha = tight_subplot(y,x,[0.01 0],[0 0],[0 0]);
         counter = 0;
-        for ii = startFr : skip : endFr;
+        for ii = time
             counter = counter  + 1;
             axes(ha(counter));
             imshow(mov(counter).cdata);
             hold on;
-            text( 30,30,[num2str(ii)],'color','b')
+            text( 30,30,[num2str(ii)],'color','b');
         end
     end
 end
-
 
 
 
@@ -1417,7 +1427,7 @@ if ~isempty(handles.FLAGS)
         mov.cdata = [];
         mov.colormap = [];
         
-        for ii = startFr:skip: endFr
+        for ii = round(startFr:skip: endFr)
             delete(get(handles.axes1, 'Children'))
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
                 handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
@@ -1433,14 +1443,15 @@ if ~isempty(handles.FLAGS)
                 saveFilename = [handles.dirSave,filename{1},'.avi'];
                 v = VideoWriter(saveFilename);
                 v.FrameRate = 2;
-                open(v)
-                writeVideo(v,mov)
-                close(v)
+                open(v);
+                writeVideo(v,mov);
+                close(v);
                 handles.message.String = ['Saved movie at ', saveFilename];
             end
         end
     end
 end
+
 
 function cell_tower_mosaic(handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
