@@ -104,10 +104,18 @@ ignoreError = 0;
 ignoreAreaError = restartFlag; %Don't split big regions on restart (already done)
 maxIterPerFrame = 3;
 curIter = 1;
+
+if CONST.parallel.show_status
+    h = waitbar( 0, 'Strip small cells.');
+    cleanup = onCleanup( @()( delete( h ) ) );
+else
+    h = [];
+end
+
 while time <= numIm
     
     if CONST.parallel.show_status
-        waitbar((numIm-time)/num_im,h,['Linking -- Frame: ',num2str(time),'/',num2str(num_im)]);
+        waitbar((numIm-time)/numIm,h,['Linking -- Frame: ',num2str(time),'/',num2str(numIm)]);
     end
     
     if (time == 1)
