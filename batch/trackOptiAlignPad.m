@@ -1,4 +1,4 @@
-function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST)
+function [crop_box] = trackOptiAlignPad(dirname_, workers, CONST, targetd)
 % trackOptiAlignPad : aligns phase images to correct for microscope drift.
 % To keep as much data as possible, instead of cropping the resulting
 % images it builds a larger image that encompases all drift positions.
@@ -88,8 +88,11 @@ else
 end
 
 
+if ~exist( 'targetd', 'var' ) || isempty( targetd )
+    targetd = [dirname_,'align',filesep];
+end
 
-targetd = [dirname_,'align',filesep];
+
 mkdir(targetd);
 num_xy = numel(nxy);
 

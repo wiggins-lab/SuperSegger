@@ -45,7 +45,7 @@ if CONST.parallel.show_status
 else
     h = [];
 end
-
+SE = strel('disk',3);
 
 for i = 1:num_im;
     
@@ -60,8 +60,22 @@ for i = 1:num_im;
     props = regionprops( regs_label, 'Area' );    
     keepers = find([props(:).Area]>MIN_AREA);
     small = find([props(:).Area]<=MIN_AREA);
+     
+    small_new = [];
+    % only if they can not connect to other cells
+    for j = 1 : numel(small)
+        mask = imdilate(regs_label == small(j),SE);
+       neighbors = unique(regs_label(mask));
+       neighbors = neighbors(neighbors~=small(j));
+       neighbors = neighbors(neighbors~=0);
+       if isempty(neighbors)
+           small_new = [small_new,small(j)];
+       end
+    end
+    
+    
     cellmask_nosmall= ismember( regs_label, keepers );
-    cellmask_small= ismember( regs_label,small );
+    cellmask_small= ismember( regs_label,small_new );
     data_c.mask_bg (cellmask_small) =0;
     
     % remove segments in small regions

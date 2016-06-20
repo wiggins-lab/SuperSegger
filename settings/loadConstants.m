@@ -35,7 +35,8 @@ function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if nargin < 1 || isempty( res )
-    res = 60;
+   disp ('No constant chosen');
+   return;
 end
 
 if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
@@ -52,7 +53,7 @@ end
 % default values for numbers
 resFlag = [];
 if isa(res,'double' ) && res == 60
-    res = '60XEc';
+    res = '60XEcM9';
 elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
