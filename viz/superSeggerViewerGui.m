@@ -210,7 +210,10 @@ if nargin<2 || isempty(file_filter);
 end
 
 if ~exist(dirSave, 'dir')
+    try
     mkdir(dirSave);
+    catch
+    end
 else
     if exist([dirSave, 'dataImArray.mat'], 'file')
         load([dirSave, 'dataImArray'],'dataImArray');
@@ -1400,7 +1403,7 @@ if ~isempty(handles.FLAGS)
         
         num_time = numel(time);
         x = min(6,num_time);
-        y = round(num_time/x);
+        y = ceil(num_time/x);
         if y == 0
             y = 1;
         end
