@@ -584,7 +584,7 @@ end
 
 function find_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    updateImage(hObject, handles);
+    find_cell_no(handles)
 end
 
 function find_cell_no(handles)
