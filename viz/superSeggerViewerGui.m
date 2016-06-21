@@ -584,7 +584,8 @@ end
 
 function find_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    find_cell_no(handles)
+    updateImage(hObject, handles);
+    find_cell_no(handles);
 end
 
 function find_cell_no(handles)
@@ -1182,10 +1183,10 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
         handles = consensus_image(handles)
     elseif strcmp('Consensus Kymo',value)
         handles = consensus_kymo(handles);
-    end
-else
-    set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
+    end 
 end
+
+set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
 
 function cell_info_Callback(hObject, eventdata, handles)
 global settings;
