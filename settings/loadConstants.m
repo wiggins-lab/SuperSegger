@@ -106,11 +106,9 @@ CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cel
 CONST.trackLoci.numSpots = []; % needs to be set to the number of spots per channel to find foci
 CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 
-% only cells with areas between 60 and 700 are made
-% if you want to keep all the cells use instead CONST.trackLoci.gate  = [];
-area_gate(1).x = [70 700];
-area_gate(1).ind = 14; % index for area
-CONST.trackLoci.gate = area_gate;
+%  you can set an initial gate here
+CONST.trackLoci.gate  = [];
+
 
 % pixelsize
 if all(ismember('100X',res))
