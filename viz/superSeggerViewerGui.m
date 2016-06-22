@@ -1299,6 +1299,7 @@ else
             if strcmp(choice, 'Yes')
                 saveFilename = [handles.dirSave,cell_name(1:end-4),'.avi'];
                 v = VideoWriter(saveFilename);
+                v.FrameRate = 10;
                 open(v)
                 writeVideo(v,mov)
                 close(v)
@@ -1446,7 +1447,7 @@ if ~isempty(handles.FLAGS)
             if ~isempty(filename)
                 saveFilename = [handles.dirSave,filename{1},'.avi'];
                 v = VideoWriter(saveFilename);
-                v.FrameRate = 2;
+                v.FrameRate = 10;
                 open(v);
                 writeVideo(v,mov);
                 close(v);
