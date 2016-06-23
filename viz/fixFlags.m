@@ -1,5 +1,6 @@
 function FLAGS = fixFlags(FLAGS)
 % fixFlags : fixes and initializes flags for superSeggerViewer.
+%
 %   INPUT :
 %       FLAGS : previous flags
 %   OUTPUT : 
@@ -51,12 +52,12 @@ end
 
 % shows region fills
 if ~isfield(FLAGS,'P_flag')
-    FLAGS.P_flag  = 0;
+    FLAGS.P_flag  = 1;
 end
 
 % shows region outlines
 if ~isfield(FLAGS,'Outline_flag')
-    FLAGS.Outline_flag  = 1;
+    FLAGS.Outline_flag  = 0;
 end
 
 % shows errors
