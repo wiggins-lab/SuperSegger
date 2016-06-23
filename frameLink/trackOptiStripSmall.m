@@ -58,7 +58,6 @@ for i = 1:num_im;
     % remove small area regions
     regs_label = bwlabel(data_c.mask_cell);
     props = regionprops( regs_label, 'Area' );    
-    keepers = find([props(:).Area]>MIN_AREA);
     small = find([props(:).Area]<=MIN_AREA);
      
     small_new = [];
@@ -74,8 +73,11 @@ for i = 1:num_im;
     end
     
     
-    cellmask_nosmall= ismember( regs_label, keepers );
+    % remove the small from the mask
     cellmask_small= ismember( regs_label,small_new );
+    cellmask_nosmall = data_c.mask_cell ;
+    cellmask_nosmall (cellmask_small) = 0;
+    
     data_c.mask_bg (cellmask_small) =0;
     
     % remove segments in small regions

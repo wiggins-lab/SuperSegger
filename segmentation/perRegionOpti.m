@@ -93,10 +93,6 @@ regs_label = data.regs.regs_label;
 badReg = find(data.regs.scoreRaw < minGoodRegScore);
 props = data.regs.props;
 
-% remove tiny regions
-small = find([props(:).Area]>CONST.trackOpti.MIN_AREA);
-badReg = badReg(ismember(badReg,small));
-
 numBadRegions = size(badReg,1);
 if verbose    
     disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
