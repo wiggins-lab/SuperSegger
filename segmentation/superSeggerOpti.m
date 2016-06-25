@@ -250,7 +250,7 @@ data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
 data.phase = phaseOrig;
 data.mask_colonies = mask_colonies;
 
-if disp_flag
+if disp_flag && ~CONST.parallel.PARALLEL_FLAG
     figure(1)
     clf;
     showSegDataPhase(data);

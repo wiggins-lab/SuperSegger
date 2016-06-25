@@ -278,7 +278,7 @@ data.segs.segs_bad = segs_bad;
 % update region fields using new mask
 data = intMakeRegs( data, CONST );
 
-if disp_flag
+if disp_flag && ~CONST.parallel.PARALLEL_FLAG
     figure(1);
     cell_mask = data.mask_cell;
     back = double(0.7*ag( data.phase ));
