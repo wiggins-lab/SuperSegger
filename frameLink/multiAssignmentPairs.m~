@@ -69,7 +69,6 @@ noOverlap = 0.0001;
 centroidWeight = 5;
 areaFactor = 20;
 areaChangeFactor = 100;
-outwardMotFactor = 1/10;
 dA = [];
 
 if ~isempty(data_c)
@@ -270,11 +269,11 @@ if ~isempty(data_c)
         %  penalty for big area changes
         areaChangePenalty(abs(areaChange) > 0.6) = 1000;
         areaChangePenalty(abs(areaChange) > 0.3) = 50;
-        distFromColonyMat = repmat(exp(-distFromColn/outwardMotFactor)',1,size(outwardMot,2));
+        distFromColonyMat = repmat(exp(-distFromColn/100)',1,size(outwardMot,2));
         
         totCost = areaChangePenalty +  areaChangeFactor * 1./areaOverlapTransCost + ...
             centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange) + ...
-            distFromColonyMat * areaFactor * 1./areaOverlapCost + outwardMot * outwardMotFactor ;
+            distFromColonyMat * areaFactor * 1./areaOverlapCost + outwardMot / 10 ;
         
         
         assignedInC = [];
@@ -284,6 +283,13 @@ if ~isempty(data_c)
         flagger = ~isnan(costMat);
 
         while any( flagger(:)) >0
+             
+            % thought it would be faster.. it is not :
+            %[~,ind] = min( costMat(flagger));
+            %[tr,tc] = find(flagger);
+            %asgnRow = tr(ind);
+            %asgnCol = tc(ind);
+
             
             [~,ind] = min(costMat(:));
             [asgnRow,asgnCol] = ind2sub(size(costMat),ind);
@@ -317,9 +323,6 @@ if ~isempty(data_c)
         
         [assignments,revAssign] =fixProblems(assignments,revAssign,minIndxC, cArea, fArea);
         [revAssign,assignments] =fixProblems(revAssign,assignments,minIndxF, fArea, cArea);
-        
-        [assignments,revAssign] = exchangeAssignment (assignments,revAssign, minIndxF, totCost,1);
-        [revAssign,assignments] = exchangeAssignment (revAssign,assignments, minIndxC, totCost,0);
         
         dA = changeInArea(assignments, cArea,fArea);
         errorR = setError(dA);
@@ -419,14 +422,10 @@ end
 end
 
 
-function [assignments,revAssign] = exchangeAssignment (assignments,...
-    revAssign, minIndxF, totCost, solvingForC)
-    % finds cells without assignment, and finds their best possible assignment.
-    % exchanges assignments for the one that has taken that assignment if
-    % it is second best possible choice was also left without assignment. 
-
+function [assignments,revAssign] = exchangeAssignment (assignments, revAssign, ...
+            minIndxF, cArea, fArea)
+    
    leftInC = find(cellfun('isempty',assignments));
-   leftInF = find(cellfun('isempty',revAssign));
 
     for kk = 1 : numel(leftInC)
             leftC = leftInC(kk);
@@ -438,29 +437,55 @@ function [assignments,revAssign] = exchangeAssignment (assignments,...
                     break
                 end
             end
-            
-            if solvingForC
-                totCostTemp = totCost(badC,:);
-                totCostTemp(bestF) = NaN;
-                [~,badCSecondF] = min(totCostTemp);
-            else
-                totCostTemp = totCost(:,badC);
-                totCostTemp(bestF) = NaN;
-                [~,badCSecondF] = min(totCostTemp);
-            end
-            
+            % would second option be good enough?
+            totCostTemp = totCost(badC,:);
+            costBef = totCostTemp(bestF);
+            totCostTemp(bestF) = NaN;
+            [cost,badCSecondF] = min(totCostTemp);
+
             if any(leftInF == badCSecondF)
-                disp (['Exchanging assignment for ', num2str(badC), '  and  ', num2str(leftC),  ' ', num2str(bestF)]);
                 assignments{badC} = badCSecondF;
-                revAssign{badCSecondF} = badC;
-                revAssign{bestF} = leftC;
+                dA(badC) = areaChange(badC,badCSecondF);
                 assignments{leftC} = bestF;
+                dA(leftC) = areaChange(leftC,bestF);
+                newleftInC = setdiff(newleftInC,leftC);
             end
     end
 end
 
 
 
+
+% need to include this back
+%    newleftInC = leftInC;
+%         % rewrite this for both data_f and data_c..
+%         % two options : is exchaning assgn fixed the problem
+%         % and does adding this to an errorenous assgn fix the problem
+%         for kk = 1 : numel(leftInC)
+%             leftC = leftInC(kk);
+%             bestF = minIndxF(leftC);
+%
+%             for badC = 1 : numel(assignments)
+%                 tempAss = assignments{badC};
+%                 if any(tempAss ==bestF)
+%                     break
+%                 end
+%             end
+%             % would second option be good enough?
+%             totCostTemp = totCost(badC,:);
+%             costBef = totCostTemp(bestF);
+%             totCostTemp(bestF) = NaN;
+%             [cost,badCSecondF] = min(totCostTemp);
+%
+%             if any(leftInF == badCSecondF)
+%                 assignments{badC} = badCSecondF;
+%                 dA(badC) = areaChange(badC,badCSecondF);
+%                 assignments{leftC} = bestF;
+%                 dA(leftC) = areaChange(leftC,bestF);
+%                 newleftInC = setdiff(newleftInC,leftC);
+%             end
+%         end
+%
 %         [~,minIndxC] = min(totCost,[],1);
 %         % check if it can be added to an assignment?
 %         for kk = 1 : numel(leftInF)

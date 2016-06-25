@@ -139,7 +139,7 @@ while time <= numIm
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
         
     if verbose
-        disp (['Calculating maping for frame ', num2str(time)])
+        disp (['Linking for frame ', num2str(time)])
     end
     
     
