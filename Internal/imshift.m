@@ -34,24 +34,24 @@ maskSS = size(mask);
 % y direction
 if offset(2) < 0 % upwards
     shiftInY = abs(offset(2));
-    zeroPad = zeros(shiftInY,maskSS(2));
+    zeroPad = zeros(min(maskSS(1),shiftInY),maskSS(2));
     maskShifted = [maskShifted(shiftInY+1:end,:);zeroPad];
 
 else % downwards
     shiftInY = abs(offset(2));
-    zeroPad = zeros(shiftInY,maskSS(2));
+    zeroPad = zeros(min(maskSS(1),shiftInY),maskSS(2));
     maskShifted = [zeroPad;maskShifted(1:end-shiftInY,:)];
 
 end
 
 if offset(1) < 0 % left
     shiftInX = abs(offset(1));
-    zeroPad = zeros(maskSS(1),shiftInX);
+    zeroPad = zeros(maskSS(1),min(maskSS(1),shiftInX));
     maskShifted = [maskShifted(:,shiftInX+1:end),zeroPad];
 
 else % right
     shiftInX = abs(offset(1));
-    zeroPad = zeros(maskSS(1),shiftInX);
+    zeroPad = zeros(maskSS(1),min(maskSS(2),shiftInX));
     maskShifted = [zeroPad,maskShifted(:,1:end-shiftInX)];
 
 end
