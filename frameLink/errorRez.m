@@ -268,8 +268,8 @@ for regNum =  1 : data_c.regs.num_regs;
                  
                 haveNoMatch = any(isempty({data_c.regs.map.f{cCellsFromR}}));
                 forwMap = [data_c.regs.map.f{cCellsFromR}];
-                [forwardMap] = unique(forwMap)
-                occur = [histc(forwMap,forwardMap)];
+                [forwardMap] = unique([forwMap]);
+                occur = [histc([forwMap],forwardMap)];
                 matchToTheSame = ~haveNoMatch && numel(forwardMap)==1;
                 someMatchToSame = ~haveNoMatch && any(occur>1);
                 
@@ -286,7 +286,15 @@ for regNum =  1 : data_c.regs.num_regs;
                     resetRegions = or(reset_tmp,resetRegions);
                 elseif ~isempty(data_f) && (someMatchToSame) 
                      indFwMap = find(occur>1);
-                     cellsToMerge =cCellsFromR(forwMap == forwardMap(indFwMap));
+                     valueFw = forwardMap(indFwMap);
+                     cellsToMerge = [];
+                     for i = 1 : numel(cCellsFromR)
+                         cur_cell = cCellsFromR(i);
+                         if any(data_c.regs.map.f{cur_cell} == valueFw)
+                             cellsToMerge = [cellsToMerge ;cur_cell];
+                         end
+                     
+                     end
                      [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
                      modRegions = [modRegions;cellsToMerge']; 
                 end
@@ -383,7 +391,7 @@ loc2 = find(flaggerC&flaggerR2);
 cost1 = data_c.regs.cost.r(loc1);
 cost2 = data_c.regs.cost.r(loc2);
 
-if cost1<cost2 || isnan(cost2)
+if isempty(cost2) || cost1<cost2 || isnan(cost2)
     data_c.regs.error.r(regNum) = 2;
     errorStat = 1;
     data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
