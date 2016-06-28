@@ -50,7 +50,7 @@ handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
 handles.directory.String = pwd;
-settings.trainFun = @trainTree; % can change this to @neuralNetTrain
+settings.trainFun = @neuralNetTrain %trainTree; % can change this to @neuralNetTrain
 settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
@@ -228,14 +228,21 @@ drawnow;
 
 saveData_Callback();
 
-[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
-save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
+% hack to put a new segm info calculation - change your pointer 
+settings.CONST.seg.segScoreInfo = @segInfoCurv;
+settings.CONST.superSeggerOpti.NUM_INFO = 25;
 
+
+disp('loading the segments'' data');
+[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs',settings.CONST);
+save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
+disp('training the segments ..');
 [settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = settings.trainFun (Xsegs, Ysegs);
 
 settings.constantModified = 1;
 
 % update scores and save data files again
+disp('updating the segments'' raw scores with the new coefficients..');
 updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.seg.segmentScoreFun);
 set(handles.figure1,'Pointer','arrow');
 try

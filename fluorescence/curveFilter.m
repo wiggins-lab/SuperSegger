@@ -1,4 +1,4 @@
-function [M_, G_, C1_, C2_, M, G, C1, C2] = curveFilter( im, filterWidth )
+function [M_, G_, C1_, C2_, M, G, C1, C2, im_xx, im_yy, im_xy] = curveFilter( im, filterWidth )
 % curveFilter : calculates the curvatures of an image.
 %
 % INPUT : 

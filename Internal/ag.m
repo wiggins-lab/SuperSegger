@@ -1,4 +1,4 @@
-function im = ag (im,imin,imax)
+function [im,im_min,im_max] = ag (im,imin,imax)
 % ag : autogain, it increases the contrast of image im, using imin and imax.
 % It subtracts the the minimum from of the image, divides by the max and
 % then normalizes to 255.

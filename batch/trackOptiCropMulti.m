@@ -25,7 +25,6 @@ function targetd = trackOptiCropMulti(dirname,xydir,targetd)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-targetd = [];
 
 if ~isempty(dirname)
     

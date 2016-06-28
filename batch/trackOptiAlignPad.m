@@ -90,6 +90,9 @@ end
 
 if ~exist( 'targetd', 'var' ) || isempty( targetd )
     targetd = [dirname_,'align',filesep];
+else
+     targetd = fixDir(targetd);
+    
 end
 
 

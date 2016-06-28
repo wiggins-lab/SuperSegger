@@ -208,7 +208,6 @@ global stat_0_index;
 global cell_error_index;
 global pole_age_index;
 
-
 end_time = max( clist.data(:,cell_div_index) );
 
 
