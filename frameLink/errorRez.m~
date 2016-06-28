@@ -267,23 +267,36 @@ for regNum =  1 : data_c.regs.num_regs;
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) > 2
                  
                 haveNoMatch = any(isempty({data_c.regs.map.f{cCellsFromR}}));
-                forwardMap,occur] = unique([data_c.regs.map.f{cCellsFromR}])
-                matchToTheSame = ~haveNoMatch && numel()==1;
-                someMatchToSame = ~haveNoMatch && numel(unique([data_c.regs.map.f{cCellsFromR}]))<numel(cCellsFromR);
+                forwMap = [data_c.regs.map.f{cCellsFromR}];
+                [forwardMap] = unique([forwMap])
+                occur = [histc([forwMap],forwardMap)];
+                matchToTheSame = ~haveNoMatch && numel(forwardMap)==1;
+                someMatchToSame = ~haveNoMatch && any(occur>1);
                 
                 % r: one has no forward mapping, or both map to the same in fw
                 if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
                     if ~ignoreError
-                        [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
-                         modRegions = [modRegions;sister1;sister2]; 
+                        [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
+                         modRegions = [modRegions;cCellsFromR']; 
                     else
                         [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
                         modRegions = [modRegions;modids_tmp]; 
                     end
                     resetRegions = or(reset_tmp,resetRegions);
                 elseif ~isempty(data_f) && (someMatchToSame) 
-                    
+                     indFwMap = find(occur>1);
+                     valueFw = (forwMap == forwardMap(indFwMap));
+                     cellsToMerge = [];
+                     for i = 1 : numel(cCellsFromR)
+                         cur_cell = cCellsFromR(i);
+                         if any(data_c.regs.map.f{cur_cell} == valueFw)
+                             e
+                     
+                     end
+                     cellsToMerge =cCellsFromR();
+                     [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
+                     modRegions = [modRegions;cellsToMerge']; 
                 end
         else
             
@@ -378,7 +391,7 @@ loc2 = find(flaggerC&flaggerR2);
 cost1 = data_c.regs.cost.r(loc1);
 cost2 = data_c.regs.cost.r(loc2);
 
-if cost1<cost2 || isnan(cost2)
+if isempty(cost2) || cost1<cost2 || isnan(cost2)
     data_c.regs.error.r(regNum) = 2;
     errorStat = 1;
     data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
