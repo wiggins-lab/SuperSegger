@@ -296,7 +296,7 @@ for regNum =  1 : data_c.regs.num_regs;
                      
                      end
                      [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
-                     modRegions = [modRegions;cellsToMerge']; 
+                     modRegions = [modRegions;cellsToMerge]; 
                 end
         else
             
