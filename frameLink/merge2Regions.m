@@ -1,4 +1,4 @@
-function [data_c,resetRegions] = merge2Regions (data_c, reg1, reg2, CONST)
+function [data_c,resetRegions] = merge2Regions (data_c, list_merge, CONST)
 % merge2Regions : merges reg1 and reg2 into one in the mask_cell
 % regions need to be remade after this in order to have the right
 % properties.
@@ -31,19 +31,12 @@ function [data_c,resetRegions] = merge2Regions (data_c, reg1, reg2, CONST)
 
 
 
-verbose = CONST.parallel.verbose;
+masksum = 0*data_c.regs.regs_label;
 
-if verbose
-    disp (['Merging regions ', num2str(reg1), ' ', num2str(reg2)]);
+for i = 1 : numel(list_merge)
+    mask1 = (data_c.regs.regs_label == list_merge(i));
+    masksum = (masksum+mask1);
 end
-
-if reg1 == 15
-    disp('test')
-end
-
-mask1 = (data_c.regs.regs_label == reg1);
-mask2 = (data_c.regs.regs_label == reg2);
-masksum = (mask1+mask2);
 masksum_  = imdilate(masksum,strel('square',3));
 masksum__  = imerode(masksum_,strel('square',3));
 

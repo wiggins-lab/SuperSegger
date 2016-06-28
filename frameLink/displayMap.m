@@ -4,7 +4,7 @@ function displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCells
 % green : maskC
 % blue : all cell masks  in c
 
-disp ([num2str(cCellsTransp), ' map to - > ' , num2str(rCellsFromC), ' and  maps to - > ', num2str(cCellsFromR), ' which maps to ' , num2str(rCellsTransp)]);
+%disp ([num2str(cCellsTransp), ' map to - > ' , num2str(rCellsFromC), ' and  maps to - > ', num2str(cCellsFromR), ' which maps to ' , num2str(rCellsTransp)]);
 maskCtransp = data_c.regs.regs_label*0;
 maskC = maskCtransp;
 maskR = maskCtransp;

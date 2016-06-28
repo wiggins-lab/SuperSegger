@@ -66,11 +66,13 @@ for regNum =  1 : data_c.regs.num_regs;
         disp ([header, 'ErRes: Frame: ', num2str(time), ' already modified ',num2str(regNum)]);
     else
         rCellsFromC = data_c.regs.map.r{regNum}; % where regNum maps in reverse
-        
+       
         if ~isempty(rCellsFromC)
+            cCellsFromR = data_r.regs.map.f{rCellsFromC};
             cCellsTransp = data_c.regs.revmap.r{rCellsFromC};
         else
-            cCellsTransp = 0;
+            cCellsFromR = [];
+            cCellsTransp = [];
         end
         
         
@@ -99,14 +101,23 @@ for regNum =  1 : data_c.regs.num_regs;
                 [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
             end
             
-        elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && all(data_r.regs.map.f{rCellsFromC} == regNum)
+        elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && all(cCellsFromR == regNum)
             % MAPS TO ONE AND AGREES
             % sets cell ID from mapped reg, updates death in data_r
             errorStat = (data_c.regs.error.r(regNum)>0);
             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
+        
+        elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && ~all(cCellsFromR == regNum)
+            % MAPS TO ONE AND DISAGREES
+            % map with an error flag...
+            errorStat = (data_c.regs.error.r(regNum)>0);
+            [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
             
-        elseif numel(rCellsFromC) == 1 && numel(data_r.regs.map.f{rCellsFromC}) == 1 &&  numel (cCellsTransp) == 2
-            %% regNum maps to mapCR, mapCR maps to two in current, but mapCR maps to one otherwise, but disagreement
+            
+            
+        elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 1 &&  numel (cCellsTransp) == 2
+            % regNum and another cell map to one in reverse 
+            % but one in reverse only maps to one forward
             
             sister1 = regNum;
             sister2 = cCellsTransp (cCellsTransp~=regNum);
@@ -129,7 +140,7 @@ for regNum =  1 : data_c.regs.num_regs;
             if divAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                 % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
-                [data_c,mergeReset] = merge2Regions (data_c, sister1, sister2, CONST);
+                [data_c,mergeReset] = merge2Regions (data_c, [sister1, sister2], CONST);
                 modRegions = [modRegions;sister1;sister2];   
                 resetRegions = (resetRegions || mergeReset);
             elseif divAreaChange
@@ -142,7 +153,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 modRegions = [modRegions;modids_tmp];
             end
             
-        elseif numel(rCellsFromC) == 1 && numel(data_r.regs.map.f{rCellsFromC}) == 2
+        elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 2
             % the 1 in reverse maps to two in current : possible splitting event
             mother = rCellsFromC;
             sister1 = regNum;
@@ -159,7 +170,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
                     if ~ignoreError
-                        [data_c,reset_tmp] = merge2Regions (data_c, sister1, sister2, CONST);
+                        [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
                          modRegions = [modRegions;sister1;sister2]; 
                     else
                         [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
@@ -212,22 +223,22 @@ for regNum =  1 : data_c.regs.num_regs;
             end
            
             end
-        elseif numel(rCellsFromC) == 2
+        elseif numel(rCellsFromC) > 1
             % 1 in current maps to two in reverse
             % try to find a segment that should be turned on in current
             % frame, exit regNum loop, make time - 1 and relink
             
             % The two in reverse map to regNum only
-            twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
-                numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
-            
+            %twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
+             %   numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
+            twoInRMapToCOnly = 1;
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==rCellsFromC(1)) + (data_r.regs.regs_label==rCellsFromC(2)))));
             end
             
             
-            if twoInRMapToCOnly & ~ignoreError
+            if ~ignoreError %& twoInRMapToCOnly
                 [data_c,success] = missingSeg2to1 (data_c,regNum,data_r,rCellsFromC,CONST);
             else
                 success = false;
@@ -251,7 +262,27 @@ for regNum =  1 : data_c.regs.num_regs;
                 % ERROR NOT FIXED : link to the one with the best score
                 [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, rCellsFromC, time, verbose,header);
             end
+            
+
+        elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) > 2
+                 
+                haveNoMatch = any(isempty(data_c.regs.map.f{cCellsFromR}));
+                matchToTheSame = ~haveNoMatch && numel(unique(data_c.regs.map.f{cCellsFromR}))==1;
+                
+                % r: one has no forward mapping, or both map to the same in fw
+                if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
+                    % wrong division merge cells
+                    if ~ignoreError
+                        [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
+                         modRegions = [modRegions;sister1;sister2]; 
+                    else
+                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
+                        modRegions = [modRegions;modids_tmp]; 
+                    end
+                    resetRegions = or(reset_tmp,resetRegions);
+                end
         else
+            
             data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                 ', reg: ', num2str(regNum),'. Error not fixed'];
             
@@ -308,26 +339,9 @@ end
 
 
 function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time, header, verbose)
-%global SCORE_LIMIT_MOTHER
-%global SCORE_LIMIT_DAUGHTER
 
-
-% errorM  = (data_r.regs.scoreRaw(mother) < SCORE_LIMIT_MOTHER );
-% errorD1 = (data_c.regs.scoreRaw(sister1) < SCORE_LIMIT_DAUGHTER);
-% errorD2 = (data_c.regs.scoreRaw(sister2) < SCORE_LIMIT_DAUGHTER);
-% 
-% % if debug_flag && ~data_c.regs.ID(sister1)
-% %     figure(1);
-% %     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
-% %     keyboard;
-% % end
-% 
-% if ~(errorM || errorD1 || errorD2)
-    % good scores for mother and daughters
-    % sets ehist to 0 (no error) and stat0 to 1 (successful division)
-    
     data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),' and ', num2str(sister2),' . good cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
+        ', reg: ', num2str(sister1),' and ', num2str(sister2),' . cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
         num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
         ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
     if verbose
@@ -338,30 +352,7 @@ function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,s
     data_c.regs.error.r(sister2) = 0;
     [data_c, data_r, cell_count] = markDivisionEvent( ...
         data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
-    
-% else
-%     % bad scores for mother or daughters
-%     % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
-%     errorStat = 1;
-%     %data_c.regs.error.r(sister1) = 1;
-%     data_r.regs.error.r(mother) = 0;
-%     data_c.regs.error.r(sister1) = 0;
-%     data_c.regs.error.r(sister2) = 0;
-%     
-%     data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-%         ', reg: ', num2str(sister1),' and ', num2str(sister2),...
-%         '. 1 -> 2 mapping  from mother reg', num2str(mother),', but not good cell [sm,sd1,sd2,slim] = [',...
-%         num2str(data_r.regs.scoreRaw(mother),2),', ',...
-%         num2str(data_c.regs.scoreRaw(sister1),2),', ',...
-%         num2str(data_c.regs.scoreRaw(sister2),2)]);
-%     
-%     if verbose
-%         disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
-%     end
-%     [data_c, data_r, cell_count] = markDivisionEvent( ...
-%         data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
-%     
-% end
+
 end
 
 
@@ -373,8 +364,15 @@ end
 function [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, mapCR, time, verbose,header)
 % maps to best from two forward
 
-cost1 = data_c.regs.cost.r(regNum,mapCR(1));
-cost2 = data_c.regs.cost.r(regNum,mapCR(2));
+
+flaggerC = (data_c.regs.idsC.r(1,:) == regNum) & isnan(data_c.regs.idsC.r(2,:));
+flaggerR1 = (data_c.regs.idsR.r(1,:) == mapCR(1)) & isnan(data_c.regs.idsR.r(2,:));
+flaggerR2 = (data_c.regs.idsR.r(1,:) == mapCR(2)) & isnan(data_c.regs.idsR.r(2,:));
+
+loc1 = find(flaggerC&flaggerR1);
+loc2 = find(flaggerC&flaggerR2);
+cost1 = data_c.regs.cost.r(loc1);
+cost2 = data_c.regs.cost.r(loc2);
 
 if cost1<cost2 || isnan(cost2)
     data_c.regs.error.r(regNum) = 2;

@@ -310,10 +310,10 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             data.regs.error.r),ignoreErrorV)));
         map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
         
-        % cells with ehist, but no error current->reverse or ignoreError
-        map_ehist_noErrorRev_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+        % cells with ehist in this frame, but no error current->reverse or ignoreError
+        map_ehist_in_frame_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             ~data.regs.error.r),ignoreErrorV)));
-        map_ehist_noErRev  = double(ismember( data.regs.regs_label, map_ehist_noErrorRev_ind ));
+        map_ehist_in_frame  = double(ismember( data.regs.regs_label, map_ehist_in_frame_ind ));
         
         
         % cells without error history
@@ -351,7 +351,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         
         
-        redChannel =  double(lyse_im)+0.5*(2*(map_err_rev)+(map_ehist_noErRev)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+        redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
         greenChannel =  0.3*(map_no_err) - 0.5*(map_stat0_1)+0.2*(map_stat0_0);
         blueChannel = 0.7*(map_stat0_2)+ 0.5*(map_stat0_1)+0.3*(map_stat0_0);
         

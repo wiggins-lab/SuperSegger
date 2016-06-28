@@ -98,7 +98,7 @@ CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
-CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cells
+CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
