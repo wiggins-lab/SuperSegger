@@ -286,7 +286,7 @@ if FLAGS.Outline_flag  % it just outlines the cells
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
-    if ~isfield( data.regs, 'ID') % no cell ids - seg files
+    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files
         
         blueChannel = 0.3*(data.mask_cell);
         reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));

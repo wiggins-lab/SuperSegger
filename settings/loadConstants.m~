@@ -98,7 +98,7 @@ CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
-CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
+CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cells
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
@@ -195,7 +195,7 @@ end
 
 % segmentation parameters
 % max number of total segments for segmentation
-CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
+CONST.superSeggerOpti.MAX_SEG_NUM = 100;
 
 % objects with less area than this are removed from the mask
 CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
