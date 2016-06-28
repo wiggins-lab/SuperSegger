@@ -76,13 +76,13 @@ for regNum =  1 : data_c.regs.num_regs;
             cCellsFromR = [];
         end
         
-                
+        
         if ~isempty(cCellsFromR)
             rCellsTransp = unique([data_r.regs.revmap.f{cCellsFromR}]);
         else
             rCellsTransp = [];
         end
-
+        
         
         numberMatch = (numel(rCellsFromC) == numel(rCellsTransp)) && ...
             (numel(cCellsFromR) == numel(cCellsTransp));
@@ -95,7 +95,7 @@ for regNum =  1 : data_c.regs.num_regs;
         oneToTwo = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 2 ;
         twoToOne = numel(rCellsFromC) == 2 &&  numel (cCellsFromR) == 1 ;
         oneToThree = numel(rCellsFromC) == 1 &&  numel (cCellsFromR) == 3 ;
-                
+        
         if numberMatch && assignmentMatch
             
             if zeroToOne % maps to 0 in the previous frame - stray
@@ -184,35 +184,38 @@ for regNum =  1 : data_c.regs.num_regs;
                 else
                     % maybe copy from frame instead
                     % ERROR NOT FIXED : link to the one with the best score
+                    if debug_flag
+                    keyboard;
+                end
                     [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, rCellsFromC, time, verbose,header);
                 end
             elseif oneToThree
-                 disp ('merge two?')
-                  displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                  if debug_flag
+                disp ('merge two?')
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                if debug_flag
                     keyboard;
-                  end
+                end
             else
                 
                 disp ('there is another case of correctness?!?')
-                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                 
-                 if debug_flag
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                
+                if debug_flag
                     keyboard;
-                 end
+                end
             end
         elseif numberMatch
             if zeroToOne
                 % one to one but disagreement.
-                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                    ', reg: ', num2str(regNum),'. 0->1 Error not fixed - misalign.'];     
+                    ', reg: ', num2str(regNum),'. 0->1 Error not fixed - misalign.'];
                 
                 if debug_flag
                     keyboard;
                 end
             elseif oneToOne
-                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                     ', reg: ', num2str(regNum),'. 1->1 Error not fixed - misalign.'];
                 
@@ -227,7 +230,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % 2 : get the best two couples of the three
                 
                 % create new cell with error
-                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
                 [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);
                 data_c.regs.error.r(regNum) = 1;
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
@@ -247,9 +250,9 @@ for regNum =  1 : data_c.regs.num_regs;
         else % mistmatch of numbers and assignments
             c_matches = cCellsFromR(ismember(cCellsFromR, cCellsTransp));
             r_matches = rCellsFromC(ismember(rCellsFromC, rCellsTransp));
-
+            
             if partialMatch && numel(c_matches) == 1 && numel(r_matches) == 1
-               [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, hasError(data_c, c_matches));
+                [data_c, data_r] = continueCellLine( data_c, c_matches, data_r, r_matches, time, hasError(data_c, c_matches));
                 modRegions = [modRegions;c_matches];
                 
                 
@@ -284,18 +287,18 @@ for regNum =  1 : data_c.regs.num_regs;
                     modRegions = [modRegions;modids_tmp];
                 end
                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-             
+                
                 if debug_flag
                     keyboard;
                 end
             elseif oneToTwo && any([data_c.regs.map.r{cCellsFromR(cCellsFromR~=regNum)}] ~= rCellsFromC)
-                % regNum -> mother, mother maps to two, second does not map to mother. 
+                % regNum -> mother, mother maps to two, second does not map to mother.
                 [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, hasError(data_c, regNum));
-                 displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
-                 
-                 if debug_flag
+                displayMap (data_c,data_r, rCellsFromC, cCellsTransp,cCellsFromR,rCellsTransp)
+                
+                if debug_flag
                     keyboard;
-                 end
+                end
             else
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
                     ', reg: ', num2str(regNum),'. Error not fixed mishmatch and misalign.'];
@@ -354,56 +357,18 @@ function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,s
 global SCORE_LIMIT_MOTHER
 global SCORE_LIMIT_DAUGHTER
 
-
-errorM  = (data_r.regs.scoreRaw(mother) < SCORE_LIMIT_MOTHER );
-errorD1 = (data_c.regs.scoreRaw(sister1) < SCORE_LIMIT_DAUGHTER);
-errorD2 = (data_c.regs.scoreRaw(sister2) < SCORE_LIMIT_DAUGHTER);
-
-% if debug_flag && ~data_c.regs.ID(sister1)
-%     figure(1);
-%     imshow(cat(3,ag(data_c.phase), ag(ag(data_c.regs.regs_label==sister2) +ag(data_c.regs.regs_label==sister1)),ag(data_r.regs.regs_label==mother)));
-%     keyboard;
-% end
-
-if ~(errorM || errorD1 || errorD2)
-    % good scores for mother and daughters
-    % sets ehist to 0 (no error) and stat0 to 1 (successful division)
-    data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),' and ', num2str(sister2),' . good cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
-        num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
-        ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
-    if verbose
-        disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
-    end
-    data_r.regs.error.r(mother) = 0;
-    data_c.regs.error.r(sister1) = 0;
-    data_c.regs.error.r(sister2) = 0;
-    [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
-    
-else
-    % bad scores for mother or daughters
-    % sets ehist to 1 ( error) and stat0 to 0 (non successful division)
-    errorStat = 1;
-    %data_c.regs.error.r(sister1) = 1;
-    data_r.regs.error.r(mother) = 0;
-    data_c.regs.error.r(sister1) = 0;
-    data_c.regs.error.r(sister2) = 0;
-    
-    data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),' and ', num2str(sister2),...
-        '. 1 -> 2 mapping  from mother reg', num2str(mother),', but not good cell [sm,sd1,sd2,slim] = [',...
-        num2str(data_r.regs.scoreRaw(mother),2),', ',...
-        num2str(data_c.regs.scoreRaw(sister1),2),', ',...
-        num2str(data_c.regs.scoreRaw(sister2),2)]);
-    
-    if verbose
-        disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
-    end
-    [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, errorStat, sister2, cell_count);
-    
+data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
+    ', reg: ', num2str(sister1),' and ', num2str(sister2),' . good cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
+    num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
+    ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
+if verbose
+    disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
 end
+data_r.regs.error.r(mother) = 0;
+data_c.regs.error.r(sister1) = 0;
+data_c.regs.error.r(sister2) = 0;
+[data_c, data_r, cell_count] = markDivisionEvent( ...
+    data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
 end
 
 
@@ -478,6 +443,6 @@ end
 end
 
 function isError = hasError(data_c, regNum)
-    isError = 0; % FIX ME
-    %isError = data_c.regs.error.r(regNum) ~= 0 || data_c.regs.error.f(regNum) ~= 0;
+isError = 0; % FIX ME
+%isError = data_c.regs.error.r(regNum) ~= 0 || data_c.regs.error.f(regNum) ~= 0;
 end

@@ -1,27 +1,20 @@
-function [madeChanges, data_c, data_r] =  errorRez (data_c, data_r, CONST, time, verbose)
-% errorRez : links cells from the frame before to the current and attempts to
-% resolve segmentation errors if the linking is inconsistent.
+function [madeChanges, data_c, data_r] =  splitAreaErrors (data_c, data_r, CONST, time, verbose)
+% splitAreaErrors : splits cells with large area error.
 %
 % INPUT :
-%   time : current frame number
 %   data_c : current time frame data (seg/err) file.
 %   data_r : reverse time frame data (seg/err) file.
-%   data_f : forward time frame data (seg/err) file.
 %   CONST : segmentation parameters.
-%   cell_count : last cell id used.
-%   header : last cell id used.
-%   debug_flag : 1 to display figures for debugging
+%   time : frame number
 %
 % OUTPUT :
 %   data_c : updated current time frame data (seg/err) file.
 %   data_r : updated reverse time frame data (seg/err) file.
-%   cell_count : last cell id used.
-%   resetRegions : if true, regions were modified and this frame needs to
-%   be relinked.
+%   madeChanges : boolean for whether cells were split
 %
 %
 % Copyright (C) 2016 Wiggins Lab
-% Written by Stella Stylianidou
+% Written by Connor Brennan
 % University of Washington, 2016
 % This file is part of SuperSegger.
 %
@@ -43,7 +36,7 @@ DEBUG_FLAG = 1;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 
-DA_MAX = DA_MAX / 2;
+%DA_MAX = DA_MAX / 2;
 
 madeChanges = 0;
 

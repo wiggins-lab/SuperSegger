@@ -35,7 +35,8 @@ function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if nargin < 1 || isempty( res )
-    res = 60;
+   disp ('No constant chosen');
+   return;
 end
 
 if ~exist('PARALLEL_FLAG','var') || isempty( PARALLEL_FLAG )
@@ -52,7 +53,7 @@ end
 % default values for numbers
 resFlag = [];
 if isa(res,'double' ) && res == 60
-    res = '60XEc';
+    res = '60XEcM9';
 elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
@@ -75,7 +76,7 @@ CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
 
 % region optimization parameters
-CONST.regionOpti.MAX_NUM_RESOLVE = 5000; % no region optimization above this number of segments
+CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
 CONST.regionOpti.MAX_NUM_SYSTEMATIC = 8; % max number of segments for systematic
 CONST.regionOpti.CutOffScoreHi = 10; % cut off score for segments
 CONST.regionOpti.CutOffScoreLo = -10; % cut off score for segments
@@ -97,7 +98,7 @@ CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
 CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
 CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
-CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cells
+CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
@@ -105,11 +106,9 @@ CONST.trackOpti.linkFun = @multiAssignmentPairs; % function used for linking cel
 CONST.trackLoci.numSpots = []; % needs to be set to the number of spots per channel to find foci
 CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 
-% only cells with areas between 60 and 700 are made
-% if you want to keep all the cells use instead CONST.trackLoci.gate  = [];
-area_gate(1).x = [70 700];
-area_gate(1).ind = 14; % index for area
-CONST.trackLoci.gate = area_gate;
+%  you can set an initial gate here
+CONST.trackLoci.gate  = [];
+
 
 % pixelsize
 if all(ismember('100X',res))
@@ -200,7 +199,7 @@ end
 
 % segmentation parameters
 % max number of total segments for segmentation
-CONST.superSeggerOpti.MAX_SEG_NUM = ConstLoaded.superSeggerOpti.MAX_SEG_NUM;
+CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
 
 % objects with less area than this are removed from the mask
 CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;

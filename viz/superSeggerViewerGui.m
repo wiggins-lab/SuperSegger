@@ -210,7 +210,10 @@ if nargin<2 || isempty(file_filter);
 end
 
 if ~exist(dirSave, 'dir')
+    try
     mkdir(dirSave);
+    catch
+    end
 else
     if exist([dirSave, 'dataImArray.mat'], 'file')
         load([dirSave, 'dataImArray'],'dataImArray');
@@ -416,10 +419,9 @@ if filename ~= 0
     fh = figure('visible', 'off');
     copyobj(handles.axes1, fh);
     savename = sprintf('%s/%s',pathName,filename);
-    %saveas(fh,[(savename),'.fig'],'fig');
     print(fh,'-depsc',[(savename),'.eps'])
     saveas(fh,[(savename),'.png'],'png');
-    handles.message.String = ['Figure is saved in eps, fig, and png format at ',savename];
+    handles.message.String = ['Figure is saved in eps and png format at ',savename];
     close(fh);
 end
 
@@ -583,6 +585,7 @@ end
 function find_cell_no_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     updateImage(hObject, handles);
+    find_cell_no(handles);
 end
 
 function find_cell_no(handles)
@@ -1180,10 +1183,10 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
         handles = consensus_image(handles)
     elseif strcmp('Consensus Kymo',value)
         handles = consensus_kymo(handles);
-    end
-else
-    set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
+    end 
 end
+
+set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
 
 function cell_info_Callback(hObject, eventdata, handles)
 global settings;
@@ -1296,6 +1299,7 @@ else
             if strcmp(choice, 'Yes')
                 saveFilename = [handles.dirSave,cell_name(1:end-4),'.avi'];
                 v = VideoWriter(saveFilename);
+                v.FrameRate = 10;
                 open(v)
                 writeVideo(v,mov)
                 close(v)
@@ -1401,7 +1405,7 @@ if ~isempty(handles.FLAGS)
         
         num_time = numel(time);
         x = min(6,num_time);
-        y = round(num_time/x);
+        y = ceil(num_time/x);
         if y == 0
             y = 1;
         end
@@ -1443,7 +1447,7 @@ if ~isempty(handles.FLAGS)
             if ~isempty(filename)
                 saveFilename = [handles.dirSave,filename{1},'.avi'];
                 v = VideoWriter(saveFilename);
-                v.FrameRate = 2;
+                v.FrameRate = 10;
                 open(v);
                 writeVideo(v,mov);
                 close(v);

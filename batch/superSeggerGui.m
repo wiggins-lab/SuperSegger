@@ -145,28 +145,11 @@ CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
-
-linkVal = get(handles.link_list,'Value'); 
-if linkVal == 1
-    CONST.trackOpti.linkFun =  @multiAssignmentFastOnlyOverlap;
-else
-    CONST.trackOpti.linkFun =  @multiAssignmentPairs;
-end
-
-
 clean_flag = handles.clean_flag.Value;
 skip = str2double(handles.skip.String);
 
 BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST);
 
-function ec60_Callback(hObject, eventdata, handles)
-function ec100_Callback(hObject, eventdata, handles)
-function pa100_Callback(hObject, eventdata, handles)
-function pa60_Callback(hObject, eventdata, handles)
-function a60_Callback(hObject, eventdata, handles)
-function eclb60_Callback(hObject, eventdata, handles)
-function pam60_Callback(hObject, eventdata, handles)
-function bthai60_Callback(hObject, eventdata, handles)
 
 % tries different constants
 function try_constants_Callback(hObject, eventdata, handles)
@@ -212,11 +195,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function link_list_Callback(hObject, eventdata, handles)
-function link_list_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function constants_list_Callback(hObject, eventdata, handles)
 function constants_list_CreateFcn(hObject, eventdata, handles)

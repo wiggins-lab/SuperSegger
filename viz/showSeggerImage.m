@@ -119,12 +119,13 @@ b = gca; legend(b,'off');
 
 if FLAGS.P_flag && FLAGS.legend
     hold on;
+    dark_blue = [20 20 199]/255;
     light_blue = [20 97 199]/255;
     cyan = [36 113 125]/255;
     green = [18 95 63]/255;
     purple = [105 60 106]/255;
     ha(1) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',green,'MarkerFaceColor',green);
-    ha(2) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',cyan,'MarkerFaceColor',cyan);
+    ha(2) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',dark_blue,'MarkerFaceColor',dark_blue);
     ha(3) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',light_blue,'MarkerFaceColor',light_blue);
     ha(4) = plot(nan,nan,'o','MarkerSize',10,'MarkerEdgeColor',purple,'MarkerFaceColor',purple);
     ha(5) = plot(nan,nan,'-r');
@@ -285,7 +286,7 @@ if FLAGS.Outline_flag  % it just outlines the cells
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
-    if ~isfield( data.regs, 'ID') % no cell ids - seg files
+    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files
         
         blueChannel = 0.3*(data.mask_cell);
         reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
@@ -309,10 +310,10 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             data.regs.error.r),ignoreErrorV)));
         map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
         
-        % cells with ehist, but no error current->reverse or ignoreError
-        map_ehist_noErrorRev_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+        % cells with ehist in this frame, but no error current->reverse or ignoreError
+        map_ehist_in_frame_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             ~data.regs.error.r),ignoreErrorV)));
-        map_ehist_noErRev  = double(ismember( data.regs.regs_label, map_ehist_noErrorRev_ind ));
+        map_ehist_in_frame  = double(ismember( data.regs.regs_label, map_ehist_in_frame_ind ));
         
         
         % cells without error history
@@ -349,9 +350,10 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
         
         
-        redChannel =  double(lyse_im)+0.15*(2*(map_err_rev)+(map_ehist_noErRev)+3*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
-        greenChannel =  0.30*(map_no_err);
-        blueChannel = 0.7*((map_stat0_2)+ 0.5*(map_stat0_1)+0.25*(map_stat0_0));
+        
+        redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+        greenChannel =  0.3*(map_no_err) - 0.5*(map_stat0_1)+0.2*(map_stat0_0);
+        blueChannel = 0.7*(map_stat0_2)+ 0.5*(map_stat0_1)+0.3*(map_stat0_0);
         
         reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
         

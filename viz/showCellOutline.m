@@ -1,4 +1,4 @@
-function showCellOutline( data )
+function im = showCellOutline( data )
 % showCellOutline : draws the outlines for the regions in the data file.
 %
 % INPUT :
@@ -19,9 +19,10 @@ segs_3n   = data.segs.segs_3n;
 cell_mask = (mask_bg .* ~segs_good .* ~segs_3n);
 outline = imdilate( cell_mask, strel( 'square',3) );
 outline = ag(outline-cell_mask);
-imshow(uint8(cat(3,back + 1.00*double(outline),...
+im = uint8(cat(3,back + 1.00*double(outline),...
     back ,...
-    back + 0.2*double(ag(~cell_mask)-outline) )));
+    back + 0.2*double(ag(~cell_mask)-outline) ));
+imshow(im);
 drawnow;
 
 end

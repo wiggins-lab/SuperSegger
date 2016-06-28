@@ -94,21 +94,29 @@ elseif ~isempty(contents2)
     restartFlag = 1;
     if time > 1
         disp (['continuing from where I stopped - time : ', num2str(time)]);
-        %delete([dirname,contents2(end).name])
         dataLast = load([dirname,contents2(end-1).name]);
         cell_count = max(dataLast.regs.ID);
     end
 end
 
 
-%resetRegions  = 1;
 ignoreError = 0;
 ignoreAreaError = restartFlag; %Don't split big regions on restart (already done)
-previousMasks ={};
 maxIterPerFrame = 3;
 curIter = 1;
+
+if CONST.parallel.show_status
+    h = waitbar( 0, 'Strip small cells.');
+    cleanup = onCleanup( @()( delete( h ) ) );
+else
+    h = [];
+end
+
 while time <= numIm
     
+    if CONST.parallel.show_status
+        waitbar((numIm-time)/numIm,h,['Linking -- Frame: ',num2str(time),'/',num2str(numIm)]);
+    end
     
     if (time == 1)
         data_r = [];
@@ -129,14 +137,13 @@ while time <= numIm
     data_c = intDataLoader (datacName);
     data_c = updateRegionFields (data_c,CONST);  % make regions
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
-    
-    % go through regions in current data
-    
+        
     if verbose
-        disp (['Calculating maping for frame ', num2str(time)])
+        disp (['Linking for frame ', num2str(time)])
     end
     
-    if ~isempty(data_r) % && ((resetRegions) || (~isfield(data_r.regs,'map') && ~isfield(data_r.regs.map,'f')))
+    
+    if ~isempty(data_r)
         [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f,data_r.regs.revmap.f] = assignmentFun (data_r, data_c,CONST,1,0);
     end
     [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
@@ -145,27 +152,18 @@ while time <= numIm
     resetRegions = 1;
     madeChanges = 0;
     if USE_LARGE_REGION_SPLITTING && ~ignoreAreaError && ~isempty(data_r)
-        [madeChanges, data_c, data_r] = splitAreaErrors(data_c, data_r, CONST, time, verbose);
-        
-        %Only split cells once
-        ignoreAreaError = 1;
+        [madeChanges, data_c, data_r] = splitAreaErrors(data_c, data_r, CONST, time, verbose);               
+        ignoreAreaError = 1; % Only split cells once
     end
     
     if ~madeChanges
         [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
-
-        for x = 1 : numel(previousMasks)
-            maskDif = xor(data_c.mask_cell,previousMasks{x});
-            if all(maskDif==0)
-                ignoreError = 1;
-            end
-        end
-
+        
+        % error resolution for each frame up to maxIterPerFrame
         if curIter >= maxIterPerFrame
             ignoreError = 1;
         end
 
-        previousMasks  {end+1} = data_c.mask_cell;
 
         % error resolution and id assignment
         if USE_NEW_ERROR_REZ
@@ -185,7 +183,6 @@ while time <= numIm
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
     else
         time = time + 1;
-        previousMasks = {};
         ignoreError = 0;
         ignoreAreaError = 0;
         curIter = 1;

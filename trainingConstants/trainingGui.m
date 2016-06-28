@@ -50,7 +50,9 @@ handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
 handles.directory.String = pwd;
-settings.trainFun = @neuralNetTrain %trainTree; % can change this to @neuralNetTrain
+
+settings.trainFun = @neuralNetTrain; % current options : @trainTree or @neuralNetTrain
+
 settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
