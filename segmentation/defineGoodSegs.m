@@ -157,6 +157,35 @@ data.segs.scoreRaw    = scoreRaw;
 data.segs.props       = segs_props;
 
 %intShowSegScore( data, reshape([drill(segs_props,'.Centroid(1)'),...
-%    drill(segs_props,'.Centroid(2)')],[numel(segs_props),2]) , 23 );
+%   drill(segs_props,'.Centroid(2)')],[numel(segs_props),2]) , 21 );
+
+end
+
+
+%% Debugging tool not called for visualizing scores
+function intShowSegScore( data, cen, ind )
+
+figure(101);
+clf;
+
+nseg = numel( data.segs.score);
+
+backer = 0.8*ag(data.phase);
+
+segs_good = 0.4*ag(data.segs.segs_good);
+segs_bad  = 0.4*ag(data.segs.segs_bad);
+segs_3n   = 0.4*ag(data.segs.segs_3n);
+
+imshow(cat(3,segs_good+backer+segs_3n,...
+             0.5*segs_good+backer,...
+             segs_bad+backer));
+
+hold on;
+
+for ii = 1:nseg
+    
+   text( cen(ii,1), cen(ii,2), num2str( data.segs2.info(ii,ind),'%1.2g' ),'Color', 'w');
+end
+
 
 end

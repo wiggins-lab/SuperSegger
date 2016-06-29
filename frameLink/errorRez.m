@@ -133,17 +133,17 @@ for regNum =  1 : data_c.regs.num_regs;
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
             totAreaR =  data_r.regs.props(mother).Area;
             AreaChange = (totAreaC-totAreaR)/totAreaC;
-            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
+            goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
             oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
-            if divAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
+            if goodAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                 % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
                 [data_c,mergeReset] = merge2Regions (data_c, [sister1, sister2], CONST);
                 modRegions = [modRegions;sister1;sister2];   
                 resetRegions = (resetRegions || mergeReset);
-            elseif divAreaChange
+            elseif goodAreaChange
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
                 modRegions = [modRegions;sister1;sister2];                
             else
@@ -231,7 +231,7 @@ for regNum =  1 : data_c.regs.num_regs;
             % The two in reverse map to regNum only
             %twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
              %   numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
-            twoInRMapToCOnly = 1;
+            %twoInRMapToCOnly = 1;
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==rCellsFromC(1)) + (data_r.regs.regs_label==rCellsFromC(2)))));

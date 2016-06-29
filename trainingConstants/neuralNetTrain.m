@@ -20,23 +20,25 @@ function [net,fun] = neuralNetTrain (X, Y, numCanidates)
 fun = @scoreNeuralNet;
 
 if ~exist('numCanidates','var') || isempty(numCanidates)
-    numCanidates = 1;
+    numCanidates = 3;
 end
 
 t = [(Y == 0),Y]';
 x = X';
 
 
+
+% Create a Pattern Recognition Network
+% hiddenLayerSizes
+net = patternnet([10 15]);
+
 % Choose a Training Function
 % For a list of all training functions type: help nntrain
 % 'trainlm' is usually fastest.
 % 'trainbr' takes longer but may be better for challenging problems.
 % 'trainscg' uses less memory. Suitable in low memory situations.
-trainFcn = 'trainbr';  % Scaled conjugate gradient backpropagation.
+net.trainFcn = 'trainbr';  % Scaled conjugate gradient backpropagation.
 
-% Create a Pattern Recognition Network
-hiddenLayerSize = 10;
-net = patternnet(hiddenLayerSize);
 
 % Setup Division of Data for Training, Validation, Testing
 net.divideParam.trainRatio = 70/100;
