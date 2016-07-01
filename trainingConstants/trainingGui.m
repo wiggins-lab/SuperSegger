@@ -431,7 +431,11 @@ if settings.dataSegmented
     elseif settings.axisFlag == 3
         % deleting areas in square
         maskFigure()
+        cropRegion = [];
+        try
         [~,cropRegion] = imcrop(handles.viewport_train);
+        catch
+        end
         if ~isempty(cropRegion)
             cropRegion = floor( cropRegion );
             corner1 = [cropRegion(1),cropRegion(2)];
@@ -607,7 +611,11 @@ end
 function addUndo()
 global settings
 
-settings.oldData = [settings.currentData, settings.oldData];
+try
+settings.oldData = [settings.currentData(1), settings.oldData(1)];
+catch
+settings.oldData = [settings.currentData(1)];
+end
 if numel(settings.oldData) > settings.maxData
     settings.oldData = settings.oldData(1:settings.maxData);
 end
