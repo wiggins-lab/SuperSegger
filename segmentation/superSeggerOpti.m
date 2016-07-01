@@ -114,6 +114,8 @@ if ~exist('mask','var')
     mask = [];
 end
 
+mask_colonies = [];
+
 % If data structure is passed, rescue the phase image and mask
 if isstruct( phaseOrData )
     data      = phaseOrData;
@@ -181,14 +183,19 @@ if isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
     filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_bg_ = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
     
+    [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
+    aK = abs(K);
+    mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK );
+
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
-    mask_bg = logical((mask_bg_-mask_halos)>0);
+    mask_bg = logical((mask_colonies-mask_halos)>0);
     
     % removes micro-colonies with background level outline intensity - not dark enough
     mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig );
+    
     
 else
     mask_bg = mask;
@@ -272,7 +279,7 @@ end
 
 % Determine the "good" and "bad" segments
 data = defineGoodSegs(data,ws,phaseNormUnfilt,C2phaseThresh,mask_bg, A,CONST, ~dataFlag );
-
+data.mask_colonies = mask_colonies;
 % copy the existing score into the data structure
 if dataFlag
     

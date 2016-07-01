@@ -10,7 +10,7 @@ function [data,A]  = superSeggerOpti(phaseOrData, mask, disp_flag, CONST, adapt_
 % boundaries.
 %
 % INPUT :
-%       phaseOrig : phase image
+%       phaseOrData : phase image or data file to be used
 %       mask : cell mask, given externally or calculated with band-pass filter
 %       disp_flag : display flag
 %       CONST : segmentation constants
@@ -119,14 +119,8 @@ if isstruct( phaseOrData )
     data      = phaseOrData;
     phaseOrig = data.phase;
     dataFlag  = true;
-    %segments_stay = unique(data.segs.segs_label(:));
-    %segments_stay = segments_stay(segments_stay~=0);
-    
-    segs_label_old = data.segs.segs_label;
-    
-    score     = data.segs.score;
-    score = score(segments_stay);
-    
+    segs_old = data.segs;
+        
     % Copy the mask from data into mask if it is empty 
     if isempty( mask )
         mask      = data.mask_bg;
@@ -176,8 +170,6 @@ phaseNormUnfilt = (double(phaseOrig)-imin)/(imax-imin);
 % it also enhances subcellular contrast. We subtract the magic threshold
 % to remove the variation in intesnity within a cell region.
 [~,~,~,C2phase] = curveFilter (double(phaseNormFilt),1);
-
-
 C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
 
 
@@ -189,13 +181,21 @@ if isempty(mask)
     % no background making mask
     filt_3 = fspecial( 'gaussian',25, 15 );
     filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_bg_ = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
     
+    [~,~,~,~,M,K,C1,C2] = curveFilter( phaseNormUnfilt, 3 );
+    aK = abs(K);
+    tic
+    mask_bg_ = modMaskTmp( mask_colonies, phaseNormUnfilt, aK );
+    toc
+
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
     mask_bg = logical((mask_bg_-mask_halos)>0);
     
+    % removes micro-colonies with background level outline intensity - not dark enough
     mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig );
+    
     
 else
     mask_bg = mask;
@@ -212,7 +212,7 @@ end
 %% Split up the micro colonies into watershed regions to assemble cells
 % if data exists, reconstruct ws
 if dataFlag
-    ws = ~data.mask_bg+data.segs.segs_3n+data.segs.segs_bad+data.segs.segs_good;
+    ws = logical(~data.mask_bg+data.segs.segs_3n+data.segs.segs_bad+data.segs.segs_good);
 else
     % watershed just the cell mask to identify segments
     phaseMask = uint8(agd(C2phaseThresh) + 255*(1-(mask_bg)));
@@ -283,20 +283,26 @@ data = defineGoodSegs(data,ws,phaseNormUnfilt,C2phaseThresh,mask_bg, A,CONST, ~d
 % copy the existing score into the data structure
 if dataFlag
     
-    data.segs.score = nan( data.segs.
+    data.segs.score = nan( [size(data.segs.info,1),1] );
     % map the regions
-    props_tmp = regionprops( data.segs.segs_label, segs_label_old, {'MinIntensity','MaxIntensity'} );
+    props_tmp = regionprops( data.segs.segs_label, segs_old.segs_label, {'MinIntensity','MaxIntensity'} );
     tmp_min = [props_tmp.MinIntensity];
     tmp_max = [props_tmp.MaxIntensity];
     
-    [y,x] = histc( props_tmp.MaxIntensity, 0:max(props_tmp.MaxIntensity));
+    [y,x] = hist( tmp_max, 0:max(tmp_max));
     good_club = x(y==1);
     flagger = and( ismember( tmp_max,good_club), and(tmp_min==tmp_max,tmp_min>0));
     
-    data.segs.score( flagger ) = score(  tmp_max(flagger) );
+    data.segs.score( flagger ) = segs_old.score(  tmp_max(flagger) );
     data.segs.score( ~flagger )  = nan;
     
-    disp( ['Regions lost: ',num2str(sum( ~flagger))] );
+    data.segs.segs_good = segs_old.segs_good;
+    data.segs.segs_bad  = segs_old.segs_bad;
+    data.segs.segs_3n   = segs_old.segs_3n;
+    
+    %disp( ['New segments lost: ',num2str(sum( ~flagger))] );
+    %disp( ['Old segments lost: ',num2str(    sum(~ismember(unique(segs_old.segs_label(:)),tmp_max(flagger))))] );  
+
 end
 
 % Calculate and return the final cell mask
@@ -348,6 +354,3 @@ end
 
 
 end
-
-
-
