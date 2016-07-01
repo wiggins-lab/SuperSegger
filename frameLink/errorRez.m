@@ -150,7 +150,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 % map to best, remove mapping from second
                 [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
                 resetRegions = or(reset_tmp,resetRegions);
-                modRegions = [modRegions;modids_tmp];
+                modRegions = [modRegions;modids_tmp'];
             end
             
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 2
@@ -431,7 +431,7 @@ data_c.regs.revmap.r{mapCR} = keeper;
 
 
 data_c.regs.error.r(remove) = 1;
-idsOfModRegions = [remove;keeper];
+idsOfModRegions = [remove,keeper];
 if REMOVE_STRAY && hasNoFwMapping(data_c,remove)
      data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
         ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
