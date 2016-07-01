@@ -1,4 +1,4 @@
-function [X,Y] =  getInfoScores (dirname, xChoice, CONST)
+function [X,Y] =  getInfoScores (dirname, xChoice, recalcInfo, CONST)
 % getInfoScores : gathers properties and predicted values to be used for
 % model training.
 %
@@ -46,8 +46,9 @@ X = [];
 
 for i = 1 : numel(contents)
     data = load([dirname,contents(i).name]);
-    contents(i).name
-    if exist('CONST','var')
+    disp(contents(i).name);
+    if recalcInfo && exist('CONST','var') && ~isempty(CONST)
+        disp ('recalculating');
         data = calculateInfo (data,CONST,xChoice);
         save ([dirname,contents(i).name],'-struct','data');
     end
@@ -99,19 +100,13 @@ Y = Y(indices);
             end
             
         elseif strcmp (xChoice,'segs')
-            %ws = ~data.mask_bg+data.segs.segs_3n++data.segs.segs_bad+data.segs.segs_good;
-            %phaseNorm = data.segs.phaseNorm;
-            %C2phaseThresh = data.segs.phaseC2;
-            %A = CONST.superSeggerOpti.A;
-            %mask_bg = data.mask_bg;
-            %calcScores = 0;
-            %[data_tmp] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
-            %    mask_bg, A, CONST,calcScores);
-            
+
             data = superSeggerOpti( data, [], 0, CONST );
+           % disp('hack');
+           %ss = size(data.segs.info,1);
+           %data.segs.info (1:ss,20:25)  = 0;
             
-%             = data_tmp.segs.info;
-%             newScore = data_tmp.segs.score;
+
             
         end
     end

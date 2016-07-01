@@ -1,4 +1,4 @@
-function updateScores(dirname,xChoice,coefficients,scoreFunction,linear)
+function updateScores(dirname,xChoice,coefficients,scoreFunction)
 % updateScores : updates the raw scores using scoreFunction and coefficients 
 % Coefficients are the A or E (can be a neural network) that were created
 % during training.
@@ -9,7 +9,6 @@ function updateScores(dirname,xChoice,coefficients,scoreFunction,linear)
 %       xChoice : 'segs' to load _seg.mat files, anything else loads *_seg*.mat 
 %       coefficients : A (segs) or E (regs), coefficients or network
 %       scoreFunction : function used to calculate score
-%       linear : 1 to use only linear relationships for the parameters
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Stella Stylianidou.
@@ -35,9 +34,6 @@ if ~strcmp (xChoice,'segs') && ~strcmp (xChoice,'regs')
     xChoice = 'segs';
 end
 
-if ~exist('linear','var') || isempty(linear)
-    linear = false;
-end
 
 if strcmp (xChoice,'segs')
     contents = dir([dirname,'*_seg.mat']);

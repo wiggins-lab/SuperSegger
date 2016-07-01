@@ -39,7 +39,12 @@ figure(2);
 clf;
 figure(3);
 clf;
-
+figure(4);
+clf;
+figure(5);
+clf;
+figure(6);
+clf;
 
 clist_ = gate( clist );
 gated  = clist_.data(:,1); 
@@ -91,6 +96,7 @@ cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
 cell_error_index = grabClistIndex(clist,'Error Frame');
 cell_age_index = grabClistIndex(clist,'Cell Age' );
 pole_age_index = grabClistIndex(clist,'Old Pole Age' );
+
 
 if isempty(cell_error_index)
     disp ('no error frame found in clist')
@@ -189,6 +195,7 @@ title( 'Number of Cells' );
 
 legend( hh2, legend_text, 'Location' , 'NorthWest' );
 
+
 try
 ylim_ = data.n2_max;
 ylim( ceil(log([0.5,2*ylim_(end)])/log(2)) );
@@ -196,6 +203,26 @@ xlim( [-.1,1.1]*height1 );
 end
 
 set( gca, 'YGrid', 'on')
+
+
+figure(4);
+ylabel( 'Length' );
+xlabel( 'Time (frames)' );
+legend( hh, legend_text, 'Location' , 'NorthWest' );
+set( gca, 'YScale', 'log'  );
+
+
+figure(5);
+ylabel( 'Length' );
+xlabel( 'Time (frames)' );
+legend( hh, legend_text, 'Location' , 'NorthWest' );
+set( gca, 'YScale', 'log'  );
+
+figure(6);
+ylabel( 'Length' );
+xlabel( 'Time (frames)' );
+legend( hh, legend_text, 'Location' , 'NorthWest' );
+set( gca, 'YScale', 'log'  );
 
 end
 
@@ -392,6 +419,12 @@ plot( first_death_time, log(nn(ind))/log(2), '.', ...
 
 hh2 = [hh2, h_];
 
+figure(6);
+stairs( ttt, nn, '-', 'Color', cc );
+hold on;
+
+intDoLengthAn( clist, list )
+
 
 end
 
@@ -433,7 +466,29 @@ end
 
 end
 
+function intDoLengthAn( clist, list )
 
+flagger = ismember( clist.data(:,1), list );
+
+
+lengths = squeeze( clist.data3D(flagger,2,:) );
+
+figure(4);
+semilogy( lengths' );
+hold on;
+
+
+lsum = nansum(lengths,1);
+figure(5);
+semilogy( lsum );
+hold on;
+
+figure(6);
+semilogy( lsum/lsum(1),':' );
+hold on;
+
+
+end
 
 
 

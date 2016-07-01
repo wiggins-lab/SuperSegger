@@ -37,7 +37,7 @@ function [data_new,success] = missingSeg2to1 (data_c,regC,data_r,regR,CONST)
 
 success = false;
 data_new = data_c;
-debug_flag = 0;
+debug_flag = 1;
 
 % need some checks to see if this should happen
 longAxis = data_c.regs.info(regC,1);
@@ -83,7 +83,7 @@ end
 % keep only segments of interest
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (segsLabel,segs_list,dist,mask,CONST,areaR1,areaR2,data_c.segs.scoreRaw);
 
-if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
+if  ~isempty(minIndex)% && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
     % a good solution
     num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);
@@ -134,7 +134,7 @@ segs_list = segs_list(segs_list~=0);
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (TmpSegsLabel,segs_list,dist,newmask,CONST,areaR1,areaR2,tmp.segs.scoreRaw);
 
 % check if a good solution was found
-if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
+if  ~isempty(minIndex) %&& any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
     % a good solution
     num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);

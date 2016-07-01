@@ -29,7 +29,7 @@ function  [rawScore] = scoreNeuralNet (x,net)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 x = x';
-y = houseNeuralSimulation(x,net); % same as y = net(x) but faster
+y = net(x); % same as y = net(x) but faster
 prob  = y(2,:); % probabilities of second class (score = 1)
 
 % because of the way scores were calculated in the past I will shift the

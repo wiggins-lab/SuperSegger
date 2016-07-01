@@ -46,7 +46,7 @@ end
 
 if offset(1) < 0 % left
     shiftInX = abs(offset(1));
-    zeroPad = zeros(maskSS(1),min(maskSS(1),shiftInX));
+    zeroPad = zeros(maskSS(1),min(maskSS(2),shiftInX));
     maskShifted = [maskShifted(:,shiftInX+1:end),zeroPad];
 
 else % right

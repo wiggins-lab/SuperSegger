@@ -51,7 +51,7 @@ set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
 handles.directory.String = pwd;
 
-settings.trainFun = @neuralNetTrain; % options : @ trainLasso, @trainTree, @neuralNetTrain
+settings.trainFun = @trainLasso; % current options : @trainTree or @neuralNetTrain
 
 settings.axisFlag = 4;
 settings.frameNumber = 1;
@@ -70,19 +70,12 @@ settings.saveFolder = '';
 settings.dataSegmented = 0;
 settings.CONST = [];
 settings.nameCONST = 'none';
-settings.frameSkip = 1;
+settings.frameSkip = 5;
 settings.imagesLoaded = 0;
 settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 settings.constantModified = 0;
-settings.recalculateSegs = 1;
-settings.segsInfo = @segInfoCurv;
-settings.numSegsInfo = 25;
-settings.recalculateRegs = 0;
-settings.regsInfo = @cellprops3;
-settings.numRegsInfo = 21;
-
 
 setWorkingDirectory(handles.directory.String, 1, 0);
 
@@ -238,12 +231,12 @@ drawnow;
 saveData_Callback();
 
 % hack to put a new segm info calculation - change your pointer 
-settings.CONST.seg.segScoreInfo = settings.segsInfo;
-settings.CONST.superSeggerOpti.NUM_INFO = settings.numSegsInfo;
+settings.CONST.seg.segScoreInfo = @segInfoCurv;
+settings.CONST.superSeggerOpti.NUM_INFO = 25;
 
 
 disp('loading the segments'' data');
-[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs',settings.recalculateSegs,settings.CONST);
+[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs', []);
 save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
 disp('training the segments ..');
 [settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = settings.trainFun (Xsegs, Ysegs);
@@ -311,12 +304,7 @@ drawnow;
 
 saveData_Callback();
 
-
-settings.CONST.regionScoreFun.props = settings.regsInfo;
-settings.CONST.regionScoreFun.NUM_INFO = settings.numRegsInfo;
-
-
-[Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.recalculateRegs, settings.CONST);
+[Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
 save([settings.currentDirectory,filesep,'regs_training_data'],'Xregs','Yregs');
 [settings.CONST.regionScoreFun.E,settings.CONST.regionScoreFun.fun] = settings.trainFun (Xregs, Yregs);
 
@@ -431,7 +419,7 @@ if settings.dataSegmented
     elseif settings.axisFlag == 3
         % deleting areas in square
         maskFigure()
-        [~,cropRegion] = imcrop(handles.viewport_train);
+        [~,cropRegion] = imcrop(handles.viewport_trai);
         if ~isempty(cropRegion)
             cropRegion = floor( cropRegion );
             corner1 = [cropRegion(1),cropRegion(2)];
@@ -439,7 +427,7 @@ if settings.dataSegmented
             addUndo();
             settings.currentData = killRegionsGUI(settings.currentData, settings.CONST,corner1,corner2);
             saveData();
-            updateUI(handles);
+            updateUI();
         end
 
     elseif settings.axisFlag == 4
@@ -1049,5 +1037,4 @@ function debug_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to debug (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global settings;
 keyboard;
