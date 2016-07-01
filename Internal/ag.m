@@ -31,6 +31,8 @@ function [im,im_min,im_max] = ag (im,imin,imax)
 
 im = double(im);
 
+im(isinf(im(:))) = nan;
+
 if exist( 'imin', 'var') && ~isempty(  imin )
     im_min = imin;
 else
