@@ -978,8 +978,8 @@ else
             disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
             disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
             disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
-            disp(['Cell Old Pole Age : ', num2str(data.CellA{ii}.pole)]);
-            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole)]);
+            disp(['Cell Old Pole Age : ', num2str( data.CellA{ii}.pole.op_age)]);
+            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);
             
             if isfield(data.CellA{ii},'fl1')
                 disp('fluorescence 1 statistics: ')

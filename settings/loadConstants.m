@@ -95,10 +95,11 @@ CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.2; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
 CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
-CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
-CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
+CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
+CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
+CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
@@ -240,8 +241,6 @@ CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
-% minimum area a cell region can have, otherwise it is discarded.
-CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
 
 %% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG

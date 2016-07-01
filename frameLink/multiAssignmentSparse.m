@@ -299,7 +299,7 @@ if ~isempty(data_c)
         %  penalty for big area changes
         areaChangePenalty(abs(areaChange) > 0.6) = 1000;
         areaChangePenalty(abs(areaChange) > 0.3) = 50;
-        
+        overlapCost = 1 - areaOverlapCost;
         totCost = areaChangePenalty +  areaChangeFactor * 1./areaOverlapTransCost + ...
             centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange) + ...
             distFromColonyMat * areaFactor * 1./areaOverlapCost + outwardMotFactor * outwardMot ;
@@ -341,8 +341,8 @@ if ~isempty(data_c)
         fArea = [data_f.regs.props.Area];
        
         % attempt to fix assignment error for cells left without assignment
-        [assignments,revAssign] =fixProblems(assignments,revAssign, totCost, indexF,indexC, cArea, fArea);
-        [revAssign,assignments] =fixProblems(revAssign,assignments, totCost, indexC, indexF,fArea, cArea);        
+        [assignments,revAssign] =fixProblems(assignments,revAssign, overlapCost, indexF,indexC, cArea, fArea);
+        [revAssign,assignments] =fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);        
         [assignments,revAssign] = exchangeAssignment (assignments,revAssign, totCost, indexF, indexC);
         [revAssign,assignments] = exchangeAssignment (revAssign,assignments, totCost, indexC, indexF);
         
