@@ -39,8 +39,7 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-global SCORE_LIMIT_MOTHER
-global SCORE_LIMIT_DAUGHTER
+
 global REMOVE_STRAY
 global header_string
 global regToDelete
@@ -48,8 +47,6 @@ header_string = header;
 verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
-SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
-SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 regToDelete = [];
@@ -229,9 +226,9 @@ for regNum =  1 : data_c.regs.num_regs;
             % frame, exit regNum loop, make time - 1 and relink
             
             % The two in reverse map to regNum only
-            %twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
-             %   numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
-            %twoInRMapToCOnly = 1;
+%             twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
+%                 numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
+       
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==rCellsFromC(1)) + (data_r.regs.regs_label==rCellsFromC(2)))));
@@ -410,6 +407,7 @@ else
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
     end
+    
     [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
     
 end

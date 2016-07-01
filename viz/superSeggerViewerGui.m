@@ -970,7 +970,8 @@ else
             settings.handles.include_ids.String = num2str(settings.id_list);
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
-            disp(['Area : ', num2str(data.CellA{ii}.coord.A)]);
+            disp(['Area : ', num2str(data.regs.props(ii).Area)]);
+            if isfield(data,'CellA')
             disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
             disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
             disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
@@ -980,7 +981,6 @@ else
             disp(['Cell Old Pole Age : ', num2str(data.CellA{ii}.pole)]);
             disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole)]);
             
-            
             if isfield(data.CellA{ii},'fl1')
                 disp('fluorescence 1 statistics: ')
                 disp( (data.CellA{ii}.fl1));
@@ -989,12 +989,12 @@ else
                 disp('fluorescence 2 statistics : ')
                 disp( (data.CellA{ii}.fl1));
             end
-            
+            end
             % disp(data.CellA{ii});
             
-            updateImage(settings.hObject, settings.handles)
+            updateImage(settings.hObject, settings.handles);
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
+            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles);
         end
     end
 end

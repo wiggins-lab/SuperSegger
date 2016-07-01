@@ -174,7 +174,7 @@ while ~isempty(badReg)
     goodChecked = segs_list(ismember(segs_list,goodSegList));
     badChecked = segs_list(ismember(segs_list,badSegList));
     
-    % remove from mask already checked segments
+    %remove from mask already checked segments
     for kk = 1 : numel(goodChecked)
         combMask = combMask - (segsLabelMod(yy,xx)==goodChecked(kk));
     end
@@ -183,9 +183,9 @@ while ~isempty(badReg)
     for kk = 1 : numel(badChecked)
         combMask = combMask + (segsLabelMod(yy,xx)==badChecked(kk));
     end
-    
+   
     combMask = double(combMask>0);
-    % keep only not checked segs
+    %keep only not checked segs
     if ~isempty(goodChecked)
         segs_list =  segs_list(~ismember(segs_list,goodChecked));
     end
@@ -228,7 +228,7 @@ while ~isempty(badReg)
     end
     
     
-    if debug_flag
+    if debug_flag &&  ~isempty(segs_list)
         % shows the final optimized segments for the combined mask
         mod = mask_regs*0;
         mod(yy,xx) = combMask;
@@ -284,6 +284,7 @@ if disp_flag
     back = double(0.7*ag( data.phase ));
     outline = imdilate( cell_mask, strel( 'square',3) );
     outline = ag(outline-cell_mask);
+    % imshow does not work for parallel - use image
     image(uint8(cat(3,back + 0.7*double(ag(data.segs.segs_good)) + double(ag(data.segs.segs_3n))...
         ,back,...
         back+ 0.2*double(ag(~cell_mask)-outline))));

@@ -201,6 +201,8 @@ end
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
 
+CONST.superSeggerOpti.dIcellNonCell = 0.2;
+
 % objects with less area than this are removed from the mask
 CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
 
