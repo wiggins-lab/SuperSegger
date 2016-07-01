@@ -107,10 +107,14 @@ if clean_flag && showWarnings
     end
 end
 
+if startEnd(1) >1 
+    CONST.align.ALIGN_FLAG = 0;
+end
+
 % align frames
 if exist( dirname_, 'dir' )
     
-    if startEnd(1) >1 || exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
             (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
             exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
         disp('BatchSuperSeggerOpti : images already aligned');
