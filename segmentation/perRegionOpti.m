@@ -278,13 +278,13 @@ data.segs.segs_bad = segs_bad;
 % update region fields using new mask
 data = intMakeRegs( data, CONST );
 
-if disp_flag && ~CONST.parallel.PARALLEL_FLAG
+if disp_flag
     figure(1);
     cell_mask = data.mask_cell;
     back = double(0.7*ag( data.phase ));
     outline = imdilate( cell_mask, strel( 'square',3) );
     outline = ag(outline-cell_mask);
-    imshow(uint8(cat(3,back + 0.7*double(ag(data.segs.segs_good)) + double(ag(data.segs.segs_3n))...
+    image(uint8(cat(3,back + 0.7*double(ag(data.segs.segs_good)) + double(ag(data.segs.segs_3n))...
         ,back,...
         back+ 0.2*double(ag(~cell_mask)-outline))));
     drawnow;
