@@ -287,9 +287,9 @@ for regNum =  1 : data_c.regs.num_regs;
                 if ~ignoreError
                     [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
                     modRegions = [modRegions;col(cCellsFromR)];
-                else
-                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-                    modRegions = [modRegions;col(modids_tmp)];
+%                 else
+%                     [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+%                     modRegions = [modRegions;col(modids_tmp)];
                 end
                 resetRegions = or(reset_tmp,resetRegions);
             elseif ~isempty(data_f) && (someMatchToSame)
@@ -441,7 +441,7 @@ data_c.regs.revmap.r{mapCR} = keeper;
 data_c.regs.error.r(remove) = 1;
 
 idsOfModRegions = [col(remove);col(keeper)];
-if REMOVE_STRAY && (~isempty(data_f) && hasNoFwMapping(data_c,remove))
+if REMOVE_STRAY && ~isempty(data_f) && hasNoFwMapping(data_c,remove)
      data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
       ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
     if verbose
