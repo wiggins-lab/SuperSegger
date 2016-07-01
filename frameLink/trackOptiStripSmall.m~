@@ -29,7 +29,7 @@ function trackOptiStripSmall(dirname, CONST, disp_flag)
 
 
 VERY_SMALL_AREA = CONST.trackOpti.MIN_AREA; % smaller that this is stripped
-MIN_AREA = CONST.trackOpti.MIN_AREA_NO_NEIGH; % smaller that this is stripped if no neighbors
+MIN_AREA = CONST.trackOpti.MIN_AREA; % smaller that this is stripped if no neighbors
 dirname = fixDir(dirname);
 contents=dir([dirname '*_seg.mat']);
 num_im = length(contents);

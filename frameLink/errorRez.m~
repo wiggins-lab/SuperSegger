@@ -51,7 +51,7 @@ DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 regToDelete = [];
 resetRegions = false;
-minAreaToMerge = CONST.trackOpti.SMALL_AREA_MERGE;
+minAreaToMerge = 55;
 
 
 % set all ids to 0
@@ -61,7 +61,9 @@ modRegions = [];
 for regNum =  1 : data_c.regs.num_regs;
     
     
-    
+    if regNum == 34 
+        keyboard;
+    end
     
     if data_c.regs.ID(regNum) ~= 0
         disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);
@@ -144,16 +146,16 @@ for regNum =  1 : data_c.regs.num_regs;
                 % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
                 [data_c,mergeReset] = merge2Regions (data_c, [sister1, sister2], CONST);
-                modRegions = [modRegions;col(cCellsTransp)];
+                modRegions = [modRegions;sister1;sister2];
                 resetRegions = (resetRegions || mergeReset);
             elseif goodAreaChange
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                modRegions = [modRegions;col(cCellsTransp)];
+                modRegions = [modRegions;sister1;sister2];
             else
                 % map to best, remove mapping from second
-                [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+                [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
                 resetRegions = or(reset_tmp,resetRegions);
-                modRegions = [modRegions;col(modids_tmp)];
+                modRegions = [modRegions;modids_tmp];
             end
             
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 2
@@ -177,18 +179,20 @@ for regNum =  1 : data_c.regs.num_regs;
                 oneIsSmall = (cArea(sister1) < minAreaToMerge) || (cArea(sister2) < minAreaToMerge);
                 if goodAreaChange && ~ignoreError && (haveNoMatch || matchToTheSame || oneIsSmall)
                     
-               % wrong division merge cells
+                    
+                    
+                    % wrong division merge cells
                     if ~ignoreError
                         [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
-                        modRegions = [modRegions;col(mapRC) ];
+                        modRegions = [modRegions;sister1;sister2];
                     else
-                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-                        modRegions = [modRegions;col(modids_tmp)];
+                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
+                        modRegions = [modRegions;modids_tmp];
                     end
                     resetRegions = or(reset_tmp,resetRegions);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                    modRegions = [modRegions;col(mapRC) ];
+                    modRegions = [modRegions;sister1;sister2];
                 end
             elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
@@ -286,10 +290,10 @@ for regNum =  1 : data_c.regs.num_regs;
                 % wrong division merge cells
                 if ~ignoreError
                     [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
-                    modRegions = [modRegions;col(cCellsFromR)];
+                    modRegions = [modRegions;cCellsFromR'];
                 else
-                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-                    modRegions = [modRegions;col(modids_tmp)];
+                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header);
+                    modRegions = [modRegions;modids_tmp];
                 end
                 resetRegions = or(reset_tmp,resetRegions);
             elseif ~isempty(data_f) && (someMatchToSame)
@@ -304,7 +308,7 @@ for regNum =  1 : data_c.regs.num_regs;
                     
                 end
                 [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
-                modRegions = [modRegions;col(cellsToMerge)];
+                modRegions = [modRegions;cellsToMerge];
             end
         else
             
@@ -427,7 +431,7 @@ end
 
 
 function [data_c,data_r,cell_count,resetRegions,idsOfModRegions] = mapBestOfTwo ...
-    (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header,data_f)
+    (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
 % maps to best from two forward
 global regToDelete
 global REMOVE_STRAY
@@ -438,12 +442,13 @@ remove = mapRC(mapRC~=keeper);
 errorStat = (data_c.regs.error.r(keeper)>0);
 [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, errorStat);
 data_c.regs.revmap.r{mapCR} = keeper;
-data_c.regs.error.r(remove) = 1;
 
-idsOfModRegions = [col(remove);col(keeper)];
-if REMOVE_STRAY && (~isempty(data_f) && hasNoFwMapping(data_c,remove))
-     data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-      ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
+
+data_c.regs.error.r(remove) = 1;
+idsOfModRegions = [remove;keeper];
+if REMOVE_STRAY && hasNoFwMapping(data_c,remove)
+    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
     end

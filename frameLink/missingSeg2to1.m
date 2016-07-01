@@ -37,7 +37,7 @@ function [data_new,success] = missingSeg2to1 (data_c,regC,data_r,regR,CONST)
 
 success = false;
 data_new = data_c;
-debug_flag = 1;
+debug_flag = 0;
 
 % need some checks to see if this should happen
 longAxis = data_c.regs.info(regC,1);
@@ -66,18 +66,19 @@ separatingSegment = ~comboMaskR.*comboMaskRerod;
 dist = bwdist(separatingSegment);
 
 if debug_flag
+    figure(2);
+    clf;
     imshow(cat(3,0.5*ag(data_c.phase) + ag(data_c.regs.regs_label==regC),...
         ag(data_r.regs.regs_label==regR(1)),ag(data_r.regs.regs_label==regR(2))));
 end
 
-% add the long axis thing as a constant..
-% if this thing are not true don't even try to segment this again.
-% or size of cell too small to be divided..
-if numel(segs_list) == 0  || (longAxis < CONST.regionOpti.MIN_LENGTH * 1.5 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
+% do not divide a cell that is too small to be divided.
+if numel(segs_list) == 0  || ...
+        (longAxis < CONST.regionOpti.MIN_LENGTH * 1.5 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
     return
 end
 if debug_flag
-    imshow(segsLabel)
+    imshow(segsLabel);
 end
 
 % keep only segments of interest

@@ -1,4 +1,4 @@
-function [ mask_bg_mod ] = intRemoveFalseMicroCol( mask_bg, phase )
+function [ mask_bg_mod ] = intRemoveFalseMicroCol( mask_bg, phase, CONST )
 % intRemoveFalseMicroCol : used to remove regions that are not cells.
 % It removes anything whose intnsity on the outline is above the background
 % intensity.
@@ -49,7 +49,7 @@ mean_cell    = mean( phase( mask_bg ));
 dI = mean_noncell-mean_cell;
 
 % indices of regions to be removed
-ind = find(vals > mean_noncell+dI*.0);
+ind = find(vals > mean_noncell-dI*CONST.superSeggerOpti.dIcellNonCell);
 kill_list = [kill_l',ind];
 
 mask_kill = ismember( label_bg, kill_list  );
