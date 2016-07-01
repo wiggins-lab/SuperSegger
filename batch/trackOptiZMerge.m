@@ -199,10 +199,18 @@ for ii = 1:data.numz
     rad = 1;
     
     tmp = medfilt2( ims(:,:,ii), [3,3] );
+    
+    tmp_mean = mean(tmp(:));
+   
+    
+    tmp = ims(:,:,ii);
+    tmp(tmp<.3*tmp_mean) = 0.3*tmp_mean;
+    tmp(tmp>2.5*tmp_mean) = 2.5*tmp_mean;
+
     tmp_max = max( [tmp(:)',tmp_max] );
+
     
-    
-    [~,~,~,~,~,~,~,tmp ] = curveFilter( squeeze(ims(:,:,ii)), rad );
+    [~,~,~,~,~,~,~,tmp ] = curveFilter( tmp, rad );
     
     tmp = imresize( tmp, 1/data.mag );
     
