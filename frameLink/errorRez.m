@@ -272,7 +272,6 @@ for regNum =  1 : data_c.regs.num_regs;
                 occur = [histc([forwMap],forwardMap)];
                 matchToTheSame = ~haveNoMatch && numel(forwardMap)==1;
                 someMatchToSame = ~haveNoMatch && any(occur>1);
-                
                 % r: one has no forward mapping, or both map to the same in fw
                 if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
                     % wrong division merge cells
@@ -280,7 +279,7 @@ for regNum =  1 : data_c.regs.num_regs;
                         [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
                          modRegions = [modRegions;cCellsFromR']; 
                     else
-                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
+                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header);
                         modRegions = [modRegions;modids_tmp]; 
                     end
                     resetRegions = or(reset_tmp,resetRegions);
