@@ -144,16 +144,16 @@ for regNum =  1 : data_c.regs.num_regs;
                 % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
                 [data_c,mergeReset] = merge2Regions (data_c, [sister1, sister2], CONST);
-                modRegions = [modRegions;sister1;sister2];
+                modRegions = [modRegions;col(cCellsTransp)];
                 resetRegions = (resetRegions || mergeReset);
             elseif goodAreaChange
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                modRegions = [modRegions;sister1;sister2];
+                modRegions = [modRegions;col(cCellsTransp)];
             else
                 % map to best, remove mapping from second
                 [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
                 resetRegions = or(reset_tmp,resetRegions);
-                modRegions = [modRegions;modids_tmp];
+                modRegions = [modRegions;col(modids_tmp)];
             end
             
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 2
@@ -180,15 +180,15 @@ for regNum =  1 : data_c.regs.num_regs;
                % wrong division merge cells
                     if ~ignoreError
                         [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
-                        modRegions = [modRegions;sister1;sister2];
+                        modRegions = [modRegions;col(mapRC) ];
                     else
                         [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-                        modRegions = [modRegions;modids_tmp];
+                        modRegions = [modRegions;col(modids_tmp)];
                     end
                     resetRegions = or(reset_tmp,resetRegions);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                    modRegions = [modRegions;sister1;sister2];
+                    modRegions = [modRegions;col(mapRC) ];
                 end
             elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
@@ -286,10 +286,10 @@ for regNum =  1 : data_c.regs.num_regs;
                 % wrong division merge cells
                 if ~ignoreError
                     [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
-                    modRegions = [modRegions;cCellsFromR'];
+                    modRegions = [modRegions;col(cCellsFromR)];
                 else
                     [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-                    modRegions = [modRegions;modids_tmp];
+                    modRegions = [modRegions;col(modids_tmp)];
                 end
                 resetRegions = or(reset_tmp,resetRegions);
             elseif ~isempty(data_f) && (someMatchToSame)
@@ -304,7 +304,7 @@ for regNum =  1 : data_c.regs.num_regs;
                     
                 end
                 [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
-                modRegions = [modRegions;cellsToMerge];
+                modRegions = [modRegions;col(cellsToMerge)];
             end
         else
             
@@ -438,13 +438,12 @@ remove = mapRC(mapRC~=keeper);
 errorStat = (data_c.regs.error.r(keeper)>0);
 [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, errorStat);
 data_c.regs.revmap.r{mapCR} = keeper;
-
-
 data_c.regs.error.r(remove) = 1;
-idsOfModRegions = [remove;keeper];
+
+idsOfModRegions = [col(remove);col(keeper)];
 if REMOVE_STRAY && (~isempty(data_f) && hasNoFwMapping(data_c,remove))
-    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
+     data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+      ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
     end
