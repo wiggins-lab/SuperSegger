@@ -34,8 +34,13 @@ function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+% gets the list of all possible constants in the settings folder
+[possibleConstants, list, filepath] = getConstantsList();
+
+CONST = [];
 if nargin < 1 || isempty( res )
-   disp ('No constant chosen');
+   disp ('No constant chosen. Possible constants are : ');
+   disp(list');
    return;
 end
 
@@ -47,8 +52,7 @@ if ~exist('dispText','var') || isempty( dispText )
     dispText = true;
 end
 
-% gets the list of all possible constants in the settings folder
-[possibleConstants, ~, filepath] = getConstantsList();
+
 
 % default values for numbers
 resFlag = [];
@@ -186,7 +190,10 @@ elseif exist(res, 'file')
     ConstLoaded = load(res);
     CONST.ResFlag = res;
 else
-    errordlg('loadConstants: Constants not loaded : no match found. Aborting.');
+    errordlg('loadConstants: Constants not loaded : no match found. Aborting. ');
+    disp(['Possible constants']);
+    disp(list');
+    CONST = [];
     return;
 end
 
