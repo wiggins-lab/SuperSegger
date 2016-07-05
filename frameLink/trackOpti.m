@@ -1,5 +1,4 @@
-
-function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header) 
+function clist = trackOpti(dirname,skip,CONST, header, startEnd) 
 % trackOpti : calls the rest of the functions for segmentation
 % After each sub-function is called, is creates a file in the seg directory
 % that begins with .trackOpti (they are hidden, you?ll have to use ?ls -a?
@@ -14,9 +13,8 @@ function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)
 %       dirname : xy folder
 %       skip : frames to be skipped in segmentation, default is 1.
 %       CONST : Constants file
-%       CLEAN_FLAG : 0 (default) continue from previous stop point
-%                    1 clean everything and restart segmentation
 %       header : information string
+%       startEnd : start and end stage
 % OUTPUT :
 %       clist : list of cells with time-independent information about each
 %
@@ -42,16 +40,16 @@ function clist = trackOpti(dirname,skip,CONST, CLEAN_FLAG, header)
 
 % if the CLEAN_FLAG does not exist, set it to true and remove all existing
 % files. This is the safer option.
-if ~exist('CLEAN_FLAG') || isempty( CLEAN_FLAG )
-    CLEAN_FLAG = true;
-end
+% if ~exist('CLEAN_FLAG') || isempty( CLEAN_FLAG )
+%     CLEAN_FLAG = true;
+% end
 
 if ~exist('header','var')
     header = 'trackOpti no header: ';
 end
 
 % turn skip off if skip isn't set.
-if ~exist('skip') || isempty(skip)
+if ~exist('skip','var') || isempty(skip)
     skip = 1;
 end
 
@@ -69,28 +67,15 @@ if ~exist( dirname_cell, 'dir' )
     mkdir(  dirname_cell );
 end
 
-
-
-%% Clean directories
-if CLEAN_FLAG
-    warning('off','MATLAB:DELETE:Permission')
-    delete ([dirname,'clist.mat']); % clist
-    delete ([dirname_seg,'*err.mat']); % error files
-    delete ([dirname_cell,'*.mat']); % cell files
-    delete ([dirname_cell,'.trackOpti*']); 
-    delete ([dirname_seg,'.trackOpti*']); % stamp files
-    if skip > 1
-        delete ([dirname_full,'*.mat']);
-        delete ([dirname_full,'.trackOpti*']);
-    end
-    
+if ~exist( 'startEnd', 'var' ) || isempty( startEnd )
+    startEnd = [1 20];
 end
 
 
 %% trackOptiStripSmall
 % removes small regions that are probably not real (bubbles, dust, or minicells)
 stamp_name = [dirname_seg,'.trackOptiStripSmall-Step1.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' ) && (startEnd(1) <= 3 && startEnd(2) >= 3)
     disp([header,'trackOpti - Step 1: Running trackOptiStripSmall.']);
     trackOptiStripSmall(dirname_seg, CONST);
     time_stamp = clock;
@@ -102,7 +87,7 @@ end
 %% Link frames and do error resolution
 % Calculate the overlap between cells between subsequent frames.
 stamp_name = [dirname_seg,'.trackOptiLinkCell-Step2.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' ) && (startEnd(1) <= 4 && startEnd(2) >= 4)
     disp([header,'trackOpti - Step 2: Running trackOptiLinkCell.']);
     delete_old_err_files = 1;
     trackOptiLinkCellMulti(dirname_seg, delete_old_err_files, CONST, header);
@@ -115,8 +100,7 @@ end
 %% Skip Merge
 % If skip is bigger than 1, it takes care of merging all the frames skipped.
 % the merged skipped frames are placed in the seg_full dir
-if skip>1
-    
+if skip>1  && ( startEnd(1) <= 4 && startEnd(2) >= 4)
     dirname_seg  = dirname_full; % change dirname_seg to seg_all directory
     stamp_name = [dirname_seg,'.trackOptiSkipMerge-Step2merge.mat'];
     if ~exist( stamp_name, 'file' );
@@ -137,8 +121,7 @@ if skip>1
         save( stamp_name, 'time_stamp');
     else
         disp([header,'trackOpti: trackOptiLink already run.']);
-    end
-    
+    end   
 end
 
 
@@ -146,7 +129,7 @@ end
 % trackOptiCellMarker marks complete cells cycles. clist contains a
 % list of cell statistics etc.
 stamp_name = [dirname_seg,'.trackOptiCellMarker-Step3.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' ) && (startEnd(1) <= 5 && startEnd(2) >= 5)
     disp([header,'trackOpti - Step 3: Running trackOptiCellMarker.']);        
     trackOptiCellMarker(dirname_seg, CONST, header);
     time_stamp = clock;
@@ -158,7 +141,7 @@ end
 %% Fluor
 % Calculates Fluorescence Background
 stamp_name = [dirname_seg,'.trackOptiFluor-Step4.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' )  && (startEnd(1) <= 6 && startEnd(2) >= 6)
     disp([header,'trackOpti - Step 4: Running trackOptiFluor.']);  
     trackOptiFluor(dirname_seg,CONST, header);
     time_stamp = clock;
@@ -171,7 +154,7 @@ end
 %% Make Cell
 % Computes cell characteristics and puts them in *err files under CellA{}
 stamp_name = [dirname_seg,'.trackOptiMakeCell-Step5.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' )  && (startEnd(1) <= 7 && startEnd(2) >= 7)
     disp([header,'trackOpti - Step 5: Running trackOptiMakeCell.']); 
     trackOptiMakeCell(dirname_seg, CONST, header);
     time_stamp = clock;
@@ -182,7 +165,7 @@ end
 
 
 %% Finds loci in each fluorescent channel
-if sum(CONST.trackLoci.numSpots(:))
+if sum(CONST.trackLoci.numSpots(:)) && (startEnd(1) <= 8 && startEnd(2) >= 8)
     stamp_name = [dirname_seg,'.trackOptiFindFoci-Step6.mat'];
     if ~exist( stamp_name, 'file' );
         disp([header,'trackOpti - Step 6: Running trackOptiFindFoci.']); 
@@ -195,9 +178,9 @@ if sum(CONST.trackLoci.numSpots(:))
 end
 
 
-%% Computes cell characteristics in make cells
+%% Make the clist
 stamp_name = [dirname_seg,'.trackOptiClist-Step7.mat'];
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' ) && (startEnd(1) <= 9 && startEnd(2) >= 9)
     disp([header,'trackOpti - Step 7: Running trackOptiClist.']);  
     
     [clist] = trackOptiClist(dirname_seg, CONST, header);
@@ -223,7 +206,7 @@ end
 % for a single cell.
 stamp_name = [dirname_seg,'.trackOptiCellFiles-Step8.mat'];
 
-if ~exist( stamp_name, 'file' );
+if ~exist( stamp_name, 'file' ) && (startEnd(1) <= 10 && startEnd(2) >= 10)
     disp([header,'trackOpti - Step 8: Running trackOptiCellFiles.']);  
     clist = load([dirname,'clist.mat']);
     if isfield( CONST, 'gate' )

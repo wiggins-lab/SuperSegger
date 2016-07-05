@@ -138,7 +138,11 @@ function relink_Callback(hObject, eventdata, handles)
 choice = questdlg('Are you sure you want to relink and remake the cell files?', 'Re-link the cells?', 'Yes', 'No', 'No');
 if strcmp(choice, 'Yes')
     skip = 1;
-    CLEAN_FLAG = true;
-    header = 'trackOptiView: ';
-    trackOpti(handles.dirname_xy,skip, handles.CONST, CLEAN_FLAG, header);
+    
+    % deleting old linking files
+    startEnd = [4 20]; % from linking to the end
+    cleanSuperSegger (handles.dirname_xy, startEnd, skip);
+
+    header = 'Relink: ';
+    trackOpti(handles.dirname_xy,skip, handles.CONST, header, startEnd);
 end

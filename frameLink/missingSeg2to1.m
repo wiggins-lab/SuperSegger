@@ -66,24 +66,25 @@ separatingSegment = ~comboMaskR.*comboMaskRerod;
 dist = bwdist(separatingSegment);
 
 if debug_flag
+    figure(2);
+    clf;
     imshow(cat(3,0.5*ag(data_c.phase) + ag(data_c.regs.regs_label==regC),...
         ag(data_r.regs.regs_label==regR(1)),ag(data_r.regs.regs_label==regR(2))));
 end
 
-% add the long axis thing as a constant..
-% if this thing are not true don't even try to segment this again.
-% or size of cell too small to be divided..
-if numel(segs_list) == 0  || (longAxis < CONST.regionOpti.MIN_LENGTH * 1.5 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
+% do not divide a cell that is too small to be divided.
+if numel(segs_list) == 0  || ...
+        (longAxis < CONST.regionOpti.MIN_LENGTH * 1.5 && shortAxis < .5*CONST.superSeggerOpti.MAX_WIDTH)
     return
 end
 if debug_flag
-    imshow(segsLabel)
+    imshow(segsLabel);
 end
 
 % keep only segments of interest
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (segsLabel,segs_list,dist,mask,CONST,areaR1,areaR2,data_c.segs.scoreRaw);
 
-if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
+if  ~isempty(minIndex)% && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
     % a good solution
     num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);
@@ -134,7 +135,7 @@ segs_list = segs_list(segs_list~=0);
 [minIndex,minRegEScore, minDA,segs_close] = findBestSegs (TmpSegsLabel,segs_list,dist,newmask,CONST,areaR1,areaR2,tmp.segs.scoreRaw);
 
 % check if a good solution was found
-if  ~isempty(minIndex) && any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
+if  ~isempty(minIndex) %&& any (minRegEScore) > 0 && minDA < 1.5*CONST.trackOpti.DA_MAX
     % a good solution
     num_segs = numel(segs_close);
     vect = makeVector(minIndex-1,num_segs);

@@ -39,8 +39,7 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-global SCORE_LIMIT_MOTHER
-global SCORE_LIMIT_DAUGHTER
+
 global REMOVE_STRAY
 global header_string
 global regToDelete
@@ -48,25 +47,29 @@ header_string = header;
 verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
-SCORE_LIMIT_DAUGHTER =  CONST.trackOpti.SCORE_LIMIT_DAUGHTER;
-SCORE_LIMIT_MOTHER = CONST.trackOpti.SCORE_LIMIT_MOTHER;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 regToDelete = [];
 resetRegions = false;
+minAreaToMerge = CONST.trackOpti.SMALL_AREA_MERGE;
+
 
 % set all ids to 0
+cArea = [data_c.regs.props.Area];
 data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
 for regNum =  1 : data_c.regs.num_regs;
-
+    
+    
+    
+    
     if data_c.regs.ID(regNum) ~= 0
-          disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);
+        disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);
     elseif ismember (regNum,modRegions)
         disp ([header, 'ErRes: Frame: ', num2str(time), ' already modified ',num2str(regNum)]);
     else
         rCellsFromC = data_c.regs.map.r{regNum}; % where regNum maps in reverse
-       
+        
         if ~isempty(rCellsFromC)
             cCellsFromR = data_r.regs.map.f{rCellsFromC};
             cCellsTransp = data_c.regs.revmap.r{rCellsFromC};
@@ -93,7 +96,7 @@ for regNum =  1 : data_c.regs.num_regs;
             else % maps to a region in the next frame, or time is 1
                 if time~=1
                     data_c.regs.error.label{regNum} = ['Frame: ', num2str(time), ...
-                        ', reg: ', num2str(regNum), '. is a stray region.'];                   
+                        ', reg: ', num2str(regNum), '. is a stray region.'];
                     if verbose
                         disp([header, 'ErRes: ',data_c.regs.error.label{regNum}] );
                     end
@@ -106,7 +109,7 @@ for regNum =  1 : data_c.regs.num_regs;
             % sets cell ID from mapped reg, updates death in data_r
             errorStat = (data_c.regs.error.r(regNum)>0);
             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
-        
+            
         elseif numel(rCellsFromC) == 1 &&  numel (cCellsTransp) == 1 && ~all(cCellsFromR == regNum)
             % MAPS TO ONE AND DISAGREES
             % map with an error flag...
@@ -116,7 +119,7 @@ for regNum =  1 : data_c.regs.num_regs;
             
             
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 1 &&  numel (cCellsTransp) == 2
-            % regNum and another cell map to one in reverse 
+            % regNum and another cell map to one in reverse
             % but one in reverse only maps to one forward
             
             sister1 = regNum;
@@ -133,24 +136,24 @@ for regNum =  1 : data_c.regs.num_regs;
             totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
             totAreaR =  data_r.regs.props(mother).Area;
             AreaChange = (totAreaC-totAreaR)/totAreaC;
-            divAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
+            goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
             matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
-            oneIsSmall = (data_c.regs.info(sister1,1) < MIN_LENGTH) ||  (data_c.regs.info(sister1,1) < MIN_LENGTH);
-            if divAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
+            oneIsSmall = (cArea(sister1) < minAreaToMerge) || (cArea(sister2) < minAreaToMerge);
+            if goodAreaChange && ~ignoreError && ~isempty(data_f) && (haveNoMatch || matchToTheSame || oneIsSmall)
                 % r: one has no forward mapping, or both map to the same in fw, or one small
                 % wrong division merge cells
                 [data_c,mergeReset] = merge2Regions (data_c, [sister1, sister2], CONST);
-                modRegions = [modRegions;sister1;sister2];   
+                modRegions = [modRegions;col(cCellsTransp)];
                 resetRegions = (resetRegions || mergeReset);
-            elseif divAreaChange
+            elseif goodAreaChange
                 [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                modRegions = [modRegions;sister1;sister2];                
+                modRegions = [modRegions;col(cCellsTransp)];
             else
                 % map to best, remove mapping from second
-                [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
+                [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
                 resetRegions = or(reset_tmp,resetRegions);
-                modRegions = [modRegions;modids_tmp];
+                modRegions = [modRegions;col(modids_tmp)];
             end
             
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 2
@@ -163,23 +166,29 @@ for regNum =  1 : data_c.regs.num_regs;
             
             if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && all(sister2Mapping == mother)
                 
+                
+                
+                totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
+                totAreaR =  data_r.regs.props(mother).Area;
+                AreaChange = (totAreaC-totAreaR)/totAreaC;
+                goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
                 matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
-                
-                % r: one has no forward mapping, or both map to the same in fw
-                if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
+                oneIsSmall = (cArea(sister1) < minAreaToMerge) || (cArea(sister2) < minAreaToMerge);
+                if goodAreaChange && ~ignoreError && (haveNoMatch || matchToTheSame || oneIsSmall)
+                    
                     % wrong division merge cells
                     if ~ignoreError
                         [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
-                         modRegions = [modRegions;sister1;sister2]; 
+                        modRegions = [modRegions;col(mapRC) ];
                     else
-                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
-                        modRegions = [modRegions;modids_tmp]; 
+                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+                        modRegions = [modRegions;col(modids_tmp)];
                     end
                     resetRegions = or(reset_tmp,resetRegions);
                 else
                     [data_c, data_r, cell_count] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time,header, verbose);
-                    modRegions = [modRegions;sister1;sister2]; 
+                    modRegions = [modRegions;col(mapRC) ];
                 end
             elseif numel(sister2) == 1 && any(mapRC==regNum) && any(data_c.regs.map.r{sister2} ~= mother)
                 % map the one-to-one to mother
@@ -216,12 +225,12 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
             else
                 data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
-                ', reg: ', num2str(regNum),'. Error not fixed - two to 1 but don''t know what to do.'];
-            
-            if verbose
-                disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
-            end
-           
+                    ', reg: ', num2str(regNum),'. Error not fixed - two to 1 but don''t know what to do.'];
+                
+                if verbose
+                    disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
+                end
+                
             end
         elseif numel(rCellsFromC) > 1
             % 1 in current maps to two in reverse
@@ -229,9 +238,9 @@ for regNum =  1 : data_c.regs.num_regs;
             % frame, exit regNum loop, make time - 1 and relink
             
             % The two in reverse map to regNum only
-            %twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
-             %   numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
-            twoInRMapToCOnly = 1;
+            %             twoInRMapToCOnly = numel(data_r.regs.map.f{rCellsFromC(1)}) == 1 && data_r.regs.map.f{rCellsFromC(1)}==regNum && ...
+            %                 numel(data_r.regs.map.f{rCellsFromC(2)}) == 1 && data_r.regs.map.f{rCellsFromC(2)}==regNum;
+            
             if debug_flag
                 imshow(cat(3,0.5*ag(data_c.phase), 0.7*ag(data_c.regs.regs_label==regNum),...
                     ag((data_r.regs.regs_label==rCellsFromC(1)) + (data_r.regs.regs_label==rCellsFromC(2)))));
@@ -263,41 +272,41 @@ for regNum =  1 : data_c.regs.num_regs;
                 [data_c,data_r] = mapToBestOfTwo (data_c, regNum, data_r, rCellsFromC, time, verbose,header);
             end
             
-
+            
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) > 2
-                 
-                haveNoMatch = any(isempty({data_c.regs.map.f{cCellsFromR}}));
-                forwMap = [data_c.regs.map.f{cCellsFromR}];
-                [forwardMap] = unique([forwMap]);
-                occur = [histc([forwMap],forwardMap)];
-                matchToTheSame = ~haveNoMatch && numel(forwardMap)==1;
-                someMatchToSame = ~haveNoMatch && any(occur>1);
-                
-                % r: one has no forward mapping, or both map to the same in fw
-                if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
-                    % wrong division merge cells
-                    if ~ignoreError
-                        [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
-                         modRegions = [modRegions;cCellsFromR']; 
-                    else
-                        [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, mapRC, data_r, rCellsFromC, time, verbose, cell_count,header);
-                        modRegions = [modRegions;modids_tmp]; 
-                    end
-                    resetRegions = or(reset_tmp,resetRegions);
-                elseif ~isempty(data_f) && (someMatchToSame) 
-                     indFwMap = find(occur>1);
-                     valueFw = forwardMap(indFwMap);
-                     cellsToMerge = [];
-                     for i = 1 : numel(cCellsFromR)
-                         cur_cell = cCellsFromR(i);
-                         if any(data_c.regs.map.f{cur_cell} == valueFw)
-                             cellsToMerge = [cellsToMerge ;cur_cell];
-                         end
-                     
-                     end
-                     [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
-                     modRegions = [modRegions;cellsToMerge]; 
+            
+            haveNoMatch = any(isempty({data_c.regs.map.f{cCellsFromR}}));
+            forwMap = [data_c.regs.map.f{cCellsFromR}];
+            forwardMap = unique(forwMap);
+            occur = histc(forwMap,forwardMap);
+            matchToTheSame = ~haveNoMatch && numel(forwardMap)==1;
+            someMatchToSame = ~haveNoMatch && any(occur>1);
+            % r: one has no forward mapping, or both map to the same in fw
+            if  ~isempty(data_f) && (haveNoMatch || matchToTheSame)
+                % wrong division merge cells
+                if ~ignoreError
+                    [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
+                    modRegions = [modRegions;col(cCellsFromR)];
+                else
+                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+                    modRegions = [modRegions;col(modids_tmp)];
                 end
+                resetRegions = or(reset_tmp,resetRegions);
+            elseif ~isempty(data_f) && (someMatchToSame)
+                indFwMap = find(occur>1);
+                valueFw = forwardMap(indFwMap);
+                cellsToMerge = [];
+                for i = 1 : numel(cCellsFromR)
+                    cur_cell = cCellsFromR(i);
+                    if any(data_c.regs.map.f{cur_cell} == valueFw)
+                        cellsToMerge = [cellsToMerge ;cur_cell];
+                    end
+                    
+                end
+                [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
+                modRegions = [modRegions;col(cellsToMerge)];
+                resetRegions = or(reset_tmp,resetRegions);
+            end
         else
             
             data_c.regs.error.label{regNum} = ['Frame: ', num2str(time),...
@@ -308,7 +317,7 @@ for regNum =  1 : data_c.regs.num_regs;
             end
             if debug_flag
                 intDisplay (data_r,rCellsFromC,data_c,regNum);
-
+                
             end
             
         end
@@ -357,18 +366,18 @@ end
 
 function [ data_c, data_r, cell_count ] = createDivision (data_c,data_r,mother,sister1,sister2, cell_count, time, header, verbose)
 
-    data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(sister1),' and ', num2str(sister2),' . cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
-        num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
-        ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
-    if verbose
-        disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
-    end
-    data_r.regs.error.r(mother) = 0;
-    data_c.regs.error.r(sister1) = 0;
-    data_c.regs.error.r(sister2) = 0;
-    [data_c, data_r, cell_count] = markDivisionEvent( ...
-        data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
+data_c.regs.error.label{sister1} = (['Frame: ', num2str(time),...
+    ', reg: ', num2str(sister1),' and ', num2str(sister2),' . cell division from mother reg', num2str(mother),'. [L1,L2,Sc] = [',...
+    num2str(data_c.regs.L1(sister1),2),', ',num2str(data_c.regs.L2(sister1),2),...
+    ', ',num2str(data_c.regs.scoreRaw(sister1),2),'].']);
+if verbose
+    disp([header, 'ErRes: ', data_c.regs.error.label{sister1}] );
+end
+data_r.regs.error.r(mother) = 0;
+data_c.regs.error.r(sister1) = 0;
+data_c.regs.error.r(sister2) = 0;
+[data_c, data_r, cell_count] = markDivisionEvent( ...
+    data_c, sister1, data_r, mother, time, 0, sister2, cell_count);
 
 end
 
@@ -411,6 +420,7 @@ else
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{regNum}]);
     end
+    
     [data_c, data_r] = continueCellLine(data_c, regNum, data_r, mapCR(2), time, errorStat);
     
 end
@@ -418,7 +428,7 @@ end
 
 
 function [data_c,data_r,cell_count,resetRegions,idsOfModRegions] = mapBestOfTwo ...
-    (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header)
+    (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header,data_f)
 % maps to best from two forward
 global regToDelete
 global REMOVE_STRAY
@@ -429,12 +439,11 @@ remove = mapRC(mapRC~=keeper);
 errorStat = (data_c.regs.error.r(keeper)>0);
 [data_c, data_r] = continueCellLine( data_c, keeper, data_r, mapCR, time, errorStat);
 data_c.regs.revmap.r{mapCR} = keeper;
-
-
 data_c.regs.error.r(remove) = 1;
-idsOfModRegions = [remove;keeper];
-if REMOVE_STRAY && hasNoFwMapping(data_c,remove)
-     data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
+
+idsOfModRegions = [col(remove);col(keeper)];
+if REMOVE_STRAY && (~isempty(data_f) && hasNoFwMapping(data_c,remove))
+    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
         ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);
     if verbose
         disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );

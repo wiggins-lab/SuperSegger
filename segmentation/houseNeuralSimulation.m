@@ -20,9 +20,26 @@ function [Y,Xf,Af] = houseNeuralSimulation(X,net)
 % ===== NEURAL NETWORK CONSTANTS =====
 
 % Input 1
-x1_step1_xoffset = net.input.processSettings{1}.xoffset;
-x1_step1_gain = net.input.processSettings{1}.gain;
-x1_step1_ymin =  net.input.processSettings{1}.ymin;
+if isfield(net.input.processSettings{1},'xoffset')
+    x1_step1_xoffset = net.input.processSettings{1}.xoffset;
+else
+    disp('no net offset');
+    x1_step1_xoffset =0 ;
+end
+
+if isfield(net.input.processSettings{1},'gain')
+    x1_step1_gain = net.input.processSettings{1}.gain;
+else
+    disp('no net gain');
+    x1_step1_gain =0 ;
+end
+
+if isfield(net.input.processSettings{1},'ymin')
+    x1_step1_gain = net.input.processSettings{1}.ymin;
+else
+    disp('no net ymin');
+    x1_step1_ymin =0 ;
+end
 
 % Layer 1
 b1 = net.b{1};
@@ -33,6 +50,12 @@ b2 = net.b{2};
 LW2_1 = net.LW{2};
 
 % ===== SIMULATION ========
+
+if isfield(net.input.processSettings{1},'keep')
+    keep = net.input.processSettings{1}.keep;
+    X = X(keep,:);
+end
+
 
 % Format Input Arguments
 isCellX = iscell(X);
@@ -48,6 +71,9 @@ end
 
 % Allocate Outputs
 Y = cell(1,TS);
+
+
+
 
 % Time loop
 for ts=1:TS

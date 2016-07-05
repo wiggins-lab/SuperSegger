@@ -36,8 +36,6 @@ DEBUG_FLAG = 1;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 
-%DA_MAX = DA_MAX / 2;
-
 madeChanges = 0;
 
 splitRegions = [];

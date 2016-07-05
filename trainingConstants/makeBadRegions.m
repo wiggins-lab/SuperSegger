@@ -62,7 +62,7 @@ function [data] = intModRegions ( data,CONST )
 % intModRegions ; modifies regions to create bad regions
 
 % fraction of segments to be modified to create bad regions
-FRACTION_SEG_MOD = 0.5;
+FRACTION_SEG_MOD = 0.3;
 num_segs = numel(data.segs.score);
 num_mod  = ceil( num_segs*FRACTION_SEG_MOD );
 mod_list = unique(ceil(rand(1,num_mod)*num_segs));

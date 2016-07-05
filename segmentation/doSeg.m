@@ -1,5 +1,5 @@
 function  [err_flag] = doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, ...
-    dirname_xy, clean_flag, skip, CONST, header, crop_box)
+    dirname_xy,  skip, CONST, header, crop_box)
 % doSeg : Segments and saves data in the seg.mat files in the seg/ directory.
 % If the seg files are already found it does not repeat the segmentation.
 % It calls the segmentation function found in CONST.seg.segFun to achieve
@@ -56,16 +56,14 @@ name = name( 1:max(nameInfo_tmp.npos(:,3))); % has format imagename-tXX
 
 data.basename = name;
 
-if ~exist([dirname_xy,'seg',filesep])
+if ~exist([dirname_xy,'seg',filesep],'dir')
     mkdir([dirname_xy,'seg',filesep]);
 end
 
 dataname=[dirname_xy,'seg',filesep,name,'_seg.mat'];
 
-verbose = CONST.parallel.verbose;
 
-
-if ~exist(dataname,'file') || clean_flag 
+if ~exist(dataname,'file')
     nameInfo_tmp = nameInfo;
     nameInfo_tmp.npos(1,1) = nt(i);
     nameInfo_tmp.npos(4,1) = 1; % z value

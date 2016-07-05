@@ -1,4 +1,4 @@
-function im = ag (im,imin,imax)
+function [im,im_min,im_max] = ag (im,imin,imax)
 % ag : autogain, it increases the contrast of image im, using imin and imax.
 % It subtracts the the minimum from of the image, divides by the max and
 % then normalizes to 255.
@@ -30,6 +30,8 @@ function im = ag (im,imin,imax)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 im = double(im);
+
+im(isinf(im(:))) = nan;
 
 if exist( 'imin', 'var') && ~isempty(  imin )
     im_min = imin;

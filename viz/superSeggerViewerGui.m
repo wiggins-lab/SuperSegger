@@ -337,12 +337,7 @@ else
         showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
         try
             save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-            clist = handles.clist;
-            if ~isempty(clist)
-                save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
-            end
         catch
-            disp('Error saving.' );
         end
         
     end
@@ -970,16 +965,16 @@ else
             settings.handles.include_ids.String = num2str(settings.id_list);
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
-            disp(['Area : ', num2str(data.CellA{ii}.coord.A)]);
+            disp(['Area : ', num2str(data.regs.props(ii).Area)]);
+            if isfield(data,'CellA')
             disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
             disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
             disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
             disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
             disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
             disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
-            disp(['Cell Old Pole Age : ', num2str(data.CellA{ii}.pole)]);
-            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole)]);
-            
+            disp(['Cell Old Pole Age : ', num2str( data.CellA{ii}.pole.op_age)]);
+            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);
             
             if isfield(data.CellA{ii},'fl1')
                 disp('fluorescence 1 statistics: ')
@@ -989,12 +984,12 @@ else
                 disp('fluorescence 2 statistics : ')
                 disp( (data.CellA{ii}.fl1));
             end
-            
+            end
             % disp(data.CellA{ii});
             
-            updateImage(settings.hObject, settings.handles)
+            updateImage(settings.hObject, settings.handles);
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
+            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles);
         end
     end
 end
@@ -1500,4 +1495,19 @@ function cell_no_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in save_clist.
+function save_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to save_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+try
+   clist = handles.clist;
+    if ~isempty(clist)
+        save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+    end
+catch
+    disp('Error saving.' );
 end

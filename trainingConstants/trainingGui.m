@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 23-May-2016 17:45:12
+% Last Modified by GUIDE v2.5 29-Jun-2016 13:07:03
 
 % Begin initialization code - DO NOT EDIT
 
@@ -50,7 +50,9 @@ handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 
 handles.directory.String = pwd;
-settings.trainFun = @neuralNetTrain; % can change this to @neuralNetTrain
+
+settings.trainFun = @neuralNetTrain; % options : @ trainLasso, @trainTree, @neuralNetTrain
+
 settings.axisFlag = 4;
 settings.frameNumber = 1;
 settings.loadFiles = [];
@@ -68,12 +70,19 @@ settings.saveFolder = '';
 settings.dataSegmented = 0;
 settings.CONST = [];
 settings.nameCONST = 'none';
-settings.frameSkip = 5;
+settings.frameSkip = 1;
 settings.imagesLoaded = 0;
 settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 settings.constantModified = 0;
+settings.recalculateSegs = 0;
+settings.segsInfo = @segInfoCurv;
+settings.numSegsInfo = 25;
+settings.recalculateRegs = 0;
+settings.regsInfo = @cellprops3;
+settings.numRegsInfo = 21;
+
 
 setWorkingDirectory(handles.directory.String, 1, 0);
 
@@ -121,12 +130,12 @@ end
 
 skip = 1;
 clean_flag = 1;
-only_seg = 1; % runs only segmentation, no linking
+start_end_steps =  [2 3]; % runs only segmentation, no linking
 CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
-BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, only_seg, 0);
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, start_end_steps);
 mkdir([settings.loadDirectory(1:end-1),'_backup'])
 copyfile ([settings.loadDirectory,'*seg.mat'],[settings.loadDirectory(1:end-1),'_backup'],'f')
 settings.frameNumber = 1;
@@ -228,14 +237,21 @@ drawnow;
 
 saveData_Callback();
 
-[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs');
-save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
+% hack to put a new segm info calculation - change your pointer 
+settings.CONST.seg.segScoreInfo = settings.segsInfo;
+settings.CONST.superSeggerOpti.NUM_INFO = settings.numSegsInfo;
 
+
+disp('loading the segments'' data');
+[Xsegs,Ysegs] = getInfoScores (settings.loadDirectory,'segs',settings.recalculateSegs,settings.CONST);
+save([settings.currentDirectory,filesep,'segs_training_data'],'Xsegs','Ysegs');
+disp('training the segments ..');
 [settings.CONST.superSeggerOpti.A,settings.CONST.seg.segmentScoreFun] = settings.trainFun (Xsegs, Ysegs);
 
 settings.constantModified = 1;
 
 % update scores and save data files again
+disp('updating the segments'' raw scores with the new coefficients..');
 updateScores(settings.loadDirectory,'segs', settings.CONST.superSeggerOpti.A, settings.CONST.seg.segmentScoreFun);
 set(handles.figure1,'Pointer','arrow');
 try
@@ -295,7 +311,12 @@ drawnow;
 
 saveData_Callback();
 
-[Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.CONST);
+
+settings.CONST.regionScoreFun.props = settings.regsInfo;
+settings.CONST.regionScoreFun.NUM_INFO = settings.numRegsInfo;
+
+
+[Xregs,Yregs] = getInfoScores (settings.loadDirectory,'regs',settings.recalculateRegs, settings.CONST);
 save([settings.currentDirectory,filesep,'regs_training_data'],'Xregs','Yregs');
 [settings.CONST.regionScoreFun.E,settings.CONST.regionScoreFun.fun] = settings.trainFun (Xregs, Yregs);
 
@@ -410,17 +431,21 @@ if settings.dataSegmented
     elseif settings.axisFlag == 3
         % deleting areas in square
         maskFigure()
-        %backer = ag(settings.currentData.phase);
-        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-       
-        if numel(handles.viewport_train.Children) > 0
-            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        cropRegion = [];
+        try
+        [~,cropRegion] = imcrop(handles.viewport_train);
+        catch
         end
-        
-        if numel(settings.firstPosition) > 0
-            hold on;
-            plot( settings.firstPosition(1), settings.firstPosition(2), 'k+','MarkerSize', 30)
+        if ~isempty(cropRegion)
+            cropRegion = floor( cropRegion );
+            corner1 = [cropRegion(1),cropRegion(2)];
+            corner2 = [cropRegion(1)+cropRegion(3),cropRegion(2)+cropRegion(4)];
+            addUndo();
+            settings.currentData = killRegionsGUI(settings.currentData, settings.CONST,corner1,corner2);
+            saveData();
+            updateUI(handles);
         end
+
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -428,13 +453,9 @@ if settings.dataSegmented
     elseif settings.axisFlag == 5
         % mask image
         maskFigure()
-        %backer = ag(settings.currentData.phase);
-        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
     elseif settings.axisFlag == 6
         % deleting regions
         maskFigure()
-        %backer = ag(settings.currentData.phase);
-        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
        
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
@@ -572,7 +593,7 @@ global settings;
 cell_mask = settings.currentData.mask_cell;
 cc = bwconncomp(cell_mask, 4);
 labeled = labelmatrix(cc);
-RGB_label = label2rgb(labeled,'lines',[.7 .7 .7]);%,'shuffle');
+RGB_label = label2rgb(labeled,'lines',[0 0 0]);%,'shuffle');
 imshow(RGB_label);
   
 
@@ -590,7 +611,11 @@ end
 function addUndo()
 global settings
 
-settings.oldData = [settings.currentData, settings.oldData];
+try
+settings.oldData = [settings.currentData(1), settings.oldData(1)];
+catch
+settings.oldData = [settings.currentData(1)];
+end
 if numel(settings.oldData) > settings.maxData
     settings.oldData = settings.oldData(1:settings.maxData);
 end
@@ -727,18 +752,6 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     end
     saveData();
     
-
-elseif settings.axisFlag == 3
-    if numel(settings.firstPosition) == 0
-        settings.firstPosition = eventdata.IntersectionPoint;
-    else
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
-        drawnow;
-        addUndo();
-        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
-        saveData();        
-        settings.firstPosition = [];
-    end
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       
@@ -841,13 +854,6 @@ end
 function figure1_DeleteFcn(hObject, eventdata, handles)
 checkIfSave();
 
-
-% function getValuesFromConst(handles)
-% global settings;
-% resValue = get(handles.constants_list,'Value');
-% res = handles.constants_list.String{resValue};
-% CONST = loadConstantsNN (res,0,0);
-% settings.CONST = CONST;
 
 
 function modifyConstants_Callback(hObject, eventdata, handles)
@@ -1044,3 +1050,12 @@ end
 if strcmpi(eventdata.Key,'rightarrow')
 	next_Callback(hObject, eventdata, handles);
 end
+
+
+% --------------------------------------------------------------------
+function debug_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to debug (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global settings;
+keyboard;
