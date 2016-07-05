@@ -1,23 +1,49 @@
 function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
 % removeDebris : removes false positives from microcolony mask
+% It uses the brightness of the halos versus the darkness of the ecoli
+% and the curvature of the image  
+%
+% INPUT : 
+%   mask_bg : background mask.
+%   phase : normalized phase image.
+%   aK : texture/pebble measure (uses im_xx from the curveFilter).
+% OUTPUT : 
+%   mask_mod : modified mask.
+% 
+% Copyright (C) 2016 Wiggins Lab
+% Written by Stella Stylianidou & Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+INTENSITY_DIF = 0.2;
+PEBBLE_CONST = 5;
 debugFlag = false;
-
-ss = size( phase );
-
-label_bg = bwlabel( mask_bg );
-
 pad = 6;
 
+ss = size( phase );
+label_bg = bwlabel( mask_bg );
 props = regionprops( label_bg,  'BoundingBox', 'Centroid' );
-
 num_reg = numel( props );
 
+%initialize
 I_K = nan( [1,num_reg] );
 I_p = nan( [1,num_reg] );
 I_m = nan( [1,num_reg] );
-
 
 
 for ii = 1:num_reg
@@ -25,7 +51,6 @@ for ii = 1:num_reg
     bb = props(ii).BoundingBox;
     
     [xx,yy] = getBBpad( bb,ss,pad );
-    
     
     mask_ii  = (label_bg( yy,xx)==ii);
     phase_ii = phase(yy,xx);
@@ -36,17 +61,18 @@ for ii = 1:num_reg
     mask_m2 = bwmorph( mask_ii, 'erode', 2 );
     mask_m1 = bwmorph( mask_ii, 'erode', 1 );
     
-    o_m = mask_m1-mask_m2;
-    o_p = mask_p2-mask_p1;
     
-    sss = sum(o_m(:));
+    inner_outline = mask_m1-mask_m2; 
+    outer_outline = mask_p2-mask_p1;
+    
+    sss = sum(inner_outline(:));
     if sss > 0
-        I_m(ii) = sum(o_m(:).*double(phase_ii(:)))/sss;
+        I_m(ii) = sum(inner_outline(:).*double(phase_ii(:)))/sss;
     end
     
-    sss = sum(o_p(:));
+    sss = sum(outer_outline(:));
     if sss > 0
-        I_p(ii) = sum(o_p(:).*double(phase_ii(:)))/sum(o_p(:));
+        I_p(ii) = sum(outer_outline(:).*double(phase_ii(:)))/sum(outer_outline(:));
     end
     
     sss = sum(mask_ii(:));
@@ -57,23 +83,18 @@ for ii = 1:num_reg
     
 end
 
-DI = I_p-I_m;
 
-keeper = find( and(DI>.2,I_K>5 ));
-mask_mod = ismember( label_bg, keeper);
-
-
-
+DI = I_p-I_m; % change in intensity of outer and inner outline.
+keeper = find(and(DI>INTENSITY_DIF,I_K>PEBBLE_CONST));
+mask_mod = ismember(label_bg, keeper);
 
 
 if debugFlag
     
     figure(8);
-    clf;
-        
+    clf;        
     halo_keep = find( DI>.2 );
     pebble_keep = find( I_K>5 );
-    
     imshow( comp( phase, mask_bg, ismember( label_bg,halo_keep ), ismember( label_bg,pebble_keep) ) );
        
     for ii = 1:num_reg
