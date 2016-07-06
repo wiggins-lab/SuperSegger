@@ -106,7 +106,7 @@ maxIterPerFrame = 3;
 curIter = 1;
 
 if CONST.parallel.show_status
-    h = waitbar( 0, 'Strip small cells.');
+    h = waitbar( 0, 'Linking.');
     cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
