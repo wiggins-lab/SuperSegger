@@ -80,6 +80,11 @@ if ~exist( 'showWarnings', 'var' ) || isempty( showWarnings )
     showWarnings = 1;
 end
 
+
+if ~checkToolboxes
+    return;
+end
+
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.
 if isstruct(res)
@@ -112,8 +117,7 @@ if startEnd(1) >1
 end
 
 % align frames
-if exist( dirname_, 'dir' )
-    
+if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
             (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
             exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
