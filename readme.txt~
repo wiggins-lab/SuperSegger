@@ -44,14 +44,14 @@ You can download a sample dataset and a bootcamp folder from our website to try 
 Segmentation Parameters
 =======================
 Some information about the parameters currently provided with the software :
-100XEc : Trained on E.coli, 60nm/pix .
-100XPa : Trained on P.aeruginosa, 60nm/pix.
-60XEcAB1157 : Trained on E.coli AB1157 on M9 pads, 100nm/pix.
-60XEcM9 : Trained on E.coli on M9 pads, 100nm/pix.
-60XEc : Trained on E.coli on LB and M9 pads, 100nm/pix.
-60XEcLB : Trained on E.coli on LB pads, 100nm/pix.
-60XBay : Trained on A.baylyi on LB pads, 100nm/pix.
-60XPa : Trained on P.aeruginosa, 100nm/pix.
+100XEc : Trained on E.coli, 100X camera resolution.
+100XPa : Trained on P.aeruginosa, 100X camera resolution.
+60XEcAB1157 : Trained on E.coli AB1157 on M9 pads, 60X camera resolution.
+60XEcM9 : Trained on E.coli on M9 pads, 60X camera resolution.
+60XEc : Trained on E.coli on LB and M9 pads, 60X camera resolution.
+60XEcLB : Trained on E.coli on LB pads, 60X camera resolution.
+60XBay : Trained on A.baylyi on LB pads, 60X camera resolution.
+60XPa : Trained on P.aeruginosa, 60X camera resolution.
 60XCaulob : Trained on snapshots of C.crescentus, 130 nm/pixel.
 
 

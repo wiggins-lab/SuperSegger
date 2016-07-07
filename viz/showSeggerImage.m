@@ -352,8 +352,8 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         
         
         redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
-        greenChannel =  0.3*(map_no_err) - 0.5*(map_stat0_1)+0.2*(map_stat0_0);
-        blueChannel = 0.7*(map_stat0_2)+ 0.5*(map_stat0_1)+0.3*(map_stat0_0);
+        greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
+        blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
         
         reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
         
