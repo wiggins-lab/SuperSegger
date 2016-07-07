@@ -29,13 +29,15 @@ function [rightNames] = isRightNameFormat(dirname)
 contents = dir([dirname,filesep,'*.tif']);
 filenames = {contents.name}';
 
-
 nameWithXy=regexpi(filenames,'t\d+xy\d+c\d+.tif','once');
 nameWithoutXy=regexpi(filenames,'t\d+c\d+.tif','once');
+nameWithoutt=regexpi(filenames,'xy\d+c\d+.tif','once');
 
 numWithXy =  sum(~cellfun('isempty',nameWithXy));
 numWithoutXY = sum(~cellfun('isempty',nameWithoutXy));
-if numWithXy>0 ||numWithoutXY>0
+numWithoutt = sum(~cellfun('isempty',nameWithoutt));
+
+if numWithXy>0 ||numWithoutXY>0 || numWithoutt>0
     rightNames = true;
 else
     rightNames = false;
