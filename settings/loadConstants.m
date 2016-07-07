@@ -57,7 +57,7 @@ end
 % default values for numbers
 resFlag = [];
 if isa(res,'double' ) && res == 60
-    res = '60XEcM9';
+    res = '60XEc';
 elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
@@ -115,10 +115,10 @@ CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 CONST.trackLoci.gate  = [];
 
 
-% pixelsize
-if all(ismember('100X',res))
+% pixelsize in um
+if all(ismember('100X',res)) % 60 nm per pixel
     CONST.getLocusTracks.PixelSize        = 6/60;
-elseif all(ismember('60X',res))
+elseif all(ismember('60X',res)) % 100 nm per pixel
     CONST.getLocusTracks.PixelSize        = 6/100;
 else
     CONST.getLocusTracks.PixelSize        = [];
