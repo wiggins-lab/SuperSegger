@@ -76,13 +76,12 @@ settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 settings.constantModified = 0;
-settings.recalculateSegs = 0;
+settings.recalculateSegs = 1;
 settings.segsInfo = @segInfoCurv;
 settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
 settings.numRegsInfo = 21;
-
 
 setWorkingDirectory(handles.directory.String, 1, 0);
 
@@ -401,6 +400,10 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
+if settings.InCropMode
+    uiresume()
+    settings.InCropMode = 0;
+end
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -432,21 +435,17 @@ if settings.dataSegmented
     elseif settings.axisFlag == 3
         % deleting areas in square
         maskFigure()
-        cropRegion = [];
-        try
-        [~,cropRegion] = imcrop(handles.viewport_train);
-        catch
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
-        if ~isempty(cropRegion)
-            cropRegion = floor( cropRegion );
-            corner1 = [cropRegion(1),cropRegion(2)];
-            corner2 = [cropRegion(1)+cropRegion(3),cropRegion(2)+cropRegion(4)];
-            addUndo();
-            settings.currentData = killRegionsGUI(settings.currentData, settings.CONST,corner1,corner2);
-            saveData();
-            updateUI(handles);
+        
+        if numel(settings.firstPosition) > 0
+            hold on;
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
         end
-
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -760,6 +759,18 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     end
     saveData();
     
+
+elseif settings.axisFlag == 3
+    if numel(settings.firstPosition) == 0
+        settings.firstPosition = eventdata.IntersectionPoint;
+    else
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
+        drawnow;
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
+        saveData();        
+        settings.firstPosition = [];
+    end
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       
