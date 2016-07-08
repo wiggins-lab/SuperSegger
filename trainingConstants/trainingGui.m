@@ -400,10 +400,6 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
-if settings.InCropMode
-    uiresume()
-    settings.InCropMode = 0;
-end
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);

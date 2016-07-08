@@ -248,11 +248,17 @@ CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
-
+if isfield (ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
 CONST.trackOpti.SMALL_AREA_MERGE = ConstLoaded.trackOpti.SMALL_AREA_MERGE; % in the linking phase, this regions with this area are merged with the ones next to them.
-CONST.trackOpti.MIN_AREA_NO_NEIGH = ConstLoaded.trackOpti.MIN_AREA_NO_NEIGH; % regions with area below this and no neighbors are discarded;
-CONST.trackOpti.MIN_AREA = ConstLoaded.trackOpti.MIN_AREA;  % minimum area a cell region can have, otherwise it is discarded.
+end
 
+if isfield (ConstLoaded.trackOpti,'MIN_AREA_NO_NEIGH')
+CONST.trackOpti.MIN_AREA_NO_NEIGH = ConstLoaded.trackOpti.MIN_AREA_NO_NEIGH; % regions with area below this and no neighbors are discarded;
+end
+
+if isfield (ConstLoaded.trackOpti,'MIN_AREA')
+CONST.trackOpti.MIN_AREA = ConstLoaded.trackOpti.MIN_AREA;  % minimum area a cell region can have, otherwise it is discarded.
+end
 
 %% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
