@@ -147,6 +147,7 @@ else
     phaseNorm = phaseOrig;
 end
 
+pixelFactor = CONST.getLocusTracks.PixelSize / 0.100 ;
 
 % fix the range, set the max and min value of the phase image
 mult_max = 2.5;
@@ -158,13 +159,13 @@ phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
 
 % if the size of the meditatrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
-f = fspecial('gaussian', 11, SMOOTH_WIDTH);
+f = fspecial('gaussian', 11, SMOOTH_WIDTH * pixelFactor);
 phaseNormFilt = imfilter(phaseNorm, f,'replicate');
 
 
 % Minimum constrast filter to enhance inter-cellular image contrast
 [phaseNormFilt,imin,imax] = ag(phaseNormFilt);
-magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
+magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS* pixelFactor);
 
 phaseNormUnfilt = (double(phaseOrig)-imin)/(imax-imin);
 
@@ -185,16 +186,16 @@ if isempty(mask)
     filt_4 = fspecial( 'gaussian',5, 1/2 );
     mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
     
-    [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
-    aK = abs(K);
-    mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK );
+    %   [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
+    %    aK = abs(K);
+    %mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK );
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
     mask_bg = logical((mask_colonies-mask_halos)>0);
     
     % removes micro-colonies with background level outline intensity - not dark enough
-    mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST );
+    %mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST );
     
     
 else
@@ -299,9 +300,6 @@ if dataFlag
     data.segs.segs_good = segs_old.segs_good;
     data.segs.segs_bad  = segs_old.segs_bad;
     data.segs.segs_3n   = segs_old.segs_3n;
-    
-    %disp( ['New segments lost: ',num2str(sum( ~flagger))] );
-    %disp( ['Old segments lost: ',num2str(    sum(~ismember(unique(segs_old.segs_label(:)),tmp_max(flagger))))] );  
 
 end
 

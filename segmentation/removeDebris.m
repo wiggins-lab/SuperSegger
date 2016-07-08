@@ -83,7 +83,8 @@ for ii = 1:num_reg
     
 end
 
-
+% temp until i figure out right normalization
+I_K= I_K * 100000;
 DI = I_p-I_m; % change in intensity of outer and inner outline.
 keeper = find(and(DI>INTENSITY_DIF,I_K>PEBBLE_CONST));
 mask_mod = ismember(label_bg, keeper);

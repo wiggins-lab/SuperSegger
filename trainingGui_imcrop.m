@@ -1,4 +1,4 @@
-function varargout = trainingGui(varargin)
+function varargout = trainingGui_imcrop(varargin)
 % modifyConstValuesGUI : gui to train for region and segment scores.
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 06-Jul-2016 12:38:17
+% Last Modified by GUIDE v2.5 08-Jul-2016 12:11:26
 
 % Begin initialization code - DO NOT EDIT
 
@@ -27,8 +27,8 @@ function varargout = trainingGui(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @trainingGui_OpeningFcn, ...
-    'gui_OutputFcn',  @trainingGui_OutputFcn, ...
+    'gui_OpeningFcn', @trainingGui_imcrop_OpeningFcn, ...
+    'gui_OutputFcn',  @trainingGui_imcrop_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -42,8 +42,8 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before trainingGui is made visible.
-function trainingGui_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before trainingGui_imcrop is made visible.
+function trainingGui_imcrop_OpeningFcn(hObject, eventdata, handles, varargin)
 global settings;
 
 handles.output = hObject;
@@ -82,7 +82,8 @@ settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
 settings.numRegsInfo = 21;
-settings.cropTime = 0;
+settings.InCropMode = 0;
+
 setWorkingDirectory(handles.directory.String, 1, 0);
 
 updateUI(handles);
@@ -91,7 +92,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = trainingGui_OutputFcn(hObject, eventdata, handles)
+function varargout = trainingGui_imcrop_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
@@ -202,18 +203,15 @@ settings.errorHandle = errordlg(message);
 
 function del_areas_Callback(hObject, eventdata, handles)
 global settings;
-if  hObject.Value
-    if settings.dataSegmented
-        settings.cropTime = 1;
-        settings.firstPosition = [];
-        updateUI(handles);
-        hObject.Value
-    else
-        warning(['Plese segment files first']);
-    end
+
+if settings.dataSegmented
+    settings.axisFlag = 3;
+    settings.firstPosition = [];
+    updateUI(handles);
 else
-    settings.cropTime = 0;
+    warning(['Plese segment files first']);
 end
+
 function del_reg_Callback(hObject, eventdata, handles)
 global settings
 if settings.dataSegmented
@@ -403,7 +401,10 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
-
+if settings.InCropMode
+    uiresume()
+    settings.InCropMode = 0;
+end
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -432,7 +433,24 @@ if settings.dataSegmented
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
-   
+    elseif settings.axisFlag == 3
+        % deleting areas in square
+        maskFigure()
+        cropRegion = [];
+        settings.InCropMode = 1;
+        [~,cropRegion] = imcrop(handles.viewport_train);
+        settings.InCropMode = 0;
+        settings.axisFlag == 5
+        if ~isempty(cropRegion)
+            cropRegion = floor( cropRegion );
+            corner1 = [cropRegion(1),cropRegion(2)];
+            corner2 = [cropRegion(1)+cropRegion(3),cropRegion(2)+cropRegion(4)];
+            addUndo();
+            settings.currentData = killRegionsGUI(settings.currentData, settings.CONST,corner1,corner2);
+            saveData();
+            updateUI(handles);
+        end
+
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -458,28 +476,11 @@ elseif settings.imagesLoaded
     imshow(settings.currentData, []);
 end
 
-
-if settings.cropTime
-    % deleting areas in square
-    %maskFigure()
-    %backer = ag(settings.currentData.phase);
-    %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-    
-    if numel(handles.viewport_train.Children) > 0
-        set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-    end
-    
-    if numel(settings.firstPosition) > 0
-        hold on;
-        plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
-    end
-end
-
 handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
 handles.mask_radio.Value = 0;
-if settings.axisFlag == 5 ||  settings.axisFlag == 6
+if settings.axisFlag == 5 || settings.axisFlag == 3 || settings.axisFlag == 6
     handles.mask_radio.Value = 1;
 elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
@@ -751,19 +752,7 @@ function imageButtonDownFcn(hObject, eventdata, handles)
 
 global settings;
 
-if settings.cropTime
-    if numel(settings.firstPosition) == 0
-        settings.firstPosition = eventdata.IntersectionPoint;
-    else
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
-        drawnow;
-        addUndo();
-        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
-        saveData();        
-        settings.firstPosition = [];
-    end
-
-elseif settings.axisFlag == 1 || settings.axisFlag == 2
+if settings.axisFlag == 1 || settings.axisFlag == 2
     FLAGS.im_flag = settings.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
@@ -775,8 +764,6 @@ elseif settings.axisFlag == 1 || settings.axisFlag == 2
     end
     saveData();
     
-
-
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       

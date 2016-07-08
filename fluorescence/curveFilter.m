@@ -45,16 +45,15 @@ end
 
 % Make filter 
 x = -floor(7*filterWidth):floor(7*filterWidth);
-%x = -10:10;
 [X,Y] = meshgrid( x, x);
 R2 = X.^2+Y.^2;
 
 v = filterWidth^2;
 
 gau = 1/(2*pi*v) * exp( -R2/(2*v) );
-f_xx = (2*pi*v^2)*((X/v).^2-1/v).*gau;
-f_yy = (2*pi*v^2)*((Y/v).^2-1/v).*gau;
-f_xy = (2*pi*v^2)*X.*Y.*gau/v^2;
+f_xx = ((X/v).^2-1/v).*gau;
+f_yy = ((Y/v).^2-1/v).*gau;
+f_xy =  X.*Y.*gau/v^2;
 
 % Do filtering
 im_xx = imfilter( im, f_xx, 'replicate' );

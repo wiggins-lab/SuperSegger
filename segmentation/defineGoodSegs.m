@@ -131,6 +131,9 @@ ymax = sim(1);
 num_info = CONST.superSeggerOpti.NUM_INFO;
 seg_info = nan(numSegs,num_info);
 
+
+% pixelFactor 
+
 % score is a binary include (1)/exclude (0) flag generated
 % by a vector multiplcation of A with seg_info.
 score    = zeros(numSegs,1);
