@@ -15,6 +15,18 @@ Setting the Path
 
 In order for Matlab to be able to find the different pieces of the code the SuperSegger folder needs to be in your path. In the Home tab, in the Environment section, click Set Path. The Set Path dialog box appears. Click add folder with subfolders and add the SuperSegger folder. 
 
+
+Software Requirements
+=====================
+
+In order to use SuperSegger you need to have the MATLAB software with the following toolboxes:
+Image Processing Toolbox
+Neural Network Toolbox
+Statistics and Machine Learning Toolbox
+Global Optimization Toolbox
+Parallel Computing Toolbox (not necessary)
+
+
 Main functions you may need
 ===========================
 
@@ -26,21 +38,20 @@ trainingGui : to train your own constants.
 Non - GUI :
 ProcessExp : set your parameters and run BatchSuperSeggerOpti. (You can use this instead of superSeggerGui)
 
-
 You can download a sample dataset and a bootcamp folder from our website to try the software.
 
 
 Segmentation Parameters
 =======================
 Some information about the parameters currently provided with the software :
-100XEc : Trained on E.coli, 100X camera resolution.
-100XPa : Trained on P.aeruginosa, 100X camera resolution.
-60XEcAB1157 : Trained on E.coli AB1157 on M9 pads, 60X camera resolution.
-60XEcM9 : Trained on E.coli on M9 pads, 60X camera resolution.
-60XEc : Trained on E.coli on LB and M9 pads, 60X camera resolution.
-60XEcLB : Trained on E.coli on LB pads, 60X camera resolution.
-60XBay : Trained on A.baylyi on LB pads, 60X camera resolution.
-60XPa : Trained on P.aeruginosa, 60X camera resolution.
+100XEc : Trained on E.coli, 60nm/pix .
+100XPa : Trained on P.aeruginosa, 60nm/pix.
+60XEcAB1157 : Trained on E.coli AB1157 on M9 pads, 100nm/pix.
+60XEcM9 : Trained on E.coli on M9 pads, 100nm/pix.
+60XEc : Trained on E.coli on LB and M9 pads, 100nm/pix.
+60XEcLB : Trained on E.coli on LB pads, 100nm/pix.
+60XBay : Trained on A.baylyi on LB pads, 100nm/pix.
+60XPa : Trained on P.aeruginosa, 100nm/pix.
 60XCaulob : Trained on snapshots of C.crescentus, 130 nm/pixel.
 
 
@@ -75,17 +86,6 @@ Collecting Images
 ==================
 
 SuperSegger is unable to correctly segment images where the cell outlines are not clear to the user by eye. Care should still be taken in collecting the best possible focused phase images. We recommend that users crop out-of-focus regions of the image before the segmentation process since these parts of the image are unlikely to yield usable data. superSeggerGui provides a function to crop your images.
-
-
-Software Requirements
-=====================
-
-In order to use SuperSegger you need to have the MATLAB software with the following toolboxes:
-Image Processing Toolbox
-Neural Network Toolbox
-Statistics and Machine Learning Toolbox
-Global Optimization Toolbox
-Parallel Computing Toolbox (not necessary)
 
 
 

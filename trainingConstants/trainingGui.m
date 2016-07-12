@@ -18,7 +18,7 @@ function varargout = trainingGui(varargin)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-% Last Modified by GUIDE v2.5 29-Jun-2016 13:07:03
+% Last Modified by GUIDE v2.5 06-Jul-2016 12:38:17
 
 % Begin initialization code - DO NOT EDIT
 
@@ -82,7 +82,6 @@ settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
 settings.numRegsInfo = 21;
-
 
 setWorkingDirectory(handles.directory.String, 1, 0);
 
@@ -401,6 +400,10 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
+if settings.InCropMode
+    uiresume()
+    settings.InCropMode = 0;
+end
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -420,7 +423,8 @@ if settings.dataSegmented
     if settings.axisFlag == 1 || settings.axisFlag == 2
         % 1 for segments view, 2 for phase view.
         FLAGS.im_flag = settings.axisFlag;
-        FLAGS.S_flag = 0;
+        FLAGS.S_flag = settings.handles.show_score.Value;
+        FLAGS.index_score = str2num(settings.handles.score_txt.String);
         FLAGS.t_flag = 0;
         
         showSegRuleGUI(settings.currentData, FLAGS, handles.viewport_train);
@@ -431,17 +435,17 @@ if settings.dataSegmented
     elseif settings.axisFlag == 3
         % deleting areas in square
         maskFigure()
-        [~,cropRegion] = imcrop(handles.viewport_train);
-        if ~isempty(cropRegion)
-            cropRegion = floor( cropRegion );
-            corner1 = [cropRegion(1),cropRegion(2)];
-            corner2 = [cropRegion(1)+cropRegion(3),cropRegion(2)+cropRegion(4)];
-            addUndo();
-            settings.currentData = killRegionsGUI(settings.currentData, settings.CONST,corner1,corner2);
-            saveData();
-            updateUI(handles);
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
-
+        
+        if numel(settings.firstPosition) > 0
+            hold on;
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+        end
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -607,7 +611,11 @@ end
 function addUndo()
 global settings
 
-settings.oldData = [settings.currentData, settings.oldData];
+try
+settings.oldData = [settings.currentData(1), settings.oldData(1)];
+catch
+settings.oldData = [settings.currentData(1)];
+end
 if numel(settings.oldData) > settings.maxData
     settings.oldData = settings.oldData(1:settings.maxData);
 end
@@ -679,7 +687,14 @@ end
 
 if exist(settings.loadDirectory, 'dir')
     settings.numFrames = numel(dir([settings.loadDirectory,'*seg.mat']));
-    settings.loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
+    
+    % get files with right names
+    loadFiles = dir([settings.loadDirectory,'*seg*.mat']);
+    filenames = {loadFiles.name}';
+    pass_names= regexp(filenames,'seg.mat|seg_\d+_mod.mat');
+    pass_flag = ~cellfun('isempty',pass_names);
+    loadFiles(~pass_flag) = [];
+    settings.loadFiles = loadFiles;
     
     if settings.numFrames > 0
         settings.dataSegmented = 1;
@@ -744,6 +759,18 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     end
     saveData();
     
+
+elseif settings.axisFlag == 3
+    if numel(settings.firstPosition) == 0
+        settings.firstPosition = eventdata.IntersectionPoint;
+    else
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
+        drawnow;
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
+        saveData();        
+        settings.firstPosition = [];
+    end
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       
@@ -1017,7 +1044,6 @@ end
 updateUI(handles);
 
 
-
 function crop_Callback(hObject, eventdata, handles)
 
 
@@ -1051,3 +1077,35 @@ function debug_ClickedCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global settings;
 keyboard;
+
+
+% --- Executes on button press in show_score.
+function show_score_Callback(hObject, eventdata, handles)
+% hObject    handle to show_score (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_score
+updateUI(handles);
+
+
+function score_txt_Callback(hObject, eventdata, handles)
+% hObject    handle to score_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of score_txt as text
+%        str2double(get(hObject,'String')) returns contents of score_txt as a double
+updateUI(handles);
+
+% --- Executes during object creation, after setting all properties.
+function score_txt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to score_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

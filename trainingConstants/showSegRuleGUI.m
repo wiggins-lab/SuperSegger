@@ -44,9 +44,16 @@ end
 
 S_flag = FLAGS.S_flag;
 
+if ~isfield( FLAGS, 'index_score' ) % labels for segments
+    FLAGS.index_score = [];
+end
+index_score = FLAGS.index_score;
+
 if ~isfield( FLAGS, 't_flag' ) % labels for segments
     FLAGS.t_flag = 1;
 end
+
+
 
 t_flag = FLAGS.t_flag;
 
@@ -134,24 +141,32 @@ if im_flag == 1
     if S_flag && (~t_flag)
         for ii = 1:num_segs
             r = props(ii).Centroid;
-            tmp_flag = double(round(data.segs.scoreRaw(ii)))-double(data.segs.score(ii));
+            
+            if isempty(index_score) || index_score(1) < 1 || index_score(1) > size(data.segs.info,2)
+                score_tmp =  data.segs.scoreRaw(ii);
+            else
+                score_tmp =  data.segs.info(ii,index_score);
+            end
+            
+            tmp_flag = ((score_tmp>0) == (data.segs.score(ii)));
+                       
+            
             if tmp_flag == 0
                 if ~Sj_flag
-                    text( r(1), r(2), num2str( data.segs.scoreRaw(ii), 2), 'Color', [0.5,0.5,0.5] );
+                    text( r(1), r(2), num2str( score_tmp, 2), 'Color', [0.5,0.5,0.5] );
                 end
             else
-                if data.segs.Include(ii)
-                    text( r(1), r(2), num2str( data.segs.scoreRaw(ii), 2), 'Color', 'w' );
+                if isfield (data.segs, 'Include') && data.segs.Include(ii)
+                    text( r(1), r(2), num2str( score_tmp, 2), 'Color', 'w' );
                 elseif ~Sj_flag
-                    text( r(1), r(2), num2str( data.segs.scoreRaw(ii), 2), 'Color', 'g' );
+                    text( r(1), r(2), num2str( score_tmp, 2), 'Color', 'g' );
                 end
             end
         end
     end
     
     if t_flag
-        for ii = 1:num_segs
-            
+        for ii = 1:num_segs            
             r = props(ii).Centroid;
             text( r(1), r(2), num2str( ii ), 'Color', 'w' );
         end
@@ -189,13 +204,21 @@ elseif im_flag == 2 % region view
         for ii = 1:num_regs
             r = data.regs.props(ii).Centroid;
             flagger = 1;
+            
             if isfield (data.regs,'score')
-                flagger =  logical(data.regs.score(ii)) == round(data.regs.scoreRaw(ii));
-            end
-            if flagger
-                text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', 'w' );
-            elseif ~Sj_flag
-                text( r(1), r(2), num2str( data.regs.scoreRaw(ii), 2), 'Color', [0.5,0.5,0.5] );
+                if isempty(index_score) || index_score(1) < 1 || index_score(1) > size(data.regs.info,2)
+                    score_tmp =  data.regs.scoreRaw(ii);
+                else
+                    score_tmp =  data.regs.info(ii,index_score);
+                end
+
+                flagger = ((score_tmp>0) == (data.regs.score(ii)));
+
+                if flagger
+                    text( r(1), r(2), num2str( score_tmp, 2), 'Color', 'w' );
+                elseif ~Sj_flag
+                    text( r(1), r(2), num2str( score_tmp, 2), 'Color', [0.5,0.5,0.5] );
+                end
             end
         end
     end

@@ -177,7 +177,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 oneIsSmall = (cArea(sister1) < minAreaToMerge) || (cArea(sister2) < minAreaToMerge);
                 if goodAreaChange && ~ignoreError && (haveNoMatch || matchToTheSame || oneIsSmall)
                     
-               % wrong division merge cells
+                    % wrong division merge cells
                     if ~ignoreError
                         [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
                         modRegions = [modRegions;col(mapRC) ];
@@ -305,6 +305,7 @@ for regNum =  1 : data_c.regs.num_regs;
                 end
                 [data_c,reset_tmp] = merge2Regions (data_c, cellsToMerge, CONST);
                 modRegions = [modRegions;col(cellsToMerge)];
+                resetRegions = or(reset_tmp,resetRegions);
             end
         else
             
@@ -441,6 +442,7 @@ data_c.regs.revmap.r{mapCR} = keeper;
 data_c.regs.error.r(remove) = 1;
 
 idsOfModRegions = [col(remove);col(keeper)];
+
 if REMOVE_STRAY && ~isempty(data_f) && hasNoFwMapping(data_c,remove)
      data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
       ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' and was deleted.' num2str(keeper) , ' was.']);

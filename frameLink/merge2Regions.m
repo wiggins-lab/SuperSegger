@@ -28,15 +28,14 @@ function [data_c,resetRegions] = merge2Regions (data_c, list_merge, CONST)
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
 
-
-
-
+resetRegions = 0;
 masksum = 0*data_c.regs.regs_label;
 
 for i = 1 : numel(list_merge)
     mask1 = (data_c.regs.regs_label == list_merge(i));
     masksum = (masksum+mask1);
 end
+
 masksum_  = imdilate(masksum,strel('square',3));
 masksum__  = imerode(masksum_,strel('square',3));
 
@@ -49,8 +48,6 @@ if max(labels(:)) == 1
     data_c.segs.segs_bad(segsInMask) = 1;
     data_c.mask_cell = double((data_c.mask_cell + masksum__)>0);
     resetRegions = true;
-else
-    resetRegions = false;
 end
 
 

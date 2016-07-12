@@ -20,7 +20,7 @@ function [net,fun] = neuralNetTrain (X, Y, numCanidates)
 fun = @scoreNeuralNet;
 
 if ~exist('numCanidates','var') || isempty(numCanidates)
-    numCanidates = 3;
+    numCanidates = 1;
 end
 
 t = [(Y == 0),Y]';

@@ -1,14 +1,42 @@
 function [data] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
     mask_bg, A, CONST, calcScores)
-
-% defineGoodSegs is a sub function that uses intensity thresholds to
-% segregate the set of segments produced by the watershed algorithm
-% into "good" segments (segs_good) which lie along a real cellular
-% boundary, and "bad" segments, which lie along spurious boundaries
-% within single cells.
-% note that we assume (safely) that the watershed always over- rather
+% defineGoodSegs sets the segments to good, bad and 3n set by the watershed algorithm
+% "Good" segments (segs_good) are the ones that lie along a real cellular
+% boundary, "bad" segments, lie along spurious boundaries
+% within single cells. 3n_segs are the fixed segments.
+% Note that we assume (safely) that the watershed always over-rather
 % than under-segment the image. That is, the set of all real segments is
 % contained with the set of all segments produced by the watershed algorithm.
+%
+% INPUT :
+%   data : data segmentation frame file
+%   ws : watersehd image
+%   phaseNorm : normalized phase image
+%   C2phaseThresh : c2 (curvature) calculated image
+%   mask_bg : background mask
+%   A : scoring coefficients
+%   CONST : segmentation parameters
+%   caclScores : boolean to calculate scores
+% OUTPUT :
+%   data : updated data segmentation frame file.
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Paul Wiggins & Stella Stylianidou.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
