@@ -84,13 +84,17 @@ function [data,A]  = superSeggerOpti(phaseOrData, mask, disp_flag, CONST, adapt_
 
 % Load the constants from the package settings file
 
-MIN_BG_AREA     = CONST.superSeggerOpti.MIN_BG_AREA;
-MAGIC_RADIUS    = CONST.superSeggerOpti.MAGIC_RADIUS;
+
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
+MAGIC_RADIUS    = round(CONST.superSeggerOpti.MAGIC_RADIUS / pixelFactor);
+
 MAGIC_THRESHOLD = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 CUT_INT         = CONST.superSeggerOpti.CUT_INT;
-SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
-MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
+
+SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH / pixelFactor;
+MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH / pixelFactor;
 A               = CONST.superSeggerOpti.A;
+
 verbose = CONST.parallel.verbose;
 
 
@@ -147,7 +151,7 @@ else
     phaseNorm = phaseOrig;
 end
 
-pixelFactor = CONST.getLocusTracks.PixelSize / 0.100 ;
+
 
 % fix the range, set the max and min value of the phase image
 mult_max = 2.5;
@@ -159,22 +163,22 @@ phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
 
 % if the size of the meditatrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a probablem later.
-f = fspecial('gaussian', 11, SMOOTH_WIDTH * pixelFactor);
+f = fspecial('gaussian', round(7*SMOOTH_WIDTH), SMOOTH_WIDTH );
 phaseNormFilt = imfilter(phaseNorm, f,'replicate');
 
 
 % Minimum constrast filter to enhance inter-cellular image contrast
 [phaseNormFilt,imin,imax] = ag(phaseNormFilt);
-magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS* pixelFactor);
-
+magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
 phaseNormUnfilt = (double(phaseOrig)-imin)/(imax-imin);
 
 % C2phase is the Principal curvature 2 of the image without negative values
 % it also enhances subcellular contrast. We subtract the magic threshold
 % to remove the variation in intesnity within a cell region.
-[~,~,~,C2phase] = curveFilter (double(phaseNormFilt),1);
-C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
-
+[~,~,~,C2phase] = curveFilter (double(phaseNormFilt),1/pixelFactor);
+C2phase = C2phase / pixelFactor^2;
+C2phaseThresh = double(C2phase-MAGIC_THRESHOLD);
+C2phaseThresh (C2phaseThresh < 0 ) = 0;
 
 % creates initial background mask by globally thresholding the band-pass
 % filtered phase image. We determine the thresholds empirically.
@@ -182,20 +186,20 @@ C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
 % the smaller background regions between cells.
 if isempty(mask)
     % no background making mask
-    filt_3 = fspecial( 'gaussian',25, 15 );
-    filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    filt_3 = fspecial( 'gaussian', round(25 / pixelFactor), 15/ pixelFactor );
+    filt_4 = fspecial( 'gaussian', round(5/ pixelFactor), 1/2/ pixelFactor );
+    mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4, CONST, crop_box, pixelFactor);
     
-    %   [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
-    %    aK = abs(K);
-    %mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK );
+    [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3/pixelFactor );
+    aK = abs(K)/pixelFactor^4;
+    mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK, CONST, pixelFactor);
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
     mask_bg = logical((mask_colonies-mask_halos)>0);
     
     % removes micro-colonies with background level outline intensity - not dark enough
-    %mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST );
+    mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST, pixelFactor );
     
     
 else
@@ -217,7 +221,8 @@ if dataFlag
 else
     % watershed just the cell mask to identify segments
     phaseMask = uint8(agd(C2phaseThresh) + 255*(1-(mask_bg)));
-    ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
+    size_8 = 8 ;
+    ws = 1-(1-double(~watershed(phaseMask,size_8))).*mask_bg;
     
     
     if adapt_flag
@@ -230,7 +235,7 @@ else
         regs_label = bwlabel( wsc );
         props = regionprops( regs_label, 'BoundingBox','Orientation','MajorAxisLength','MinorAxisLength');
         L2 = [props.MinorAxisLength];
-        wide_regions = find(L2 > MAX_WIDTH);
+        wide_regions = find(L2 > MAX_WIDTH );
         
         for ii = wide_regions
             [xx,yy] = getBB( props(ii).BoundingBox );

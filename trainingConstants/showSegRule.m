@@ -32,7 +32,7 @@ function showSegRule( data, FLAGS, figNum,CONST )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 if (~exist('FLAGS','var') || isempty(FLAGS)) || ~isfield( FLAGS, 'im_flag' )
-    FLAGS.im_flag=2;
+    FLAGS.im_flag=1;
 end
 
 im_flag = FLAGS.im_flag;

@@ -1,4 +1,4 @@
-function [ mask_bg_mod ] = intRemoveFalseMicroCol( mask_bg, phase, CONST )
+function [ mask_bg_mod ] = intRemoveFalseMicroCol( mask_bg, phase, CONST, pixelFactor )
 % intRemoveFalseMicroCol : used to remove regions that are not cells.
 % It removes anything whose intnsity on the outline is above the background
 % intensity.
@@ -29,8 +29,12 @@ function [ mask_bg_mod ] = intRemoveFalseMicroCol( mask_bg, phase, CONST )
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 % inner outline of the mask
+
+size_1 = 1 / pixelFactor;
+size_2 = 2 / pixelFactor;
+
 mask_bg = logical( mask_bg );
-mask_er = bwmorph(  mask_bg, 'erode',1 ) - bwmorph(  mask_bg, 'erode',2 );
+mask_er = bwmorph(  mask_bg, 'erode', size_1 ) - bwmorph(  mask_bg, 'erode', size_2 );
 
 label_bg = bwlabel( mask_bg );
 mask_er = logical(mask_er);

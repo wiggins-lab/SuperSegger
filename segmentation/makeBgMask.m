@@ -1,11 +1,10 @@
-function mask = makeBgMask(phase, filt_3, filt_4, AREA, CONST, crop_box)
+function mask = makeBgMask(phase, filt_3, filt_4, CONST, crop_box, pixelFactor)
 % makeBgMask : makes a background mask for the phase image
 %
 % INPUT :
 %       phase : phase image
 %       filt_3 : first filter with bigger size and std
 %       filt_4 : second filter with smaller size and std
-%       AREA : the minimum area of cells/cell clumps
 %       CONST : segmentation constants
 %       crop_box : information about alignement of the image
 %
@@ -31,12 +30,18 @@ function mask = makeBgMask(phase, filt_3, filt_4, AREA, CONST, crop_box)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+
 crop_box = round( crop_box );
-crop_rad = CONST.superSeggerOpti.crop_rad;
+crop_rad = round(CONST.superSeggerOpti.crop_rad/ pixelFactor);
+
 THRESH1  = CONST.superSeggerOpti.THRESH1; % to remove background
 THRESH2  = CONST.superSeggerOpti.THRESH2; % to remove background between cells
-Amax     = CONST.superSeggerOpti.Amax;
+Amax     = CONST.superSeggerOpti.Amax / pixelFactor^2;
+MIN_BG_AREA = CONST.superSeggerOpti.MIN_BG_AREA; % the minimum area of cells/cell clumps
 
+disk_5 = round(5 / pixelFactor);
+disk_1 = round(1 / pixelFactor);
+disk_2 = round(2 / pixelFactor);
 % applies the two filters
 im_filt3 = imfilter(double(phase),filt_3,'replicate');
 im_filt4 = imfilter(double(phase),filt_4,'replicate');
@@ -46,25 +51,25 @@ nnn      = ag(tmp);
 
 % intensity thresholding to get the cell colonies
 % dilating and filling the areas below Amax
-maskth1    = imdilate(nnn>THRESH1,strel('disk',5));
+maskth1    = imdilate(nnn>THRESH1,strel('disk',disk_5));
 maskth1    = fill_max_area( maskth1, Amax );
 
 % dilated mask for values above low threshold
 % emphasizes the structure in cells and background
-maskth2     = imdilate(nnn>THRESH2,strel('disk',1));
+maskth2     = imdilate(nnn>THRESH2,strel('disk',disk_1));
 
 % Logical and of two masks where the two masks match
 mask     = and(maskth2,maskth1);
 
 % dilate, fills the max area, and erodes
-mask     = imdilate( mask, strel('disk',2));
+mask     = imdilate( mask, strel('disk',disk_2));
 mask     = fill_max_area( mask, Amax );
 mask     = imerode( mask, strel('disk',crop_rad));
 
 % remove from mask objects with area smaller than AREA
 cc       = bwconncomp(mask);
 stats    = regionprops(cc, 'Area');
-idx      = find([stats.Area] > AREA);
+idx      = find([stats.Area] > MIN_BG_AREA);
 mask     = ismember(labelmatrix(cc), idx);
 
 

@@ -1,4 +1,4 @@
-function seg_info = segInfoL2(segs_props, segs_props_tmp, regs_prop, regs_label,disk1)
+function seg_info = segInfoResize(segs_props, segs_props_tmp, regs_prop, regs_label,disk1, pixelFactor)
 % segInfoL2 : Calculates the properties of the segments used for segment scoring.
 %
 % INPUT :
@@ -30,30 +30,36 @@ function seg_info = segInfoL2(segs_props, segs_props_tmp, regs_prop, regs_label,
 
 
 nn = segs_props.Area;
-sim_ii = size(segs_props_tmp.phaseC2);
+seg_mask = segs_props_tmp.mask;
+seg_mask = imdilate(seg_mask,disk1);
+sim_ii = size(segs_props_tmp.phase);
 % mask_ii_out are the pixels around the segment so that a second d over
 % the segment can be computed.
+
 if nn>2
-    mask_ii_end  = (compConn(segs_props_tmp.mask,4)==1);
-    mask_ii_out  = xor(bwmorph( xor(segs_props_tmp.mask,mask_ii_end), 'dilate' ),segs_props_tmp.mask);
+    mask_ii_end  = (compConn(seg_mask,4)==1);
+    mask_tmp = xor(seg_mask,mask_ii_end);
+    mask_tmp_dil = bwmorph(mask_tmp,'dilate');
+    mask_ii_out  = xor(mask_tmp_dil,seg_mask);
 elseif nn == 1
-    mask_ii_out  = xor(bwmorph( segs_props_tmp.mask, 'dilate'),segs_props_tmp.mask);
+    mask_tmp_dil = bwmorph(seg_mask,'dilate');
+    mask_ii_out  = xor(mask_tmp_dil,seg_mask);
 else
-    mask_ii_out  = imdilate( segs_props_tmp.mask, disk1)-segs_props_tmp.mask;
+    mask_ii_out  = imdilate(seg_mask, disk1)-seg_mask;
     mask_ii_out  = and(mask_ii_out,(compConn(mask_ii_out,4)>0));
 end
 
 % seg_info(:,1) is the minimum phase intensity on the seg
-[seg_info(1),ind] = min(segs_props_tmp.phaseC2(:).*double(segs_props_tmp.mask(:))+1e6*double(~segs_props_tmp.mask(:)));
+[seg_info(1),ind] = min(segs_props_tmp.phase(:).*double(seg_mask(:))+1e6*double(~seg_mask(:)));
 
 % seg_info(:,2) is the mean phase intensity on the seg
-seg_info(2) = mean(segs_props_tmp.phaseC2(segs_props_tmp.mask));
+seg_info(2) = mean(segs_props_tmp.phase(seg_mask));
 
 % seg_info(:,3) is area of the seg
-seg_info(3) = nn;
+seg_info(3) = nn * pixelFactor;
 
 % seg_info(:,4) is the mean second d of the phase normal to the seg
-seg_info(4) = mean(segs_props_tmp.phaseC2(mask_ii_out)) - seg_info(2);
+seg_info(4) = mean(segs_props_tmp.phase(mask_ii_out)) - seg_info(2);
 
 % next we want to do some more calculation around the minimum phase
 % pixel. sub1 and sub2 are the indicies in the cropped image
@@ -70,17 +76,17 @@ min_pixel(sub1,sub2) = true;
 % outline the min pixel
 min_pixel_out = bwmorph( min_pixel, 'dilate');
 % and mask/anti-mask it
-ii_min_para   = and(min_pixel_out,segs_props_tmp.mask);
+ii_min_para   = and(min_pixel_out,seg_mask);
 ii_min_norm   = xor(min_pixel_out,ii_min_para);
 
 % seg_info(:,5) is the second d of the phase normal to the seg at the
 % min pixel
-seg_info(5) = mean(segs_props_tmp.phaseC2(ii_min_norm))-mean(segs_props_tmp.phaseC2(ii_min_para));
+seg_info(5) = mean(segs_props_tmp.phase(ii_min_norm))-mean(segs_props_tmp.phase(ii_min_para));
 
 % seg_info(:,6) is the second d of the phase parallel to the seg at the
 % min pixel
 tmp_mask = xor(ii_min_para,min_pixel);
-seg_info(6) = mean(segs_props_tmp.phaseC2(tmp_mask))-seg_info(1);
+seg_info(6) = mean(segs_props_tmp.phase(tmp_mask))-seg_info(1);
 
 if isnan(seg_info(6))
     disp([header,'NaN in seg_info!']);
@@ -90,32 +96,32 @@ end
 % have to determine what these regions are... ie the regs_label number
 % By construction, each seg touches two regions. Ind_reg is the vector
 % of the region indexes--after we eliminate '0'.
-uu = segs_props_tmp.regs_label(imdilate( segs_props_tmp.mask, disk1));
+uu = segs_props_tmp.regs_label(imdilate( seg_mask, disk1));
 ind_reg = unique(uu(logical(uu)));
 
 % seg_info(:,7) and seg_info(:,8) are the min and max area of the
 % neighboring regions
-seg_info(7)  = min( regs_prop(ind_reg(:)).Area);
-seg_info(8)  = max( regs_prop(ind_reg(:)).Area);
+seg_info(7)  = min([regs_prop(ind_reg(:)).Area]) * pixelFactor^2;
+seg_info(8)  = max([regs_prop(ind_reg(:)).Area]) * pixelFactor^2;
 
 % seg_info(:,9) and seg_info(:,10) are the min and max minor axis
 % length of the neighboring regions
-seg_info(9)  = min( regs_prop(ind_reg(:)).MinorAxisLength);
-seg_info(10) = max( regs_prop(ind_reg(:)).MinorAxisLength);
+seg_info(9)  = min([regs_prop(ind_reg(:)).MinorAxisLength]) * pixelFactor;
+seg_info(10) = max([regs_prop(ind_reg(:)).MinorAxisLength]) * pixelFactor;
 
 % seg_info(:,11) and seg_info(:,12) are the min and max major axis
 % length of the neighboring regions
-seg_info(11) = min( regs_prop(ind_reg(:)).MajorAxisLength);
-seg_info(12) = max( regs_prop(ind_reg(:)).MajorAxisLength);
+seg_info(11) = min([regs_prop(ind_reg(:)).MajorAxisLength]) * pixelFactor;
+seg_info(12) = max([regs_prop(ind_reg(:)).MajorAxisLength]) * pixelFactor;
 
 % seg_info(:,11), seg_info(:,12), and seg_info(:,13) are the min
 % and max major axis length of the segment itself, including the
 % square of the major axis length... which would allow a non-
 % linarity in the length cutoff. No evidence that this helps...
 % just added it because I could.
-seg_info(13) = segs_props.MinorAxisLength;
-seg_info(14) = segs_props.MajorAxisLength;
-seg_info(15) = segs_props.MajorAxisLength^2;
+seg_info(13) = segs_props.MinorAxisLength * pixelFactor;
+seg_info(14) = segs_props.MajorAxisLength * pixelFactor;
+seg_info(15) = segs_props.MajorAxisLength^2 * pixelFactor^2;
 
 
 % Next we want to do some calculation looking at the size of
@@ -152,11 +158,25 @@ end
 
 % seg_info(:,16) and seg_info(:,17) are the min and max Length of the
 % regions projected onto the major axis of the segment.
-seg_info(16) = max(L1); % max and min region length para to seg
-seg_info(17) = min(L1);
+seg_info(16) = max(L1) * pixelFactor; % max and min region length para to seg
+seg_info(17) = min(L1) * pixelFactor;
 % seg_info(:,16) and seg_info(:,17) are the min and max Length of the
 % regions projected onto the minor axis of the segment.
-seg_info(18) = max(L2); % max and min region length normal to seg
-seg_info(19) = min(L2);
+seg_info(18) = max(L2) * pixelFactor; % max and min region length normal to seg
+seg_info(19) = min(L2) * pixelFactor;
+
+
+% put in the curvatures
+Cmaj = e1(1).^2.*segs_props.f_xx + 2*e1(1).*e1(2).*segs_props.f_xy + e1(2).^2.*segs_props.f_yy;
+Cmin = e2(1).^2.*segs_props.f_xx + 2*e2(1).*e2(2).*segs_props.f_xy + e2(2).^2.*segs_props.f_yy;
+
+seg_info(20) = segs_props.G;
+seg_info(21) = segs_props.G_;
+
+seg_info(22) = Cmaj;
+seg_info(23) = Cmin;
+
+seg_info(24) = segs_props.C1;
+seg_info(25) = segs_props.C2;
 
 end

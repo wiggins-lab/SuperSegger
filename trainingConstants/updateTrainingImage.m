@@ -72,7 +72,7 @@ if ~isempty(x)
             % xx and yy are the segments coordinates
             [xx,yy] = getBB( data.segs.props(ii).BoundingBox );
 
-            if data.segs.score(ii) % score is 1
+            if isnan(data.segs.score(ii)) || data.segs.score(ii) % score is 1
                 data.segs.score(ii) = 0; % set to 0
                 data.segs.segs_good(yy,xx) ...
                     = double(~~(data.segs.segs_good(yy,xx)...

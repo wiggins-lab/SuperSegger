@@ -1,4 +1,4 @@
-function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
+function [ mask_mod ] = removeDebris( mask_bg, phase, aK, CONST, pixelFactor)
 % removeDebris : removes false positives from microcolony mask
 % It uses the brightness of the halos versus the darkness of the ecoli
 % and the curvature of the image  
@@ -31,9 +31,10 @@ function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
 
 
 INTENSITY_DIF = 0.2;
-PEBBLE_CONST = 5;
+PEBBLE_CONST = 1.9304e-05;
+
 debugFlag = false;
-pad = 6;
+pad = round(6 * 1/pixelFactor);
 
 ss = size( phase );
 label_bg = bwlabel( mask_bg );
@@ -45,7 +46,8 @@ I_K = nan( [1,num_reg] );
 I_p = nan( [1,num_reg] );
 I_m = nan( [1,num_reg] );
 
-
+size_2 = 2 / pixelFactor;
+size_1 = 1 / pixelFactor;
 for ii = 1:num_reg
     
     bb = props(ii).BoundingBox;
@@ -56,10 +58,10 @@ for ii = 1:num_reg
     phase_ii = phase(yy,xx);
     aK_ii = aK(yy,xx);
     
-    mask_p2 = bwmorph( mask_ii, 'dilate', 2 );
-    mask_p1 = bwmorph( mask_ii, 'dilate', 1 );
-    mask_m2 = bwmorph( mask_ii, 'erode', 2 );
-    mask_m1 = bwmorph( mask_ii, 'erode', 1 );
+    mask_p2 = bwmorph( mask_ii, 'dilate', size_2 );
+    mask_p1 = bwmorph( mask_ii, 'dilate', size_1 );
+    mask_m2 = bwmorph( mask_ii, 'erode', size_2 );
+    mask_m1 = bwmorph( mask_ii, 'erode', size_1 );
     
     
     inner_outline = mask_m1-mask_m2; 
@@ -84,7 +86,7 @@ for ii = 1:num_reg
 end
 
 % temp until i figure out right normalization
-I_K= I_K * 100000;
+
 DI = I_p-I_m; % change in intensity of outer and inner outline.
 keeper = find(and(DI>INTENSITY_DIF,I_K>PEBBLE_CONST));
 mask_mod = ismember(label_bg, keeper);
@@ -94,8 +96,8 @@ if debugFlag
     
     figure(8);
     clf;        
-    halo_keep = find( DI>.2 );
-    pebble_keep = find( I_K>5 );
+    halo_keep = find( DI>INTENSITY_DIF);
+    pebble_keep = find( I_K> PEBBLE_CONST);
     imshow( comp( phase, mask_bg, ismember( label_bg,halo_keep ), ismember( label_bg,pebble_keep) ) );
        
     for ii = 1:num_reg

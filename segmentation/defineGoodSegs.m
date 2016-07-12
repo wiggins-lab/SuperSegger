@@ -38,13 +38,13 @@ function [data] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 sim = size( phaseNorm );
+
 
 % Create labeled image of the segments
 %here we obtain the cell-background boundary, which we know is correct.
-disk1 = strel('disk',1);
+disk1 = strel('disk',round(1 /pixelFactor));
 outer_bound = xor(bwmorph(mask_bg,'dilate'),mask_bg);
 
 % label the connected regions in the mask with an id
@@ -68,7 +68,7 @@ segs_3n = double(((ws_cc > 2)+outer_bound)>0);
 segs    = ws-segs_3n.*ws;
 
 %turn on all the segs smaller than MIN_SEGS_SIZE
-MIN_SEGS_SIZE = 2;
+MIN_SEGS_SIZE = 2/pixelFactor;
 cc = bwconncomp( segs, 4 );
 segs_props = regionprops(cc, 'Area');
 logmask = [segs_props.Area] < MIN_SEGS_SIZE;
@@ -88,6 +88,15 @@ segs_props = regionprops(segs_label,  {'Area', 'BoundingBox','MinorAxisLength',.
     'MajorAxisLength', 'Orientation', 'Centroid' } );
 
 [~, ~, ~, ~, ~, G, C1, C2, f_xx, f_yy, f_xy] = curveFilter (double(phaseNorm),1.5);
+
+% resize by pixelFactor : 
+G =  G / pixelFactor^4;
+C1 = C1 / pixelFactor^2;
+C2 = C2 / pixelFactor^2;
+f_xx = f_xx/ pixelFactor^2;
+f_yy = f_yy/ pixelFactor^2;
+f_xy = f_xy/ pixelFactor^2;
+
 G_ = G;
 G_(G_>0) = 0;
 
@@ -143,8 +152,12 @@ scoreRaw = zeros(numSegs,1);
 % bad.
 for ii = 1:numSegs
     
+    if ii == 6
+        disp('hi')
+    end
     % Crop around each segment with two pixels of padding in x and y
-    [xx,yy] = getBBpad( segs_props(ii).BoundingBox, sim, 2 );
+    padbox = round(2 /pixelFactor);
+    [xx,yy] = getBBpad( segs_props(ii).BoundingBox, sim, padbox );
     
  
     % here we get the cropped segment mask and corresponding phase image
@@ -157,7 +170,7 @@ for ii = 1:numSegs
     segs_props_tmp.sim = sim;
     
     seg_info(ii,:) = CONST.seg.segScoreInfo( segs_props(ii),segs_props_tmp,...
-        regs_prop,regs_label,disk1);
+        regs_prop,regs_label,disk1,pixelFactor);
     
     if calcScores    
         % Calculate the score to determine if the seg will be included.

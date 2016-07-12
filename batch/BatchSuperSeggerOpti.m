@@ -113,7 +113,7 @@ if clean_flag && showWarnings
 end
 
 if startEnd(1) >1 
-    CONST.align.ALIGN_FLAG = 0;
+    CONST.imAlign.ALIGN_FLAG = 0;
 end
 
 % align frames
@@ -136,7 +136,7 @@ if exist( dirname_, 'dir' )
         end
         
         mkdir( [dirname_,filesep,'raw_im'] );
-        if CONST.align.ALIGN_FLAG
+        if CONST.imAlign.ALIGN_FLAG
             crop_box_array = trackOptiAlignPad( dirname_,...
                 CONST.parallel.parallel_pool_num, CONST);
             movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im

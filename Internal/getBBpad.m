@@ -26,7 +26,7 @@ function [xx,yy] = getBBpad( bb1,ss,pad )
 % 
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-
+pad = round(pad);
 ymin = ceil(bb1(2))-pad;
 xmin = ceil(bb1(1))-pad;
 ymax = ymin+floor(bb1(4))+2*pad-1;

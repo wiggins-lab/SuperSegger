@@ -1,4 +1,4 @@
-function seg_info = segsInfoCurv(segs_props, segs_props_tmp, regs_prop, regs_label,disk1)
+function seg_info = segsInfoCurv(segs_props, segs_props_tmp, regs_prop, regs_label,disk1,pixelSize)
 % segsInfoCurv : Calculates the properties of the segments used for segment scoring.
 % Uses the image curvature to calculate some of the properties.
 %
@@ -29,6 +29,7 @@ function seg_info = segsInfoCurv(segs_props, segs_props_tmp, regs_prop, regs_lab
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+pixelSize = [];
 
 nn = segs_props.Area;
 sim_ii = size(segs_props_tmp.phase);

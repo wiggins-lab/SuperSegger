@@ -77,7 +77,9 @@ settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 settings.constantModified = 0;
 settings.recalculateSegs = 1;
-settings.segsInfo = @segInfoCurv;
+%settings.segsInfo = @segInfoResizeNorm;
+%settings.segsInfo  = @segInfoResCurvNoD;
+settings.segsInfo  = @segInfoResizeCurv;
 settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
@@ -134,7 +136,7 @@ CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
-BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, start_end_steps);
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, start_end_steps, 1);
 mkdir([settings.loadDirectory(1:end-1),'_backup'])
 copyfile ([settings.loadDirectory,'*seg.mat'],[settings.loadDirectory(1:end-1),'_backup'],'f')
 settings.frameNumber = 1;

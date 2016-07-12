@@ -47,7 +47,6 @@ for i = 1 : numel(contents)
     if strcmp (xChoice,'segs')
         X = data.segs.info;
         [data.segs.scoreRaw] = scoreFunction (X,coefficients)';
-        data.regs.score = ones(data.regs.num_regs,1);
     else
          X = data.regs.info;
         [data.regs.scoreRaw] = scoreFunction (X,coefficients)';

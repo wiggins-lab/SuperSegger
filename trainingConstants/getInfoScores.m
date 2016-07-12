@@ -102,10 +102,6 @@ Y = Y(indices);
         elseif strcmp (xChoice,'segs')
 
             data = superSeggerOpti( data, [], 0, CONST );
-           % disp('hack');
-           %ss = size(data.segs.info,1);
-           %data.segs.info (1:ss,20:25)  = 0;
-            
 
             
         end

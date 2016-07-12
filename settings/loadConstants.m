@@ -76,7 +76,7 @@ CONST.imAlign.out = {CONST.imAlign.GFP, ...   % c1 channel name
 CONST.imAlign.AlignToFirst = false; % align all images to first image
 CONST.imAlign.AlignChannel = 1; % channel to use for alignment
 CONST.imAlign.medFilt = false; % use median filter during alignment
-CONST.align.ALIGN_FLAG = 1; % align images (boolean)
+CONST.imAlign.ALIGN_FLAG = 1; % align images (boolean)
 
 
 % region optimization parameters
@@ -115,14 +115,14 @@ CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 CONST.trackLoci.gate  = [];
 
 
-% pixelsize in um
-if all(ismember('100X',upper(res))) % 60 nm per pixel
-    CONST.getLocusTracks.PixelSize        = 6/100;
-elseif all(ismember('60X',upper(res))) % 100 nm per pixel
-    CONST.getLocusTracks.PixelSize        = 6/60;
-else
-    CONST.getLocusTracks.PixelSize        = [];
-end
+% % pixelsize in um
+% if all(ismember('100X',upper(res))) % 60 nm per pixel
+%     CONST.getLocusTracks.PixelSize        = 6/100;
+% elseif all(ismember('60X',upper(res))) % 100 nm per pixel
+%     CONST.getLocusTracks.PixelSize        = 6/60;
+% else
+%     CONST.getLocusTracks.PixelSize        = [];
+% end
 
 % getLocusTracks Constants
 CONST.getLocusTracks.FLUOR1_MIN_SCORE = 3; % only foci above this score are shown in the viewer
@@ -206,6 +206,16 @@ end
 % from the default and should be loaded from your constants file.
 
 % segmentation parameters
+
+% in um
+if isfield (ConstLoaded,'general')
+    CONST.general.trainedPixelSize = ConstLoaded.general.trainedPixelSize; 
+else
+  CONST.general.trainedPixelSize = 0.1; % 
+end
+
+CONST.general.dataPixelSize = CONST.general.trainedPixelSize;
+
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
 
