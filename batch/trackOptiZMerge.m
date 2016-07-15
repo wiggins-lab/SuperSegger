@@ -134,7 +134,7 @@ for nnxy = nxy
     disp( ['XY: ',num2str( nnxy ),' / ',num2str(numel(nxy))] );
     %loop through times
     
-    parfor jj = 1:numt
+    for jj = 1:numt
         
         intDoTimeStep(  nt(jj), data, nnxy )
         
@@ -192,23 +192,33 @@ end
 
 function Z2f = makeMergeMap( ims, data )
 
-tmp_max = nan;
+tmp_max = 0;
 
 curver = zeros( [data.ss,data.numz] );
+
+% this removes bright glass chunks from the field
+mask   = false( data.ss0 );
+
 for ii = 1:data.numz
     rad = 1;
     
-    tmp = medfilt2( ims(:,:,ii), [3,3] );
+    tmp = medfilt2( ims(:,:,ii), [3,3], 'symmetric' );
     
     tmp_mean = mean(tmp(:));
-   
+    
     
     tmp = ims(:,:,ii);
-    tmp(tmp<.3*tmp_mean) = 0.3*tmp_mean;
-    tmp(tmp>2.5*tmp_mean) = 2.5*tmp_mean;
-
-    tmp_max = max( [tmp(:)',tmp_max] );
-
+    
+    flagger = tmp<.3*tmp_mean;
+    %mask         = or( flagger,mask);
+    tmp(flagger) = 0.3*tmp_mean;
+    
+    flagger = tmp>2.5*tmp_mean;
+    mask         = or( flagger,mask);
+    tmp( flagger) = 2.5*tmp_mean;
+    
+    tmp_max = tmp_max+tmp_mean;
+    
     
     [~,~,~,~,~,~,~,tmp ] = curveFilter( tmp, rad );
     
@@ -218,6 +228,12 @@ for ii = 1:data.numz
     curver(:,:,ii)  = tmp;
 end
 
+mask_r = logical(imresize( double(mask), 1/data.mag ));
+mask_rbw = bwmorph( bwmorph( mask_r, 'erode',2),'dilate',4);
+
+int_min = imresize(min( ims, [], 3), 1/data.mag );
+
+tmp_max = tmp_max/data.numz;
 
 curver = curver/tmp_max;
 
@@ -245,14 +261,16 @@ Z_ = nansum(curver_mod.*data.Z3,3)./nansum(curver_mod,3);
 
 %% Model background Z position based on length gradient
 
+mask_min =  int_min<0.9*mean(int_min(:));
 
-mask   = (tmp>0.1);
-mask   = bwmorph( mask, 'dilate', 2 );
-mask   = bwmorph( mask, 'erode', 2 );
+mask   = and( (tmp>0.02), mask_min );
+
+mask   = bwmorph( mask, 'dilate', 1 );
+mask   = bwmorph( mask, 'erode', 1 );
 
 mask_e = bwmorph( mask, 'erode', 2 );
 mask_o = (mask-mask_e)>0;
-
+mask_o(mask_rbw) = false;
 
 N = sum(mask_o(:));
 
