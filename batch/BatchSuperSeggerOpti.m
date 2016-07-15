@@ -1,4 +1,4 @@
-function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG,showWarnings)
+function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,startEnd,showWarnings)
 % BatchSuperSeggerOpti : runs everything from start to finish,
 % including alignment, building the directory structure,
 %single image segmentation, error resolution, cell linking,
@@ -29,16 +29,16 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,SEGMENT_FLAG,ONLY_SEG
 %            : new segs if they don't yet exist.
 % res       : is a string that is passed to loadConstants(Mine).m to load
 %           : the right constants for processing.
-% SEGMENT_FLAG : to segment cells
-% ONLY_SEG : if true it does not run trackOpti (does only the segmentation)
 % showWarnings : Set to 0 to mute warnings
-%
+% startEnd : array of two values to indicate where to start and where to
+% stop the program. 1, alignment, 2, segmentation, 3, stripping, 4 linking,
+% 5, cell marker, 6 : fluor, 7 : foci, 8, cellA structrues, 9, clist, 10 cell files.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins & Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-%
+
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
@@ -72,16 +72,17 @@ if nargin < 4 || isempty( res )
 end
 
 
-if ~exist( 'SEGMENT_FLAG', 'var' ) || isempty( SEGMENT_FLAG )
-    SEGMENT_FLAG = 1;
-end
-
-if ~exist( 'ONLY_SEG', 'var' ) || isempty( ONLY_SEG )
-    ONLY_SEG = 0;
+if ~exist( 'startEnd', 'var' ) || isempty( startEnd )
+    startEnd = [1 20];
 end
 
 if ~exist( 'showWarnings', 'var' ) || isempty( showWarnings )
     showWarnings = 1;
+end
+
+
+if ~checkToolboxes
+    return;
 end
 
 %if you pass a res value, write over CONST values. If it isn't passed,
@@ -98,7 +99,7 @@ else
 end
 
 
-if clean_flag && SEGMENT_FLAG && showWarnings
+if clean_flag && showWarnings
     try
         disp ('Clean flag is set to true.')
         answer=input('Do you want to continue, Y/N [Y]:','s');
@@ -111,12 +112,16 @@ if clean_flag && SEGMENT_FLAG && showWarnings
     end
 end
 
+if startEnd(1) >1 
+    CONST.align.ALIGN_FLAG = 0;
+end
+
 % align frames
-if exist( dirname_, 'dir' )
+if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
             (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
             exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
-         disp('BatchSuperSeggerOpti : images already aligned');
+        disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
             tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
             crop_box_array = tmp.crop_box_array;
@@ -143,6 +148,7 @@ if exist( dirname_, 'dir' )
     else
         error('No images found');
     end
+    
 else
     error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );
 end
@@ -208,7 +214,7 @@ else
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-            CONST, SEGMENT_FLAG, crop_box_array{j}, ONLY_SEG)
+            CONST, startEnd, crop_box_array{j})
         
         if workers || ~CONST.parallel.show_status
             disp( ['BatchSuperSeggerOpti: No status bar. xy ',num2str(j), ...
@@ -238,7 +244,7 @@ end
 end
 
 function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
-    CONST, SEGMENT_FLAG, crop_box, ONLY_SEG)
+    CONST, startEnd, crop_box)
 % intProcessXY : the details of running the code in parallel.
 % Essentially for parallel processing to work, you have to hand each
 % processor all the information it needs to process the images.
@@ -298,13 +304,13 @@ end
 
 stamp_name = [dirname_xy,'seg',filesep,'.doSegFull'];
 
-if clean_flag && exist(stamp_name,'file')
-    delete(stamp_name)
+if clean_flag
+    cleanSuperSegger (dirname_xy, startEnd, skip)
 end
 
 
 % does the segmentations for all the frames in parallel
-if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
+if startEnd(1) <= 2 && startEnd(2) >=2 && ~exist( stamp_name, 'file' )
     parfor(i=1:num_t,workers) % through all frames
         %for i = 1:num_t
         
@@ -315,7 +321,7 @@ if SEGMENT_FLAG && ~exist( stamp_name, 'file' )
         end
         
         doSeg(i, nameInfo, nc, nz, nt, num_z, num_c, dirname_xy, ...
-            clean_flag, skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp);
+            skip, CONST, [header,'t',num2str(i),': '], crop_box_tmp);
         
         if ~CONST.parallel.show_status
             if verbose
@@ -337,10 +343,8 @@ if CONST.parallel.show_status
 end
 
 % trackOpti has all the rest of things : Linking, Cell files, Fluorescence calculation etc
-if ~ONLY_SEG
-    trackOpti(dirname_xy,skip,CONST, clean_flag, header);
-else
-    disp ('Only segmentation was set to true - Linking and cell files were not made');
+if startEnd(2) >2
+    trackOpti(dirname_xy,skip,CONST, header, startEnd);
 end
 end
 

@@ -13,6 +13,9 @@ function [M_, G_, C1_, C2_, M, G, C1, C2, im_xx, im_yy, im_xy] = curveFilter( im
 %       G : Gaussian curvature of the image
 %       C1 : Principal curvature 1 of the image
 %       C2 : Principal curvature 2 of the image
+%       im_xx :
+%       im_yy :
+%       im_xy :
 %
 % Copyright (C) 2016 Wiggins Lab 
 % Written by Connor Brennan & Paul Wiggins.

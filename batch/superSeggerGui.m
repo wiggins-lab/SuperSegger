@@ -59,6 +59,31 @@ varargout{1} = handles.output;
 
 function imageFolder_ClickedCallback(hObject, eventdata, handles)
 handles.directory.String = uigetdir;
+
+
+function help_ClickedCallback(hObject, eventdata, handles)
+msgbox('Examples for image conversion : ')
+
+function convert_names_help_Callback(hObject, eventdata, handles)
+
+Opt.Interpreter = 'tex';
+Opt.WindowStyle = 'normal';
+msgbox({'NAMING CONVERSION:',
+    '',
+    'Our naming convention is : \bf[name]t001xy1c1.tif\rm where t is the prefix for time, xy the prefix for position number and c the prefix for channel number.',
+    '',
+    'The convert script accepts the characters before and after the frame and position numbers, and the characters indicating the channels.',
+  '',
+    'For example if your naming convetion is \bf[name]-pos1-p-001.tif\rm, you can use for channel names : \bf-p-\rm, position prefix : \bfpos\rm, time suffix : \bf.tif\rm.',
+'If your naming convetion is \bf[name]{\_}00000000t{\_}BF.tif\rm and \bfname{\_}00000000t{\_}GFP.tif\rm, you can use for channel names : \bfBF,GFP\rm, time prefix : \bf{\_}\rm and time suffix : \bft{\_}\rm.'
+}, 'Title','none',Opt);
+
+
+function convert_names_help_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
 function directory_Callback(hObject, eventdata, handles)
 function directory_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))

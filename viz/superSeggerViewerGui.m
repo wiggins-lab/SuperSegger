@@ -185,9 +185,16 @@ if handles.num_xy~=0
         handles.clist = [];
     end
 else
+    
+    
     if numel(direct_contents_err) == 0 &&  numel(direct_contents_seg) == 0   % no images found abort.
         cla(handles.axes1)
-        handles.message.String = ['There are no xy dirs. Choose a different directory.'];
+        
+        if numel(dir([dirname, '*.tif'])) > 0
+            handles.message.String = ['Directory does not contain segmented data. Please use superSeggerGui to segment your data.'];
+        else
+            handles.message.String = ['There are no xy dirs. Choose a different directory.'];
+        end
         disable_all_panels(hObject,handles);
         
         return;
@@ -211,7 +218,7 @@ end
 
 if ~exist(dirSave, 'dir')
     try
-    mkdir(dirSave);
+        mkdir(dirSave);
     catch
     end
 else
@@ -337,12 +344,7 @@ else
         showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
         try
             save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
-            clist = handles.clist;
-            if ~isempty(clist)
-                save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
-            end
         catch
-            disp('Error saving.' );
         end
         
     end
@@ -450,7 +452,7 @@ initImage(hObject, handles);
 
 function image_directory_Callback(hObject, eventdata, handles)
 initImage(hObject, handles);
- 
+
 
 function image_directory_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -970,31 +972,31 @@ else
             settings.handles.include_ids.String = num2str(settings.id_list);
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
-            disp(['Area : ', num2str(data.CellA{ii}.coord.A)]);
-            disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
-            disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
-            disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
-            disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
-            disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
-            disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
-            disp(['Cell Old Pole Age : ', num2str(data.CellA{ii}.pole)]);
-            disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole)]);
-            
-            
-            if isfield(data.CellA{ii},'fl1')
-                disp('fluorescence 1 statistics: ')
-                disp( (data.CellA{ii}.fl1));
+            disp(['Area : ', num2str(data.regs.props(ii).Area)]);
+            if isfield(data,'CellA')
+                disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
+                disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
+                disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
+                disp(['Cell Length : ', num2str(data.CellA{ii}.cellLength(1))]);
+                disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
+                disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
+                disp(['Cell Old Pole Age : ', num2str( data.CellA{ii}.pole.op_age)]);
+                disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);
+                
+                if isfield(data.CellA{ii},'fl1')
+                    disp('fluorescence 1 statistics: ')
+                    disp( (data.CellA{ii}.fl1));
+                end
+                if isfield(data.CellA{ii},'fl2')
+                    disp('fluorescence 2 statistics : ')
+                    disp( (data.CellA{ii}.fl1));
+                end
             end
-            if isfield(data.CellA{ii},'fl2')
-                disp('fluorescence 2 statistics : ')
-                disp( (data.CellA{ii}.fl1));
-            end
-            
             % disp(data.CellA{ii});
             
-            updateImage(settings.hObject, settings.handles)
+            updateImage(settings.hObject, settings.handles);
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles)
+            cell_info_Callback(settings.hObject, settings.eventdata, settings.handles);
         end
     end
 end
@@ -1183,7 +1185,7 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
         handles = consensus_image(handles)
     elseif strcmp('Consensus Kymo',value)
         handles = consensus_kymo(handles);
-    end 
+    end
 end
 
 set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
@@ -1361,14 +1363,14 @@ if ~isempty(a) % did not press cancel
         skip = (endFr-startFr)/(numFrm-1);
     end
     
-     if isnan(numFrm) && ~isnan(skip)
+    if isnan(numFrm) && ~isnan(skip)
         skip = skip;
-     end
-     
-     if isnan(skip) && isnan(numFrm)
+    end
+    
+    if isnan(skip) && isnan(numFrm)
         skip = 1; % default value
     end
-
+    
 else
     startFr = [];
     endFr = [];
@@ -1431,14 +1433,15 @@ if ~isempty(handles.FLAGS)
     if ~isempty(startFr)
         mov.cdata = [];
         mov.colormap = [];
-        
+        counter = 1;
         for ii = round(startFr:skip: endFr)
             delete(get(handles.axes1, 'Children'))
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
                 handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
             showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
             drawnow;
-            mov(ii) = getframe;
+            mov(counter) = getframe;
+            counter = counter + 1;
             handles.message.String = ['Frame number: ', num2str(ii)];
         end
         choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
@@ -1500,4 +1503,19 @@ function cell_no_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in save_clist.
+function save_clist_Callback(hObject, eventdata, handles)
+% hObject    handle to save_clist (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+try
+    clist = handles.clist;
+    if ~isempty(clist)
+        save( [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+    end
+catch
+    disp('Error saving.' );
 end

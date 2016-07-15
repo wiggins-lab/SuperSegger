@@ -106,7 +106,7 @@ maxIterPerFrame = 3;
 curIter = 1;
 
 if CONST.parallel.show_status
-    h = waitbar( 0, 'Strip small cells.');
+    h = waitbar( 0, 'Linking.');
     cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
@@ -167,7 +167,7 @@ while time <= numIm
 
         % error resolution and id assignment
         if USE_NEW_ERROR_REZ
-            [data_c,data_r,cell_count,resetRegions] = errorRezNew (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
+            [data_c,data_r,cell_count,resetRegions] = errorRezFw (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
         else
             [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
         end
@@ -202,7 +202,7 @@ end
     function data = intDataLoader (dataName)
         % intDataLoader : loads the data files.
         % if first tries to load the fiele ending with filt2, if it doesn't find it
-        % it loads the dataName given, and if that is not found either it
+        % it loads the dataName given, and if that is notund either it
         % return empty.
         
         dataNameMod = [dataName(1:end-7),filt2];

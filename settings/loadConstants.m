@@ -34,8 +34,13 @@ function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+% gets the list of all possible constants in the settings folder
+[possibleConstants, list, filepath] = getConstantsList();
+
+CONST = [];
 if nargin < 1 || isempty( res )
-   disp ('No constant chosen');
+   disp ('No constant chosen. Possible constants are : ');
+   disp(list');
    return;
 end
 
@@ -47,13 +52,12 @@ if ~exist('dispText','var') || isempty( dispText )
     dispText = true;
 end
 
-% gets the list of all possible constants in the settings folder
-[possibleConstants, ~, filepath] = getConstantsList();
+
 
 % default values for numbers
 resFlag = [];
 if isa(res,'double' ) && res == 60
-    res = '60XEcM9';
+    res = '60XEc';
 elseif isa(res,'double' ) && res == 100
     res = '100XEc';
 end
@@ -95,10 +99,11 @@ CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.2; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
 CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
-CONST.trackOpti.SCORE_LIMIT_DAUGHTER = -30; % mother score for good division
-CONST.trackOpti.SCORE_LIMIT_MOTHER = -30; % daughter score for good division
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
+CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
+CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
+CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
 
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
@@ -110,11 +115,11 @@ CONST.trackLoci.fluorFlag = 1; % to calculate fluorescence statistics
 CONST.trackLoci.gate  = [];
 
 
-% pixelsize
-if all(ismember('100X',res))
-    CONST.getLocusTracks.PixelSize        = 6/60;
-elseif all(ismember('60X',res))
+% pixelsize in um
+if all(ismember('100X',upper(res))) % 60 nm per pixel
     CONST.getLocusTracks.PixelSize        = 6/100;
+elseif all(ismember('60X',upper(res))) % 100 nm per pixel
+    CONST.getLocusTracks.PixelSize        = 6/60;
 else
     CONST.getLocusTracks.PixelSize        = [];
 end
@@ -185,7 +190,10 @@ elseif exist(res, 'file')
     ConstLoaded = load(res);
     CONST.ResFlag = res;
 else
-    errordlg('loadConstants: Constants not loaded : no match found. Aborting.');
+    errordlg('loadConstants: Constants not loaded : no match found. Aborting. ');
+    disp(['Possible constants']);
+    disp(list');
+    CONST = [];
     return;
 end
 
@@ -200,6 +208,8 @@ end
 % segmentation parameters
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
+
+CONST.superSeggerOpti.dIcellNonCell = 0.2;
 
 % objects with less area than this are removed from the mask
 CONST.superSeggerOpti.MIN_BG_AREA = ConstLoaded.superSeggerOpti.MIN_BG_AREA;
@@ -238,8 +248,14 @@ CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
-% minimum area a cell region can have, otherwise it is discarded.
-CONST.trackOpti.MIN_AREA= ConstLoaded.trackOpti.MIN_AREA;
+if isfield(ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
+CONST.trackOpti.SMALL_AREA_MERGE = ConstLoaded.trackOpti.SMALL_AREA_MERGE; % in the linking phase, this regions with this area are merged with the ones next to them.
+CONST.trackOpti.MIN_AREA_NO_NEIGH = ConstLoaded.trackOpti.MIN_AREA_NO_NEIGH; % regions with area below this and no neighbors are discarded;
+end
+
+if isfield(ConstLoaded.trackOpti,'MIN_AREA')
+CONST.trackOpti.MIN_AREA = ConstLoaded.trackOpti.MIN_AREA;  % minimum area a cell region can have, otherwise it is discarded.
+end
 
 %% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG
