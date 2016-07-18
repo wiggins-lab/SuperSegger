@@ -1,4 +1,4 @@
-function out = gate(varargin)
+function out = gateTool(varargin)
 %GATETOOL : used to gate the list of cells.
 % This is done according to an already made gate field in clist
 %
@@ -123,7 +123,7 @@ data = intProcessInput( varargin );
 
 %% make a new gate if required
 if data.merge_flag
-    data.clist = intDoMerge( data.clist );
+    data.clist = intDoMerge( data.clist, [], ~data.time_flag );
 end
 
 
@@ -171,6 +171,7 @@ varargin = varargin{1};
 nargin   = numel( varargin );
 
 data.make_flag      = false;
+
 data.strip_flag     = false;
 data.log_flag       = false([1,3]);
 data.merge_flag     = false;
@@ -184,6 +185,7 @@ data.inv_flag       = false;
 data.get_flag       = false;
 data.get3d_flag     = false;
 data.stat_flag      = false;
+data.skip3D         = false;
 
 data.trace_flag     = false;
 
@@ -265,6 +267,9 @@ else
                     data.log_flag( [1,2] ) = true;
                     counter = counter-1;
                 end
+            case 'skip3d'
+                data.skip3D_flag = true;
+                
             case 'clear'
 
                 counter = counter + 1;                
@@ -500,6 +505,23 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
+            case {'make3d','gate3d'}
+                
+                counter  = counter + 1;
+                next_arg = varargin{counter};
+                
+                data.time_flag = true;
+                
+                if isnumeric( next_arg )
+                    data.make_flag = true;
+                    data.ind = next_arg;
+                    
+                elseif isstruct( next_arg )
+                    data = intMakeGate( data, next_arg );
+                else
+                    error( 'gate must be numeric ind list or struct' );
+                end
+                
             case 'time'
                 
                 data.time_flag = true;
@@ -646,13 +668,20 @@ if isstruct(arg_)
     if iscell( data.clist )
         data.clist = intDoAll( data.clist, 'make', arg_ );
     else
-        if isfield( data.clist, 'gate' ) && ~isempty( data.clist.gate )
-            data.clist.gate = intMergeStruct(data.clist.gate,arg_);
+        if ~data.time_flag
+            if isfield( data.clist, 'gate' ) && ~isempty( data.clist.gate )
+                data.clist.gate = intMergeStruct(data.clist.gate,arg_);
+            else
+                data.clist.gate = arg_;
+            end
         else
-            data.clist.gate = arg_;
+            if isfield( data.clist, 'gate3D' ) && ~isempty( data.clist.gate3D )
+                data.clist.gate3D = intMergeStruct(data.clist.gate3D,arg_);
+            else
+                data.clist.gate3D = arg_;
+            end
         end
-    end
-    
+    end 
 elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     intShow( data );
     hold on;
@@ -679,6 +708,16 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
         tmp_gate.ind  = data.ind;
         tmp_gate.xx   = [];
         
+        % print the gate info to the command window.
+        if data.time_flag
+            def = intGetDef3D( data.clist );
+            disp( ['Gate selected for ', def{data.ind}] );
+        else
+            def = intGetDef( data.clist );
+            disp( ['Gate selected for ', def{data.ind}] );
+        end
+        
+        disp(tmp_gate.x);
         
         hold on;
         plot( gxx(1)+[0,0], ylim_, 'r--' );
@@ -728,15 +767,34 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
         tmp_gate.ind = data.ind;
         tmp_gate.xx  = xx;
         tmp_gate.x   = [];
+        
+        % print the gate info to the command window.
+        if data.time_flag
+            def = intGetDef3D( data.clist );
+            disp( ['Gate selected for ', def{data.ind(1)},', ',def{data.ind(2)}] );
+        else
+            def = intGetDef( data.clist );
+            disp( ['Gate selected for ', def{data.ind(1)},', ',def{data.ind(2)}] );
+        end
+        disp( tmp_gate.xx );
+        
     else
         error( 'Too many ind to gate. Must be either 1 or 2.' );
     end
    
     % copy the gate in
-    data.clist = gateTool( data.clist, 'make', tmp_gate );
+    if ~data.time_flag
+        data.clist = gateTool( data.clist, 'make', tmp_gate );
+        % Show the gate
+        figure
+        gateTool( data.clist, 'show', data.ind);  
+    else 
+        data.clist = gateTool( data.clist, 'make3D', tmp_gate );
+        % Show the gate
+        figure
+        gateTool( data.clist, 'show', data.ind, 'time' );
+    end
     
-    % Show the gate
-    gateTool( data.clist, 'show', data.ind, 'color', 'r' );  
     
 else
     error( 'Make gate in must be gate structure of indices' );
@@ -844,15 +902,19 @@ if ~data0.noclear_flag
 end
 
 data = data0;
-data.clist = gateTool( data.clist, 'strip' );
 
+if data.time_flag
+    data.clist = gateTool( data.clist, 'strip', 'time' );
+else
+    data.clist = gateTool( data.clist, 'strip', 'skip3d' );
+end
 
 
 %% make bins
 
 if data0.hist_flag || (numel( data0.ind )==1) || data0.kde_flag
     data1 = data;
-    data1.clist = intDoMerge( data1.clist );
+    data1.clist = intDoMerge( data1.clist, [], ~data.time_flag );
     
     data.bin = intMakeBins( data1.clist, data1, data.mult );
 end
@@ -930,19 +992,21 @@ else
 end
 
 if data.trace_flag
-    xlabel( 'Time (Frames)' );
-    ylabel(  labs{1} );
+    xlabel( 'Time (Frames)', 'Interpreter','none' );
+    
+    
+    ylabel(  labs{1}, 'Interpreter','none' );
 else
     if numel( data.ind )
-        xlabel( labs{1}  );
+        xlabel( labs{1}, 'Interpreter','none'  );
     end
     
     if numel( data.ind ) == 2
-        ylabel(  labs{2} );
+        ylabel(  labs{2} , 'Interpreter','none');
     elseif data.den_flag
-        ylabel( 'Density' );
+        ylabel( 'Density', 'Interpreter','none' );
     else
-        ylabel( 'Number' );
+        ylabel( 'Number' , 'Interpreter','none');
     end
 end
 
@@ -967,7 +1031,11 @@ if iscell(clist)
         error( 'At least one dimension of the clist cell array should be unitary' );
     else
         if nr > 1
-            clist = gateTool( clist, 'merge' );
+            if data.time_flag
+                clist = gateTool( clist, 'merge', 'time' );
+            else
+                clist = gateTool( clist, 'merge', 'skip3d' );
+            end
             data = intIntShow( clist, data );
         else
             for ii = 1:nc
@@ -996,8 +1064,8 @@ switch numel( data.ind )
     case 1 % 1D
         if data.kde_flag
             [data,h] = intShowKDE1D( clist, data );
-        elseif data.time_flag
-            [data,h] = intTime( clist, data );
+        %elseif data.time_flag
+        %    [data,h] = intTime( clist, data );
         else
             [data,h] = intShowHist1D( clist, data );
         end
@@ -1019,6 +1087,14 @@ else
     name = ['data ', num2str(numel( data.h )) ];
 end
 
+nc = size( clist.data, 1 );
+
+if data.time_flag
+    name = [name,' (',num2str( data.n, '%1.2g' ),' points)'];
+else
+    name = [name,' (',num2str( nc ),' cells)'];
+end
+    
 data.legend = {data.legend{:},name};
 
 end
@@ -1036,9 +1112,10 @@ if data.log_flag(1)
 end
 flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
 x1 = x1( flagger );
+data.n = sum( flagger(:) );
 
 
-[y,x] = hist( clist.data(:,data.ind), bin );
+[y,x] = hist( x1, bin );
 
 if data.den_flag
     dx = diff(x);
@@ -1072,6 +1149,9 @@ if data.log_flag(1)
 end
 flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
 x1 = x1( flagger );
+data.n = sum( flagger(:) );
+
+
 
 [y,x] = hist( x1, bin );
 
@@ -1106,6 +1186,9 @@ end
 
 
 if numel(data.ind) == 1
+    
+    x1 = intGetData( clist, data, data.ind(1) );
+    
     if data.bin_flag || ~isempty( data.bin )
         if iscell( data.bin )
             bin = data.bin{1};
@@ -1113,7 +1196,11 @@ if numel(data.ind) == 1
             bin = data.bin;
         end
     else
-        ss = size( clist.data, 1 );
+        
+        ss = sum(~isnan(x1(:)));
+        
+        %ss = size( clist.data, 1) ;
+
         bin = round(sqrt(ss));
     end
     
@@ -1121,7 +1208,7 @@ if numel(data.ind) == 1
         
         num_bin = bin;
         
-        x1 = intGetData( clist, data, data.ind(1) );
+        
         if data.log_flag(1)
             x1 = log(x1);
         end
@@ -1133,7 +1220,7 @@ if numel(data.ind) == 1
         
         dx = max_x1-min_x1;
         
-        bin = bin*mult;
+        num_bin = num_bin*mult;
         bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
         dx_vec(1) = dx/((num_bin-1));
         
@@ -1142,6 +1229,9 @@ if numel(data.ind) == 1
         dx_vec(1) = bin(2)-bin(1);
     end
 else
+    
+    x1 = intGetData( clist, data, data.ind(1) );
+    
     if data.bin_flag || ~isempty( data.bin )
         if iscell( data.bin )
             bin = data.bin;
@@ -1149,7 +1239,9 @@ else
             bin = {data.bin(1),data.bin(2)};
         end
     else
-        ss = size( clist.data, 1 );
+        %ss = numel( x1 );
+        ss = size( clist.data, 1) ;
+        
         bin = round(sqrt(ss));
         bin = {bin, bin};
     end
@@ -1158,7 +1250,7 @@ else
         
         num_bin = bin{1};
         
-        x1 = intGetData( clist, data, data.ind(1) );
+        
 
         if data.log_flag(1)
             x1 = log(x1);
@@ -1221,6 +1313,12 @@ end
 if data.log_flag(2)
     x2 = log( x2 );
 end
+
+
+flagger = logical(~isinf(x1)+~isinf(x2));
+data.n = sum( flagger(:) );
+
+
 
 [y,xx] = hist3( [x2,x1], bin );
 
@@ -1290,9 +1388,10 @@ if data.log_flag(2)
 end
 
 flagger = logical(~isinf(x1)+~isinf(x2));
+data.n = sum( flagger(:) );
+
 
 [y,xx] = hist3( [x2(flagger),x1(flagger)], bin );
-
 
 
 if data.cond_flag
@@ -1371,7 +1470,7 @@ function yf = intConv2D( y, data, dx )
 dx = dx(2:-1:1);
 
 if isempty( data.rk )
-    rk = [data.mult,data.mult];
+    rk = 2*[data.mult,data.mult];
 else
     rk = data.rk./dx;
 end
@@ -1413,7 +1512,7 @@ end
 function yf = intConv1D( y, data, dx )
 
 if isempty( data.rk )
-    rk = data.mult;
+    rk = 2*data.mult;
 else
     rk = data.rk./dx;
 end
@@ -1433,7 +1532,9 @@ end
 %%
 function [data,h] = intShowDot( clist, data )
 
+    hold on;
 
+    
 if ~data.time_flag
     x1 = intGetData( clist, data, data.ind(1) );
     x2 = intGetData( clist, data, data.ind(2) );
@@ -1447,7 +1548,6 @@ else
     x1 = squeeze(clist.data3D(:,data.ind(1),:));
     x2 = squeeze(clist.data3D(:,data.ind(2),:));
     
-    hold on;
     
     if isfield( clist, 'color' )
         cc = clist.color;
@@ -1558,7 +1658,11 @@ end
 
 
 %%
-function clistM = intDoMerge( clist, ID_ind )
+function clistM = intDoMerge( clist, ID_ind, skip3D )
+
+if ~exist( 'skip3D', 'var' )
+    skip3D = false;
+end
 
 if ~exist( 'ID_ind', 'var' )
     def = intGetDef( clist );
@@ -1577,7 +1681,7 @@ else
     
     for ii = 1:nc
         if iscell( clist{ii} )
-            clist_ = intDoMerge( clist{ii} );
+            clist_ = intDoMerge( clist{ii}, [], skip3D );
         else
             clist_ = clist{ii};
         end
@@ -1599,11 +1703,12 @@ else
             
             %clist 3D
             
-            if isfield( clist_, 'data3D' )
+            if isfield( clist_, 'data3D' ) && ~skip3D
                 clist_.data3D(:,1,:) = clist_.data3D(:,1,:) +maxID;
                 
-                clistM.data3D = [clistM.data3D;...
-                    clist_.data3D];
+                ss = size(clistM.data3D);
+                               clistM.data3D = [clistM.data3D;...
+                    clist_.data3D(:,1:ss(2),:)];
             end
         end
     end
@@ -1696,45 +1801,81 @@ end
 
 function clist = intLoadClist( dirname )
 
+drill_flag = true;
+
 clist = {};
 dirname = fixDir( dirname );
+
+
 
 if ~exist( dirname, 'dir' )
     error( ['Directory ', dirname, 'does not exist.' ] );
 else
-    contentsD = dir(  [dirname, 'xy*'] );
-    
-    nc = numel( contentsD );
-    
-    if nc == 0
-        
-        filename = [dirname,'clist.mat'];
-        if exist( filename, 'file' );
-            clist = load( filename );
-            clist.filename = [fixDir(pwd),filename];
-        else
-            error([ 'Can''t find file ', filename] );
-        end
-        
+    if drill_flag
+        clist = intRecLoad( {}, dirname, 0 );
     else
+        contentsD = dir(  [dirname, 'xy*'] );
         
-        counter = 0;
-        for ii = 1:nc
-           dirname_xy = fixDir( [dirname,contentsD(ii).name] );
-           
-           filename = [dirname_xy,'clist.mat' ];
-           
-           if exist( filename, 'file' )
-               counter = counter+1;
-               tmp = load( filename );
-               tmp.filename = [fixDir(pwd),filename];
-               
-               clist{counter} = tmp;
-           end
+        nc = numel( contentsD );
+        
+        if nc == 0
+            
+            filename = [dirname,'clist.mat'];
+            if exist( filename, 'file' );
+                clist = load( filename );
+                clist.filename = [fixDir(pwd),filename];
+            else
+                error([ 'Can''t find file ', filename] );
+            end
+            
+        else
+            
+            counter = 0;
+            for ii = 1:nc
+                dirname_xy = fixDir( [dirname,contentsD(ii).name] );
+                
+                filename = [dirname_xy,'clist.mat' ];
+                
+                if exist( filename, 'file' )
+                    counter = counter+1;
+                    tmp = load( filename );
+                    tmp.filename = [fixDir(pwd),filename];
+                    
+                    clist{counter} = tmp;
+                end
+            end
         end
     end
 end
 end
+
+
+function [clist,count] = intRecLoad( clist, dirname, count )
+
+dirname = fixDir( dirname );
+
+contents = dir( dirname );
+
+nc = numel( contents );
+
+for ii = 1:nc
+    
+    if contents( ii).isdir && contents(ii).name(1) ~= '.'
+        dirname_ii = [dirname,contents(ii).name];
+        %disp( ['Checking directory ',dirname_ii] );
+        [clist,count] = intRecLoad( clist, dirname_ii, count );
+    elseif strcmp( contents(ii).name, 'clist.mat' )
+        count = count+1;
+        name = [dirname,'clist.mat'];
+        disp( ['Loading ',name] );
+        clist{1,count} = load( name );
+        
+    end
+end
+
+
+end
+
 
 %%
 function clistS = intSqueeze( varargin )
@@ -1803,7 +1944,7 @@ end
 end
 
 %%
-function output = intGet3D( clist, g3d_ind );
+function output = intGet3D( clist, g3d_ind )
 
 output = [];
 if iscell( clist )
@@ -1824,10 +1965,38 @@ function x = intGetData( clist, data, ind )
 if data.time_flag
     x = clist.data3D(:,ind,:);
     x = x(:);
+    
+    x = intApplyGate3d( x, clist );
 else
     x = clist.data(:,ind);
 end
 end
+
+function x = intApplyGate3d( x, clist )
+
+ss     = size(clist.data3D);
+inflag = true(ss(1)*ss(3),1);
+
+if isfield( clist, 'gate3D' ) && ~isempty ('gate3D.clist')
+    for ii = 1:numel(clist.gate3D)
+        if numel(clist.gate3D(ii).ind) == 2
+            
+            tmp1 = clist.data3D(:,clist.gate3D(ii).ind(1),:);
+            tmp2 = clist.data3D(:,clist.gate3D(ii).ind(2),:);
+            
+            inflag = and(inflag, inpolygon( tmp1(:), tmp2(:), ...
+                clist.gate3D(ii).xx(:,1), clist.gate3D(ii).xx(:,2) ));
+        else
+            tmp = clist.data3D(:,clist.gate3D(ii).ind,:);
+            inflag = and( inflag, and( tmp(:) > min(clist.gate3D(ii).x), tmp(:) < max(clist.gate3D(ii).x)));
+        end
+    end
+end
+
+x = x(inflag);
+
+end
+
 %%
 function clist = intDoAddT( clist )
 
@@ -1840,7 +2009,7 @@ if iscell( clist )
 elseif isstruct( clist )
     ss = size( clist.data3D );
     
-    len  = ~isnan(squeeze(gateTool( clist, 'get3D', 2 )));
+    len  = reshape( ~isnan(squeeze(gateTool( clist, 'get3D', 2 ))),[ss(1),ss(3)]);
     age = cumsum( len, 2 );
     age(~len) = nan;
     
