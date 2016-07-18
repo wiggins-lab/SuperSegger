@@ -1,29 +1,5 @@
-function out = gate(varargin)
-%GATETOOL : used to gate the list of cells.
-% This is done according to an already made gate field in clist
-%
-% INPUT :
-%   clist : table of cells and variables with gate field
-% OUTPUT :
-%   clist0 : table of cells that passed the gate
-%
-% Copyright (C) 2016 Wiggins Lab
-% Written by Paul Wiggins.
-% University of Washington, 2016
-% This file is part of SuperSegger.
-%
-% SuperSegger is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-%
-% SuperSegger is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-%
-% You should have received a copy of the GNU General Public License
-% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+function out = gateTool(varargin)
+%GATETOOL : used for a variety of clist/gating functions. 
 %
 %SYNTAX: 
 %clist_out = GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
@@ -33,7 +9,7 @@ function out = gate(varargin)
 %
 %  If there are no arguments specified, the 'strip' command is run
 %
-%Clist modification commands:
+% Clist modification commands:
 %
 % 'merge'      : Merge all clist input into a single output clist (no
 %                arguments accepted)
@@ -116,6 +92,25 @@ function out = gate(varargin)
 %
 % 'def3D'       : Show all the temporal channel definitions at the command
 %                 line
+%
+% Copyright (C) 2016 Wiggins Lab
+% Written by Paul Wiggins.
+% University of Washington, 2016
+% This file is part of SuperSegger.
+%
+% SuperSegger is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% SuperSegger is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+%
 
 %% process the input arguments
 data = intProcessInput( varargin );
@@ -632,6 +627,7 @@ else
         clist0.data3D = clist.data3D(inflag,:,:);
     end
     
+    clist0.gate = [];
     data.clist = clist0;
 end
 end
@@ -932,6 +928,9 @@ end
 if data.trace_flag
     xlabel( 'Time (Frames)' );
     ylabel(  labs{1} );
+elseif data.time_flag
+    xlabel( 'Time (Frames)' );
+    ylabel(  labs{1} );
 else
     if numel( data.ind )
         xlabel( labs{1}  );
@@ -1030,6 +1029,11 @@ function [data,h] = intShowHist1D( clist, data )
 
 bin = intMakeBins( clist, data );
 
+% if isnan(bin)
+%       ss = size( clist.data, 1 );
+%       bin = round(sqrt(ss));
+% end
+
 x1 = intGetData( clist, data, data.ind(1) );
 if data.log_flag(1)
     x1 = log(x1);
@@ -1106,7 +1110,7 @@ end
 
 
 if numel(data.ind) == 1
-    if data.bin_flag || ~isempty( data.bin )
+    if data.bin_flag || (~isempty( data.bin ) && all(~isnan(data.bin)))
         if iscell( data.bin )
             bin = data.bin{1};
         else
