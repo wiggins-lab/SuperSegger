@@ -1189,11 +1189,11 @@ end
 
 
 if numel(data.ind) == 1
-    if data.bin_flag || ~isempty( data.bin )
-
+    
     x1 = intGetData( clist, data, data.ind(1) );
-
-    if iscell( data.bin )
+    
+    if data.bin_flag || ~isempty( data.bin )
+        if iscell( data.bin )
             bin = data.bin{1};
         else
             bin = data.bin;
