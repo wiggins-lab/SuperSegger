@@ -38,7 +38,9 @@ function out = gateTool(varargin)
 %
 % 'add3d' data, name : add a field (name) to the clist data with values
 %                 (data)
-%
+% 'xls' filename  : saves the clist.data file as filename.xls
+%  'stats' index :  statistics, mean and standard deviation of gated cells for given index.
+%                   and total number of cells, and number of gated cells.
 %
 %Visualization commands:
 %
@@ -150,6 +152,14 @@ elseif data.get3d_flag
     out = intGet3D( data.clist, data.g3d_ind );
 end
 
+
+if data.xls_flag
+    clist_tmp = data.clist;
+    clist_tmp = gateTool( clist_tmp, 'merge' );        
+    clist_tmp = gateTool( clist_tmp );
+    xlswrite(data.filename,  clist_tmp.data);
+end
+
 if data.stat_flag
     out_num = intGetCellNum( data.clist );
     disp( ['Gated cellls: ',num2str(out_num(1))] );
@@ -194,6 +204,7 @@ data.skip3D         = false;
 
 data.trace_flag     = false;
 
+data.xls_flag       = false;
 data.name_flag      = false;
 data.den_flag       = false;
 data.noclear_flag   = false;
@@ -274,7 +285,21 @@ else
                 end
             case 'skip3d'
                 data.skip3D_flag = true;
+            case 'xls'
+                data.xls_flag = true;
+                  
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Please provide a filename' )
+                end
                 
+                next_arg = varargin{counter};
+                if isnumeric( next_arg )
+                    error( 'Please provide a non numeric filename' )
+                else
+                    data.filename = next_arg;
+                end
+                  
             case 'clear'
 
                 counter = counter + 1;                
