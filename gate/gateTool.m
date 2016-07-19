@@ -151,10 +151,19 @@ elseif data.get3d_flag
 end
 
 if data.stat_flag
-    out = intGetCellNum( data.clist );
-    disp( ['Gated cellls: ',num2str(out(1))] );
-    disp( ['Total cells:  ',num2str(out(2))] );
-    disp( [num2str(100*out(1)/out(2)),' %'] );
+    out_num = intGetCellNum( data.clist );
+    disp( ['Gated cellls: ',num2str(out_num(1))] );
+    disp( ['Total cells:  ',num2str(out_num(2))] );
+    disp( [num2str(100*out_num(1)/out_num(2)),' %'] );
+    if ~isempty(data.ind)
+        clist_tmp = data.clist;
+        clist_tmp = gateTool( clist_tmp, 'merge' );        
+        clist_tmp = gateTool( clist_tmp );
+        mean_ind = nanmean(clist_tmp.data(:,data.ind));
+        std_ind = nanstd(clist_tmp.data(:,data.ind));
+        disp( ['Mean of index: ',num2str(data.ind) , ' : ' , num2str(mean_ind)] );
+        disp( ['Std of index: ',num2str(data.ind) , ' : ' , num2str(std_ind)] );      
+    end
 end
 
 
@@ -540,6 +549,13 @@ else
                 
             case 'stat'
                 data.stat_flag = true;
+                
+                counter  = counter + 1;                
+                if (counter <= nargin) && isnumeric( varargin{counter} )
+                    data.ind =  varargin{counter};
+                else
+                    counter  = counter - 1;
+                end
                 
              case 'dothist'
                 
