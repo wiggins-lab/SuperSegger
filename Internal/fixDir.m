@@ -21,16 +21,18 @@ function dirname = fixDir( dirname )
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-if strcmp(dirname,'.')
-    dirname = pwd;
-end
-
-if dirname(end) ~= filesep
-    dirname = [dirname,filesep];
+if ~isempty( dirname )
+    if strcmp(dirname,'.')
+        dirname = pwd;
+    end
+    
+    if dirname(end) ~= filesep
+        dirname = [dirname,filesep];
+    end
 end
 
 end

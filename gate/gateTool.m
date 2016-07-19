@@ -1,4 +1,4 @@
-function out = gateTool(varargin)
+function [clist, out] = gateTool(varargin)
 %GATETOOL : used to gate the list of cells.
 % This is done according to an already made gate field in clist
 %
@@ -62,6 +62,9 @@ function out = gateTool(varargin)
 % 'add3d' data, name : add a field (name) to the clist data with values
 %                 (data)
 %
+% 'get', index  : gets data from data column index  
+%%
+% 'getgate', index : gets the indexed gate.
 %
 %Visualization commands:
 %
@@ -108,14 +111,27 @@ function out = gateTool(varargin)
 %                 numbers for the two dimensions. If it is a cell array, it
 %                 is assumed to be two vectors of centers.
 %
+% 'e', rel_er   : set bin size to get approximate relative error rel_er 
 %
+% 'err'         : show error in 1D histograms and kde's
 %
+% 'stat'        : show statistics for a show command. Only one index.
 %Other commands:
 %
 % 'def'         : Show all the channel definitions at the command line
 %
 % 'def3D'       : Show all the temporal channel definitions at the command
 %                 line
+%
+% 'xls', filename : export an excel doc with the clist data. Need to have
+%                   excel installed to export. (Not my fault.)
+%
+% 'csv', filename : export a csv doc with the clist data.
+%
+% 'save', filename : Save .mat file.
+%
+% 'units', units : set the multiplier for the data to set the desired units
+%
 
 %% process the input arguments
 data = intProcessInput( varargin );
@@ -145,21 +161,49 @@ if data.strip_flag
 end
 
 
-%% make the output
-out = data.clist;
-
-if data.get_flag
-    out = intGet( data.clist, data.g_ind );
-elseif data.get3d_flag
-    out = intGet3D( data.clist, data.g3d_ind );
+%% Do export
+if data.export_flag
+    intcsv( data.clist, data );
 end
 
-if data.stat_flag
+%% make the output
+
+if data.get_flag
+    if data.time_flag
+        out = squeeze(intGet3D( data.clist, data.g_ind ));
+    else
+        out = intGet( data.clist, data.g_ind );
+    end
+elseif data.stat_flag
     out = intGetCellNum( data.clist );
     disp( ['Gated cellls: ',num2str(out(1))] );
     disp( ['Total cells:  ',num2str(out(2))] );
     disp( [num2str(100*out(1)/out(2)),' %'] );
+elseif data.get_gate_flag
+    
+    if ~data.time_flag
+        if data.which_gate <= numel( data.clist.gate )
+            out = data.clist.gate(data.which_gate);
+        else
+            error( ['There are only ', num2str( numel( data.clist.gate ) ), ' gates.'] );
+        end
+    else
+        if ~isfield( data.clist, 'gate3D' )
+            error( 'There is not gate3D field.' );
+        else
+            if data.which_gate <= numel( data.clist.gate3D )
+                out = data.clist.gate3D(data.which_gate);
+            else
+                error( ['There are only ', num2str( numel( data.clist.gate3D ) ), ' gates.'] );
+            end
+        end
+        
+    end
 end
+
+
+clist = data.clist;
+
 
 
 end
@@ -183,12 +227,15 @@ data.dot_flag       = false;
 data.dothist_flag   = false;
 data.inv_flag       = false;
 data.get_flag       = false;
-data.get3d_flag     = false;
 data.stat_flag      = false;
-data.skip3D         = false;
+data.skip3D_flag         = false;
+data.export_flag    = false;
+
+data.error_flag     = false;
 
 data.trace_flag     = false;
 
+data.get_gate_flag = false;
 data.name_flag      = false;
 data.den_flag       = false;
 data.noclear_flag   = false;
@@ -207,12 +254,17 @@ data.color      = [];
 data.rk         = [];
 data.rm         = [];
 data.g_ind      = [];
-data.g3d_ind    = [];
+
+data.units = [1,1];
+
+data.err        = 0.05; % Target error fraction for histograms
 
 
 data.cond_flag  = false;
 
-data.mult = 20;
+data.mult = 1;
+
+load_flag = false;
 
 if nargin == 0
     error( 'gate must have at least one argument (a clist)' );
@@ -221,6 +273,7 @@ else
         
     if ischar( next_arg )
         next_arg = intLoadClist( next_arg );
+        load_flag = true;
     end
     
     if (~iscell( next_arg )) && (~isstruct( next_arg ))
@@ -236,7 +289,7 @@ else
     counter = 1;
     
     % set the strip if no arguments are specified
-    if  nargin == 1
+    if  nargin == 1 && ~load_flag
         data.strip_flag = true;
     end
     
@@ -250,7 +303,8 @@ else
             error( 'is not a command string' );
         end
         
-        switch lower(next_arg)
+        switcher = lower(next_arg);
+        switch switcher
             case 'log' % set the lag flag for log display
                 
                 counter = counter + 1;
@@ -270,6 +324,45 @@ else
             case 'skip3d'
                 data.skip3D_flag = true;
                 
+            case 'err'
+                data.error_flag = true;
+                
+            case 'e'
+                
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for target error.' )
+                end
+                next_arg = varargin{counter};
+                
+                if isnumeric( next_arg )
+                    data.err = next_arg; 
+                else
+                    error( 'Estimated error must be a double.' );
+                end
+                
+            case 'getgate'
+                
+                
+                counter = counter + 1;                
+                if counter > nargin
+                    error( 'Need to specify which clist.' );
+                end
+                
+                next_arg = varargin{counter};
+                if isnumeric( next_arg ) % if numeic set the ind's to log
+                    data.which_gate = next_arg;
+                     
+                     if numel(data.clist) ~= 1 || ~isstruct(data.clist)
+                        error('Get gate only works with a single clist');
+                     end
+                         
+                     data.get_gate_flag = true;
+                else
+                     error( 'getGate needs a numeric argument .' );
+                end
+                        
+                
             case 'clear'
 
                 counter = counter + 1;                
@@ -287,7 +380,71 @@ else
                 end
                 
                 data.clist = intClear( data.clist, cind );
+
+            case {'xls','csv'}
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for xls/csv. Must provide filename.' )
+                end
+                next_arg = varargin{counter};
+                if ~ischar( next_arg )
+                    error( 'You must include a filename.' );
+                end
+                data.export_filename = next_arg;
+                
+                data.export_index = [];
+                
+                counter = counter + 1;
+                if counter > nargin || ischar( varargin{counter} )
+                    counter = counter - 1;
+                else
+                    data.export_index = varargin{counter};
+                end
+                
+                switch switcher
+                    case 'xls'
+                        data.which_export_flag = 2;
+                    case 'csv'
+                        data.which_export_flag = 1;
+                end
+                        
+                data.export_flag = true;
+                
+            case 'save'
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for save. Must provide filename.' )
+                end
+                next_arg = varargin{counter};
+                if ~ischar( next_arg )
+                    error( 'You must include a filename.' );
+                end
+                filename = next_arg;
+                
+                clist = data.clist;
+                
+                if isstruct( data.clist )
+                    save( filename,'-struct','clist' );
+                else
+                    save( filename,'-v7.3','clist' );
+                end
+        
+           
+                
             
+            case 'units'
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for units. Must provide a scalar or vector.' )
+                end
+                next_arg = varargin{counter};
+                if ~isnumeric( next_arg )
+                    error( 'units must be scalar or vector.' );
+                else
+                    data.units =  next_arg;   
+                end
+                
+                
             case 'add'
                 
                 if numel( data.clist ) ~= 1
@@ -392,22 +549,7 @@ else
                 end
                 
                 data.g_ind = next_arg;
-                
-            case 'get3d'
-                data.get3d_flag = true;
-                
-                counter = counter + 1;
-                if counter > nargin
-                    error( 'Not enough arguments for get' )
-                end
-                next_arg = varargin{counter};
-                if ~isnumeric( next_arg )
-                    error( 'indices must be numeric' );
-                end
-                
-                data.g3d_ind = next_arg;
-                
-            case 'clear'
+    
                 
             case 'def'
                 disp( intGetDef( data.clist )' );
@@ -421,6 +563,8 @@ else
                 data.noclear_flag = true;
             case 'kde'
                 data.kde_flag = true; 
+                
+                data.mult = 20;
             case 'rk' % kernal radius
                 counter = counter + 1;
                 next_arg = varargin{counter};
@@ -493,12 +637,37 @@ else
                 
             case {'make','gate'}
                 counter  = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for add' )
+                end
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg )
-                    data.make_flag = true;
+                    
                     data.ind = next_arg;
                     
+                    counter  = counter + 1;
+                    if ~(counter > nargin)
+                        next_arg = varargin{counter};
+                        if isnumeric( next_arg )
+                            
+                            tmp_gate.ind = data.ind;
+                            
+                            if numel( data.ind ) == 1
+                                tmp_gate.x =  next_arg;
+                            elseif  numel( data.ind ) == 2
+                                tmp_gate.xx =  next_arg;
+                            end
+                            
+                            data = intMakeGate( data, tmp_gate );
+                            
+                        else
+                            data.make_flag = true;
+                            counter  = counter - 1;
+                        end
+                    else
+                        data.make_flag = true;
+                    end
                 elseif isstruct( next_arg )
                     data = intMakeGate( data, next_arg );
                 else
@@ -522,7 +691,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case 'time'
+            case {'time','3d' }
                 
                 data.time_flag = true;
                 
@@ -649,13 +818,20 @@ else
     
     
     clist0.data = clist.data(inflag,:);
-    if isfield(clist,'data3D') && isfield(clist,'def3d')
+    if isfield(clist,'data3D') && isfield(clist,'def3d') && ~data.skip3D_flag
         clist0.def3d = clist.def3d;
         clist0.data3D = clist.data3D(inflag,:,:);
     end
     
     data.clist = clist0;
+    
+    if numel(clist0.data) == 0
+       disp( 'Warning: At least one clist is empty after gating.' ); 
+    end
 end
+
+
+
 end
 
 
@@ -815,9 +991,13 @@ if iscell( clist )
         [clist{ii},fignum] =  intShowAll( clist{ii}, fignum );
     end
 elseif isstruct( clist )
-    
-    ng = numel( clist.gate );
-    
+
+    if isfield( clist, 'gate' )
+        ng = numel( clist.gate );
+    else
+        ng = 0;
+    end
+        
     clist0 = clist;
     
     for ii = 1:ng
@@ -842,11 +1022,11 @@ end
 
 %%
 function [out] = intGetCellNum( clist )
-clist = gateTool( clist, 'merge' );
+clist = gateTool( clist, 'merge', 'skip3d' );
 
 num = size( clist.data, 1 );
 
-clist = gateTool( clist );
+clist = gateTool( clist, 'strip', 'skip3d' );
 
 numG = size( clist.data, 1 );
 
@@ -963,7 +1143,9 @@ if (numel( data.ind ) == 2) && ...
 
         N = size(cc,1);
         c = (N*min_caxis-max_caxis)/(N-1);
-        caxis( [c,max_caxis] );   
+        if ~isnan( max_caxis )
+            caxis( [c,max_caxis] );
+        end
     end
     
     
@@ -1074,8 +1256,10 @@ switch numel( data.ind )
             [data,h] = intShowHist2D( clist, data );
         elseif data.dot_flag
             [data,h] = intShowDot( clist, data );
-        else
+        elseif data.kde_flag
             [data,h] = intShowKDE2D( clist, data );
+        else %default
+            [data,h] = intShowDot( clist, data );
         end
 end
 
@@ -1106,21 +1290,25 @@ function [data,h] = intShowHist1D( clist, data )
 
 bin = intMakeBins( clist, data );
 
-x1 = intGetData( clist, data, data.ind(1) );
+x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 if data.log_flag(1)
     x1 = log(x1);
 end
 flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
 x1 = x1( flagger );
 data.n = sum( flagger(:) );
-
+n   = data.n;
 
 [y,x] = hist( x1, bin );
+dy    = intDoError(y); 
 
 if data.den_flag
     dx = diff(x);
     dx = ([dx(1),dx]+[dx,dx(end)])/2;
-    y = y./dx/sum(y(:));
+    
+    normer = 1./(dx*sum(y(:)));
+    y = y*normer;
+    dy = dy*normer;
 end
 
 if isfield( clist, 'color' )
@@ -1128,6 +1316,13 @@ if isfield( clist, 'color' )
     h = plot( x,y, '.-', 'color', cc );
 else
     h = plot( x,y, '.-' );
+    cc = h.Color;
+end
+
+if data.error_flag
+    hold on;
+    plot( x,intFixError(y-dy), ':', 'color', cc );
+    plot( x,intFixError(y+dy), ':', 'color', cc );
 end
 
 
@@ -1135,32 +1330,99 @@ if ~data.bin_flag
     data.bin = x;
 end
 
+if data.stat_flag
+    intDoStatAn( x1, x, y, n, data, cc);
 end
 
+end
+
+
+
+function intDoStatAn( x1, x, y, n, data, cc)
+
+   hold on;
+   x1_mean = mean( x1 );
+   x1_std  = std(  x1 );
+   x1_max  = max(  x1 );
+   x1_min  = min(  x1 );
+   x1_p1   = x1_mean+x1_std;
+   x1_p1m  = x1_mean+x1_std/sqrt(n);
+   x1_m1   = x1_mean-x1_std;
+   x1_m1m  = x1_mean-x1_std/sqrt(n);
+   
+   y1_mean = interp1( x,y, x1_mean );
+   y1_p1   = interp1( x,y, x1_p1 );
+   y1_p1m  = interp1( x,y, x1_p1m );
+   y1_m1   = interp1( x,y, x1_m1 );
+   y1_m1m  = interp1( x,y, x1_m1m );
+   y1_max  = interp1( x,y, x1_max ,'linear','extrap');
+   y1_min  = interp1( x,y, x1_min,'linear','extrap' );
+   
+   styl = '%1.3e';
+   
+   if data.log_flag(2)
+       del = [1e-1,1];
+   else
+       del = [0,1];
+   end
+   
+   plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
+   text( x1_mean, y1_mean/2, [' mean: ',num2str( x1_mean, styl )], 'color', cc );
+   
+   plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
+   text( x1_p1, y1_p1*.75, [' std: ',num2str( x1_std, styl )], 'color', cc );
+   plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
+   text( x1_p1, y1_p1*.75, [' std: ',num2str( x1_std, styl )], 'color', cc );
+   plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+   plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+   plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
+   plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
+   
+   text( x1_p1m, y1_p1m*.25, [' error: ',num2str( x1_std/sqrt(n), styl )], 'color', cc );
+   text( x1_max, y1_max, [' max: ',num2str( x1_std/sqrt(n), styl )], 'color', cc,...
+       'VerticalAlignment', 'baseline');
+   text( x1_min, y1_min, [' min: ',num2str( x1_std/sqrt(n), styl )], 'color', cc,...
+       'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
+end
+
+
+function dy = intDoError( y )
+
+dy = sqrt( y );
+dy(dy<1) = 1;
+
+end
+
+function y = intFixError( y )
+
+y(y<0) = 0;
+
+end
 
 %%
 function [data,h] = intShowKDE1D( clist, data )
 
 [bin,dx] = intMakeBins( clist, data );
 
-x1 = intGetData( clist, data, data.ind(1) );
+x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 if data.log_flag(1)
     x1 = log(x1);
 end
 flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
 x1 = x1( flagger );
 data.n = sum( flagger(:) );
-
+n = data.n;
 
 
 [y,x] = hist( x1, bin );
 
 yf = intConv1D( y, data, dx );
-
-yf = yf/dx;
+dyf =  intDoError( yf );
 
 if data.den_flag
-    yf = yf/sum(y(:));
+    normer = 1./( sum(y(:))*dx );
+    yf = yf*normer;
+    dyf = dyf*normer;
 end
 
 if isfield( clist, 'color' )
@@ -1168,6 +1430,13 @@ if isfield( clist, 'color' )
     h = plot( x,yf, '-', 'color', cc );
 else
     h = plot( x,yf, '-' );
+    cc = h.Color;
+end
+
+if data.error_flag
+    hold on;
+    plot( x,intFixError(yf-dyf), ':', 'color', cc );
+    plot( x,intFixError(yf+dyf), ':', 'color', cc );
 end
 
 
@@ -1175,10 +1444,18 @@ if ~data.bin_flag
     data.bin = x;
 end
 
+
+if data.stat_flag
+    intDoStatAn( x1, x, yf, n, data, cc);
+end
+
+
 end
 
 %%
 function [bin,dx_vec] = intMakeBins( clist, data, mult )
+
+min_bin_num = 5;
 
 if ~exist( 'mult', 'var' )
     mult = 1;
@@ -1187,7 +1464,7 @@ end
 
 if numel(data.ind) == 1
     
-    x1 = intGetData( clist, data, data.ind(1) );
+    x1 = intGetData( clist, data, data.ind(1), data.units(1) );
     
     if data.bin_flag || ~isempty( data.bin )
         if iscell( data.bin )
@@ -1201,7 +1478,11 @@ if numel(data.ind) == 1
         
         %ss = size( clist.data, 1) ;
 
-        bin = round(sqrt(ss));
+        %bin = round(sqrt(ss));
+        
+        bin = round(data.err^2*ss);
+        
+        bin = max( [min_bin_num, bin] ); 
     end
     
     if numel( bin ) == 1
@@ -1220,6 +1501,12 @@ if numel(data.ind) == 1
         
         dx = max_x1-min_x1;
         
+     if isempty( dx)
+            dx = 1;
+            max_x1 = 1;
+            min_x1 = 0;
+        end
+        
         num_bin = num_bin*mult;
         bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
         dx_vec(1) = dx/((num_bin-1));
@@ -1230,7 +1517,7 @@ if numel(data.ind) == 1
     end
 else
     
-    x1 = intGetData( clist, data, data.ind(1) );
+    x1 = intGetData( clist, data, data.ind(1), data.units(1) );
     
     if data.bin_flag || ~isempty( data.bin )
         if iscell( data.bin )
@@ -1240,9 +1527,13 @@ else
         end
     else
         %ss = numel( x1 );
-        ss = size( clist.data, 1) ;
+        %ss = size( clist.data, 1) ;
+        ss = sum(~isnan(x1(:)));
         
-        bin = round(sqrt(ss));
+        bin = round(data.err*sqrt(ss));
+        bin = max( [min_bin_num, bin] );
+        
+        
         bin = {bin, bin};
     end
     
@@ -1251,7 +1542,7 @@ else
         num_bin = bin{1};
         
         
-
+        
         if data.log_flag(1)
             x1 = log(x1);
         end
@@ -1263,13 +1554,19 @@ else
         
         dx = max_x1-min_x1;
         
+        if isempty( dx)
+            dx = 1;
+            max_x1 = 1;
+            min_x1 = 0;
+        end
+        
         num_bin = mult*num_bin;
         x1bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
         dx_vec(1) = dx/((num_bin-1));
         
         num_bin = bin{2};
         
-        x2 = intGetData( clist, data, data.ind(2) );
+        x2 = intGetData( clist, data, data.ind(2), data.units(2) );
 
         if data.log_flag(2)
             x2 = log(x2);
@@ -1282,6 +1579,12 @@ else
         min_x2 = min( x2);
         
         dx = max_x2-min_x2;
+        
+        if isempty( dx)
+            dx = 1;
+            max_x2 = 1;
+            min_x2 = 0;
+        end
         
         num_bin = mult*num_bin;
         x2bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x2;
@@ -1303,8 +1606,8 @@ function [data,h] = intShowHist2D( clist, data )
 
 bin = intMakeBins( clist, data, data.mult );
 
-x1 = intGetData( clist, data, data.ind(1) );
-x2 = intGetData( clist, data, data.ind(2) );
+x1 = intGetData( clist, data, data.ind(1), data.units(1) );
+x2 = intGetData( clist, data, data.ind(2), data.units(2) );
 
 if data.log_flag(1)
    x1 = log(x1); 
@@ -1376,8 +1679,8 @@ function [data,h] = intShowKDE2D( clist, data )
 
 [bin,dx] = intMakeBins( clist, data, data.mult );
 
-x1 = intGetData( clist, data, data.ind(1) );
-x2 = intGetData( clist, data, data.ind(2) );
+x1 = intGetData( clist, data, data.ind(1), data.units(1) );
+x2 = intGetData( clist, data, data.ind(2), data.units(2) );
 
 if data.log_flag(1)
    x1 = log(x1); 
@@ -1536,8 +1839,8 @@ function [data,h] = intShowDot( clist, data )
 
     
 if ~data.time_flag
-    x1 = intGetData( clist, data, data.ind(1) );
-    x2 = intGetData( clist, data, data.ind(2) );
+    x1 = intGetData( clist, data, data.ind(1), data.units(1) );
+    x2 = intGetData( clist, data, data.ind(2), data.units(2) );
     
     if isfield( clist, 'color' )
         h = scatter( x1, x2, [], clist.color, '.' );
@@ -1804,44 +2107,59 @@ function clist = intLoadClist( dirname )
 drill_flag = true;
 
 clist = {};
-dirname = fixDir( dirname );
 
 
-
-if ~exist( dirname, 'dir' )
-    error( ['Directory ', dirname, 'does not exist.' ] );
-else
-    if drill_flag
-        clist = intRecLoad( {}, dirname, 0 );
+if exist( dirname, 'file' )
+    
+    tmp = load( dirname );
+    
+    if isstruct( tmp ) && isfield( tmp, 'clist' );
+        clist = tmp.clist;
     else
-        contentsD = dir(  [dirname, 'xy*'] );
-        
-        nc = numel( contentsD );
-        
-        if nc == 0
-            
-            filename = [dirname,'clist.mat'];
-            if exist( filename, 'file' );
-                clist = load( filename );
-                clist.filename = [fixDir(pwd),filename];
-            else
-                error([ 'Can''t find file ', filename] );
-            end
-            
+        clist = tmp;
+    end
+    
+    
+else
+    dirname = fixDir( dirname );
+    
+    
+    
+    if ~exist( dirname, 'dir' )
+        error( ['Directory ', dirname, 'does not exist.' ] );
+    else
+        if drill_flag
+            clist = intRecLoad( {}, dirname, 0 );
         else
+            contentsD = dir(  [dirname, 'xy*'] );
             
-            counter = 0;
-            for ii = 1:nc
-                dirname_xy = fixDir( [dirname,contentsD(ii).name] );
+            nc = numel( contentsD );
+            
+            if nc == 0
                 
-                filename = [dirname_xy,'clist.mat' ];
+                filename = [dirname,'clist.mat'];
+                if exist( filename, 'file' );
+                    clist = load( filename );
+                    clist.filename = [fixDir(pwd),filename];
+                else
+                    error([ 'Can''t find file ', filename] );
+                end
                 
-                if exist( filename, 'file' )
-                    counter = counter+1;
-                    tmp = load( filename );
-                    tmp.filename = [fixDir(pwd),filename];
+            else
+                
+                counter = 0;
+                for ii = 1:nc
+                    dirname_xy = fixDir( [dirname,contentsD(ii).name] );
                     
-                    clist{counter} = tmp;
+                    filename = [dirname_xy,'clist.mat' ];
+                    
+                    if exist( filename, 'file' )
+                        counter = counter+1;
+                        tmp = load( filename );
+                        tmp.filename = [fixDir(pwd),filename];
+                        
+                        clist{counter} = tmp;
+                    end
                 end
             end
         end
@@ -1868,9 +2186,15 @@ for ii = 1:nc
         count = count+1;
         name = [dirname,'clist.mat'];
         disp( ['Loading ',name] );
-        clist{1,count} = load( name );
+        tmp = load( name );
         
-    end
+        if isstruct( tmp ) && isfield( tmp, 'clist' );
+            clist{1,count} = tmp.clist;
+        else
+            clist{1,count} = tmp;
+        end
+        
+        end
 end
 
 
@@ -1960,7 +2284,11 @@ end
 end
 
 %%
-function x = intGetData( clist, data, ind )
+function x = intGetData( clist, data, ind, units )
+
+if ~exist( 'units', 'var' )
+    units = 1;
+end
 
 if data.time_flag
     x = clist.data3D(:,ind,:);
@@ -1970,6 +2298,9 @@ if data.time_flag
 else
     x = clist.data(:,ind);
 end
+
+x = units*x;
+
 end
 
 function x = intApplyGate3d( x, clist )
@@ -2040,4 +2371,94 @@ elseif isstruct( clist )
     clist = gateStrip( clist, ind );
 end
 
+end
+
+
+
+
+%%
+function intcsv( clist, data );
+
+
+filename = data.export_filename;
+
+disp( 'Warning: All lists contained in clist will be stripped (ungated data removed) and merged (multiple lists combined) before xls export.');
+
+
+if ~data.time_flag
+    clist = gateTool( clist, 'strip', 'skip3d' );
+    clist = gateTool( clist, 'merge', 'skip3d' );
+    
+    tmp1 = num2cell( clist.data );
+    tmp2 = reshape( clist.def, [1,numel(clist.def)] );
+    
+    tmp = cat(1,tmp2,tmp1);
+else
+    clist = gateTool( clist, 'strip');
+    clist = gateTool( clist, 'merge');
+    
+    if isfield( clist, 'data3D' )
+        if ~isfield( data, 'export_index' ) || isempty( clist.data3D ) || isempty( data.export_index )
+            error( 'Need an export index to export data3D' );
+        elseif  ~(0<data.export_index) && data.export_index<=size(clist.data3D,2)
+            error( 'Index outside the range of allowed indices for data3D' );
+        else
+            tmp = squeeze( clist.data3D(:,data.export_index,:) );
+        end
+    else
+        error( 'No data3D field.' );
+    end
+end
+
+if data.which_export_flag == 1
+    csvwrite2( filename, tmp );
+else
+    disp( 'Warning: This function only works if excel is installed. Complain to matlab (ie mathworks) not me.' );
+    
+    xlswrite( filename, tmp );
+end
+
+end
+
+
+%%
+function csvwrite2( filename, data )
+
+
+cellflag = iscell( data );
+
+nn = size( data )
+
+fid = fopen(filename, 'w') ;
+
+if fid
+    for ii = 1:nn(1)
+        for jj = 1:nn(2)
+            
+            if cellflag
+                tmp = data{ii,jj};
+            else
+                tmp = data(ii,jj);
+            end
+            
+            if ischar( tmp )
+                fprintf(fid, '%s', tmp);
+            elseif isnumeric( tmp )
+                if numel( tmp ) == 1
+                    fprintf(fid, '%e', tmp);
+                else
+                    error( 'No nonscalar allowed in csv.' );
+                end
+            else
+                error( 'un recognized type in csv.' );
+            end
+            
+            if jj ~= nn(2);
+                fprintf(fid, '%c', ',' );
+            end
+        end
+        fprintf(fid, '\n');
+    end
+    fclose(fid) ;
+end
 end
