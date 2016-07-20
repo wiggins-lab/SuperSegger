@@ -107,6 +107,8 @@ function [clist, out] = gateTool(varargin)
 %
 % 'units', units : set the multiplier for the data to set the desired units
 %
+% 'drill'       : Use recursive loading trhough a directory tree to any
+%                 level.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins.
@@ -170,7 +172,7 @@ if data.get_flag
     end
 elseif data.stat_flag
     out = intGetCellNum( data.clist );
-    disp( ['Gated cellls: ',num2str(out(1))] );
+    disp( ['Gated cells: ',num2str(out(1))] );
     disp( ['Total cells:  ',num2str(out(2))] );
     disp( [num2str(100*out(1)/out(2)),' %'] );
 elseif data.get_gate_flag
@@ -222,14 +224,15 @@ data.dothist_flag   = false;
 data.inv_flag       = false;
 data.get_flag       = false;
 data.stat_flag      = false;
-data.skip3D_flag         = false;
+data.skip3D_flag    = false;
 data.export_flag    = false;
-
+data.drill_flag     = false;
 data.error_flag     = false;
+data.newfig_flag    = false;
 
 data.trace_flag     = false;
 
-data.get_gate_flag = false;
+data.get_gate_flag  = false;
 data.name_flag      = false;
 data.den_flag       = false;
 data.noclear_flag   = false;
@@ -249,7 +252,8 @@ data.rk         = [];
 data.rm         = [];
 data.g_ind      = [];
 
-data.units = [1,1];
+data.units      = [1,1];
+data.fig_ptr    = [];
 
 data.err        = 0.05; % Target error fraction for histograms
 
@@ -266,7 +270,12 @@ else
     next_arg = varargin{1};
         
     if ischar( next_arg )
-        next_arg = intLoadClist( next_arg );
+        
+        if any(strcmp( 'drill',varargin ))
+            data.drill_flag = true;
+        end
+        
+        next_arg = intLoadClist( next_arg, data );
         load_flag = true;
     end
     
@@ -318,9 +327,24 @@ else
             case 'skip3d'
                 data.skip3D_flag = true;
                 
+            case 'drill'
+                data.drill_flag = true;
+                
             case 'err'
                 data.error_flag = true;
                 
+            case 'mult'
+                counter = counter + 1;
+                if counter > nargin
+                    error( 'Not enough arguments for MULT.' )
+                end
+                next_arg = varargin{counter};
+                
+                if isnumeric( next_arg )
+                    data.mult = next_arg; 
+                end
+                
+            
             case 'e'
                 
                 counter = counter + 1;
@@ -334,6 +358,9 @@ else
                 else
                     error( 'Estimated error must be a double.' );
                 end
+                
+            case 'newfig'
+                data.newfig_flag = true;
                 
             case 'getgate'
                 
@@ -747,6 +774,24 @@ else
         error( 'Dimension of bin must match ind.' );
     end
 end
+
+
+if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
+    
+    if (numel( data.ind ) == 2)
+        if data.time_flag
+            data.kde_flag = true;
+        else
+            data.dot_flag = true;
+        end
+        if numel( data.ind ) == 1
+            data.hist_flag = true;
+        end
+        
+    end
+    
+    
+end
 end
 
 %%
@@ -1097,103 +1142,114 @@ end
 
 data = intIntShow( data.clist, data );
 
-if (numel( data.ind ) == 2) && ...
-        (~data.dot_flag)
+nf = max( [1, numel( data.fig_ptr )] );
+
+for jj = 1:nf
     
-    xx1 = data.xx{1};
-    xx2 = data.xx{2};
+    if ~isempty( data.fig_ptr )
+        figure( data.fig_ptr(jj) );
+    end
+    
+    if (numel( data.ind ) == 2) && ...
+            (~data.dot_flag)
+        
+        
+        xx1 = data.xx{1};
+        xx2 = data.xx{2};
+        
+        if data.log_flag(2)
+            xx1 = exp(xx1);
+        end
+        if data.log_flag(1)
+            xx2 = exp(xx2);
+        end
+        
+        if numel(data.clist)>1
+            data.im = data.im/max(data.im(:));
+            if data.inv_flag
+                data.im = 1-data.im;
+            end
+        end
+        
+        
+        
+        
+        imagesc( xx2, xx1, data.im );
+        hold on;
+        
+        if size(data.clist,2)==1
+            colorbar
+            
+            cc = colormap;
+            cc(1,:) = [0.5,0.5,0.5];
+            colormap(cc);
+            
+            tmp = data.im;
+            tmp(tmp==0) = nan;
+            min_caxis = min(tmp(:));
+            max_caxis = max(tmp(:));
+            
+            N = size(cc,1);
+            c = (N*min_caxis-max_caxis)/(N-1);
+            if ~isnan( max_caxis )
+                caxis( [c,max_caxis] );
+            end
+        end
+        
+        
+        axis( [xx2(1),xx2(end),xx1(1),xx1(end)] );
+        set(gca,'layer','top')
+    end
+    
+    
+    %% set the scale on the axes
+    if data.log_flag(1)
+        set(gca,'XScale','log' );
+    end
     
     if data.log_flag(2)
-        xx1 = exp(xx1);
-    end
-    if data.log_flag(1)
-        xx2 = exp(xx2);
+        set(gca,'YScale','log' );
     end
     
-    if numel(data.clist)>1
-        data.im = data.im/max(data.im(:));
-        if data.inv_flag
-            data.im = 1-data.im;
-        end
-    end
-      
+    %% set the labels on the axis.
+    def = intGetDef( data.clist );
+    def3d = intGetDef3D( data.clist );
     
-    
-    
-    imagesc( xx2, xx1, data.im );
-    hold on;
-    
-    if size(data.clist,2)==1
-        colorbar
-        
-        cc = colormap;
-        cc(1,:) = [0.5,0.5,0.5];
-        colormap(cc);
-        
-        tmp = data.im;
-        tmp(tmp==0) = nan;
-        min_caxis = min(tmp(:));
-        max_caxis = max(tmp(:));
-
-        N = size(cc,1);
-        c = (N*min_caxis-max_caxis)/(N-1);
-        if ~isnan( max_caxis )
-            caxis( [c,max_caxis] );
-        end
-    end
-    
-    
-    axis( [xx2(1),xx2(end),xx1(1),xx1(end)] );
-    set(gca,'layer','top')
-end
-
-
-%% set the scale on the axes
-if data.log_flag(1)
-    set(gca,'XScale','log' );
-end
-
-if data.log_flag(2)
-    set(gca,'YScale','log' );
-end
-
-%% set the labels on the axis.
-def = intGetDef( data.clist );
-def3d = intGetDef3D( data.clist );
-
-if data.time_flag   
-    labs = def3d(data.ind);
-else
-    labs = def(data.ind);
-end
-
-if data.trace_flag
-    xlabel( 'Time (Frames)', 'Interpreter','none' );
-    
-    
-    ylabel(  labs{1}, 'Interpreter','none' );
-else
-    if numel( data.ind )
-        xlabel( labs{1}, 'Interpreter','none'  );
-    end
-    
-    if numel( data.ind ) == 2
-        ylabel(  labs{2} , 'Interpreter','none');
-    elseif data.den_flag
-        ylabel( 'Density', 'Interpreter','none' );
+    if data.time_flag
+        labs = def3d(data.ind);
     else
-        ylabel( 'Number' , 'Interpreter','none');
+        labs = def(data.ind);
     end
+    
+    if data.trace_flag
+        xlabel( 'Time (Frames)', 'Interpreter','none' );
+        
+        
+        ylabel(  labs{1}, 'Interpreter','none' );
+    else
+        if numel( data.ind )
+            xlabel( labs{1}, 'Interpreter','none'  );
+        end
+        
+        if numel( data.ind ) == 2
+            ylabel(  labs{2} , 'Interpreter','none');
+        elseif data.den_flag
+            ylabel( 'Density', 'Interpreter','none' );
+        else
+            ylabel( 'Number' , 'Interpreter','none');
+        end
+    end
+    
+    set( gca, 'Box', 'on' );
+    
+    if ~data.newfig_flag
+        legend( data.h, data.legend );
+    end
+    
+    set( gca, 'YDir', 'normal' );
+    
 end
-
-set( gca, 'Box', 'on' );
-
-legend( data.h, data.legend );
-
-set( gca, 'YDir', 'normal' );
-
 end
-
 %%
 function data = intIntShow( clist, data )
 
@@ -1233,37 +1289,43 @@ end
 
 function data = intIntIntShow( clist, data )
 
+if isfield( clist, 'name' );
+    name = clist.name;
+else
+    name = ['data ', num2str(numel( data.h )) ];
+end
+
+if data.newfig_flag
+    data.fig_ptr = [data.fig_ptr, figure()];
+end
+
 switch numel( data.ind )
     
     case 0
         error( 'No indices to show' );
     case 1 % 1D
         if data.kde_flag
-            [data,h] = intShowKDE1D( clist, data );
+            [data,h] = intShowKDE1D(  clist, data, name );
         %elseif data.time_flag
         %    [data,h] = intTime( clist, data );
         else
-            [data,h] = intShowHist1D( clist, data );
+            [data,h] = intShowHist1D( clist, data, name );
         end
     case 2 % 2D
         if data.hist_flag
-            [data,h] = intShowHist2D( clist, data );
+            [data,h] = intShowHist2D( clist, data, name );
         elseif data.dot_flag
-            [data,h] = intShowDot( clist, data );
+            [data,h] = intShowDot(    clist, data, name );
         elseif data.kde_flag
-            [data,h] = intShowKDE2D( clist, data );
+            [data,h] = intShowKDE2D(  clist, data, name );
         else %default
-            [data,h] = intShowDot( clist, data );
+            [data,h] = intShowDot(    clist, data, name );
         end
 end
 
 data.h = [data.h,h];
 
-if isfield( clist, 'name' );
-    name = clist.name;
-else
-    name = ['data ', num2str(numel( data.h )) ];
-end
+
 
 nc = size( clist.data, 1 );
 
@@ -1272,15 +1334,19 @@ if data.time_flag
 else
     name = [name,' (',num2str( nc ),' cells)'];
 end
-    
-data.legend = {data.legend{:},name};
+   
+if data.newfig_flag
+    legend( h, name );
+else
+    data.legend = {data.legend{:},name};
+end
 
 end
 
 
 
 %%
-function [data,h] = intShowHist1D( clist, data )
+function [data,h] = intShowHist1D( clist, data, name )
 
 bin = intMakeBins( clist, data );
 
@@ -1325,16 +1391,17 @@ if ~data.bin_flag
 end
 
 if data.stat_flag
-    intDoStatAn( x1, x, y, n, data, cc);
+    intDoStatAn( x1, x, y, n, data, cc, name );
 end
 
 end
 
 
 
-function intDoStatAn( x1, x, y, n, data, cc)
+function intDoStatAn( x1, x, y, n, data, cc, name )
 
    hold on;
+   
    x1_mean = mean( x1 );
    x1_std  = std(  x1 );
    x1_max  = max(  x1 );
@@ -1344,6 +1411,8 @@ function intDoStatAn( x1, x, y, n, data, cc)
    x1_m1   = x1_mean-x1_std;
    x1_m1m  = x1_mean-x1_std/sqrt(n);
    
+   all_out_text = [name,' -- stats:'];
+   
    y1_mean = interp1( x,y, x1_mean );
    y1_p1   = interp1( x,y, x1_p1 );
    y1_p1m  = interp1( x,y, x1_p1m );
@@ -1352,7 +1421,6 @@ function intDoStatAn( x1, x, y, n, data, cc)
    y1_max  = interp1( x,y, x1_max ,'linear','extrap');
    y1_min  = interp1( x,y, x1_min,'linear','extrap' );
    
-   styl = '%1.3e';
    
    if data.log_flag(2)
        del = [1e-1,1];
@@ -1360,23 +1428,46 @@ function intDoStatAn( x1, x, y, n, data, cc)
        del = [0,1];
    end
    
+   styl = '%1.3e';
+   
    plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
-   text( x1_mean, y1_mean/2, [' mean: ',num2str( x1_mean, styl )], 'color', cc );
+   
+   out_text = [' mean: ',num2str( x1_mean, styl )];
+   text( x1_mean, y1_mean/2, out_text, 'color', cc );
+   all_out_text = [ all_out_text, out_text,','];
    
    plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   text( x1_p1, y1_p1*.75, [' std: ',num2str( x1_std, styl )], 'color', cc );
+   
+   out_text = [' std: ',num2str( x1_std, styl )];
+   text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+   all_out_text = [ all_out_text, out_text,','];
+   
    plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   text( x1_p1, y1_p1*.75, [' std: ',num2str( x1_std, styl )], 'color', cc );
+   
+   %out_text = [' std: ',num2str( x1_std, styl )];
+   %text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+   %all_out_text = [ all_out_text, out_text,','];
+   
    plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
    plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
    plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
    plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
    
-   text( x1_p1m, y1_p1m*.25, [' error: ',num2str( x1_std/sqrt(n), styl )], 'color', cc );
-   text( x1_max, y1_max, [' max: ',num2str( x1_std/sqrt(n), styl )], 'color', cc,...
+   out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
+   text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
+   all_out_text = [ all_out_text, out_text,','];
+   
+   out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
+   text( x1_max, y1_max, out_text, 'color', cc,...
        'VerticalAlignment', 'baseline');
-   text( x1_min, y1_min, [' min: ',num2str( x1_std/sqrt(n), styl )], 'color', cc,...
+   all_out_text = [ all_out_text, out_text,','];
+   
+   out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
+   text( x1_min, y1_min, out_text, 'color', cc,...
        'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
+   all_out_text = [ all_out_text, out_text,'.'];
+   
+   disp( all_out_text );
 end
 
 
@@ -1394,7 +1485,7 @@ y(y<0) = 0;
 end
 
 %%
-function [data,h] = intShowKDE1D( clist, data )
+function [data,h] = intShowKDE1D( clist, data, name )
 
 [bin,dx] = intMakeBins( clist, data );
 
@@ -1440,7 +1531,7 @@ end
 
 
 if data.stat_flag
-    intDoStatAn( x1, x, yf, n, data, cc);
+    intDoStatAn( x1, x, yf, n, data, cc, name);
 end
 
 
@@ -1596,7 +1687,7 @@ end
 
 
 %%
-function [data,h] = intShowHist2D( clist, data )
+function [data,h] = intShowHist2D( clist, data, name )
 
 bin = intMakeBins( clist, data, data.mult );
 
@@ -1669,7 +1760,7 @@ data.xx = xx;
 end
 
 %%
-function [data,h] = intShowKDE2D( clist, data )
+function [data,h] = intShowKDE2D( clist, data, name )
 
 [bin,dx] = intMakeBins( clist, data, data.mult );
 
@@ -1827,7 +1918,7 @@ yf      = imfilter( y, fgaus, 0 );
 end
 
 %%
-function [data,h] = intShowDot( clist, data )
+function [data,h] = intShowDot( clist, data, name )
 
     hold on;
 
@@ -1835,6 +1926,7 @@ function [data,h] = intShowDot( clist, data )
 if ~data.time_flag
     x1 = intGetData( clist, data, data.ind(1), data.units(1) );
     x2 = intGetData( clist, data, data.ind(2), data.units(2) );
+
     
     if isfield( clist, 'color' )
         h = scatter( x1, x2, [], clist.color, '.' );
@@ -1845,6 +1937,9 @@ else
     x1 = squeeze(clist.data3D(:,data.ind(1),:));
     x2 = squeeze(clist.data3D(:,data.ind(2),:));
     
+    flagger = ~isnan( x1 + x2 );
+    data.n = sum( flagger(:) );
+    n   = data.n;
     
     if isfield( clist, 'color' )
         cc = clist.color;
@@ -2096,14 +2191,14 @@ end
 
 %%
 
-function clist = intLoadClist( dirname )
+function clist = intLoadClist( dirname, data )
 
-drill_flag = true;
+drill_flag = data.drill_flag;
 
 clist = {};
 
 
-if exist( dirname, 'file' )
+if exist( dirname, 'file' ) == 2
     
     tmp = load( dirname );
     
@@ -2334,7 +2429,9 @@ if iscell( clist )
 elseif isstruct( clist )
     ss = size( clist.data3D );
     
-    len  = reshape( ~isnan(squeeze(gateTool( clist, 'get3D', 2 ))),[ss(1),ss(3)]);
+    [~,tmp] = gateTool( clist, 'get', 2, 'time' );
+    
+    len  = reshape( ~isnan(squeeze(tmp)),[ss(1),ss(3)]);
     age = cumsum( len, 2 );
     age(~len) = nan;
     
