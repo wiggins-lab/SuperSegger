@@ -260,7 +260,7 @@ data.err        = 0.05; % Target error fraction for histograms
 
 data.cond_flag  = false;
 
-data.mult = 1;
+data.mult = [];
 
 load_flag = false;
 
@@ -585,7 +585,6 @@ else
             case 'kde'
                 data.kde_flag = true; 
                 
-                data.mult = 20;
             case 'rk' % kernal radius
                 counter = counter + 1;
                 next_arg = varargin{counter};
@@ -766,13 +765,7 @@ else
         
     end
     
-    if data.hist_flag
-        data.mult = 1;
-    end
-    
-    if numel( data.bin ) == 1 && numel( data.ind ) == 2
-        error( 'Dimension of bin must match ind.' );
-    end
+  
 end
 
 
@@ -792,6 +785,20 @@ if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
     
 end
+
+% set default mult
+if isempty( data.mult )
+    if data.hist_flag
+        data.mult = 1;
+    elseif data.kde_flag
+        data.mult = 20;
+    end
+end
+
+if numel( data.bin ) == 1 && numel( data.ind ) == 2
+    error( 'Dimension of bin must match ind.' );
+end
+
 end
 
 %%
