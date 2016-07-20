@@ -258,6 +258,8 @@ data.g_ind      = [];
 data.units      = [1,1];
 data.fig_ptr    = [];
 
+data.im = {};
+
 data.err        = 0.05; % Target error fraction for histograms
 
 
@@ -1176,7 +1178,7 @@ for jj = 1:nf
             xx2 = exp(xx2);
         end
         
-        if numel(data.clist)>1
+        if numel(data.clist)>1 && ~data.newfig_flag
             if ~data.log_flag(3)
                 data.im = data.im/max(data.im(:));
             end
@@ -1195,20 +1197,26 @@ for jj = 1:nf
             xx1 = log10(xx1);
         end
         
-         imagesc( xx2, xx1, data.im );
+        if iscell( data.im )
+            im = data.im{jj};
+        else
+            im = data.im;
+        end
+        
+         imagesc( xx2, xx1, im );
         
         
         
         hold on;
         
-        if size(data.clist,2)==1
+        if size(data.clist,2)==1 || data.newfig_flag
             colorbar
             
             cc = colormap;
             cc(1,:) = [0.5,0.5,0.5];
             colormap(cc);
             
-            tmp = data.im;
+            tmp = im;
             tmp(tmp==0) = nan;
             min_caxis = min(tmp(:));
             max_caxis = max(tmp(:));
@@ -1563,8 +1571,8 @@ else
 end
 
 
-yf = intConv1D( y, data, dx );
-dyf =  intDoError( yf );
+[yf,dyf] = intConv1D( y, data, dx );
+%dyf =  intDoError( yf );
 
 if data.den_flag
     normer = 1./( sum(y(:))*dx );
@@ -1807,7 +1815,7 @@ end
 
 
 
-if size( data.clist,2 ) > 1
+if (size( data.clist,2 ) > 1) && ~data.newfig_flag
 
     
     dd = y/max(y(:));
@@ -1815,14 +1823,14 @@ if size( data.clist,2 ) > 1
     im = cat(3, dd*cc(1), dd*cc(2), dd*cc(3) );
     
     
-    if isfield( data, 'im' )
+    if isfield( data, 'im' ) && ~isempty( data.im )
         data.im = data.im + im;
     else
         data.im = im;
     end
     
 else
-    data.im = y;
+    data.im = {data.im{:},y};
 end
 
 data.xx = xx;
@@ -1899,7 +1907,7 @@ if data.inv_flag
    cc = 1-cc; 
 end
 
-if size( data.clist, 2 ) > 1
+if size( data.clist, 2 ) > 1 && ~data.newfig_flag 
 
     
     dd = y/max(y(:));
@@ -1907,14 +1915,14 @@ if size( data.clist, 2 ) > 1
     im = cat(3, dd*cc(1), dd*cc(2), dd*cc(3) );
     
     
-    if isfield( data, 'im' )
+    if isfield( data, 'im' ) && ~isempty( data.im )
         data.im = data.im + im;
     else
         data.im = im;
     end
     
 else
-    data.im = y;
+    data.im = {data.im{:},y};
 end
 
 data.xx = xx;
@@ -1923,7 +1931,7 @@ data.bin = bin;
 
 end
 
-function yf = intConv2D( y, data, dx )
+function [yf] = intConv2D( y, data, dx )
 
 dx = dx(2:-1:1);
 
@@ -1967,7 +1975,7 @@ yf = yf;
 end
 
 
-function yf = intConv1D( y, data, dx )
+function [yf,dyf] = intConv1D( y, data, dx )
 
 if isempty( data.rk )
     rk = 2*data.mult;
@@ -1982,6 +1990,7 @@ R = sqrt((xx./rk(1)).^2);
 fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
 
 yf      = imfilter( y, fgaus, 0 );
+dyf     = sqrt(imfilter( y, fgaus.^2, 0 ));
 
 %yf = max( yf, minner );
 
