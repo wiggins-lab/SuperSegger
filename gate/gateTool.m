@@ -76,7 +76,7 @@ function [clist, out] = gateTool(varargin)
 %
 % 'inv'         : invert 2D hist/KDE image for printing 
 %
-% 'res', mult   : set the resolution for the KDE. Increase res by a factor
+% 'mult', mult   : set the resolution for the KDE. Increase res by a factor
 %                 of mult.
 %
 % 'bin', bin    : set the binning for the hist and KDE. In 1D, if bin is a
@@ -91,6 +91,9 @@ function [clist, out] = gateTool(varargin)
 % 'err'         : show error in 1D histograms and kde's
 %
 % 'stat'        : show statistics for a show command. Only one index.
+%
+% 'newfig'      : draws new figures for each clist
+%
 %Other commands:
 %
 % 'def'         : Show all the channel definitions at the command line
@@ -171,10 +174,10 @@ if data.get_flag
         out = intGet( data.clist, data.g_ind );
     end
 elseif data.stat_flag
-    out = intGetCellNum( data.clist );
-    disp( ['Gated cells: ',num2str(out(1))] );
-    disp( ['Total cells:  ',num2str(out(2))] );
-    disp( [num2str(100*out(1)/out(2)),' %'] );
+    %out = intGetCellNum( data.clist );
+    %disp( ['Gated cells: ',num2str(out(1))] );
+    %disp( ['Total cells:  ',num2str(out(2))] );
+    %disp( [num2str(100*out(1)/out(2)),' %'] );
 elseif data.get_gate_flag
     
     if ~data.time_flag
@@ -598,8 +601,8 @@ else
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
-                  if isnumeric( next_arg ) % if numeic set the ind's to log
-                    data.rm = next_arg;                
+                if isnumeric( next_arg ) % if numeic set the ind's to log
+                    data.rm = next_arg;
                 else % if there is no numeric ind's turn all to log
                     error( 'KDE kernal radius must be a double' );
                 end
@@ -792,6 +795,8 @@ if isempty( data.mult )
         data.mult = 1;
     elseif data.kde_flag
         data.mult = 20;
+    else
+        data.mult = 1;    
     end
 end
 
@@ -1172,7 +1177,9 @@ for jj = 1:nf
         end
         
         if numel(data.clist)>1
-            data.im = data.im/max(data.im(:));
+            if ~data.log_flag(3)
+                data.im = data.im/max(data.im(:));
+            end
             if data.inv_flag
                 data.im = 1-data.im;
             end
@@ -1180,8 +1187,18 @@ for jj = 1:nf
         
         
         
+        if data.log_flag(1) 
+            xx2 = log10(xx2);
+        end
         
-        imagesc( xx2, xx1, data.im );
+        if data.log_flag(2) 
+            xx1 = log10(xx1);
+        end
+        
+         imagesc( xx2, xx1, data.im );
+        
+        
+        
         hold on;
         
         if size(data.clist,2)==1
@@ -1211,11 +1228,15 @@ for jj = 1:nf
     
     %% set the scale on the axes
     if data.log_flag(1)
-        set(gca,'XScale','log' );
+         if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
+            set(gca,'XScale','log' );
+         end
     end
     
     if data.log_flag(2)
-        set(gca,'YScale','log' );
+        if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
+            set(gca,'YScale','log' );
+        end
     end
     
     %% set the labels on the axis.
@@ -1227,6 +1248,19 @@ for jj = 1:nf
     else
         labs = def(data.ind);
     end
+    
+    
+    if (numel(data.ind)==2) && ( data.kde_flag || data.hist_flag )
+       if data.log_flag(1)
+           labs{1} = [labs{1},' (log10)']; 
+       end
+       
+       if data.log_flag(2)
+           labs{2} = [labs{2},' (log10)']; 
+       end
+        
+    end
+    
     
     if data.trace_flag
         xlabel( 'Time (Frames)', 'Interpreter','none' );
@@ -1358,11 +1392,13 @@ function [data,h] = intShowHist1D( clist, data, name )
 bin = intMakeBins( clist, data );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
+x10 = x1;
+
 if data.log_flag(1)
     x1 = log(x1);
 end
-flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
-x1 = x1( flagger );
+[x1,flagger] = fixVals( x1 );
+x10 = fixVals( x10 );
 data.n = sum( flagger(:) );
 n   = data.n;
 
@@ -1378,18 +1414,25 @@ if data.den_flag
     dy = dy*normer;
 end
 
+
+if data.log_flag(1)
+    x_plot = exp(x);
+else
+     x_plot = x;
+end
+
 if isfield( clist, 'color' )
     cc = clist.color;
-    h = plot( x,y, '.-', 'color', cc );
+    h = plot( x_plot,y, '.-', 'color', cc );
 else
-    h = plot( x,y, '.-' );
+    h = plot( x_plot,y, '.-' );
     cc = h.Color;
 end
 
 if data.error_flag
     hold on;
-    plot( x,intFixError(y-dy), ':', 'color', cc );
-    plot( x,intFixError(y+dy), ':', 'color', cc );
+    plot( x_plot,intFixError(y-dy), ':', 'color', cc );
+    plot( x_plot,intFixError(y+dy), ':', 'color', cc );
 end
 
 
@@ -1398,7 +1441,7 @@ if ~data.bin_flag
 end
 
 if data.stat_flag
-    intDoStatAn( x1, x, y, n, data, cc, name );
+    intDoStatAn( x10, x_plot, y, n, data, cc, name );
 end
 
 end
@@ -1409,6 +1452,9 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
 
    hold on;
    
+      styl = '%1.3e';
+
+      
    x1_mean = mean( x1 );
    x1_std  = std(  x1 );
    x1_max  = max(  x1 );
@@ -1418,7 +1464,7 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
    x1_m1   = x1_mean-x1_std;
    x1_m1m  = x1_mean-x1_std/sqrt(n);
    
-   all_out_text = [name,' -- stats:'];
+   all_out_text = [name,' -- stats: n = ',num2str( n, styl ),', '];
    
    y1_mean = interp1( x,y, x1_mean );
    y1_p1   = interp1( x,y, x1_p1 );
@@ -1435,7 +1481,6 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
        del = [0,1];
    end
    
-   styl = '%1.3e';
    
    plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
    
@@ -1457,21 +1502,21 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
    
    plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
    plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-   plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
-   plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
+  % plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
+  % plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
    
    out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
    text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
    all_out_text = [ all_out_text, out_text,','];
    
    out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
-   text( x1_max, y1_max, out_text, 'color', cc,...
-       'VerticalAlignment', 'baseline');
+   %text( x1_max, y1_max, out_text, 'color', cc,...
+   %    'VerticalAlignment', 'baseline');
    all_out_text = [ all_out_text, out_text,','];
    
    out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
-   text( x1_min, y1_min, out_text, 'color', cc,...
-       'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
+   %text( x1_min, y1_min, out_text, 'color', cc,...
+   %    'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
    all_out_text = [ all_out_text, out_text,'.'];
    
    disp( all_out_text );
@@ -1497,16 +1542,26 @@ function [data,h] = intShowKDE1D( clist, data, name )
 [bin,dx] = intMakeBins( clist, data );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
+x10 = x1;
 if data.log_flag(1)
     x1 = log(x1);
 end
-flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
-x1 = x1( flagger );
+[x1,flagger] = fixVals( x1 );
+x10 = fixVals( x10 );
+
 data.n = sum( flagger(:) );
 n = data.n;
 
 
 [y,x] = hist( x1, bin );
+
+
+if data.log_flag(1)
+    x_plot = exp(x);
+else
+    x_plot = x;
+end
+
 
 yf = intConv1D( y, data, dx );
 dyf =  intDoError( yf );
@@ -1519,16 +1574,16 @@ end
 
 if isfield( clist, 'color' )
     cc = clist.color;
-    h = plot( x,yf, '-', 'color', cc );
+    h = plot( x_plot,yf, '-', 'color', cc );
 else
-    h = plot( x,yf, '-' );
+    h = plot( x_plot,yf, '-' );
     cc = h.Color;
 end
 
 if data.error_flag
     hold on;
-    plot( x,intFixError(yf-dyf), ':', 'color', cc );
-    plot( x,intFixError(yf+dyf), ':', 'color', cc );
+    plot( x_plot,intFixError(yf-dyf), ':', 'color', cc );
+    plot( x_plot,intFixError(yf+dyf), ':', 'color', cc );
 end
 
 
@@ -1538,7 +1593,7 @@ end
 
 
 if data.stat_flag
-    intDoStatAn( x1, x, yf, n, data, cc, name);
+    intDoStatAn( x10, x_plot, yf, n, data, cc, name);
 end
 
 
@@ -1586,18 +1641,19 @@ if numel(data.ind) == 1
             x1 = log(x1);
         end
         
-        x1 = x1(~isinf(x1));
+        x1 = fixVals( x1 );
         
         max_x1 = max( x1);
         min_x1 = min( x1);
         
         dx = max_x1-min_x1;
         
-     if isempty( dx)
+        if isempty( dx)
             dx = 1;
             max_x1 = 1;
             min_x1 = 0;
         end
+        
         
         num_bin = num_bin*mult;
         bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
@@ -1638,8 +1694,7 @@ else
         if data.log_flag(1)
             x1 = log(x1);
         end
-        flagger = ~logical( isinf(x1) + isnan(x1) + ~isreal(x1) );
-        x1 = x1( flagger );
+        x1 = fixVals( x1 );
         
         max_x1 = max( x1);
         min_x1 = min( x1);
@@ -1663,9 +1718,7 @@ else
         if data.log_flag(2)
             x2 = log(x2);
         end
-        
-        flagger = ~logical( isinf(x2) + isnan(x2) + ~isreal(x2) );
-        x2 = x2( flagger );
+        x2 = fixVals( x2 );
         
         max_x2 = max( x2);
         min_x2 = min( x2);
@@ -1693,6 +1746,19 @@ end
 end
 
 
+%% 
+function [x,flagger] = fixVals( x )
+
+
+flagger = ~( isinf( x ) + isnan( x) + imag( x ) );
+
+x = x(flagger);
+
+
+end
+
+
+
 %%
 function [data,h] = intShowHist2D( clist, data, name )
 
@@ -1708,9 +1774,7 @@ end
 if data.log_flag(2)
     x2 = log( x2 );
 end
-
-
-flagger = logical(~isinf(x1)+~isinf(x2));
+[~,flagger] = fixVals( x1+x2 );
 data.n = sum( flagger(:) );
 
 
@@ -1743,7 +1807,7 @@ end
 
 
 
-if numel( data.clist ) > 1
+if size( data.clist,2 ) > 1
 
     
     dd = y/max(y(:));
@@ -1781,8 +1845,7 @@ end
 if data.log_flag(2)
     x2 = log( x2 );
 end
-
-flagger = logical(~isinf(x1)+~isinf(x2));
+[~,flagger] = fixVals( x1+x2 );
 data.n = sum( flagger(:) );
 
 
@@ -1944,7 +2007,7 @@ else
     x1 = squeeze(clist.data3D(:,data.ind(1),:));
     x2 = squeeze(clist.data3D(:,data.ind(2),:));
     
-    flagger = ~isnan( x1 + x2 );
+    [~,flagger] = fixVals( x1 + x2 );
     data.n = sum( flagger(:) );
     n   = data.n;
     
