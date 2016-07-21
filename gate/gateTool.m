@@ -257,6 +257,8 @@ data.g_ind      = [];
 
 data.units      = [1,1];
 data.fig_ptr    = [];
+data.minBinNum  = 5;
+data.multi      = 500;
 
 data.im = {};
 
@@ -264,8 +266,6 @@ data.err        = 0.05; % Target error fraction for histograms
 
 
 data.cond_flag  = false;
-
-data.mult = [];
 
 load_flag = false;
 
@@ -791,16 +791,7 @@ if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
 end
 
-% set default mult
-if isempty( data.mult )
-    if data.hist_flag
-        data.mult = 1;
-    elseif data.kde_flag
-        data.mult = 20;
-    else
-        data.mult = 1;    
-    end
-end
+
 
 if numel( data.bin ) == 1 && numel( data.ind ) == 2
     error( 'Dimension of bin must match ind.' );
@@ -1149,7 +1140,7 @@ if data0.hist_flag || (numel( data0.ind )==1) || data0.kde_flag
     data1 = data;
     data1.clist = intDoMerge( data1.clist, [], ~data.time_flag );
     
-    data.bin = intMakeBins( data1.clist, data1, data.mult );
+    data = intMakeBins( data1.clist, data1  );
 end
 
 %%
@@ -1298,6 +1289,13 @@ for jj = 1:nf
     set( gca, 'YDir', 'normal' );
     
 end
+
+if data.dot_flag || (numel(data.ind)==1)
+    xlim_ = xlim;
+    XM = mean(xlim_);
+    xlim( XM+1.05*(xlim_-XM) );
+end
+
 end
 %%
 function data = intIntShow( clist, data )
@@ -1397,11 +1395,9 @@ end
 %%
 function [data,h] = intShowHist1D( clist, data, name )
 
-bin = intMakeBins( clist, data );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 x10 = x1;
-
 if data.log_flag(1)
     x1 = log(x1);
 end
@@ -1410,7 +1406,7 @@ x10 = fixVals( x10 );
 data.n = sum( flagger(:) );
 n   = data.n;
 
-[y,x] = hist( x1, bin );
+[y,x] = hist( x1, data.binS.xx );
 dy    = intDoError(y); 
 
 if data.den_flag
@@ -1547,7 +1543,6 @@ end
 %%
 function [data,h] = intShowKDE1D( clist, data, name )
 
-[bin,dx] = intMakeBins( clist, data );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 x10 = x1;
@@ -1560,6 +1555,9 @@ x10 = fixVals( x10 );
 data.n = sum( flagger(:) );
 n = data.n;
 
+bin = data.binS(1).xx;
+dx  = data.binS(1).dx;
+rk  = data.binS(1).rk_pix;
 
 [y,x] = hist( x1, bin );
 
@@ -1572,7 +1570,7 @@ end
 
 
 %[yf,dyf] = intConv1D( y, data, dx );
-[yf,dyf] = intConv1Dadd( y, data, dx );
+[yf,dyf] = intConv1Dint( y, rk );
 
 %dyf =  intDoError( yf );
 
@@ -1610,151 +1608,206 @@ end
 end
 
 %%
-function [bin,dx_vec] = intMakeBins( clist, data, mult )
+function data = intMakeBins( clist, data )
 
-min_bin_num = 5;
+for ii = 1:numel( data.ind )
+    if data.kde_flag
+           num = data.multi;
+    else
+       if isfield( data, 'bin' ) && ~isempty( data.bin ) 
+           num = data.bin(ind);
+       else
+           num = intChooseBin(clist, data, ii);
+       end
+    end
 
-if ~exist( 'mult', 'var' )
-    mult = 1;
+   binS = intMakeDX( clist, data, num, ii );
+    
+    if ~data.kde_flag
+        binS.rk_pix = [];
+        binS.rm_pix = [];
+    else
+        if isfield( data, 'rk' ) && ~isempty( data.rk )
+            binS.rk_pix = data.rk(ind)/binS.dx;
+        else
+            binS.rk_pix = intChooseRK(clist, data, ii);
+        end
+        
+        if isfield( data, 'rm' ) && ~isempty( data.rm )
+            binS.rm_pix = data.rm(ind)/binS.dx;
+        else
+            binS.rm_pix = binS.rk_pix;
+        end
+    end
+    
+    data.binS(ii) = binS;
+end
+end
+
+function binS = intMakeDX( clist, data, num, ind )
+x = intGetData( clist, data, data.ind(ind), data.units(ind) );
+if data.log_flag(ind)
+    x = log(x);
+end
+x = fixVals( x );
+
+x_max = max( x(:) );
+x_min = min( x(:) );
+
+if x_max == x_min
+    tmp = x_max;
+    x_max = tmp+1;
+    x_min = tmp-1;
+end
+
+    DX = x_max - x_min;
+    xx = DX*(0:(num-1))/(num-1)+x_min;
+    dx = xx(2)-xx(1);
+    
+    binS.xx    = xx;
+    binS.dx    = dx;
+    binS.DX    = DX;
+    binS.x_max = x_max;
+    binS.x_min = x_min;
+    binS.x     = x;
+    
+
 end
 
 
-if numel(data.ind) == 1
-    
-    x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-    
-    if data.bin_flag || ~isempty( data.bin )
-        if iscell( data.bin )
-            bin = data.bin{1};
-        else
-            bin = data.bin;
-        end
-    else
-        
-        ss = sum(~isnan(x1(:)));
-        
-        %ss = size( clist.data, 1) ;
 
-        %bin = round(sqrt(ss));
-        
-        bin = round(data.err^2*ss);
-        
-        bin = max( [min_bin_num, bin] ); 
-    end
-    
-    if numel( bin ) == 1
-        
-        num_bin = bin;
-        
-        
-        if data.log_flag(1)
-            x1 = log(x1);
-        end
-        
-        x1 = fixVals( x1 );
-        
-        max_x1 = max( x1);
-        min_x1 = min( x1);
-        
-        dx = max_x1-min_x1;
-        
-        if isempty( dx)
-            dx = 1;
-            max_x1 = 1;
-            min_x1 = 0;
-        end
-        
-        
-        num_bin = num_bin*mult;
-        bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
-        dx_vec(1) = dx/((num_bin-1));
-        
-        
-    else
-        dx_vec(1) = bin(2)-bin(1);
-    end
+function dx_min = intFindSmallest( x )
+
+dx_min = min(diff(sort(unique(x(:)))));
+
+if isempty( dx_min )
+    dx_min = 1;
+end
+
+
+end
+
+function x = intGetDataC( clist, data, ind )
+
+x = intGetData( clist, data, data.ind(ind), data.units(ind) );
+if data.log_flag(ind)
+    x = log(x);
+end
+x = fixVals( x );
+
+end
+
+
+
+
+function num_ = intChooseBin(clist, data, ind)
+
+del = 2;
+
+binS = intMakeDX( clist, data, 2, ind );
+x    = intGetDataC( clist, data, ind );
+
+dx_min = intFindSmallest( x );
+maxBinNum = min( [floor(binS.DX/dx_min),data.multi]);
+
+ln_vec = log(data.minBinNum):log(del):log(maxBinNum);
+n_vec  = round( exp(ln_vec) );
+
+num_n = numel(n_vec);
+
+if num_n == 0
+    num_ = data.multi;
 else
+    switcher = nan( [1,num_n] );
     
-    x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-    
-    if data.bin_flag || ~isempty( data.bin )
-        if iscell( data.bin )
-            bin = data.bin;
+    for ii = 1:num_n
+        num  = n_vec(ii);
+        binS = intMakeDX( clist, data, num, ind );
+        
+        y = hist( x, binS.xx );
+        
+        if false
+            delta_y = abs(diff(y));
+            dy      = sqrt( (y(2:end)+y(1:end-1))/2 );
         else
-            bin = {data.bin(1),data.bin(2)};
+            tmp = diff(y);
+            tmp = tmp([1,1:end,end]);
+            delta_y = abs(tmp(2:end)+tmp(1:end-1))/2;
+            dy      = sqrt( y );
         end
-    else
-        %ss = numel( x1 );
-        %ss = size( clist.data, 1) ;
-        ss = sum(~isnan(x1(:)));
         
-        bin = round(data.err*sqrt(ss));
-        bin = max( [min_bin_num, bin] );
-        
-        
-        bin = {bin, bin};
+        %switcher(ii) = mean( delta_y > 2*dy );
+        switcher(ii) = sum( y.*(delta_y > 2*dy))/sum(y);
     end
     
-    if numel( bin{1} ) == 1
-        
-        num_bin = bin{1};
-        
-        
-        
-        if data.log_flag(1)
-            x1 = log(x1);
+    
+    cutt = 0.5;
+    
+    ind_n = find( switcher < cutt, 1, 'first' ) - 1;
+    
+    if isempty( ind_n ) || ind_n < 1 || ind_n > num_n
+        if switcher(1) < cutt
+            ind_n = 1;
+            num_ = n_vec(ind_n);
+        else switcher(end) > cutt
+            num_ = maxBinNum;
+            ind_n = num_n;
         end
-        x1 = fixVals( x1 );
-        
-        max_x1 = max( x1);
-        min_x1 = min( x1);
-        
-        dx = max_x1-min_x1;
-        
-        if isempty( dx)
-            dx = 1;
-            max_x1 = 1;
-            min_x1 = 0;
-        end
-        
-        num_bin = mult*num_bin;
-        x1bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x1;
-        dx_vec(1) = dx/((num_bin-1));
-        
-        num_bin = bin{2};
-        
-        x2 = intGetData( clist, data, data.ind(2), data.units(2) );
-
-        if data.log_flag(2)
-            x2 = log(x2);
-        end
-        x2 = fixVals( x2 );
-        
-        max_x2 = max( x2);
-        min_x2 = min( x2);
-        
-        dx = max_x2-min_x2;
-        
-        if isempty( dx)
-            dx = 1;
-            max_x2 = 1;
-            min_x2 = 0;
-        end
-        
-        num_bin = mult*num_bin;
-        x2bin = (0:(num_bin-1))/((num_bin-1))*dx+min_x2;
-        dx_vec(2) = dx/((num_bin-1));
-        
-        bin = {x2bin,x1bin};
-    else
-        dx_vec(1) = bin{1}(2)-bin{1}(1);
-        dx_vec(2) = bin{2}(2)-bin{2}(1);
     end
     
+    num_ = n_vec(ind_n);
+end
 end
 
-end
 
+function rk_pix = intChooseRK(clist, data, ind)
+
+binS = intMakeDX( clist, data, data.multi, ind );
+x    = intGetDataC( clist, data, ind );
+
+dx_min = intFindSmallest( x );
+maxBinNum = min( [(binS.DX/dx_min),data.multi]);
+
+
+ln_vec = log(data.minBinNum):log(1.5):log(maxBinNum);
+n_vec  = round( exp(ln_vec) );
+rk_vec = data.multi./n_vec;
+
+num_n = numel(n_vec);
+
+if num_n == 0
+    rk_pix = 1;
+else
+    switcher = nan( [1,num_n] );
+    
+    for ii = 1:num_n
+        num  = n_vec(ii);
+        
+        y = hist( x, binS.xx );
+        [y,dy] = intConv1Dint( y, rk_vec(ii) );
+        
+        delta_y = rk_vec(ii)*abs(diff(y));
+        dy      = (dy(1:end-1)+dy(2:end))/2;
+        y_      = (y(2:end)+y(1:end-1))/2; 
+        
+        switcher(ii) =sum( y_.*(delta_y > 2*dy))/sum(y_);
+    end
+    
+    cutt = .5;
+    
+    ind_n = find( switcher < cutt, 1, 'first' ) - 1;
+    
+    if isempty( ind_n ) || ind_n < 1 || ind_n > num_n
+        if switcher(1) < cutt
+            ind_n = 1;
+        else switcher(end) > cutt
+            ind_n = num_n;
+        end
+    end
+    
+    rk_pix = rk_vec(ind_n)
+end
+end
 
 %% 
 function [x,flagger] = fixVals( x )
@@ -1772,7 +1825,6 @@ end
 %%
 function [data,h] = intShowHist2D( clist, data, name )
 
-bin = intMakeBins( clist, data, data.mult );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 x2 = intGetData( clist, data, data.ind(2), data.units(2) );
@@ -1789,7 +1841,7 @@ data.n = sum( flagger(:) );
 
 
 
-[y,xx] = hist3( [x2,x1], bin );
+[y,xx] = hist3( [x2,x1], {data.binS(2).xx,data.binS(1).xx} );
 
 if data.log_flag(3)
     y = log(y);
@@ -1843,7 +1895,6 @@ end
 %%
 function [data,h] = intShowKDE2D( clist, data, name )
 
-[bin,dx] = intMakeBins( clist, data, data.mult );
 
 x1 = intGetData( clist, data, data.ind(1), data.units(1) );
 x2 = intGetData( clist, data, data.ind(2), data.units(2) );
@@ -1858,6 +1909,8 @@ end
 [~,flagger] = fixVals( x1+x2 );
 data.n = sum( flagger(:) );
 
+bin = {data.binS(2).xx,data.binS(1).xx};
+dx  = [data.binS(2).dx,data.binS(1).dx];
 
 [y,xx] = hist3( [x2(flagger),x1(flagger)], bin );
 
@@ -1874,7 +1927,7 @@ if data.cond_flag
 end
 
 %y = intConv2Dadd( y, data, dx );
-y = intConv2Dadd( y, data, dx );
+y = intConv2D( y, data );
 
 if data.den_flag
     y = y./sum(y(:));
@@ -1934,21 +1987,11 @@ data.bin = bin;
 
 end
 
-function [yf] = intConv2D( y, data, dx )
+function [yf] = intConv2D( y, data )
 
-dx = dx(2:-1:1);
+rk = [data.binS(1).rk_pix,data.binS(2).rk_pix];
+rm = [data.binS(1).rm_pix,data.binS(2).rm_pix];
 
-if isempty( data.rk )
-    rk = 2*[data.mult,data.mult];
-else
-    rk = data.rk./dx;
-end
-
-if isempty( data.rm )
-    rm = [data.mult,data.mult];
-else
-    rm = data.rm./dx;
-end
 
 
 xx = -ceil(1.1*rm(1)):ceil(1.1*rm(1));
@@ -2025,6 +2068,19 @@ yf      = imfilter( y, fgaus, 0 );
 yf( minner==0) = 0;
 yf = yf;
 
+
+end
+
+
+function [yf,dyf] = intConv1Dint( y, rk )
+
+xx = -ceil(7*rk(1)):ceil(7*rk(1));
+R = sqrt((xx./rk(1)).^2);
+
+fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
+
+yf      = imfilter( y, fgaus, 0 );
+dyf     = sqrt(imfilter( y, fgaus.^2, 0 ));
 
 end
 
