@@ -1414,8 +1414,8 @@ n   = data.n;
 dy    = intDoError(y); 
 
 if data.den_flag
-    dx = diff(x);
-    dx = ([dx(1),dx]+[dx,dx(end)])/2;
+    dx = diff(x(1:2));
+    %dx = ([dx(1),dx]+[dx,dx(end)])/2;
     
     normer = 1./(dx*sum(y(:)));
     y = y*normer;
@@ -1571,7 +1571,9 @@ else
 end
 
 
-[yf,dyf] = intConv1D( y, data, dx );
+%[yf,dyf] = intConv1D( y, data, dx );
+[yf,dyf] = intConv1Dadd( y, data, dx );
+
 %dyf =  intDoError( yf );
 
 if data.den_flag
@@ -1871,7 +1873,8 @@ if data.cond_flag
    
 end
 
-y = intConv2D( y, data, dx );
+%y = intConv2Dadd( y, data, dx );
+y = intConv2Dadd( y, data, dx );
 
 if data.den_flag
     y = y./sum(y(:));
@@ -1975,26 +1978,128 @@ yf = yf;
 end
 
 
-function [yf,dyf] = intConv1D( y, data, dx )
+function [yf] = intConv2Dadd( y, data, dx )
+
+
+if isempty( data.rk ) || isempty( data.rm )
+    
+    [y1,~,rk1] = intConv1Dadd( sum(y,2), data, dx );
+    [y2,~,rk2] = intConv1Dadd( sum(y,1), data, dx );
+    
+    rk_ = [rk1,rk2];
+end
 
 if isempty( data.rk )
-    rk = 2*data.mult;
+    rk = rk_;
 else
     rk = data.rk./dx;
 end
 
+if isempty( data.rm )
+    rm = rk_;
+else
+    rm = data.rm./dx;
+end
+
+xx = -ceil(1.1*rm(1)):ceil(1.1*rm(1));
+yy = -ceil(1.1*rm(2)):ceil(1.1*rm(2));
+[X,Y] = meshgrid( xx,yy);
+R = sqrt((X./rm(1)).^2+(Y./rm(2)).^2);
+fdisk = double( R<=1 );
+
+%fdisk = fspecial( 'disk', rm  );
 
 xx = -ceil(7*rk(1)):ceil(7*rk(1));
-R = sqrt((xx./rk(1)).^2);
+yy = -ceil(7*rk(2)):ceil(7*rk(2));
+[X,Y] = meshgrid( xx,yy);
+R = sqrt((X./rk(1)).^2+(Y./rk(2)).^2);
 
-fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
+fgaus = exp( -R.^2/2 )/(2*pi*rk(1)*rk(2));
+
+minner = imfilter( y, fdisk, 0 );
 
 yf      = imfilter( y, fgaus, 0 );
-dyf     = sqrt(imfilter( y, fgaus.^2, 0 ));
 
 %yf = max( yf, minner );
 
+yf( minner==0) = 0;
+yf = yf;
+
+
 end
+
+function [yf,dyf] = intConv1D( y, data, dx )
+
+if isempty( data.rk )
+    [yf,dyf,rk] = intConv1Dadd( y, data, dx );
+else
+    rk = data.rk./dx;
+    
+    
+    
+    xx = -ceil(7*rk(1)):ceil(7*rk(1));
+    R = sqrt((xx./rk(1)).^2);
+    
+    fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
+    
+    yf      = imfilter( y, fgaus, 0 );
+    dyf     = sqrt(imfilter( y, fgaus.^2, 0 ));
+    
+    %yf = max( yf, minner );
+    
+end
+
+end
+%%
+
+function [yf,dyf,rk] = intConv1Dadd( y, data, dx )
+
+del = 1.5;
+
+ny = numel( y);
+nl = ceil(log(ny)/log(del));
+
+rk_vec = del.^((1:nl)-1);
+
+yf_vec  = nan( [nl,ny] );
+dyf_vec = yf_vec;
+
+for jj = 1:nl
+
+    rk = rk_vec(jj);
+    
+    xx = -ceil(7*rk(1)):ceil(7*rk(1));
+    R = sqrt((xx./rk(1)).^2);
+
+    fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
+
+    yf_vec(jj,:)      = imfilter( y, fgaus, 0 );
+    dyf_vec(jj,:)     = sqrt(imfilter( y, fgaus.^2, 0 ));
+end
+
+%dyf_vec(dyf_vec<1) = 1;
+
+dif_yf_vec = diff( yf_vec,1, 2 );
+dif_yf_vec = dif_yf_vec(:,[1,1:end,end] );
+dif_yf_vec = (dif_yf_vec(:,2:end)+dif_yf_vec(:,1:end-1))/2;
+dif_yf_vec = abs(dif_yf_vec.*(rk_vec'*ones([1,numel(y)])));
+
+
+switcher = (dif_yf_vec-2*dyf_vec)>0;
+switcher = mean( switcher,2);
+
+ind = find( switcher< 0.5, 1, 'last' )+1;
+
+if isempty( ind) || ind>nl
+    ind = nl;
+end
+
+yf  = yf_vec(ind,:);
+dyf = dyf_vec(ind,:);
+rk = rk_vec(ind);
+
+end
+
 
 %%
 function [data,h] = intShowDot( clist, data, name )
