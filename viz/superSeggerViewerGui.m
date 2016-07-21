@@ -1439,7 +1439,7 @@ if ~isempty(handles.FLAGS)
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
                 handles.contents, ii, handles.num_im, handles.clist, handles.FLAGS);
             showSeggerImage( data_c, data_r, data_f, handles.FLAGS, handles.clist, handles.CONST, handles.axes1);
-            drawnow;
+            drawnow;           
             mov(counter) = getframe;
             counter = counter + 1;
             handles.message.String = ['Frame number: ', num2str(ii)];
