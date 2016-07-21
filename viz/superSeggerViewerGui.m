@@ -1433,8 +1433,7 @@ if ~isempty(handles.FLAGS)
     if ~isempty(startFr)
         mov.cdata = [];
         mov.colormap = [];
-        
-        counter = 1
+        counter = 1;
         for ii = round(startFr:skip: endFr)
             delete(get(handles.axes1, 'Children'))
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...

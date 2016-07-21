@@ -82,7 +82,7 @@ settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
 settings.numRegsInfo = 21;
-
+settings.cropTime = 0;
 setWorkingDirectory(handles.directory.String, 1, 0);
 
 updateUI(handles);
@@ -202,15 +202,18 @@ settings.errorHandle = errordlg(message);
 
 function del_areas_Callback(hObject, eventdata, handles)
 global settings;
-
-if settings.dataSegmented
-    settings.axisFlag = 3;
-    settings.firstPosition = [];
-    updateUI(handles);
+if  hObject.Value
+    if settings.dataSegmented
+        settings.cropTime = 1;
+        settings.firstPosition = [];
+        updateUI(handles);
+        hObject.Value
+    else
+        warning(['Plese segment files first']);
+    end
 else
-    warning(['Plese segment files first']);
+    settings.cropTime = 0;
 end
-
 function del_reg_Callback(hObject, eventdata, handles)
 global settings
 if settings.dataSegmented
@@ -400,10 +403,7 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
-if settings.InCropMode
-    uiresume()
-    settings.InCropMode = 0;
-end
+
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -432,20 +432,7 @@ if settings.dataSegmented
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
-    elseif settings.axisFlag == 3
-        % deleting areas in square
-        maskFigure()
-        %backer = ag(settings.currentData.phase);
-        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-       
-        if numel(handles.viewport_train.Children) > 0
-            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-        end
-        
-        if numel(settings.firstPosition) > 0
-            hold on;
-            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
-        end
+   
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -471,11 +458,28 @@ elseif settings.imagesLoaded
     imshow(settings.currentData, []);
 end
 
+
+if settings.cropTime
+    % deleting areas in square
+    %maskFigure()
+    %backer = ag(settings.currentData.phase);
+    %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+    
+    if numel(handles.viewport_train.Children) > 0
+        set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+    end
+    
+    if numel(settings.firstPosition) > 0
+        hold on;
+        plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+    end
+end
+
 handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
 handles.mask_radio.Value = 0;
-if settings.axisFlag == 5 || settings.axisFlag == 3 || settings.axisFlag == 6
+if settings.axisFlag == 5 ||  settings.axisFlag == 6
     handles.mask_radio.Value = 1;
 elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
@@ -747,7 +751,19 @@ function imageButtonDownFcn(hObject, eventdata, handles)
 
 global settings;
 
-if settings.axisFlag == 1 || settings.axisFlag == 2
+if settings.cropTime
+    if numel(settings.firstPosition) == 0
+        settings.firstPosition = eventdata.IntersectionPoint;
+    else
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
+        drawnow;
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
+        saveData();        
+        settings.firstPosition = [];
+    end
+
+elseif settings.axisFlag == 1 || settings.axisFlag == 2
     FLAGS.im_flag = settings.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
@@ -760,17 +776,7 @@ if settings.axisFlag == 1 || settings.axisFlag == 2
     saveData();
     
 
-elseif settings.axisFlag == 3
-    if numel(settings.firstPosition) == 0
-        settings.firstPosition = eventdata.IntersectionPoint;
-    else
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
-        drawnow;
-        addUndo();
-        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
-        saveData();        
-        settings.firstPosition = [];
-    end
+
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       

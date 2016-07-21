@@ -292,7 +292,7 @@ end
 end
 
 
-function [hh,hh2,data] = intDoDraw( clist, list, time, death, stat0, starter,...
+function [hh,hh2,data,cc] = intDoDraw( clist, list, time, death, stat0, starter,...
     hh, hh2, error, gated, data  )
 
 %% Show the lineages
@@ -474,17 +474,32 @@ flagger = ismember( clist.data(:,1), list );
 lengths = squeeze( clist.data3D(flagger,2,:) );
 
 figure(4);
-semilogy( lengths' );
-hold on;
 
+n_ii = numel(list);
+for ii = 1:n_ii
+    ll = lengths(ii,:);
+
+    h = semilogy( ll );
+    hold on;
+    
+    cc = h.Color;
+    indf = find(~isnan(ll),1,'first');
+    indl = find(~isnan(ll),1,'last');
+
+    plot( indf, ll(indf), '.', 'Color', cc );
+    plot( indl, ll(indl), 'x', 'Color', cc );
+end
 
 lsum = nansum(lengths,1);
 figure(5);
 semilogy( lsum );
 hold on;
 
+
+ind = find(lsum>0,1,'first');
+
 figure(6);
-semilogy( lsum/lsum(1),':' );
+semilogy( lsum/lsum(ind),':' );
 hold on;
 
 
