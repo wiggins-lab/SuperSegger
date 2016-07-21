@@ -86,7 +86,6 @@ function [clist, out] = gateTool(varargin)
 %                 numbers for the two dimensions. If it is a cell array, it
 %                 is assumed to be two vectors of centers.
 %
-% 'e', rel_er   : set bin size to get approximate relative error rel_er 
 %
 % 'err'         : show error in 1D histograms and kde's
 %
@@ -262,8 +261,6 @@ data.multi      = 500;
 
 data.im = {};
 
-data.err        = 0.05; % Target error fraction for histograms
-
 
 data.cond_flag  = false;
 
@@ -350,19 +347,19 @@ else
                 end
                 
             
-            case 'e'
-                
-                counter = counter + 1;
-                if counter > nargin
-                    error( 'Not enough arguments for target error.' )
-                end
-                next_arg = varargin{counter};
-                
-                if isnumeric( next_arg )
-                    data.err = next_arg; 
-                else
-                    error( 'Estimated error must be a double.' );
-                end
+%             case 'e'
+%                 
+%                 counter = counter + 1;
+%                 if counter > nargin
+%                     error( 'Not enough arguments for target error.' )
+%                 end
+%                 next_arg = varargin{counter};
+%                 
+%                 if isnumeric( next_arg )
+%                     data.err = next_arg; 
+%                 else
+%                     error( 'Estimated error must be a double.' );
+%                 end
                 
             case 'newfig'
                 data.newfig_flag = true;
@@ -773,7 +770,6 @@ else
   
 end
 
-
 if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
     if (numel( data.ind ) == 2)
@@ -791,15 +787,13 @@ if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
 end
 
-
-
 if numel( data.bin ) == 1 && numel( data.ind ) == 2
     error( 'Dimension of bin must match ind.' );
 end
 
 end
 
-%%
+%% run gate too  on all clists in a clist
 function clist = intDoAll( clist, comm_, arg_ )
 
 if ~exist( 'arg_', 'var' )
@@ -816,7 +810,6 @@ end
 
 %% Strip out data not used.
 function data = intDoStrip( data )
-
 
 if data.array_flag
     data.clist = intDoAll( data.clist, 'strip' );
@@ -874,13 +867,9 @@ else
     end
 end
 
-
-
 end
 
-
-
-%%
+%% Add another gate. Interactive if info is not specified at the command line
 function data = intMakeGate( data, arg_ )
 
 % if you pass the gate structure whole just put it in the field
@@ -1064,7 +1053,7 @@ else
 end
 end
 
-%%
+%% get the number of gate and ungated cells...not used.
 function [out] = intGetCellNum( clist )
 clist = gateTool( clist, 'merge', 'skip3d' );
 
@@ -1078,7 +1067,7 @@ out = [numG,num];
 end
 
 
-%% 
+%% Show the gate info on the plot
 function [N,N0] = intShowGate( clist, gate_var, gate_num )
 
 if ~exist( 'gate_num', 'var' )
@@ -1134,8 +1123,7 @@ else
 end
 
 
-%% make bins
-
+% make bins
 if data0.hist_flag || (numel( data0.ind )==1) || data0.kde_flag
     data1 = data;
     data1.clist = intDoMerge( data1.clist, [], ~data.time_flag );
@@ -1143,8 +1131,7 @@ if data0.hist_flag || (numel( data0.ind )==1) || data0.kde_flag
     data = intMakeBins( data1.clist, data1  );
 end
 
-%%
-
+% Int show function: Take care of all top level operations
 data = intIntShow( data.clist, data );
 
 nf = max( [1, numel( data.fig_ptr )] );
@@ -1177,8 +1164,6 @@ for jj = 1:nf
                 data.im = 1-data.im;
             end
         end
-        
-        
         
         if data.log_flag(1) 
             xx2 = log10(xx2);
@@ -1225,7 +1210,7 @@ for jj = 1:nf
     end
     
     
-    %% set the scale on the axes
+    % set the scale on the axes
     if data.log_flag(1)
          if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
             set(gca,'XScale','log' );
@@ -1238,7 +1223,7 @@ for jj = 1:nf
         end
     end
     
-    %% set the labels on the axis.
+    % set the labels on the axis.
     def = intGetDef( data.clist );
     def3d = intGetDef3D( data.clist );
     
@@ -1297,7 +1282,8 @@ if data.dot_flag || (numel(data.ind)==1)
 end
 
 end
-%%
+
+%% internal show data fuction 
 function data = intIntShow( clist, data )
 
 
@@ -1332,8 +1318,7 @@ end
 end
 
 
-%%
-
+%% internal show data fuction 
 function data = intIntIntShow( clist, data )
 
 if isfield( clist, 'name' );
@@ -1390,21 +1375,11 @@ end
 
 end
 
-
-
-%%
+%% Show 1D histogram
 function [data,h] = intShowHist1D( clist, data, name )
 
-
-x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-x10 = x1;
-if data.log_flag(1)
-    x1 = log(x1);
-end
-[x1,flagger] = fixVals( x1 );
-x10 = fixVals( x10 );
-data.n = sum( flagger(:) );
-n   = data.n;
+[x1,x0,flagger,n] = intGetDataC( clist, data,1 );
+data.n = n;
 
 [y,x] = hist( x1, data.binS.xx );
 dy    = intDoError(y); 
@@ -1450,8 +1425,7 @@ end
 
 end
 
-
-
+%% Do statistical analysis.
 function intDoStatAn( x1, x, y, n, data, cc, name )
 
    hold on;
@@ -1540,20 +1514,11 @@ y(y<0) = 0;
 
 end
 
-%%
+%% show 1D kde
 function [data,h] = intShowKDE1D( clist, data, name )
 
-
-x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-x10 = x1;
-if data.log_flag(1)
-    x1 = log(x1);
-end
-[x1,flagger] = fixVals( x1 );
-x10 = fixVals( x10 );
-
-data.n = sum( flagger(:) );
-n = data.n;
+[x1,x0,flagger,n] = intGetDataC( clist, data, 1 );
+data.n = n;
 
 bin = data.binS(1).xx;
 dx  = data.binS(1).dx;
@@ -1607,7 +1572,7 @@ end
 
 end
 
-%%
+%% Make the bin sizes if they aren't specified
 function data = intMakeBins( clist, data )
 
 for ii = 1:numel( data.ind )
@@ -1644,6 +1609,7 @@ for ii = 1:numel( data.ind )
 end
 end
 
+% Make structures for binning the data or determining the kernel radius
 function binS = intMakeDX( clist, data, num, ind )
 x = intGetData( clist, data, data.ind(ind), data.units(ind) );
 if data.log_flag(ind)
@@ -1670,12 +1636,10 @@ end
     binS.x_max = x_max;
     binS.x_min = x_min;
     binS.x     = x;
-    
-
 end
 
 
-
+% find the fundamental resolution of the data.
 function dx_min = intFindSmallest( x )
 
 dx_min = min(diff(sort(unique(x(:)))));
@@ -1687,19 +1651,7 @@ end
 
 end
 
-function x = intGetDataC( clist, data, ind )
-
-x = intGetData( clist, data, data.ind(ind), data.units(ind) );
-if data.log_flag(ind)
-    x = log(x);
-end
-x = fixVals( x );
-
-end
-
-
-
-
+%% Make automatic choice of bin size.
 function num_ = intChooseBin(clist, data, ind)
 
 del = 2;
@@ -1759,7 +1711,7 @@ else
 end
 end
 
-
+%% Make automatic selection of kernel radius for kde
 function rk_pix = intChooseRK(clist, data, ind)
 
 binS = intMakeDX( clist, data, data.multi, ind );
@@ -1805,41 +1757,25 @@ else
         end
     end
     
-    rk_pix = rk_vec(ind_n)
+    rk_pix = rk_vec(ind_n);
 end
 end
 
-%% 
+%% Strip out imaginary, nan and inf values
 function [x,flagger] = fixVals( x )
 
-
 flagger = ~( isinf( x ) + isnan( x) + imag( x ) );
-
 x = x(flagger);
 
-
 end
 
-
-
-%%
+%% Make 2D Hist
 function [data,h] = intShowHist2D( clist, data, name )
 
-
-x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-x2 = intGetData( clist, data, data.ind(2), data.units(2) );
-
-if data.log_flag(1)
-   x1 = log(x1); 
-end
-
-if data.log_flag(2)
-    x2 = log( x2 );
-end
-[~,flagger] = fixVals( x1+x2 );
-data.n = sum( flagger(:) );
-
-
+[x_vec,x0,flagger,n] = intGetDataC( clist, data, [1,2] );
+data.n = n;
+x1 = x_vec(:,1);
+x2 = x_vec(:,2);
 
 [y,xx] = hist3( [x2,x1], {data.binS(2).xx,data.binS(1).xx} );
 
@@ -1851,7 +1787,6 @@ end
 
 
 hold on;
-
 if isfield( clist, 'color' )
     cc = clist.color;
     h = plot( nan, nan, '.', 'color', cc);
@@ -1859,7 +1794,6 @@ if isfield( clist, 'color' )
 else
     h = plot( nan, nan, '.');
 end
-
 
 cc = h.Color;
 
@@ -1869,9 +1803,7 @@ end
 
 
 
-if (size( data.clist,2 ) > 1) && ~data.newfig_flag
-
-    
+if (size( data.clist,2 ) > 1) && ~data.newfig_flag    
     dd = y/max(y(:));
     
     im = cat(3, dd*cc(1), dd*cc(2), dd*cc(3) );
@@ -1892,27 +1824,18 @@ data.xx = xx;
 
 end
 
-%%
+%% Make 2D KDE
 function [data,h] = intShowKDE2D( clist, data, name )
 
-
-x1 = intGetData( clist, data, data.ind(1), data.units(1) );
-x2 = intGetData( clist, data, data.ind(2), data.units(2) );
-
-if data.log_flag(1)
-   x1 = log(x1); 
-end
-
-if data.log_flag(2)
-    x2 = log( x2 );
-end
-[~,flagger] = fixVals( x1+x2 );
-data.n = sum( flagger(:) );
+[x_vec,x0,flagger,n] = intGetDataC( clist, data, [1,2] );
+data.n = n;
+x1 = x_vec(:,1);
+x2 = x_vec(:,2);
 
 bin = {data.binS(2).xx,data.binS(1).xx};
 dx  = [data.binS(2).dx,data.binS(1).dx];
 
-[y,xx] = hist3( [x2(flagger),x1(flagger)], bin );
+[y,xx] = hist3( [x2,x1], bin );
 
 
 if data.cond_flag
@@ -1987,6 +1910,7 @@ data.bin = bin;
 
 end
 
+%% Do gaussian convolution in 2D for KDE
 function [yf] = intConv2D( y, data )
 
 rk = [data.binS(1).rk_pix,data.binS(2).rk_pix];
@@ -2020,58 +1944,7 @@ yf = yf;
 
 end
 
-
-function [yf] = intConv2Dadd( y, data, dx )
-
-
-if isempty( data.rk ) || isempty( data.rm )
-    
-    [y1,~,rk1] = intConv1Dadd( sum(y,2), data, dx );
-    [y2,~,rk2] = intConv1Dadd( sum(y,1), data, dx );
-    
-    rk_ = [rk1,rk2];
-end
-
-if isempty( data.rk )
-    rk = rk_;
-else
-    rk = data.rk./dx;
-end
-
-if isempty( data.rm )
-    rm = rk_;
-else
-    rm = data.rm./dx;
-end
-
-xx = -ceil(1.1*rm(1)):ceil(1.1*rm(1));
-yy = -ceil(1.1*rm(2)):ceil(1.1*rm(2));
-[X,Y] = meshgrid( xx,yy);
-R = sqrt((X./rm(1)).^2+(Y./rm(2)).^2);
-fdisk = double( R<=1 );
-
-%fdisk = fspecial( 'disk', rm  );
-
-xx = -ceil(7*rk(1)):ceil(7*rk(1));
-yy = -ceil(7*rk(2)):ceil(7*rk(2));
-[X,Y] = meshgrid( xx,yy);
-R = sqrt((X./rk(1)).^2+(Y./rk(2)).^2);
-
-fgaus = exp( -R.^2/2 )/(2*pi*rk(1)*rk(2));
-
-minner = imfilter( y, fdisk, 0 );
-
-yf      = imfilter( y, fgaus, 0 );
-
-%yf = max( yf, minner );
-
-yf( minner==0) = 0;
-yf = yf;
-
-
-end
-
-
+%% Internal KDE convolution function
 function [yf,dyf] = intConv1Dint( y, rk )
 
 xx = -ceil(7*rk(1)):ceil(7*rk(1));
@@ -2106,58 +1979,8 @@ else
 end
 
 end
-%%
 
-function [yf,dyf,rk] = intConv1Dadd( y, data, dx )
-
-del = 1.5;
-
-ny = numel( y);
-nl = ceil(log(ny)/log(del));
-
-rk_vec = del.^((1:nl)-1);
-
-yf_vec  = nan( [nl,ny] );
-dyf_vec = yf_vec;
-
-for jj = 1:nl
-
-    rk = rk_vec(jj);
-    
-    xx = -ceil(7*rk(1)):ceil(7*rk(1));
-    R = sqrt((xx./rk(1)).^2);
-
-    fgaus = exp( -R.^2/2 )/sqrt(2*pi*rk(1)^2);
-
-    yf_vec(jj,:)      = imfilter( y, fgaus, 0 );
-    dyf_vec(jj,:)     = sqrt(imfilter( y, fgaus.^2, 0 ));
-end
-
-%dyf_vec(dyf_vec<1) = 1;
-
-dif_yf_vec = diff( yf_vec,1, 2 );
-dif_yf_vec = dif_yf_vec(:,[1,1:end,end] );
-dif_yf_vec = (dif_yf_vec(:,2:end)+dif_yf_vec(:,1:end-1))/2;
-dif_yf_vec = abs(dif_yf_vec.*(rk_vec'*ones([1,numel(y)])));
-
-
-switcher = (dif_yf_vec-2*dyf_vec)>0;
-switcher = mean( switcher,2);
-
-ind = find( switcher< 0.5, 1, 'last' )+1;
-
-if isempty( ind) || ind>nl
-    ind = nl;
-end
-
-yf  = yf_vec(ind,:);
-dyf = dyf_vec(ind,:);
-rk = rk_vec(ind);
-
-end
-
-
-%%
+%% Show do plot in 2D
 function [data,h] = intShowDot( clist, data, name )
 
     hold on;
@@ -2215,10 +2038,7 @@ end
 
 end
 
-
-
-
-%%
+%% Get field definition from the structure
 function def = intGetDef( clist );
 
 if isstruct( clist )
@@ -2232,7 +2052,7 @@ end
 
 end
 
-%%
+%% Get 3d field definition from the structure
 function def = intGetDef3D( clist );
 
 if isstruct( clist )
@@ -2250,8 +2070,7 @@ end
 
 end
 
-%%
-
+%% Fix colors. From internet.
 function outColor = convert_color(inColor)
 
 charValues = 'rgbcmywk'.';  %#'
@@ -2284,12 +2103,10 @@ else  %# Input is an invalid type
         'Input must be a character or numeric array.');
     
 end
-
-
 end
 
 
-%%
+%% intDoMerge merges clists into a single list
 function clistM = intDoMerge( clist, ID_ind, skip3D )
 
 if ~exist( 'skip3D', 'var' )
@@ -2349,7 +2166,7 @@ end
 end
 
 
-%%
+%% Merge structure with different fields
 function g12 = intMergeStruct( g1, g2)
 
 ng1 = numel(g1);
@@ -2387,50 +2204,7 @@ for ii = (ng1+ng2):-1:1
 end
 end
 
-%%
-function [data,h] = intTime( clist, data )
-
-hold on;
-
-tmp = squeeze(clist.data3D(:,data.ind,:));
-
-
-if isfield( clist, 'color' )
-    cc = clist.color;
-    h = plot( nan,nan, '.', 'color', cc );
-else
-    h = plot( nan,nan, '.' );
-    cc = h.Color;
-end
-
-nc = size( tmp,1 );
-tt = 1:size(tmp,2);
-
-
-if ischar( cc )
-    cc = convert_color(cc);
-end
-
-for ii = 1:nc
-
-    hh = plot( nan, nan, '.' );
-    cc_ii = hh.Color;
-    cc_ii = (cc_ii+cc)/2;
-    
-    plot( tt, tmp(ii,:), 'color', cc_ii );
-
-    start_ind = find( ~isnan( tmp(ii,:) ), 1, 'first' );
-    end_ind   = find( ~isnan( tmp(ii,:) ), 1, 'last' );
-
-    plot( tt(start_ind), tmp(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
-    plot( tt(end_ind  ), tmp(ii,end_ind  ), 'x','MarkerSize', 10, 'color', cc_ii );
-end
-
-end
-
-
-%%
-
+%% Load clist from file
 function clist = intLoadClist( dirname, data )
 
 drill_flag = data.drill_flag;
@@ -2451,9 +2225,7 @@ if exist( dirname, 'file' ) == 2
     
 else
     dirname = fixDir( dirname );
-    
-    
-    
+
     if ~exist( dirname, 'dir' )
         error( ['Directory ', dirname, 'does not exist.' ] );
     else
@@ -2496,7 +2268,7 @@ else
 end
 end
 
-
+% recursive loading of clist from directory.
 function [clist,count] = intRecLoad( clist, dirname, count )
 
 dirname = fixDir( dirname );
@@ -2529,8 +2301,7 @@ end
 
 end
 
-
-%%
+%% squeeze all clists into a single column
 function clistS = intSqueeze( varargin )
 
 if nargin == 1
@@ -2555,7 +2326,7 @@ elseif nargin == 2
 end
 end
 
-%%
+%% expand all clists into a row.
 function clistS = intExpand( varargin )
 
 if nargin == 1
@@ -2580,7 +2351,7 @@ elseif nargin == 2
 end
 end
 
-%%
+%% Get data to return at the command line
 function output = intGet( clist, g_ind )
 
 output = [];
@@ -2596,7 +2367,7 @@ end
 
 end
 
-%%
+%% get 3d data out of the structure to return at the command line
 function output = intGet3D( clist, g3d_ind )
 
 output = [];
@@ -2612,7 +2383,7 @@ end
 
 end
 
-%%
+%% Get data out of the structures
 function x = intGetData( clist, data, ind, units )
 
 if ~exist( 'units', 'var' )
@@ -2632,6 +2403,38 @@ x = units*x;
 
 end
 
+%% Get data out of the structures
+function [x,x0,flagger,n] = intGetDataC( clist, data, wind )
+
+tmp = intGetData( clist, data, data.ind(wind(1)), data.units(wind(1)) );
+
+n_ind = numel( wind );
+
+x  = nan( [numel(tmp),n_ind] );
+x0 = nan( [numel(tmp),n_ind] );
+
+for ii = 1:n_ind
+    tmp = intGetData( clist, data, data.ind(wind(ii)), data.units(wind(ii)) );
+    
+    x0(:,ii) = tmp;
+
+    if data.log_flag(wind(ii))
+        tmp = log(tmp);
+    end
+    
+    x(:,ii) = tmp;
+end
+
+[~,flagger] = fixVals( sum(x,2) );
+
+x  = x(flagger,:);
+x0 = x0(flagger,:);
+
+n= sum(flagger);
+end
+
+
+%% Gate the 3d data
 function x = intApplyGate3d( x, clist )
 
 ss     = size(clist.data3D);
@@ -2657,7 +2460,7 @@ x = x(inflag);
 
 end
 
-%%
+%% Add time fields to 3d data structure 
 function clist = intDoAddT( clist )
 
 if iscell( clist )
@@ -2689,7 +2492,7 @@ end
 
 end
 
-%%
+%% Clear gates
 function clist = intClear( clist, ind )
 
 if iscell( clist )
@@ -2704,10 +2507,7 @@ end
 
 end
 
-
-
-
-%%
+%% output csv and xls files
 function intcsv( clist, data );
 
 
@@ -2751,8 +2551,7 @@ end
 
 end
 
-
-%%
+%% crappy csv output written due to problems with matlabs implementation
 function csvwrite2( filename, data )
 
 
