@@ -793,7 +793,8 @@ end
 function plot_two_clists_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     setappdata(0, 'clist', handles.clist);
-    plot2ClistsGui();
+    [handles.clist] = plot2ClistsGui();
+    updateImage(hObject, handles);
 end
 
 % Link options
