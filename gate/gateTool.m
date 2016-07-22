@@ -1,10 +1,10 @@
 function [clist, out] = gateTool(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
-% GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
-% 
+% GATETOOL( [clist,clist cell array], [command string], [argument], ... )
+%
 % clist must be (i) a clist struct or (ii) a cell array of clists or (iii)
-% a data directory, xy1 directory or a clist file name. 
+% a data directory, xy1 directory or a clist file name.
 %
 %  If there are no arguments specified, the 'strip' command is run
 %
@@ -13,17 +13,17 @@ function [clist, out] = gateTool(varargin)
 % 'merge'      : Merge all clist input into a single output clist (no
 %                arguments accepted)
 %
-% 'name', str  : Add name in str to all input clists as a label                 
+% 'name', str  : Add name in str to all input clists as a label
 %
 % 'color', cc  : Set color cc for all clists
 %
-% 'strip'      : Remove all un-gated cells (no arguments)           
+% 'strip'      : Remove all un-gated cells (no arguments)
 %
-% 'make', ind  : Gate on indices in ind. Specify either 1 or 2 as a vector 
-%                index names are stored in def and can be view by running 
-%                the def command. If the ind is a structure it assumes it 
-%                is a preformed gate and adds it to the gate array in all 
-%                clists. Any gating is performed on all clists input.  
+% 'make', ind  : Gate on indices in ind. Specify either 1 or 2 as a vector
+%                index names are stored in def and can be view by running
+%                the def command. If the ind is a structure it assumes it
+%                is a preformed gate and adds it to the gate array in all
+%                clists. Any gating is performed on all clists input.
 %
 % 'squeeze'     : make a clist vertical so all entries are treated as
 %                 identifcal conditions.
@@ -37,17 +37,17 @@ function [clist, out] = gateTool(varargin)
 % 'add3d' data, name : add a field (name) to the clist data with values
 %                 (data)
 %
-% 'get', index  : gets data from data column index  
+% 'get', index  : gets data from data column index
 %%
 % 'getgate', index : gets the indexed gate.
 %
 %Visualization commands:
 %
-% 'show', ind   : This command will make a figure for viewing without 
-%                 modifying the clist. ind is either and index or pair of 
-%                 indices specifying what is to be visualized. If no ind is 
-%                 passed then all gates are displayed on a single clist 
-%                 input         
+% 'show', ind   : This command will make a figure for viewing without
+%                 modifying the clist. ind is either and index or pair of
+%                 indices specifying what is to be visualized. If no ind is
+%                 passed then all gates are displayed on a single clist
+%                 input
 %
 % 'kde'         : Make either a 1 or 2D KDE (depending on dimension of ind)
 %                 'show' must be called as well.
@@ -56,12 +56,12 @@ function [clist, out] = gateTool(varargin)
 %                 'show' must be called as well.
 %
 % 'hist'        : Make a 1 or 2D histogram (depending on dimension of ind)
-%                 'show' must be called as well.   
-%           
-% 'dot'         : Make a dot plot. Dim of ind must equal 2.
-%                 'show' must be called as well.   
+%                 'show' must be called as well.
 %
-% 'log', axes   : Set of axes to set with log scales. axes = [1,2,3] will 
+% 'dot'         : Make a dot plot. Dim of ind must equal 2.
+%                 'show' must be called as well.
+%
+% 'log', axes   : Set of axes to set with log scales. axes = [1,2,3] will
 %                 set x, y and color axis to have log scale.
 %
 % 'den'         : Normalize KDE and hist like a probability density
@@ -72,9 +72,9 @@ function [clist, out] = gateTool(varargin)
 %
 % 'rk', rk      : radius of the gaussian kernel for KDE
 %
-% 'rm', rm      : radius of the point mask for KDE              
+% 'rm', rm      : radius of the point mask for KDE
 %
-% 'inv'         : invert 2D hist/KDE image for printing 
+% 'inv'         : invert 2D hist/KDE image for printing
 %
 % 'mult', mult   : set the resolution for the KDE. Increase res by a factor
 %                 of mult.
@@ -270,7 +270,7 @@ if nargin == 0
     error( 'gate must have at least one argument (a clist)' );
 else
     next_arg = varargin{1};
-        
+    
     if ischar( next_arg )
         
         if any(strcmp( 'drill',varargin ))
@@ -343,23 +343,23 @@ else
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg )
-                    data.mult = next_arg; 
+                    data.mult = next_arg;
                 end
                 
-            
-%             case 'e'
-%                 
-%                 counter = counter + 1;
-%                 if counter > nargin
-%                     error( 'Not enough arguments for target error.' )
-%                 end
-%                 next_arg = varargin{counter};
-%                 
-%                 if isnumeric( next_arg )
-%                     data.err = next_arg; 
-%                 else
-%                     error( 'Estimated error must be a double.' );
-%                 end
+                
+                %             case 'e'
+                %
+                %                 counter = counter + 1;
+                %                 if counter > nargin
+                %                     error( 'Not enough arguments for target error.' )
+                %                 end
+                %                 next_arg = varargin{counter};
+                %
+                %                 if isnumeric( next_arg )
+                %                     data.err = next_arg;
+                %                 else
+                %                     error( 'Estimated error must be a double.' );
+                %                 end
                 
             case 'newfig'
                 data.newfig_flag = true;
@@ -367,7 +367,7 @@ else
             case 'getgate'
                 
                 
-                counter = counter + 1;                
+                counter = counter + 1;
                 if counter > nargin
                     error( 'Need to specify which clist.' );
                 end
@@ -375,35 +375,35 @@ else
                 next_arg = varargin{counter};
                 if isnumeric( next_arg ) % if numeic set the ind's to log
                     data.which_gate = next_arg;
-                     
-                     if numel(data.clist) ~= 1 || ~isstruct(data.clist)
+                    
+                    if numel(data.clist) ~= 1 || ~isstruct(data.clist)
                         error('Get gate only works with a single clist');
-                     end
-                         
-                     data.get_gate_flag = true;
+                    end
+                    
+                    data.get_gate_flag = true;
                 else
-                     error( 'getGate needs a numeric argument .' );
+                    error( 'getGate needs a numeric argument .' );
                 end
-                        
+                
                 
             case 'clear'
-
-                counter = counter + 1;                
+                
+                counter = counter + 1;
                 if counter > nargin
                     cind = [];
                 else
                     cind = [];
                     next_arg = varargin{counter};
-                     if isnumeric( next_arg ) % if numeic set the ind's to log
+                    if isnumeric( next_arg ) % if numeic set the ind's to log
                         cind = next_arg;
                         
                     else % if there is no numeric ind's t
-                        counter = counter - 1;      
+                        counter = counter - 1;
                     end
                 end
                 
                 data.clist = intClear( data.clist, cind );
-
+                
             case {'xls','csv'}
                 counter = counter + 1;
                 if counter > nargin
@@ -430,7 +430,7 @@ else
                     case 'csv'
                         data.which_export_flag = 1;
                 end
-                        
+                
                 data.export_flag = true;
                 
             case 'save'
@@ -451,10 +451,10 @@ else
                 else
                     save( filename,'-v7.3','clist' );
                 end
-        
-           
                 
-            
+                
+                
+                
             case 'units'
                 counter = counter + 1;
                 if counter > nargin
@@ -464,16 +464,16 @@ else
                 if ~isnumeric( next_arg )
                     error( 'units must be scalar or vector.' );
                 else
-                    data.units =  next_arg;   
+                    data.units =  next_arg;
                 end
                 
                 
             case 'add'
                 
                 if numel( data.clist ) ~= 1
-                    error( 'You can only add a field to a clist structure, not a cell array' );     
+                    error( 'You can only add a field to a clist structure, not a cell array' );
                 end
-               
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -513,11 +513,11 @@ else
                 
             case 'add3d'
                 
-                         
+                
                 if numel( data.clist ) ~= 1
-                    error( 'You can only add a field to a clist structure, not a cell array' );     
+                    error( 'You can only add a field to a clist structure, not a cell array' );
                 end
-               
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -534,7 +534,7 @@ else
                 tmp_data = next_arg;
                 
                 ss = size(data.clist.data3D);
-                 
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -553,8 +553,8 @@ else
                 
                 disp( ['Adding field ',field_name] );
                 
-
-            case 'add3dt'               
+                
+            case 'add3dt'
                 data.clist = intDoAddT( data.clist );
             case 'trace'
                 data.trace_flag = true;
@@ -572,7 +572,7 @@ else
                 end
                 
                 data.g_ind = next_arg;
-    
+                
                 
             case 'def'
                 disp( intGetDef( data.clist )' );
@@ -585,18 +585,18 @@ else
             case 'no clear' % set the names
                 data.noclear_flag = true;
             case 'kde'
-                data.kde_flag = true; 
+                data.kde_flag = true;
                 
             case 'rk' % kernal radius
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg ) % if numeic set the ind's to log
-                    data.rk = next_arg;                
+                    data.rk = next_arg;
                 else % if there is no numeric ind's turn all to log
                     error( 'KDE kernal radius must be a double' );
                 end
-            case 'rm'              
+            case 'rm'
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
@@ -610,15 +610,15 @@ else
             case 'inv'
                 data.inv_flag = true;
             case 'res'
-                 counter = counter + 1;
+                counter = counter + 1;
                 next_arg = varargin{counter};
                 
-                 if isnumeric( next_arg ) % if numeic set the ind's to log
+                if isnumeric( next_arg ) % if numeic set the ind's to log
                     data.mult = next_arg;
-
-                 else % if there is no numeric ind's turn all to log
+                    
+                else % if there is no numeric ind's turn all to log
                     error( 'Resolution must be a double.' );
-                 end
+                end
                 
             case 'squeeze'
                 
@@ -736,10 +736,10 @@ else
             case 'stat'
                 data.stat_flag = true;
                 
-             case 'dothist'
+            case 'dothist'
                 
                 data.dothist_flag = true;
-                    
+                
             case 'dot'
                 
                 data.dot_flag = true;
@@ -767,7 +767,7 @@ else
         
     end
     
-  
+    
 end
 
 if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
@@ -863,7 +863,7 @@ else
     data.clist = clist0;
     
     if numel(clist0.data) == 0
-       disp( 'Warning: At least one clist is empty after gating.' ); 
+        disp( 'Warning: At least one clist is empty after gating.' );
     end
 end
 
@@ -890,7 +890,7 @@ if isstruct(arg_)
                 data.clist.gate3D = arg_;
             end
         end
-    end 
+    end
 elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     intShow( data );
     hold on;
@@ -990,14 +990,14 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     else
         error( 'Too many ind to gate. Must be either 1 or 2.' );
     end
-   
+    
     % copy the gate in
     if ~data.time_flag
         data.clist = gateTool( data.clist, 'make', tmp_gate );
         % Show the gate
         figure
-        gateTool( data.clist, 'show', data.ind);  
-    else 
+        gateTool( data.clist, 'show', data.ind);
+    else
         data.clist = gateTool( data.clist, 'make3D', tmp_gate );
         % Show the gate
         figure
@@ -1024,13 +1024,13 @@ if iscell( clist )
         [clist{ii},fignum] =  intShowAll( clist{ii}, fignum );
     end
 elseif isstruct( clist )
-
+    
     if isfield( clist, 'gate' )
         ng = numel( clist.gate );
     else
         ng = 0;
     end
-        
+    
     clist0 = clist;
     
     for ii = 1:ng
@@ -1085,7 +1085,7 @@ N   = size( tmp.data, 1);
 
 gateTool( clist, 'show', gate_var.ind );
 
-        
+
 hold on;
 if numel(gate_var.ind)==1
     ylim_ = ylim;
@@ -1102,7 +1102,7 @@ if isfield( clist, 'name' )
     name = clist.name;
 end
 
-title( [name,' Gate: ',num2str(gate_num), ' Cell count: ',num2str(N), ' / ', num2str( N0 )] ); 
+title( [name,' Gate: ',num2str(gate_num), ' Cell count: ',num2str(N), ' / ', num2str( N0 )] );
 
 
 end
@@ -1165,11 +1165,11 @@ for jj = 1:nf
             end
         end
         
-        if data.log_flag(1) 
+        if data.log_flag(1)
             xx2 = log10(xx2);
         end
         
-        if data.log_flag(2) 
+        if data.log_flag(2)
             xx1 = log10(xx1);
         end
         
@@ -1179,7 +1179,7 @@ for jj = 1:nf
             im = data.im;
         end
         
-         imagesc( xx2, xx1, im );
+        imagesc( xx2, xx1, im );
         
         
         
@@ -1212,9 +1212,9 @@ for jj = 1:nf
     
     % set the scale on the axes
     if data.log_flag(1)
-         if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
+        if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
             set(gca,'XScale','log' );
-         end
+        end
     end
     
     if data.log_flag(2)
@@ -1235,13 +1235,13 @@ for jj = 1:nf
     
     
     if (numel(data.ind)==2) && ( data.kde_flag || data.hist_flag )
-       if data.log_flag(1)
-           labs{1} = [labs{1},' (log10)']; 
-       end
-       
-       if data.log_flag(2)
-           labs{2} = [labs{2},' (log10)']; 
-       end
+        if data.log_flag(1)
+            labs{1} = [labs{1},' (log10)'];
+        end
+        
+        if data.log_flag(2)
+            labs{2} = [labs{2},' (log10)'];
+        end
         
     end
     
@@ -1283,7 +1283,7 @@ end
 
 end
 
-%% internal show data fuction 
+%% internal show data fuction
 function data = intIntShow( clist, data )
 
 
@@ -1318,7 +1318,7 @@ end
 end
 
 
-%% internal show data fuction 
+%% internal show data fuction
 function data = intIntIntShow( clist, data )
 
 if isfield( clist, 'name' );
@@ -1338,8 +1338,8 @@ switch numel( data.ind )
     case 1 % 1D
         if data.kde_flag
             [data,h] = intShowKDE1D(  clist, data, name );
-        %elseif data.time_flag
-        %    [data,h] = intTime( clist, data );
+            %elseif data.time_flag
+            %    [data,h] = intTime( clist, data );
         else
             [data,h] = intShowHist1D( clist, data, name );
         end
@@ -1366,7 +1366,7 @@ if data.time_flag
 else
     name = [name,' (',num2str( nc ),' cells)'];
 end
-   
+
 if data.newfig_flag
     legend( h, name );
 else
@@ -1382,7 +1382,7 @@ function [data,h] = intShowHist1D( clist, data, name )
 data.n = n;
 
 [y,x] = hist( x1, data.binS.xx );
-dy    = intDoError(y); 
+dy    = intDoError(y);
 
 if data.den_flag
     dx = diff(x(1:2));
@@ -1397,7 +1397,7 @@ end
 if data.log_flag(1)
     x_plot = exp(x);
 else
-     x_plot = x;
+    x_plot = x;
 end
 
 if isfield( clist, 'color' )
@@ -1420,7 +1420,7 @@ if ~data.bin_flag
 end
 
 if data.stat_flag
-    intDoStatAn( x10, x_plot, y, n, data, cc, name );
+    intDoStatAn( x0, x_plot, y, n, data, cc, name );
 end
 
 end
@@ -1428,76 +1428,76 @@ end
 %% Do statistical analysis.
 function intDoStatAn( x1, x, y, n, data, cc, name )
 
-   hold on;
-   
-      styl = '%1.3e';
+hold on;
 
-      
-   x1_mean = mean( x1 );
-   x1_std  = std(  x1 );
-   x1_max  = max(  x1 );
-   x1_min  = min(  x1 );
-   x1_p1   = x1_mean+x1_std;
-   x1_p1m  = x1_mean+x1_std/sqrt(n);
-   x1_m1   = x1_mean-x1_std;
-   x1_m1m  = x1_mean-x1_std/sqrt(n);
-   
-   all_out_text = [name,' -- stats: n = ',num2str( n, styl ),', '];
-   
-   y1_mean = interp1( x,y, x1_mean );
-   y1_p1   = interp1( x,y, x1_p1 );
-   y1_p1m  = interp1( x,y, x1_p1m );
-   y1_m1   = interp1( x,y, x1_m1 );
-   y1_m1m  = interp1( x,y, x1_m1m );
-   y1_max  = interp1( x,y, x1_max ,'linear','extrap');
-   y1_min  = interp1( x,y, x1_min,'linear','extrap' );
-   
-   
-   if data.log_flag(2)
-       del = [1e-1,1];
-   else
-       del = [0,1];
-   end
-   
-   
-   plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' mean: ',num2str( x1_mean, styl )];
-   text( x1_mean, y1_mean/2, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' std: ',num2str( x1_std, styl )];
-   text( x1_p1, y1_p1*.75, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   %out_text = [' std: ',num2str( x1_std, styl )];
-   %text( x1_p1, y1_p1*.75, out_text, 'color', cc );
-   %all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-   plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-  % plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
-  % plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
-   text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
-   %text( x1_max, y1_max, out_text, 'color', cc,...
-   %    'VerticalAlignment', 'baseline');
-   all_out_text = [ all_out_text, out_text,','];
-   
-   out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
-   %text( x1_min, y1_min, out_text, 'color', cc,...
-   %    'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
-   all_out_text = [ all_out_text, out_text,'.'];
-   
-   disp( all_out_text );
+styl = '%1.3e';
+
+
+x1_mean = mean( x1 );
+x1_std  = std(  x1 );
+x1_max  = max(  x1 );
+x1_min  = min(  x1 );
+x1_p1   = x1_mean+x1_std;
+x1_p1m  = x1_mean+x1_std/sqrt(n);
+x1_m1   = x1_mean-x1_std;
+x1_m1m  = x1_mean-x1_std/sqrt(n);
+
+all_out_text = [name,' -- stats: n = ',num2str( n, styl ),', '];
+
+y1_mean = interp1( x,y, x1_mean );
+y1_p1   = interp1( x,y, x1_p1 );
+y1_p1m  = interp1( x,y, x1_p1m );
+y1_m1   = interp1( x,y, x1_m1 );
+y1_m1m  = interp1( x,y, x1_m1m );
+y1_max  = interp1( x,y, x1_max ,'linear','extrap');
+y1_min  = interp1( x,y, x1_min,'linear','extrap' );
+
+
+if data.log_flag(2)
+    del = [1e-1,1];
+else
+    del = [0,1];
+end
+
+
+plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' mean: ',num2str( x1_mean, styl )];
+text( x1_mean, y1_mean/2, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' std: ',num2str( x1_std, styl )];
+text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+%out_text = [' std: ',num2str( x1_std, styl )];
+%text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+%all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+% plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
+% plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
+text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
+%text( x1_max, y1_max, out_text, 'color', cc,...
+%    'VerticalAlignment', 'baseline');
+all_out_text = [ all_out_text, out_text,','];
+
+out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
+%text( x1_min, y1_min, out_text, 'color', cc,...
+%    'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
+all_out_text = [ all_out_text, out_text,'.'];
+
+disp( all_out_text );
 end
 
 
@@ -1577,16 +1577,16 @@ function data = intMakeBins( clist, data )
 
 for ii = 1:numel( data.ind )
     if data.kde_flag
-           num = data.multi;
+        num = data.multi;
     else
-       if isfield( data, 'bin' ) && ~isempty( data.bin ) 
-           num = data.bin(ind);
-       else
-           num = intChooseBin(clist, data, ii);
-       end
+        if isfield( data, 'bin' ) && ~isempty( data.bin )
+            num = data.bin(ind);
+        else
+            num = intChooseBin(clist, data, ii);
+        end
     end
-
-   binS = intMakeDX( clist, data, num, ii );
+    
+    binS = intMakeDX( clist, data, num, ii );
     
     if ~data.kde_flag
         binS.rk_pix = [];
@@ -1617,15 +1617,24 @@ if data.log_flag(ind)
 end
 x = fixVals( x );
 
-x_max = max( x(:) );
-x_min = min( x(:) );
-
-if x_max == x_min
-    tmp = x_max;
-    x_max = tmp+1;
-    x_min = tmp-1;
-end
-
+if sum(~isnan(x)) == 0
+    disp ('no data')
+    binS.xx    = 1;
+    binS.dx    = 1;
+    binS.DX    = 1;
+    binS.x_max = 1;
+    binS.x_min = 1;
+    binS.x     = 1;
+else
+    x_max = max( x(:) );
+    x_min = min( x(:) );
+    
+    if x_max == x_min
+        tmp = x_max;
+        x_max = tmp+1;
+        x_min = tmp-1;
+    end
+    
     DX = x_max - x_min;
     xx = DX*(0:(num-1))/(num-1)+x_min;
     dx = xx(2)-xx(1);
@@ -1637,7 +1646,7 @@ end
     binS.x_min = x_min;
     binS.x     = x;
 end
-
+end
 
 % find the fundamental resolution of the data.
 function dx_min = intFindSmallest( x )
@@ -1740,7 +1749,7 @@ else
         
         delta_y = rk_vec(ii)*abs(diff(y));
         dy      = (dy(1:end-1)+dy(2:end))/2;
-        y_      = (y(2:end)+y(1:end-1))/2; 
+        y_      = (y(2:end)+y(1:end-1))/2;
         
         switcher(ii) =sum( y_.*(delta_y > 2*dy))/sum(y_);
     end
@@ -1790,7 +1799,7 @@ hold on;
 if isfield( clist, 'color' )
     cc = clist.color;
     h = plot( nan, nan, '.', 'color', cc);
-
+    
 else
     h = plot( nan, nan, '.');
 end
@@ -1803,7 +1812,7 @@ end
 
 
 
-if (size( data.clist,2 ) > 1) && ~data.newfig_flag    
+if (size( data.clist,2 ) > 1) && ~data.newfig_flag
     dd = y/max(y(:));
     
     im = cat(3, dd*cc(1), dd*cc(2), dd*cc(3) );
@@ -1839,14 +1848,14 @@ dx  = [data.binS(2).dx,data.binS(1).dx];
 
 
 if data.cond_flag
-   ys = sum( y, 1 );
-   
-   ys(ys==0) = 1;
-   
-   y = y./(ones([size(y,1),1])*ys);
- %  cutt = 1/(2*data.mult);
- %  y(y>cutt) = cutt;
-   
+    ys = sum( y, 1 );
+    
+    ys(ys==0) = 1;
+    
+    y = y./(ones([size(y,1),1])*ys);
+    %  cutt = 1/(2*data.mult);
+    %  y(y>cutt) = cutt;
+    
 end
 
 %y = intConv2Dadd( y, data, dx );
@@ -1870,7 +1879,7 @@ hold on;
 if isfield( clist, 'color' )
     cc = clist.color;
     h = plot( nan, nan, '.', 'color', cc);
-
+    
 else
     h = plot( nan, nan, '.');
 end
@@ -1883,11 +1892,11 @@ if ischar( cc )
 end
 
 if data.inv_flag
-   cc = 1-cc; 
+    cc = 1-cc;
 end
 
-if size( data.clist, 2 ) > 1 && ~data.newfig_flag 
-
+if size( data.clist, 2 ) > 1 && ~data.newfig_flag
+    
     
     dd = y/max(y(:));
     
@@ -1983,13 +1992,13 @@ end
 %% Show do plot in 2D
 function [data,h] = intShowDot( clist, data, name )
 
-    hold on;
+hold on;
 
-    
+
 if ~data.time_flag
     x1 = intGetData( clist, data, data.ind(1), data.units(1) );
     x2 = intGetData( clist, data, data.ind(2), data.units(2) );
-
+    
     
     if isfield( clist, 'color' )
         h = scatter( x1, x2, [], clist.color, '.' );
@@ -2011,7 +2020,7 @@ else
         h = plot( nan,nan, '.' );
         cc = h.Color;
     end
-   
+    
     if ischar( cc )
         cc = convert_color(cc);
     end
@@ -2146,7 +2155,7 @@ else
             tmp(tmp==maxID) = 0;
             
             clist_.data(:,ID_ind) = tmp;
-             
+            
             clistM.data = [clistM.data;...
                 clist_.data];
             
@@ -2156,7 +2165,7 @@ else
                 clist_.data3D(:,1,:) = clist_.data3D(:,1,:) +maxID;
                 
                 ss = size(clistM.data3D);
-                               clistM.data3D = [clistM.data3D;...
+                clistM.data3D = [clistM.data3D;...
                     clist_.data3D(:,1:ss(2),:)];
             end
         end
@@ -2179,7 +2188,7 @@ names = unique({tmp1{:},tmp2{:}});
 nnames = numel(names);
 
 for ii = (ng1+ng2):-1:1
-
+    
     tmp_gate = [];
     
     for jj = 1:nnames
@@ -2193,7 +2202,7 @@ for ii = (ng1+ng2):-1:1
         if isfield( tmps, names{jj} )
             tmp = getfield( tmps, names{jj} );
         else
-           tmp = []; 
+            tmp = [];
         end
         
         tmp_gate = setfield( tmp_gate,  names{jj}, tmp );
@@ -2225,7 +2234,7 @@ if exist( dirname, 'file' ) == 2
     
 else
     dirname = fixDir( dirname );
-
+    
     if ~exist( dirname, 'dir' )
         error( ['Directory ', dirname, 'does not exist.' ] );
     else
@@ -2295,7 +2304,7 @@ for ii = 1:nc
             clist{1,count} = tmp;
         end
         
-        end
+    end
 end
 
 
@@ -2305,7 +2314,7 @@ end
 function clistS = intSqueeze( varargin )
 
 if nargin == 1
-    clistS = {};    
+    clistS = {};
     clistS = intSqueeze( clistS, varargin{1} );
 elseif nargin == 2
     clistS = varargin{1};
@@ -2314,7 +2323,7 @@ elseif nargin == 2
     nc  = numel( clist );
     
     for ii = 1:nc
-       
+        
         if iscell( clist{ii} )
             clistS = intSqueeze( clistS, clist{ii} );
         elseif isstruct( clist{ii} )
@@ -2330,7 +2339,7 @@ end
 function clistS = intExpand( varargin )
 
 if nargin == 1
-    clistS = {};    
+    clistS = {};
     clistS = intExpand( clistS, varargin{1} );
 elseif nargin == 2
     clistS = varargin{1};
@@ -2339,7 +2348,7 @@ elseif nargin == 2
     nc  = numel( clist );
     
     for ii = 1:nc
-       
+        
         if iscell( clist{ii} )
             clistS = intExpand( clistS, clist{ii} );
         elseif isstruct( clist{ii} )
@@ -2417,7 +2426,7 @@ for ii = 1:n_ind
     tmp = intGetData( clist, data, data.ind(wind(ii)), data.units(wind(ii)) );
     
     x0(:,ii) = tmp;
-
+    
     if data.log_flag(wind(ii))
         tmp = log(tmp);
     end
@@ -2460,7 +2469,7 @@ x = x(inflag);
 
 end
 
-%% Add time fields to 3d data structure 
+%% Add time fields to 3d data structure
 function clist = intDoAddT( clist )
 
 if iscell( clist )
@@ -2481,7 +2490,7 @@ elseif isstruct( clist )
     age_rel = age;
     age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));
     
-    time = ones([ss(1),1])*(1:ss(3)); 
+    time = ones([ss(1),1])*(1:ss(3));
     
     clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
     clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
