@@ -634,7 +634,7 @@ else
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
-                if ~isstr( next_arg )
+                if ~ischar( next_arg )
                     error( 'name is not a string' );
                 else
                     name = next_arg;
