@@ -363,8 +363,7 @@ if ~handles.time.Value
     elseif index1==0 && index2 ~= 0
         varg{end+1} = index2;
     elseif index1~=0 && index2 ~= 0
-        varg{end+1} = index1;
-        varg{end+1} = index2;
+        varg{end+1} = [index1, index2];
     end
 else
     if (handles.def3d.Value - 1) ~= 0
