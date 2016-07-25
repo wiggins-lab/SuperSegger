@@ -52,14 +52,17 @@ function [clist, out] = gateTool(varargin)
 % 'kde'         : Make either a 1 or 2D KDE (depending on dimension of ind)
 %                 'show' must be called as well.
 %
-% 'time'        : Make a temporal plot of single cell dynamics for one index
+% {'time','3d'} : Make a temporal plot of single cell dynamics for one index
 %                 'show' must be called as well.
 %
 % 'hist'        : Make a 1 or 2D histogram (depending on dimension of ind)
 %                 'show' must be called as well.   
 %           
 % 'dot'         : Make a dot plot. Dim of ind must equal 2.
-%                 'show' must be called as well.   
+%                 'show' must be called as well.
+%
+% 'line'        :
+%
 %
 % 'log', axes   : Set of axes to set with log scales. axes = [1,2,3] will 
 %                 set x, y and color axis to have log scale.
@@ -76,8 +79,8 @@ function [clist, out] = gateTool(varargin)
 %
 % 'inv'         : invert 2D hist/KDE image for printing 
 %
-% 'mult', mult   : set the resolution for the KDE. Increase res by a factor
-%                 of mult.
+% 'mult', mult  : set the resolution for the KDE. Set the number of pixels
+%                 in the image created to make ke 
 %
 % 'bin', bin    : set the binning for the hist and KDE. In 1D, if bin is a
 %                 scalar it is interpretted as the number of bins. If it is
@@ -103,7 +106,7 @@ function [clist, out] = gateTool(varargin)
 % 'xls', filename : export an excel doc with the clist data. Need to have
 %                   excel installed to export. (Not my fault.)
 %
-% 'csv', filename : export a csv doc with the clist data.
+% 'csv', filename, [ind] : export a csv doc with the clist data.
 %
 % 'save', filename : Save .mat file.
 %
@@ -231,6 +234,7 @@ data.export_flag    = false;
 data.drill_flag     = false;
 data.error_flag     = false;
 data.newfig_flag    = false;
+data.line_flag      = false;
 
 data.trace_flag     = false;
 
@@ -334,6 +338,11 @@ else
                 
             case 'err'
                 data.error_flag = true;
+                
+                
+            case 'line'
+                data.line_flag = true;
+                data.dot_flag = true;
                 
             case 'mult'
                 counter = counter + 1;
@@ -1110,6 +1119,8 @@ end
 %% function that handles the data display
 function  data0 = intShow( data0 )
 
+data0.stat = [];
+
 if ~data0.noclear_flag
     clf;
 end
@@ -1128,7 +1139,7 @@ if data0.hist_flag || (numel( data0.ind )==1) || data0.kde_flag
     data1 = data;
     data1.clist = intDoMerge( data1.clist, [], ~data.time_flag );
     
-    data = intMakeBins( data1.clist, data1  );
+    data.binS = intMakeBins( data1.clist, data1  );
 end
 
 % Int show function: Take care of all top level operations
@@ -1186,22 +1197,7 @@ for jj = 1:nf
         hold on;
         
         if size(data.clist,2)==1 || data.newfig_flag
-            colorbar
-            
-            cc = colormap;
-            cc(1,:) = [0.5,0.5,0.5];
-            colormap(cc);
-            
-            tmp = im;
-            tmp(tmp==0) = nan;
-            min_caxis = min(tmp(:));
-            max_caxis = max(tmp(:));
-            
-            N = size(cc,1);
-            c = (N*min_caxis-max_caxis)/(N-1);
-            if ~isnan( max_caxis )
-                caxis( [c,max_caxis] );
-            end
+          intFixColorBar(im);
         end
         
         
@@ -1281,7 +1277,162 @@ if data.dot_flag || (numel(data.ind)==1)
     xlim( XM+1.05*(xlim_-XM) );
 end
 
+
+if data.stat_flag
+    figure;
+    intDoBoxIt( data );
 end
+end
+
+function intFixColorBar( im )
+try
+colorbar
+
+cc = colormap;
+cc(1,:) = [0.5,0.5,0.5];
+colormap(cc);
+
+tmp = im;
+tmp(tmp==0) = nan;
+min_caxis = min(tmp(:));
+max_caxis = max(tmp(:));
+
+N = size(cc,1);
+c = (N*min_caxis-max_caxis)/(N-1);
+if ~isnan( max_caxis )
+    caxis( [c,max_caxis] );
+end
+
+end
+end
+%% 
+% function intDoBoxIt( stat, h )
+% 
+% ns = numel( stat );
+% zz = [0,0];
+% 
+% for ii = 1:ns
+%    
+%     plot( ii + zz, [stat(ii).min,stat(ii).max], ':', 'color', 'b' ),
+%     hold on;
+%     plot( ii + zz, stat(ii).mean+stat(ii).std*[-1,1], '-', 'color', 'b' ),
+%     plot( ii + zz, stat(ii).mean+stat(ii).err*[-1,1], '-', 'color', 'b', 'LineWidth', 2 ),
+% end
+% 
+% 
+% 
+% end
+
+
+function intDoBoxIt( data )
+
+sort_flag = true;
+cc = 'k';
+
+stat = data.stat;
+ns = numel( stat );
+
+if sort_flag
+    mean_data = [data.stat(:).mean];
+    [~,ord] = sort(  mean_data );
+else
+    ord = 1:ns;
+end
+
+zz = [0,0];
+
+px = [];
+for jj = 1:ns
+    
+    ii = ord(jj);
+    px = [px,data.stat(ii).px'];
+end
+xx = data.stat(1).xx;
+
+% if data.log_flag(1)
+%     xx = log10( xx );
+% end
+
+
+bin = 1:ns;
+
+% if data.log_flag(2)
+%      px = log(px);
+% end
+
+
+
+imagesc( bin, xx, px );
+
+hold on;
+
+names = {};
+
+for jj = 1:ns
+    
+    ii = ord(jj);
+    
+    yy1 = [stat(ii).min,stat(ii).max];
+    yy2 = stat(ii).mean+stat(ii).std*[-1,1];
+    yy3 = stat(ii).mean+stat(ii).err*[-1,1];
+    yy4 =  stat(ii).mean;
+    
+%     if data.log_flag(1)
+%         yy1 = log10( yy1 );
+%         yy2 = log10( yy2 );
+%         yy3 = log10( yy3 );
+%         yy4 = log10( yy4 );
+%     end
+    
+    plot( jj + zz, yy1, ':', 'color', cc ),
+    plot( jj + zz, yy2, '-', 'color', cc ),
+    plot( jj + zz, yy3, '-', 'color', cc, 'LineWidth', 2 ),
+    plot( jj     , yy4, '.', 'color', cc, 'MarkerSize', 10 ),
+ 
+    name_tmp  = stat(ii).name;
+    ind = find(name_tmp == '(',1,'last');
+    names{jj} = name_tmp(1:ind-2);
+    
+end
+
+
+intFixColorBar(px)
+
+%names = {stat(ord).name};
+set( gca, 'Xtick', [1:ns],'XTickLabels',names );
+set( gca, 'XTickLabelRotation', 45 )
+set( gca, 'YDir', 'normal' );
+
+% xlim_ = xlim;
+% XM = mean(xlim_);
+% xlim( XM+1.05*(xlim_-XM) );
+
+
+def = intGetDef( data.clist );
+def3d = intGetDef3D( data.clist );
+
+
+if data.time_flag
+    labs = def3d(data.ind);
+else
+    labs = def(data.ind);
+end
+
+if (numel(data.ind)==2) && ( data.kde_flag || data.hist_flag )
+    if data.log_flag(1)
+        labs{1} = [labs{1},' (log10)'];
+    end
+end
+
+ylabel( labs{1}, 'Interpreter','none'  );
+
+
+if data.log_flag(1)
+ set( gca, 'YScale','log' );   
+end
+
+end
+
 
 %% internal show data fuction 
 function data = intIntShow( clist, data )
@@ -1311,7 +1462,7 @@ if iscell(clist)
     
 else
     
-    data = intIntIntShow( clist, data );
+    [data] = intIntIntShow( clist, data );
     hold on;
 end
 
@@ -1319,7 +1470,9 @@ end
 
 
 %% internal show data fuction 
-function data = intIntIntShow( clist, data )
+function [data] = intIntIntShow( clist, data )
+
+stat = [];
 
 if isfield( clist, 'name' );
     name = clist.name;
@@ -1337,11 +1490,11 @@ switch numel( data.ind )
         error( 'No indices to show' );
     case 1 % 1D
         if data.kde_flag
-            [data,h] = intShowKDE1D(  clist, data, name );
+            [data,h,stat] = intShowKDE1D(  clist, data, name );
         %elseif data.time_flag
         %    [data,h] = intTime( clist, data );
         else
-            [data,h] = intShowHist1D( clist, data, name );
+            [data,h,stat] = intShowHist1D( clist, data, name );
         end
     case 2 % 2D
         if data.hist_flag
@@ -1366,6 +1519,8 @@ if data.time_flag
 else
     name = [name,' (',num2str( nc ),' cells)'];
 end
+
+stat.name = name;
    
 if data.newfig_flag
     legend( h, name );
@@ -1373,10 +1528,18 @@ else
     data.legend = {data.legend{:},name};
 end
 
+if isfield( data, 'stat' ) && ~isempty( data.stat )
+    data.stat = [data.stat,stat];
+else
+    data.stat = [stat];
+end
+
 end
 
 %% Show 1D histogram
-function [data,h] = intShowHist1D( clist, data, name )
+function [data,h,stat] = intShowHist1D( clist, data, name )
+
+stat = [];
 
 [x1,x0,flagger,n] = intGetDataC( clist, data,1 );
 data.n = n;
@@ -1420,19 +1583,19 @@ if ~data.bin_flag
 end
 
 if data.stat_flag
-    intDoStatAn( x10, x_plot, y, n, data, cc, name );
+    stat = intDoStatAn( x0, x_plot, y, n, data, cc, name );
 end
 
 end
 
 %% Do statistical analysis.
-function intDoStatAn( x1, x, y, n, data, cc, name )
+function stat = intDoStatAn( x1, x, y, n, data, cc, name )
 
    hold on;
    
-      styl = '%1.3e';
-
-      
+   styl = '%1.3e';
+   
+   
    x1_mean = mean( x1 );
    x1_std  = std(  x1 );
    x1_max  = max(  x1 );
@@ -1452,6 +1615,16 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
    y1_max  = interp1( x,y, x1_max ,'linear','extrap');
    y1_min  = interp1( x,y, x1_min,'linear','extrap' );
    
+   
+   stat      = [];
+   stat.mean = x1_mean;
+   stat.std  = x1_std;
+   stat.err  = x1_std/sqrt(n);
+   stat.px   = y;
+   stat.xx   = x;
+   stat.max  = x1_max;
+   stat.min  = x1_min;
+   stat.n    = n;
    
    if data.log_flag(2)
        del = [1e-1,1];
@@ -1480,8 +1653,8 @@ function intDoStatAn( x1, x, y, n, data, cc, name )
    
    plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
    plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-  % plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
-  % plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
+   % plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
+   % plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
    
    out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
    text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
@@ -1515,7 +1688,9 @@ y(y<0) = 0;
 end
 
 %% show 1D kde
-function [data,h] = intShowKDE1D( clist, data, name )
+function [data,h,stat] = intShowKDE1D( clist, data, name )
+
+stat = [];
 
 [x1,x0,flagger,n] = intGetDataC( clist, data, 1 );
 data.n = n;
@@ -1566,21 +1741,21 @@ end
 
 
 if data.stat_flag
-    intDoStatAn( x10, x_plot, yf, n, data, cc, name);
+    stat = intDoStatAn( x0, x_plot, yf, n, data, cc, name);
 end
 
 
 end
 
 %% Make the bin sizes if they aren't specified
-function data = intMakeBins( clist, data )
+function binS_vec = intMakeBins( clist, data )
 
 for ii = 1:numel( data.ind )
     if data.kde_flag
            num = data.multi;
     else
        if isfield( data, 'bin' ) && ~isempty( data.bin ) 
-           num = data.bin(ind);
+           num = data.bin(ii);
        else
            num = intChooseBin(clist, data, ii);
        end
@@ -1593,19 +1768,19 @@ for ii = 1:numel( data.ind )
         binS.rm_pix = [];
     else
         if isfield( data, 'rk' ) && ~isempty( data.rk )
-            binS.rk_pix = data.rk(ind)/binS.dx;
+            binS.rk_pix = data.rk(ii)/binS.dx;
         else
             binS.rk_pix = intChooseRK(clist, data, ii);
         end
         
         if isfield( data, 'rm' ) && ~isempty( data.rm )
-            binS.rm_pix = data.rm(ind)/binS.dx;
+            binS.rm_pix = data.rm(ii)/binS.dx;
         else
             binS.rm_pix = binS.rk_pix;
         end
     end
     
-    data.binS(ii) = binS;
+    binS_vec(ii) = binS;
 end
 end
 
@@ -2024,13 +2199,17 @@ else
         cc_ii = hh.Color;
         cc_ii = (cc_ii+cc)/2;
         
-        plot( x1(ii,:), x2(ii,:), 'color', cc_ii );
-        
-        start_ind = find( ~isnan( x1(ii,:) ), 1, 'first' );
-        end_ind   = find( ~isnan( x1(ii,:) ), 1, 'last' );
-        
-        plot( x1(ii,start_ind), x2(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
-        plot( x1(ii,start_ind), x2(ii,end_ind  ), 'x','MarkerSize', 10, 'color', cc_ii );
+        if data.line_flag
+            plot( x1(ii,:), x2(ii,:), 'color', cc_ii );
+            
+            start_ind = find( ~isnan( x1(ii,:) ), 1, 'first' );
+            end_ind   = find( ~isnan( x1(ii,:) ), 1, 'last' );
+            
+            plot( x1(ii,start_ind), x2(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
+            plot( x1(ii,start_ind), x2(ii,end_ind  ), 'x','MarkerSize', 10, 'color', cc_ii );
+        else
+            plot( x1(ii,:), x2(ii,:), '.', 'color', cc_ii );           
+        end
     end
     
 end
@@ -2237,7 +2416,7 @@ else
             nc = numel( contentsD );
             
             if nc == 0
-                
+                               
                 filename = [dirname,'clist.mat'];
                 if exist( filename, 'file' );
                     clist = load( filename );
@@ -2248,6 +2427,13 @@ else
                 
             else
                 
+                filename =  [dirname,'header.mat'];               
+                if exist(filename ) == 2
+                    header = load( filename );
+                else
+                    header = [];
+                end
+
                 counter = 0;
                 for ii = 1:nc
                     dirname_xy = fixDir( [dirname,contentsD(ii).name] );
@@ -2260,6 +2446,10 @@ else
                         tmp.filename = [fixDir(pwd),filename];
                         
                         clist{counter} = tmp;
+                        
+                        if ~isempty(header)
+                           clist{counter}.name =  header.xydata(ii).geneName;
+                        end
                     end
                 end
             end
