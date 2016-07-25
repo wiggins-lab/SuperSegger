@@ -1799,18 +1799,22 @@ if x_max == x_min
     tmp = x_max;
     x_max = tmp+1;
     x_min = tmp-1;
+elseif isempty( x_max )
+    DX = 1;
+    x_max =  0.5;
+    x_min = -0.5;
 end
 
-    DX = x_max - x_min;
-    xx = DX*(0:(num-1))/(num-1)+x_min;
-    dx = xx(2)-xx(1);
-    
-    binS.xx    = xx;
-    binS.dx    = dx;
-    binS.DX    = DX;
-    binS.x_max = x_max;
-    binS.x_min = x_min;
-    binS.x     = x;
+DX = x_max - x_min;
+xx = DX*(0:(num-1))/(num-1)+x_min;
+dx = xx(2)-xx(1);
+
+binS.xx    = xx;
+binS.dx    = dx;
+binS.DX    = DX;
+binS.x_max = x_max;
+binS.x_min = x_min;
+binS.x     = x;
 end
 
 
