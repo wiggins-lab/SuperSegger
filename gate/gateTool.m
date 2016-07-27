@@ -1580,7 +1580,7 @@ for ii = 1:numel( data.ind )
            num = data.multi;
     else
        if isfield( data, 'bin' ) && ~isempty( data.bin ) 
-           num = data.bin(ind);
+           num = data.bin(ii);
        else
            num = intChooseBin(clist, data, ii);
        end
@@ -1860,6 +1860,7 @@ y = y/prod(dx);
 
 if data.log_flag(3)
     y = log(y);
+    % JC y= y.^(1/6);
     y(isinf(y)) = nan;
     y(isnan(y)) = min(y(:));
 end
