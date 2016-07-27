@@ -43,9 +43,12 @@ handles.char1.String = handles.clist.def';
 handles.char2.String = handles.clist.def';
 handles.char2.Value = 2;
 guidata(hObject, handles);
+uiwait(handles.figure1);
 
 function varargout = plot2ClistsGui_OutputFcn(hObject, eventdata, handles) 
-varargout{1} = handles.output;
+varargout{1} = handles.clist;
+% The figure can be deleted now
+delete(handles.figure1);
 
 function char1_Callback(hObject, eventdata, handles)
 
@@ -66,4 +69,35 @@ if handles.char1.Value && handles.char2.Value && handles.char1.Value ~= handles.
     figure(2);
     clf;
     gateHistDot(handles.clist, [handles.char1.Value handles.char2.Value])
+end
+
+
+% --- Executes on button press in gate2d.
+function gate2d_Callback(hObject, eventdata, handles)
+% hObject    handle to gate2d (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if handles.char1.Value && handles.char2.Value && handles.char1.Value ~= handles.char2.Value
+    figure(2);
+    clf;
+    handles.clist = gateMake(handles.clist, [handles.char1.Value handles.char2.Value]);
+    handles.clist;
+    guidata(hObject, handles)
+end
+
+
+% --- Executes when user attempts to close figure1.
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+if isequal(get(hObject, 'waitstatus'), 'waiting')
+% The GUI is still in UIWAIT, us UIRESUME
+uiresume(hObject);
+else
+% The GUI is no longer waiting, just close it
+delete(hObject);
 end

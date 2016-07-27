@@ -86,6 +86,7 @@ else
     % loop through all the images (*err.mat files)
     for i = 1:num_im
         
+        
         data_c = loaderInternal([dirname,contents(i).name]);
         
         % record the number of cell neighbors
@@ -249,6 +250,7 @@ else
         
     end
     
+    
     if CONST.parallel.show_status
         close(h);
     end
@@ -257,13 +259,43 @@ else
     clist.data   = clist_tmp(logical(clist_tmp(:,1)),:);
     clist.data3D = clist_3D(clist.data(:,1),:,:);
 
+    
+    % add3dtime stuff
+    len_time_ind = grabClistIndex(clist, 'long axis', 1);
+    
+    ss = size( clist.data3D );
+    len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind,:))),[ss(1),ss(3)]);
+    age = cumsum( len, 2 );
+    age(~len) = nan;
+    
+    age_rel = age;
+    age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
+    time = ones([ss(1),1])*(1:ss(3));
+    
+    % add time
+    clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
+    % add age
+     clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
+   % add age_rel
+    clist = gateTool( clist, 'add3D', age_rel, 'Relative Age' );
+    
+    
+   
+    
+    
     clist.gate = CONST.trackLoci.gate;
     clist.neighbor = [];
     
+
     if CONST.trackOpti.NEIGHBOR_FLAG
         clist.neighbor = trackOptiListNeighbor(dirname,CONST,[]);
     end
 end
+
+
+
+
+
 end
 
 
@@ -373,6 +405,7 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'Maximum Width'},{'maxWidth'},0,0;
     {'Cell Dist to edge'},{'cell_dist'},0,0;
     ];
+
 
 % used to add numbers in front of the description
 names_3dclist = [];
