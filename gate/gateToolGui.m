@@ -524,8 +524,7 @@ elseif index1~=0 && index2 == 0
 elseif index1==0 && index2 ~= 0
     varg{end+1} = index2;
 elseif index1~=0 && index2 ~= 0
-    varg{end+1} = index1;
-    varg{end+1} = index2;
+     varg{end+1} = [index1, index2];
 end
 
 % merges them permanently.. careful!

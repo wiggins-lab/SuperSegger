@@ -1,4 +1,4 @@
-function [clist, out] = gateTool(varargin)
+function [clist, out] = gateTool2(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
 % GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
@@ -34,7 +34,7 @@ function [clist, out] = gateTool(varargin)
 % 'add', data, name : add a field (name) to the clist data with values
 %                 (data)
 %
-% 'add3d' data, name : add a field (name) to the clist data with values
+% 'add3D' data, name : add a field (name) to the clist data with values
 %                 (data)
 %
 % 'get', index  : gets data from data column index  
@@ -52,7 +52,7 @@ function [clist, out] = gateTool(varargin)
 % 'kde'         : Make either a 1 or 2D KDE (depending on dimension of ind)
 %                 'show' must be called as well.
 %
-% {'time','3d'} : Make a temporal plot of single cell dynamics for one index
+% {'time','3D'} : Make a temporal plot of single cell dynamics for one index
 %                 'show' must be called as well.
 %
 % 'hist'        : Make a 1 or 2D histogram (depending on dimension of ind)
@@ -140,7 +140,7 @@ data = intProcessInput( varargin );
 
 %% make a new gate if required
 if data.merge_flag
-    data.clist = intDoMerge( data.clist, [], ~data.time_flag );
+    data.clist = intDoMerge( data.clist, [], data.skip3D_flag );
 end
 
 
@@ -330,7 +330,7 @@ else
                     data.log_flag( [1,2] ) = true;
                     counter = counter-1;
                 end
-            case 'skip3d'
+            case 'skip3D'
                 data.skip3D_flag = true;
                 
             case 'drill'
@@ -520,7 +520,7 @@ else
                 disp( ['Adding field ',field_name] );
                 
                 
-            case 'add3d'
+            case 'add3D'
                 
                          
                 if numel( data.clist ) ~= 1
@@ -558,12 +558,12 @@ else
                 
                 field_name = [num2str( ss(2)+1 ),': ',field_name];
                 
-                data.clist.def3d{ss(2)+1} = field_name;
+                data.clist.def3D{ss(2)+1} = field_name;
                 
                 disp( ['Adding field ',field_name] );
                 
 
-            case 'add3dt'               
+            case 'add3Dt'               
                 data.clist = intDoAddT( data.clist );
             case 'trace'
                 data.trace_flag = true;
@@ -585,7 +585,7 @@ else
                 
             case 'def'
                 disp( intGetDef( data.clist )' );
-            case 'def3d'
+            case 'def3D'
                 disp( intGetDef3D( data.clist )' );
             case 'merge' % set merge flag
                 data.merge_flag = true;
@@ -705,7 +705,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'make3d','gate3d'}
+            case {'make3D','gate3D'}
                 
                 counter  = counter + 1;
                 next_arg = varargin{counter};
@@ -722,7 +722,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'time','3d' }
+            case {'time','3D' }
                 
                 data.time_flag = true;
                 
@@ -864,8 +864,8 @@ else
     
     
     clist0.data = clist.data(inflag,:);
-    if isfield(clist,'data3D') && isfield(clist,'def3d') && ~data.skip3D_flag
-        clist0.def3d = clist.def3d;
+    if isfield(clist,'data3D') && isfield(clist,'def3D') && ~data.skip3D_flag
+        clist0.def3D = clist.def3D;
         clist0.data3D = clist.data3D(inflag,:,:);
     end
     
@@ -1064,11 +1064,11 @@ end
 
 %% get the number of gate and ungated cells...not used.
 function [out] = intGetCellNum( clist )
-clist = gateTool( clist, 'merge', 'skip3d' );
+clist = gateTool( clist, 'merge', 'skip3D' );
 
 num = size( clist.data, 1 );
 
-clist = gateTool( clist, 'strip', 'skip3d' );
+clist = gateTool( clist, 'strip', 'skip3D' );
 
 numG = size( clist.data, 1 );
 
@@ -1130,7 +1130,7 @@ data = data0;
 if data.time_flag
     data.clist = gateTool( data.clist, 'strip', 'time' );
 else
-    data.clist = gateTool( data.clist, 'strip', 'skip3d' );
+    data.clist = gateTool( data.clist, 'strip', 'skip3D' );
 end
 
 
@@ -1167,7 +1167,7 @@ for jj = 1:nf
             xx2 = exp(xx2);
         end
         
-        if numel(data.clist)>1 && ~data.newfig_flag
+        if size(data.clist,2)>1 && ~data.newfig_flag
             if ~data.log_flag(3)
                 data.im = data.im/max(data.im(:));
             end
@@ -1221,10 +1221,10 @@ for jj = 1:nf
     
     % set the labels on the axis.
     def = intGetDef( data.clist );
-    def3d = intGetDef3D( data.clist );
+    def3D = intGetDef3D( data.clist );
     
     if data.time_flag
-        labs = def3d(data.ind);
+        labs = def3D(data.ind);
     else
         labs = def(data.ind);
     end
@@ -1409,11 +1409,11 @@ set( gca, 'YDir', 'normal' );
 
 
 def = intGetDef( data.clist );
-def3d = intGetDef3D( data.clist );
+def3D = intGetDef3D( data.clist );
 
 
 if data.time_flag
-    labs = def3d(data.ind);
+    labs = def3D(data.ind);
 else
     labs = def(data.ind);
 end
@@ -1450,7 +1450,7 @@ if iscell(clist)
             if data.time_flag
                 clist = gateTool( clist, 'merge', 'time' );
             else
-                clist = gateTool( clist, 'merge', 'skip3d' );
+                clist = gateTool( clist, 'merge', 'skip3D' );
             end
             data = intIntShow( clist, data );
         else
@@ -2039,7 +2039,6 @@ y = y/prod(dx);
 
 if data.log_flag(3)
     y = log(y);
-    % JC y= y.^(1/6);
     y(isinf(y)) = nan;
     y(isnan(y)) = min(y(:));
 end
@@ -2236,12 +2235,12 @@ end
 
 end
 
-%% Get 3d field definition from the structure
+%% Get 3D field definition from the structure
 function def = intGetDef3D( clist );
 
 if isstruct( clist )
-    if isfield( clist, 'def3d' )
-        def = clist.def3d;
+    if isfield( clist, 'def3D' )
+        def = clist.def3D;
     else
         def = {};
     end
@@ -2339,9 +2338,26 @@ else
             if isfield( clist_, 'data3D' ) && ~skip3D
                 clist_.data3D(:,1,:) = clist_.data3D(:,1,:) +maxID;
                 
-                ss = size(clistM.data3D);
-                               clistM.data3D = [clistM.data3D;...
-                    clist_.data3D(:,1:ss(2),:)];
+                ss1 = size(clistM.data3D);
+                ss2 = size(clist_.data3D);
+                
+                
+                if numel(ss1) == 2
+                    ss1(3) = 1;
+                end
+                
+                if numel(ss2) == 2
+                    ss2(3) = 1;
+                end
+                    
+                if ss1(3) >  ss2(3)
+                    clist_.data3D = cat(3,clist_.data3D,nan( [ss2(1:2),ss1(3)-ss2(3)] ) );
+                elseif ss1(3) <  ss2(3)
+                    clistM.data3D = cat(3,clistM.data3D,nan( [ss1(1:2),ss2(3)-ss1(3)] ) );
+                end
+                
+                clistM.data3D = [clistM.data3D;...
+                    clist_.data3D];
             end
         end
     end
@@ -2562,18 +2578,18 @@ end
 
 end
 
-%% get 3d data out of the structure to return at the command line
-function output = intGet3D( clist, g3d_ind )
+%% get 3D data out of the structure to return at the command line
+function output = intGet3D( clist, g3D_ind )
 
 output = [];
 if iscell( clist )
     nc = numel(clist);
     
     for ii = 1:nc
-        output = cat(1, output, intGet3D( clist{ii}, g3d_ind ));
+        output = cat(1, output, intGet3D( clist{ii}, g3D_ind ));
     end
 else
-    output = clist.data3D(:,g3d_ind,:);
+    output = clist.data3D(:,g3D_ind,:);
 end
 
 end
@@ -2589,7 +2605,7 @@ if data.time_flag
     x = clist.data3D(:,ind,:);
     x = x(:);
     
-    x = intApplyGate3d( x, clist );
+    x = intApplyGate3D( x, clist );
 else
     x = clist.data(:,ind);
 end
@@ -2629,8 +2645,8 @@ n= sum(flagger);
 end
 
 
-%% Gate the 3d data
-function x = intApplyGate3d( x, clist )
+%% Gate the 3D data
+function x = intApplyGate3D( x, clist )
 
 ss     = size(clist.data3D);
 inflag = true(ss(1)*ss(3),1);
@@ -2655,7 +2671,7 @@ x = x(inflag);
 
 end
 
-%% Add time fields to 3d data structure 
+%% Add time fields to 3D data structure 
 function clist = intDoAddT( clist )
 
 if iscell( clist )
@@ -2712,8 +2728,8 @@ disp( 'Warning: All lists contained in clist will be stripped (ungated data remo
 
 
 if ~data.time_flag
-    clist = gateTool( clist, 'strip', 'skip3d' );
-    clist = gateTool( clist, 'merge', 'skip3d' );
+    clist = gateTool( clist, 'strip', 'skip3D' );
+    clist = gateTool( clist, 'merge', 'skip3D' );
     
     tmp1 = num2cell( clist.data );
     tmp2 = reshape( clist.def, [1,numel(clist.def)] );
