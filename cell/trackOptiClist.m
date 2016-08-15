@@ -13,7 +13,7 @@ function [clist] = trackOptiClist(dirname,CONST,header)
 %           .data : array of cell variables versus cells.
 %           .def : definitions of variables in clist
 %           .data3D : variables vs cells vs time
-%           .def3d : definititions of variables used in data3D.
+%           .def3D : definititions of variables used in data3D.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins.
@@ -63,14 +63,14 @@ else
     end
     
     clist = [];
-    [setter,clist.def3d]  = clistSetter ();
+    [setter,clist.def3D]  = clistSetter ();
     clist.def = setter(:,1)';
     tmpFields = setter(:,2)';
     clist3d_ind = find([setter{:,4}]);
     
     death_ind = find([setter{:,3}]); % death fields : updated in every frame 
     clist_tmp = nan( MAX_CELL, numel( clist.def));
-    clist_3D  = nan( MAX_CELL, numel( clist.def3d), num_im );
+    clist_3D  = nan( MAX_CELL, numel( clist.def3D), num_im );
 
     clist_tmp(:,1) = 0;
     
@@ -260,36 +260,34 @@ else
     clist.data   = clist_tmp(logical(clist_tmp(:,1)),:);
     clist.data3D = clist_3D(clist.data(:,1),:,:);
 
+    clist = gateTool( clist, 'add3Dt' );
     
     % add3dtime stuff
-    len_time_ind = grabClistIndex(clist, 'long axis', 1);
-    
-    ss = size( clist.data3D );
-    if numel(ss) == 2
-        ss(3) = 1;
-    end
-    len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind,:))),[ss(1),ss(3)]);
-    age = cumsum( len, 2 );
-    age(~len) = nan;
-    
-    age_rel = age;
-    age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
-    time = ones([ss(1),1])*(1:ss(3));
-    growth_rate = (log(clist.data(:,11) - log(clist.data(:,10)) ./ age;
-    
-    % add time
-    clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
-    % add age
-     clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
-   % add age_rel
-    clist = gateTool( clist, 'add3D', age_rel, 'Relative Age' );
+%     len_time_ind = grabClistIndex(clist, 'Long axis (L)', 1);
+%     
+%     ss = size( clist.data3D );
+%     if numel(ss) == 2
+%         ss(3) = 1;
+%     end
+%     len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind(1),:))),[ss(1),ss(3)]);
+%     age = cumsum( len, 2 );
+%     age(~len) = nan;
+%     
+%     age_rel = age;
+%     age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
+%     time = ones([ss(1),1])*(1:ss(3));
+%     %growth_rate = (log(clist.data(:,11)) - log(clist.data(:,10))) ./ age;
+%     
+%     % add time
+%     clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
+%     % add age
+%      clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
+%    % add age_rel
+%     clist = gateTool( clist, 'add3D', age_rel, 'Relative Age' );
    % add growth rate
-    clist = gateTool( clist, 'add', growth_rate, 'Growth Rate' );
+    %clist = gateTool( clist, 'add', growth_rate, 'Growth Rate' );
     
-    
-   
-    
-    
+
     clist.gate = CONST.trackLoci.gate;
     clist.neighbor = [];
     
