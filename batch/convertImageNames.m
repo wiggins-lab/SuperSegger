@@ -24,21 +24,21 @@ function convertImageNames(dirname, basename, timeFilterBefore, ...
 %         images to *c1*, gfp to c2 and mcherry to c3 .
 %
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -74,8 +74,8 @@ disp('File names not in Elements format : Converting..')
 
 % if the basename does not exist ask the user to input all the variables
 if ~exist('basename','var')
-    basename = input('Please type the basename:','s');    
-    timeFilterBefore = input('Please type the prefix for the number of the time frame, press enter if none:','s');    
+    basename = input('Please type the basename:','s');
+    timeFilterBefore = input('Please type the prefix for the number of the time frame, press enter if none:','s');
     timeFilterAfter = input('Please type the suffix for the number of the time frame, press enter if none:','s');
     xyFilterBefore = input('Please type the prefix for the number of the xy position, press enter if none:','s');
     xyFilterAfter = input('Please type the suffix for the number of the xy position, press enter if none:','s');
@@ -97,23 +97,45 @@ for j = 1: numel (images)
     fileName = images(j).name;
     %disp(fileName);
     
-    currentTime = findNumbers (fileName, timeFilterBefore, timeFilterAfter); % find out time
-    if isempty(currentTime)
-        disp (['time expression incorrect for filename', fileName, '- aborting']);
-        return;
+    
+    if isnumeric(timeFilterBefore ) && isnumeric(timeFilterAfter)
+        currentTime = str2double(fileName(timeFilterBefore:timeFilterAfter));
+        if ~isnumeric((currentTime))
+            disp (['No frame numbers found in ', fileName, ' between ' , num2str(timeFilterBefore), ' ', num2str(timeFilterAfter), '- aborting']);
+        end
+    else
+        currentTime = findNumbers (fileName, timeFilterBefore, timeFilterAfter); % find out time
+        if isempty(currentTime)
+            disp (['time expression incorrect for filename', fileName, '- aborting']);
+            return;
+        end
     end
     
-    currentXY = findNumbers (fileName, xyFilterBefore, xyFilterAfter); % find out xy
-    if isempty(currentXY)
-        disp (['time expression incorrect for filename', fileName, '- aborting']);
-        return;
+
+    if isnumeric(xyFilterBefore ) && isnumeric(xyFilterAfter)
+        currentXY = str2double(fileName(xyFilterBefore:xyFilterAfter));
+        if ~isnumeric((currentXY))
+            disp (['No xy numbers found in ', fileName, ' between ' , num2str(xyFilterBefore), ' ', num2str(xyFilterAfter), '- aborting']);
+            return
+        end
+    else
+        currentXY = findNumbers (fileName, xyFilterBefore, xyFilterAfter); % find out xy
+        if isempty(currentXY)
+            disp (['xy expression incorrect for filename', fileName, '- aborting']);
+            return;
+        end
     end
     
     channelPos = [];
     c = 0;
-    while isempty(channelPos)
-        c = c +1;
-        channelPos = strfind(fileName, channelNames {c}); % find out channel
+    if isempty(channelNames) || isempty(channelNames{1})
+        c = 1;
+        channelPos = 1;
+    else
+        while isempty(channelPos)
+            c = c +1;
+            channelPos = strfind(fileName, channelNames {c}); % find out channel
+        end
     end
     
     if isempty(channelPos)

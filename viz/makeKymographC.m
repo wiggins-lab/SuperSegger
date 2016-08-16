@@ -41,6 +41,11 @@ f1mm=[0,1];
 f2mm=[0,1];
 pixelsize = CONST.getLocusTracks.PixelSize;
 
+if isempty(pixelsize)
+    pixelsize = 0.1;
+end
+
+
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end

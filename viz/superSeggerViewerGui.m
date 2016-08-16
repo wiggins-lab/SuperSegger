@@ -1327,7 +1327,7 @@ else
         else
             
             handles.cell_no.String = num2str(c);
-            xdim = 2; %str2double(handles.no_columns.String);
+            xdim = 4; %str2double(handles.no_columns.String);
             [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
             if ~isempty( data_cell )
                 handles.message.String = ['Cell Tower for cell ', cell_name];
