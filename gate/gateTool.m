@@ -140,7 +140,7 @@ data = intProcessInput( varargin );
 
 %% make a new gate if required
 if data.merge_flag
-    data.clist = intDoMerge( data.clist, [], ~data.time_flag );
+    data.clist = intDoMerge( data.clist, [], data.skip3D_flag );
 end
 
 
@@ -1167,7 +1167,7 @@ for jj = 1:nf
             xx2 = exp(xx2);
         end
         
-        if numel(data.clist)>1 && ~data.newfig_flag
+        if size(data.clist,2)>1 && ~data.newfig_flag
             if ~data.log_flag(3)
                 data.im = data.im/max(data.im(:));
             end
@@ -2338,9 +2338,17 @@ else
             if isfield( clist_, 'data3D' ) && ~skip3D
                 clist_.data3D(:,1,:) = clist_.data3D(:,1,:) +maxID;
                 
-                ss = size(clistM.data3D);
-                               clistM.data3D = [clistM.data3D;...
-                    clist_.data3D(:,1:ss(2),:)];
+                ss1 = size(clistM.data3D);
+                ss2 = size(clist_.data3D);
+
+                if ss1(3) >  ss2(3)
+                    clist_.data3D = cat(3,clist_.data3D,nan( [ss2(1:2),ss1(3)-ss2(3)] ) );
+                elseif ss1(3) <  ss2(3)
+                    clistM.data3D = cat(3,clistM.data3D,nan( [ss1(1:2),ss2(3)-ss1(3)] ) );
+                end
+                
+                clistM.data3D = [clistM.data3D;...
+                    clist_.data3D];
             end
         end
     end
