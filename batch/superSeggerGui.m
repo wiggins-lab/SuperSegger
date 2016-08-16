@@ -128,9 +128,36 @@ end
 
 % converts image names
 function convert_images_Callback(hObject, eventdata, handles)
+tbef = handles.timeBefore.String;
+taft = handles.timeAfter.String;
+xybef =  handles.xyBefore.String;
+xyaft = handles.xyAfter.String;
+
+% check if they are numbers
+
+[temp,status] = str2num(tbef)
+if status
+    tbef = temp;
+end
+
+[temp,status] = str2num(taft)
+if status
+    taft = temp;
+end
+
+[temp,status] = str2num(xybef)
+if status
+    xybef = temp;
+end
+
+[temp,status] = str2num(xyaft)
+if status
+    xyaft = temp;
+end
+
+
 convertImageNames(handles.directory.String, handles.basename.String, ...
-    handles.timeBefore.String, handles.timeAfter.String, handles.xyBefore.String, ...
-    handles.xyAfter.String, strsplit(handles.channels.String, ','));
+    tbef,taft, xybef, xyaft, strsplit(handles.channels.String, ','));
 
 
 function crop_images_CreateFcn(hObject, eventdata, handles)

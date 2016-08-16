@@ -316,11 +316,10 @@ else
         end
         if  ~isempty(handles.clist) && ~isempty(handles.clist.gate)
             handles.gate_text.String = 'Gates:';
-            cell_gates = struct2cell(handles.clist.gate);
-            for i=1:length(cell_gates(2,1,:));
-                handles.gate_text.String = strcat(handles.gate_text.String, [num2str(cell_gates{2,1,i}) ',']);
+            num_cell_gates = numel(handles.clist.gate);
+            for i=1:num_cell_gates
+                handles.gate_text.String = strcat(handles.gate_text.String, '[',[num2str(handles.clist.gate(i).ind) ']']);
             end
-            handles.gate_text.String = handles.gate_text.String(1:end-1);
         else
             handles.gate_text.String = '';
         end
@@ -1327,7 +1326,7 @@ else
         else
             
             handles.cell_no.String = num2str(c);
-            xdim = 2; %str2double(handles.no_columns.String);
+            xdim = 4; %str2double(handles.no_columns.String);
             [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
             if ~isempty( data_cell )
                 handles.message.String = ['Cell Tower for cell ', cell_name];

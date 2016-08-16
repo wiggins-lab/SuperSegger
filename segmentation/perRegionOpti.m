@@ -1,6 +1,6 @@
 function [data] = perRegionOpti( data, disp_flag, CONST,header)
 % perRegionOpti : Segmentaion optimization using region characteristics.
-% It attempts to improve the region score by turning off on and off segments 
+% It attempts to improve the region score by turning off on and off segments
 % of regions with bad scores. It uses systematic method, or simulated
 % anneal, according to the nudmber of segments to be considered.
 %
@@ -94,7 +94,7 @@ badReg = find(data.regs.scoreRaw < minGoodRegScore);
 props = data.regs.props;
 
 numBadRegions = size(badReg,1);
-if verbose    
+if verbose
     disp([header, 'rO: Possible segments to be tweaked : ',num2str(numel(unique(segsLabelMod))-1),'.']);
     disp([header, 'rO: Optimizing ',num2str(numBadRegions),' regions.']);
 end
@@ -183,7 +183,7 @@ while ~isempty(badReg)
     for kk = 1 : numel(badChecked)
         combMask = combMask + (segsLabelMod(yy,xx)==badChecked(kk));
     end
-   
+    
     combMask = double(combMask>0);
     %keep only not checked segs
     if ~isempty(goodChecked)
@@ -201,7 +201,7 @@ while ~isempty(badReg)
         segmentMask = segmentMask + (segsLabelAll==segs_list(kk));
     end
     
-
+    
     
     if isempty(segs_list)
         [vect] = [];
@@ -239,8 +239,8 @@ while ~isempty(badReg)
             segment_mask = segment_mask + vect(kk)*(segs_list(kk)==segsLabelAll);
         end
         
-
-        backer = 0.5*ag(mask_regs);      
+        
+        backer = 0.5*ag(mask_regs);
         segment_mask_small = ag(segment_mask(yy,xx));
         backer_small = (backer(yy,xx));
         backer_small = ag(((backer_small) - ag(combMask))>0);
@@ -254,8 +254,8 @@ while ~isempty(badReg)
         subplot(1,2,2)
         imshow(cat(3,0.3*(backer_small)+ag(segment_mask_small)...
             ,0.2*ag(all_segs_small-segment_mask_small) +  0.3*backer_small + 0.5*ag(combMask>0), ...
-           0.5* ag(combMask>0) +  0.3*(backer_small)));
-       keyboard;  
+            0.5* ag(combMask>0) +  0.3*(backer_small)));
+        keyboard;
     end
 end
 
@@ -289,6 +289,7 @@ if disp_flag
         ,back,...
         back+ 0.2*double(ag(~cell_mask)-outline))));
     drawnow;
+    axis equal tight;
 end
 
 
