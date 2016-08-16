@@ -55,6 +55,7 @@ function gateToolGui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for gateToolGui
 handles.output = hObject;
 handles.dirname.String = pwd;
+handles.time_flag = 0
 handles.clist_found = 0;
 handles.multi_clist = [];
 updateGui(hObject,handles)
@@ -81,22 +82,40 @@ varargout{1} = handles.multi_clist;
 
 function updateGui(hObject,handles)
 
-if isfield(handles,'multi_clist') && ~isempty(handles.multi_clist) &&  isfield(handles.multi_clist{1},'def')
+if isfield(handles,'multi_clist') && ~isempty(handles.multi_clist)
     handles.clist_found = 1;
 else
     handles.clist_found = 0;
+    handles.msgbox.String = ['Clists : 0'];
 end
 
 
+
 if handles.clist_found
-    handles.def1.String = ['None';handles.multi_clist{1}.def'];
-    handles.def2.String = ['None';handles.multi_clist{1}.def'];
-    handles.def3d.String = ['None';handles.multi_clist{1}.def3d'];
+    % get def of clist
+    
+    which_clist = getClist(handles);
+    
+    if iscell(which_clist)
+        which_clist = which_clist{1};
+    end
+        
+    
+    if handles.time_flag
+       handles.def1.String = ['None';which_clist(1).def3d'];
+       handles.def2.String = ['None';which_clist(1).def3d'];
+    else 
+        handles.def1.String = ['None';which_clist(1).def'];
+        handles.def2.String = ['None';which_clist(1).def'];
+    end
+
     num_clist = numel(handles.multi_clist);
     names = {};
     for i = 1 : num_clist
-        if isfield(handles.multi_clist{i},'name')
+        if iscell (handles.multi_clist) && isfield(handles.multi_clist{i},'name')
             names {end+1} = handles.multi_clist{i}.name;
+        elseif isstruct (handles.multi_clist) && isfield(handles.multi_clist(i),'name')
+            names {end+1} = handles.multi_clist(i).name;
         else
             names {end+1} = ['data',num2str(i)];
         end
@@ -118,6 +137,15 @@ end
 
 guidata(hObject,handles);
 
+function which_clist = getClist(handles)
+if handles.clist_choice.Value == 1
+    which_clist = handles.multi_clist;
+elseif isstruct(handles.multi_clist)
+    which_clist = handles.multi_clist(handles.clist_choice.Value-1);
+else 
+    which_clist = handles.multi_clist{handles.clist_choice.Value-1};
+end
+
 
 % --- Executes on button press in xls.
 function xls_Callback(hObject, eventdata, handles)
@@ -125,11 +153,7 @@ function xls_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [filename, pathName] = uiputfile('data.csv', 'Save xls file',  handles.dirname.String);
-if handles.clist_choice.Value == 1
-    which_clist = handles.multi_clist;
-else
-    which_clist = handles.multi_clist{handles.clist_choice.Value-1};
-end
+which_clist = getClist(handles);
 gateTool(which_clist,'xls',[pathName,filesep,filename]);
 
 
@@ -139,11 +163,7 @@ function csv_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [filename, pathName] = uiputfile('data.csv', 'Save csv file',  handles.dirname.String);
-if handles.clist_choice.Value == 1
-    which_clist = handles.multi_clist;
-else
-    which_clist = handles.multi_clist{handles.clist_choice.Value-1};
-end
+which_clist = getClist(handles);
 gateTool(which_clist,'csv',[pathName,filesep,filename]);
 
 % --- Executes on button press in save_mat_file.
@@ -152,11 +172,7 @@ function save_mat_file_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [filename, pathName] = uiputfile('clist.mat', 'Save clist file',  handles.dirname.String);
-if handles.clist_choice.Value == 1
-    which_clist = handles.multi_clist;
-else
-    which_clist = handles.multi_clist{handles.clist_choice.Value-1};
-end
+which_clist = getClist(handles);
 gateTool(which_clist,'save',[pathName,filesep,filename]);
 
 function [tmp_clist] = loadClistFromDir()
@@ -169,7 +185,7 @@ function load_clist_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [tmp_clist] = loadClistFromDir()
-updateGui(handles)
+updateGui(hObject,handles)
 
 
 % --- Executes on button press in pushbutton2.
@@ -260,8 +276,13 @@ function time_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of time
+if get(hObject,'Value')
+    handles.time_flag = 1;
+else
+    handles.time_flag = 0;
+end
 
-
+updateGui(hObject,handles);
 % --- Executes on selection change in def1.
 function def1_Callback(hObject, eventdata, handles)
 % hObject    handle to def1 (see GCBO)
@@ -316,6 +337,11 @@ function hist_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of hist_tool
 
+if get(hObject,'Value')
+    if get(handles.dot,'Value')
+        handles.dot.Value = 0;
+    end
+end
 
 % --- Executes on button press in dot.
 function dot_Callback(hObject, eventdata, handles)
@@ -324,7 +350,11 @@ function dot_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of dot
-
+if get(hObject,'Value')
+    if get(handles.hist,'Value')
+        handles.hist.Value = 0;
+    end
+end
 
 % --- Executes on button press in log.
 function log_Callback(hObject, eventdata, handles)
@@ -355,24 +385,19 @@ index2 = handles.def2.Value - 1;
 
 varg = {'show'};
 
-if ~handles.time.Value
-    if ~index1 && ~index2
-        %nothing
-    elseif index1~=0 && index2 == 0
-        varg{end+1} = index1;
-    elseif index1==0 && index2 ~= 0
-        varg{end+1} = index2;
-    elseif index1~=0 && index2 ~= 0
-        varg{end+1} = index1;
-        varg{end+1} = index2;
-    end
-else
-    if (handles.def3d.Value - 1) ~= 0
-        varg{end+1} =  handles.def3d.Value - 1;
-        varg{end+1} = 'time';
-    else
-        msgbox ('choose time index')
-    end
+
+if ~index1 && ~index2
+    %nothing
+elseif index1~=0 && index2 == 0
+    varg{end+1} = index1;
+elseif index1==0 && index2 ~= 0
+    varg{end+1} = index2;
+elseif index1~=0 && index2 ~= 0
+    varg{end+1} = [index1, index2];
+end
+
+if handles.time.Value
+    varg{end+1} = 'time';
 end
 
 
@@ -406,13 +431,9 @@ if handles.merge.Value
 end
 
 
-if handles.clist_choice.Value == 1
-    which_clist = handles.multi_clist;
-else
-    which_clist = handles.multi_clist{handles.clist_choice.Value-1};
-end
-
-gateTool(which_clist,varg{:},'no clear','newfig' );
+which_clist = getClist(handles)
+figure;
+gateTool(which_clist,varg{:},'no clear');
 
 % --- Executes on button press in err.
 function err_Callback(hObject, eventdata, handles)
@@ -439,8 +460,18 @@ function add_Callback(hObject, eventdata, handles)
 % hObject    handle to add (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[tmp_clist] = loadClistFromDir();
-handles.multi_clist = [handles.multi_clist,tmp_clist];
+[loaded_clist] = loadClistFromDir();
+if iscell(loaded_clist) && size(loaded_clist,2) ==1
+    loaded_clist = loaded_clist{1};
+end
+
+if isstruct(handles.multi_clist)
+    tmp_before = handles.multi_clist;
+    handles.multi_clist = {};
+    handles.multi_clist{1} = tmp_before;
+end
+
+handles.multi_clist{end+1} = loaded_clist;
 updateGui(hObject,handles)
 
 % --- Executes on button press in delete.
@@ -484,7 +515,6 @@ index1 = handles.def1.Value - 1;
 index2 = handles.def2.Value - 1;
 
 
-
 varg = {'make'};
 
 if ~index1 && ~index2
@@ -494,10 +524,10 @@ elseif index1~=0 && index2 == 0
 elseif index1==0 && index2 ~= 0
     varg{end+1} = index2;
 elseif index1~=0 && index2 ~= 0
-    varg{end+1} = index1;
-    varg{end+1} = index2;
+     varg{end+1} = [index1, index2];
 end
 
+% merges them permanently.. careful!
 if handles.merge.Value
     varg{end+1} = 'merge';
 end
@@ -505,11 +535,13 @@ end
 if index1 || index2
     if handles.clist_choice.Value == 1
         handles.multi_clist = gateTool(handles.multi_clist,varg{:},'no clear','newfig');
+    elseif isstruct(handles.multi_clist)
+        handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),varg{:},'no clear','newfig');
     else
         handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},varg{:},'no clear','newfig');
-    end
-    
+    end 
 end
+
 guidata(hObject,handles);
 
 
@@ -549,13 +581,18 @@ function hist_tool_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to hist_tool (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+handles.hist.Value = 1;
+show_gates_Callback(hObject, eventdata, handles)
+handles.hist.Value = 0;
 
 % --------------------------------------------------------------------
 function contour_tool_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to contour_tool (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.kde.Value = 1;
+show_gates_Callback(hObject, eventdata, handles)
+handles.kde.Value = 0;
 
 
 % --------------------------------------------------------------------
@@ -563,7 +600,9 @@ function scatter_tool_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to scatter_tool (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+handles.dot.Value = 1;
+show_gates_Callback(hObject, eventdata, handles)
+handles.dot.Value = 0;
 
 % --------------------------------------------------------------------
 function debug_ClickedCallback(hObject, eventdata, handles)
@@ -579,10 +618,13 @@ function close_figs_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-set(gateToolGui, 'HandleVisibility', 'off');
-close all;
-set(gateToolGui, 'HandleVisibility', 'on');
-
+fh=findall(0,'Type','Figure');
+for i = 1 : numel(fh)
+    if ~strcmp(fh(i).Name,'gateToolGui')
+        close(fh(i))
+    end
+end
+        
 
 % --- Executes on button press in clear_gate.
 function clear_gate_Callback(hObject, eventdata, handles)
@@ -603,7 +645,7 @@ name = getString ('Clist name', 'Type clist name');
 if handles.clist_choice.Value == 1
     handles.multi_clist = gateTool(handles.multi_clist,'name',name);
 else
-    handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},'name',name);
+    handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),'name',name);
 end
 updateGui(hObject,handles)
 

@@ -172,8 +172,6 @@ if isempty(regexp(fileName,[patternBefore,'[0123456789]+',patternAfter], 'once')
     return;
 end
 
-
-
 % find starting and ending number
 [timeStart,timeEnd] =  regexp(fileName,[patternBefore,'[0123456789]+',patternAfter]);
 
