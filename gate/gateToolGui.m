@@ -638,8 +638,7 @@ if index1 || index2
             name_bef = tmp.name;
             handles.multi_clist{2} = gateTool(tmp,varg{:},'no clear','newfig');
             handles.clist_choice.Value = numel(handles.multi_clist)+1;
-            naming_func (handles,[name_bef,'gated']);
-            handles = naming_func (handles,name);
+            handles  = naming_func (handles,[name_bef,'gated']);
         end
     else
         if handles.replace_flag
