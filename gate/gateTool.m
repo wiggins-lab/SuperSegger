@@ -554,6 +554,10 @@ else
                 end
                 field_name = next_arg;
                 
+                if numel(ss) == 2
+                    ss(3) = 1;
+                end
+                
                 data.clist.data3D = cat(2,data.clist.data3D,reshape(tmp_data,[ss(1),1,ss(3)]));
                 
                 field_name = [num2str( ss(2)+1 ),': ',field_name];
@@ -1958,6 +1962,17 @@ x2 = x_vec(:,2);
 
 [y,xx] = hist3( [x2,x1], {data.binS(2).xx,data.binS(1).xx} );
 
+if data.cond_flag
+   ys = sum( y, 1 );
+   
+   ys(ys==0) = 1;
+   
+   y = y./(ones([size(y,1),1])*ys);
+ %  cutt = 1/(2*data.mult);
+ %  y(y>cutt) = cutt;
+   
+end
+
 if data.log_flag(3)
     y = log(y);
     y(isinf(y)) = nan;
@@ -2222,7 +2237,7 @@ end
 end
 
 %% Get field definition from the structure
-function def = intGetDef( clist );
+function def = intGetDef( clist )
 
 if isstruct( clist )
     def = clist.def;
@@ -2687,6 +2702,9 @@ elseif isstruct( clist )
     
     [~,tmp] = gateTool( clist, 'get', 2, 'time' );
     
+    if numel(ss) == 2
+        ss(3) = 1;
+    end
     len  = reshape( ~isnan(squeeze(tmp)),[ss(1),ss(3)]);
     age = cumsum( len, 2 );
     age(~len) = nan;

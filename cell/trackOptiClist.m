@@ -262,30 +262,37 @@ else
 
     clist = gateTool( clist, 'add3Dt' );
     
-    % add3dtime stuff
-%     len_time_ind = grabClistIndex(clist, 'Long axis (L)', 1);
-%     
-%     ss = size( clist.data3D );
-%     if numel(ss) == 2
-%         ss(3) = 1;
-%     end
-%     len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind(1),:))),[ss(1),ss(3)]);
-%     age = cumsum( len, 2 );
-%     age(~len) = nan;
-%     
-%     age_rel = age;
-%     age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
-%     time = ones([ss(1),1])*(1:ss(3));
-%     %growth_rate = (log(clist.data(:,11)) - log(clist.data(:,10))) ./ age;
-%     
+    %add3dtime stuff
+    len_time_ind = grabClistIndex(clist, 'Long axis (L)', 1);
+    
+    ss = size( clist.data3D );
+    if numel(ss) == 2
+        ss(3) = 1;
+    end
+    len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind(1),:))),[ss(1),ss(3)]);
+    age = cumsum( len, 2 );
+    age(~len) = nan;
+    
+    age_rel = age;
+    age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
+    time = ones([ss(1),1])*(1:ss(3));
+    
+    len_0_ind = grabClistIndex(clist, 'Long axis (L) birth');
+    len_0 = clist.data(:,len_0_ind);
+    len_1_ind = grabClistIndex(clist, 'Long axis (L) death');
+    len_1 = clist.data(:,len_1_ind);
+    age_ind = grabClistIndex(clist, 'Cell age');
+    age = clist.data(:,age_ind);
+    growth_rate = (log(len_1) - log(len_0)) ./ age;
+    
 %     % add time
 %     clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
 %     % add age
 %      clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
 %    % add age_rel
 %     clist = gateTool( clist, 'add3D', age_rel, 'Relative Age' );
-   % add growth rate
-    %clist = gateTool( clist, 'add', growth_rate, 'Growth Rate' );
+   %add growth rate
+    clist = gateTool( clist, 'add', growth_rate, 'Growth Rate' );
     
 
     clist.gate = CONST.trackLoci.gate;

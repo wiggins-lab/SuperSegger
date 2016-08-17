@@ -31,7 +31,7 @@ end
 if ~time
     def = lower(clist.def');
 else
-    def = lower(clist.def3d');
+    def = lower(clist.def3D');
 end
 
 field_str = lower(field_str);
