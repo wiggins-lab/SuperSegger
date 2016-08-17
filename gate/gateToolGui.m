@@ -55,11 +55,11 @@ function gateToolGui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for gateToolGui
 handles.output = hObject;
 handles.dirname.String = pwd;
-handles.time_flag = 0
+handles.time_flag = 0;
 handles.clist_found = 0;
 handles.multi_clist = [];
 updateGui(hObject,handles)
-set(handles.figure1, 'units', 'normalized', 'position', [0.2 0.2 0.3 0.7])
+set(handles.figure1, 'units', 'normalized', 'position', [0.2 0.2 0.3 0.7]);
 % Update handles structure
 guidata(hObject, handles);
 
@@ -123,15 +123,15 @@ if handles.clist_found
     end
     handles.clist_choice.String = ['All';names'];
     handles.msgbox.String = ['Clists : ', num2str(num_clist)];
-    set(findall(handles.action_panel, '-property', 'enable'), 'enable', 'on')
-    set(findall(handles.show_panel, '-property', 'enable'), 'enable', 'on')
-    set(findall(handles.save_panel, '-property', 'enable'), 'enable', 'on')
-    set(findall(handles.def_panel, '-property', 'enable'), 'enable', 'on')
+    set(findall(handles.action_panel, '-property', 'enable'), 'enable', 'on');
+    set(findall(handles.show_panel, '-property', 'enable'), 'enable', 'on');
+    set(findall(handles.save_panel, '-property', 'enable'), 'enable', 'on');
+    set(findall(handles.def_panel, '-property', 'enable'), 'enable', 'on');
 else
-    set(findall(handles.action_panel, '-property', 'enable'), 'enable', 'off')
-    set(findall(handles.show_panel, '-property', 'enable'), 'enable', 'off')
-    set(findall(handles.save_panel, '-property', 'enable'), 'enable', 'off')
-    set(findall(handles.def_panel, '-property', 'enable'), 'enable', 'off')
+    set(findall(handles.action_panel, '-property', 'enable'), 'enable', 'off');
+    set(findall(handles.show_panel, '-property', 'enable'), 'enable', 'off');
+    set(findall(handles.save_panel, '-property', 'enable'), 'enable', 'off');
+    set(findall(handles.def_panel, '-property', 'enable'), 'enable', 'off');
     
 end
 
@@ -185,7 +185,7 @@ function load_clist_Callback(hObject, eventdata, handles)
 % hObject    handle to load_clist (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[tmp_clist] = loadClistFromDir()
+[tmp_clist] = loadClistFromDir();
 updateGui(hObject,handles)
 
 
@@ -283,7 +283,7 @@ else
     handles.time_flag = 0;
 end
 
-updateGui(hObject,handles);
+updateGui(hObject,handles)
 % --- Executes on selection change in def1.
 function def1_Callback(hObject, eventdata, handles)
 % hObject    handle to def1 (see GCBO)
@@ -583,7 +583,7 @@ function hist_tool_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.hist.Value = 1;
-show_gates_Callback(hObject, eventdata, handles)
+show_gates_Callback(hObject, eventdata, handles);
 handles.hist.Value = 0;
 
 % --------------------------------------------------------------------
@@ -592,7 +592,7 @@ function contour_tool_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.kde.Value = 1;
-show_gates_Callback(hObject, eventdata, handles)
+show_gates_Callback(hObject, eventdata, handles);
 handles.kde.Value = 0;
 
 
@@ -602,7 +602,7 @@ function scatter_tool_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.dot.Value = 1;
-show_gates_Callback(hObject, eventdata, handles)
+show_gates_Callback(hObject, eventdata, handles);
 handles.dot.Value = 0;
 
 % --------------------------------------------------------------------
@@ -622,7 +622,7 @@ function close_figs_Callback(hObject, eventdata, handles)
 fh=findall(0,'Type','Figure');
 for i = 1 : numel(fh)
     if ~strcmp(fh(i).Name,'gateToolGui')
-        close(fh(i))
+        close(fh(i));
     end
 end
         

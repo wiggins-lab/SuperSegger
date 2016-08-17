@@ -603,7 +603,7 @@ else
                 
             case 'def'
                 disp( intGetDef( data.clist )' );
-            case 'def3D'
+            case 'def3d'
                 disp( intGetDef3D( data.clist )' );
             case 'merge' % set merge flag
                 data.merge_flag = true;
@@ -723,7 +723,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'make3D','gate3D'}
+            case {'make3d','gate3d'}
                 
                 counter  = counter + 1;
                 next_arg = varargin{counter};
@@ -740,7 +740,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'time','3D' }
+            case {'time','3d' }
                 
                 data.time_flag = true;
                 
@@ -880,7 +880,13 @@ else
                     clist.gate(ii).xx(:,1), clist.gate(ii).xx(:,2) ));
             else
                 x = clist.data(:,clist.gate(ii).ind);
-                inflag = and( inflag, and( x > min(clist.gate(ii).x), x < max(clist.gate(ii).x)));
+                xg = clist.gate(ii).x;
+                
+                if numel(xg)==1
+                    inflag =  and( inflag, xg==x ); 
+                else
+                    inflag = and( inflag, and( x > min(xg), x < max(xg)));
+                end
             end
         end
     end
@@ -2240,11 +2246,11 @@ else
         if data.line_flag
             plot( x1(ii,:), x2(ii,:), 'color', cc_ii );
             
-            start_ind = find( ~isnan( x1(ii,:) ), 1, 'first' );
-            end_ind   = find( ~isnan( x1(ii,:) ), 1, 'last' );
+            start_ind = find( ~isnan( x1(ii,:)+x2(ii,:) ), 1, 'first' );
+            end_ind   = find( ~isnan( x1(ii,:)+x2(ii,:) ), 1, 'last' );
             
             plot( x1(ii,start_ind), x2(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
-            plot( x1(ii,start_ind), x2(ii,end_ind  ), 'x','MarkerSize', 10, 'color', cc_ii );
+            plot( x1(ii,end_ind), x2(ii,end_ind  ), '.','MarkerSize', 10, 'color', cc_ii );
         else
             plot( x1(ii,:), x2(ii,:), '.', 'color', cc_ii );           
         end
