@@ -1,4 +1,4 @@
-function [ind] = grabClistIndex(clist, field_str)
+function [ind] = grabClistIndex(clist, field_str, time)
 % grabClistIndex : grabs the clist index for string
 %
 % INPUT :
@@ -24,8 +24,18 @@ function [ind] = grabClistIndex(clist, field_str)
 %
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-def = lower(clist.def');
+if ~exist('time','var') || isempty(time)
+    time = 0;
+end
+
+if ~time
+    def = lower(clist.def');
+else
+    def = lower(clist.def3D');
+end
+
 field_str = lower(field_str);
 ind = find(~cellfun('isempty',strfind(def,field_str)));
+
 
 end
