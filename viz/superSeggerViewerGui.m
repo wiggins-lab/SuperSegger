@@ -77,6 +77,9 @@ else
     if isfield(handles.clist,'def3d')
         handles.time_clist.String = handles.clist.def3d';
     end
+     if isfield(handles.clist,'def3D')
+        handles.time_clist.String = handles.clist.def3D';
+    end
     if isfield(handles.clist,'idExclude')
         handles.exclude_ids.String = num2str(handles.clist.idExclude);
     else
