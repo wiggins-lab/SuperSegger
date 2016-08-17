@@ -22,7 +22,7 @@ function varargout = gateToolGui(varargin)
 
 % Edit the above text to modify the response to help gateToolGui
 
-% Last Modified by GUIDE v2.5 22-Jul-2016 16:48:17
+% Last Modified by GUIDE v2.5 17-Aug-2016 13:24:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -58,8 +58,10 @@ handles.dirname.String = pwd;
 handles.time_flag = 0;
 handles.clist_found = 0;
 handles.multi_clist = [];
+handles.replace_flag = 0;
 updateGui(hObject,handles)
-set(handles.figure1, 'units', 'normalized', 'position', [0.2 0.2 0.3 0.7]);
+
+set(handles.figure1, 'units', 'normalized', 'position', [0.2 0.1 0.35 0.75]);
 % Update handles structure
 guidata(hObject, handles);
 
@@ -100,25 +102,37 @@ if handles.clist_found
     if iscell(which_clist)
         which_clist = which_clist{1};
     end
-        
+    
     
     if handles.time_flag
-       handles.def1.String = ['None';which_clist(1).def3d'];
-       handles.def2.String = ['None';which_clist(1).def3d'];
-    else 
+        if isfield( which_clist(1), 'def3D' )
+            handles.def1.String = ['None';which_clist(1).def3D'];
+            handles.def2.String = ['None';which_clist(1).def3D'];
+            
+        elseif isfield( which_clist(1), 'def3d' )
+            handles.def1.String = ['None';which_clist(1).def3d'];
+            handles.def2.String = ['None';which_clist(1).def3d'];
+            
+        end
+    else
         handles.def1.String = ['None';which_clist(1).def'];
         handles.def2.String = ['None';which_clist(1).def'];
     end
-
+    
     num_clist = numel(handles.multi_clist);
     names = {};
     for i = 1 : num_clist
-        if iscell (handles.multi_clist) && isfield(handles.multi_clist{i},'name')
+        if iscell (handles.multi_clist)
+            if ~isfield(handles.multi_clist{i},'name')
+                handles.multi_clist{i}.name = ['data',num2str(i)];
+            end
             names {end+1} = handles.multi_clist{i}.name;
-        elseif isstruct (handles.multi_clist) && isfield(handles.multi_clist(i),'name')
+            
+        elseif isstruct (handles.multi_clist)
+            if ~isfield(handles.multi_clist(i),'name')
+                handles.multi_clist(i).name = ['data',num2str(i)];
+            end
             names {end+1} = handles.multi_clist(i).name;
-        else
-            names {end+1} = ['data',num2str(i)];
         end
     end
     handles.clist_choice.String = ['All';names'];
@@ -143,7 +157,7 @@ if handles.clist_choice.Value == 1
     which_clist = handles.multi_clist;
 elseif isstruct(handles.multi_clist)
     which_clist = handles.multi_clist(handles.clist_choice.Value-1);
-else 
+else
     which_clist = handles.multi_clist{handles.clist_choice.Value-1};
 end
 
@@ -231,7 +245,35 @@ function strip_Callback(hObject, eventdata, handles)
 % hObject    handle to strip (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.multi_clist = gateTool(handles.multi_clist,'strip');
+
+
+if handles.clist_choice.Value == 1
+    handles.multi_clist = gateTool(handles.multi_clist,'strip');
+elseif isstruct(handles.multi_clist)
+    if handles.replace_flag
+        handles.multi_clist(handles.clist_choice.Value-1) =  gateTool(handles.multi_clist(handles.clist_choice.Value-1),'strip');
+    else
+        clist_bef = handles.multi_clist(handles.clist_choice.Value-1);
+        name_bef = clist_bef.name;
+        tmp_striped =  gateTool(clist_bef,'strip');
+        tmp_striped.name = [name_bef,'stripped'];
+        handles.multi_clist = {};
+        handles.multi_clist{1} = clist_bef;
+        handles.multi_clist{2} = tmp_striped;
+    end
+else
+    if handles.replace_flag
+        handles.multi_clist{handles.clist_choice.Value-1} =  gateTool(handles.multi_clist{handles.clist_choice.Value-1},'strip');
+    else
+        clist_bef = handles.multi_clist{handles.clist_choice.Value-1};
+        name_bef = clist_bef.name;
+        tmp_striped =  gateTool(clist_bef,'strip');
+        tmp_striped.name = [name_bef,'stripped'];
+        handles.multi_clist{end+1} = tmp_striped;
+    end
+end
+
+updateGui(hObject,handles);
 guidata(hObject,handles);
 
 
@@ -259,6 +301,15 @@ function kde_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of kde
+
+if get(hObject,'Value')
+    if get(handles.dot,'Value')
+        handles.dot.Value = 0;
+    end
+    if get(handles.hist,'Value')
+        handles.hist.Value = 0;
+    end
+end
 
 
 % --- Executes on button press in stats.
@@ -342,6 +393,9 @@ if get(hObject,'Value')
     if get(handles.dot,'Value')
         handles.dot.Value = 0;
     end
+    if get(handles.kde,'Value')
+        handles.kde.Value = 0;
+    end
 end
 
 % --- Executes on button press in dot.
@@ -355,6 +409,10 @@ if get(hObject,'Value')
     if get(handles.hist,'Value')
         handles.hist.Value = 0;
     end
+    if get(handles.kde,'Value')
+        handles.kde.Value = 0;
+    end
+    
 end
 
 % --- Executes on button press in log.
@@ -373,7 +431,9 @@ function cond_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of cond
-
+if get(hObject,'Value')
+    handles.density.Value = 0;
+end
 
 % --- Executes on button press in show_gates.
 function show_gates_Callback(hObject, eventdata, handles)
@@ -419,10 +479,29 @@ end
 
 if handles.log.Value
     varg{end+1} = 'log';
+    log_axis = [];
+    if handles.x_box.Value
+        log_axis = [log_axis;1];
+    end
+    if handles.y_box.Value
+        log_axis = [log_axis;2];
+    end
+    if handles.z_box.Value
+        log_axis = [log_axis;3];
+    end
+    if  ~isempty(log_axis)
+        varg{end+1} =  log_axis';
+    end
+    
 end
 if handles.cond.Value
     varg{end+1} = 'cond';
 end
+
+if handles.density.Value
+    varg{end+1} = 'den';
+end
+
 if handles.err.Value
     varg{end+1} = 'err';
 end
@@ -480,8 +559,18 @@ function delete_Callback(hObject, eventdata, handles)
 % hObject    handle to delete (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.multi_clist = [];
-updateGui(hObject,handles)
+
+if handles.clist_choice.Value == 1
+    handles.multi_clist = [];
+elseif isstruct(handles.multi_clist)
+    handles.multi_clist(handles.clist_choice.Value-1) =[];
+else
+    handles.multi_clist{handles.clist_choice.Value-1} =[];
+    handles.multi_clist =  handles.multi_clist(~cellfun('isempty', handles.multi_clist))
+end
+
+handles.clist_choice.Value = 1;
+updateGui(hObject,handles);
 
 % --- Executes on selection change in def3d.
 function def3d_Callback(hObject, eventdata, handles)
@@ -525,7 +614,7 @@ elseif index1~=0 && index2 == 0
 elseif index1==0 && index2 ~= 0
     varg{end+1} = index2;
 elseif index1~=0 && index2 ~= 0
-     varg{end+1} = [index1, index2];
+    varg{end+1} = [index1, index2];
 end
 
 % merges them permanently.. careful!
@@ -537,12 +626,30 @@ if index1 || index2
     if handles.clist_choice.Value == 1
         handles.multi_clist = gateTool(handles.multi_clist,varg{:},'no clear','newfig');
     elseif isstruct(handles.multi_clist)
-        handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),varg{:},'no clear','newfig');
+        if handles.replace_flag
+            handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),varg{:},'no clear','newfig');
+        else
+            tmp = handles.multi_clist;
+            handles.multi_clist = {};
+            handles.multi_clist{1} = tmp;
+            name_bef = tmp.name;
+            handles.multi_clist{2} = gateTool(tmp,varg{:},'no clear','newfig');
+            handles.clist_choice.Value = numel(handles.multi_clist)+1;
+            naming_func (handles,[name_bef,'gated']);
+            handles = naming_func (handles,name);
+        end
     else
-        handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},varg{:},'no clear','newfig');
-    end 
+        if handles.replace_flag
+            handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},varg{:},'no clear','newfig');
+        else
+            name_bef = handles.multi_clist{handles.clist_choice.Value-1}.name;
+            handles.multi_clist{end+1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},varg{:},'no clear','newfig');
+            handles.clist_choice.Value = numel(handles.multi_clist)+1;
+            handles = naming_func (handles,[name_bef,'gated']);
+        end
+    end
 end
-
+updateGui(hObject,handles);
 guidata(hObject,handles);
 
 
@@ -625,7 +732,7 @@ for i = 1 : numel(fh)
         close(fh(i));
     end
 end
-        
+
 
 % --- Executes on button press in clear_gate.
 function clear_gate_Callback(hObject, eventdata, handles)
@@ -635,6 +742,16 @@ function clear_gate_Callback(hObject, eventdata, handles)
 handles.multi_clist = gateTool(handles.multi_clist,'clear');
 guidata(hObject,handles);
 
+function handles = naming_func (handles,name)
+if handles.clist_choice.Value == 1
+    handles.multi_clist = gateTool(handles.multi_clist,'name',name);
+elseif isstruct(handles.multi_clist)
+    handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),'name',name);
+else
+    handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},'name',name);
+end
+
+
 % --- Executes on button press in name.
 function name_Callback(hObject, eventdata, handles)
 % hObject    handle to name (see GCBO)
@@ -643,11 +760,7 @@ function name_Callback(hObject, eventdata, handles)
 
 
 name = getString ('Clist name', 'Type clist name');
-if handles.clist_choice.Value == 1
-    handles.multi_clist = gateTool(handles.multi_clist,'name',name);
-else
-    handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),'name',name);
-end
+handles = naming_func (handles,name);
 updateGui(hObject,handles)
 
 function num_return = getNumber (dlg_title, prompt)
@@ -693,4 +806,57 @@ function clist_choice_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in replace.
+function replace_Callback(hObject, eventdata, handles)
+% hObject    handle to replace (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of replace
+if get(hObject,'Value')
+    handles.replace_flag = 1;
+else
+    handles.replace_flag = 0;
+end
+guidata(hObject,handles);
+
+% --- Executes on button press in x_box.
+function x_box_Callback(hObject, eventdata, handles)
+% hObject    handle to x_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of x_box
+
+
+% --- Executes on button press in y_box.
+function y_box_Callback(hObject, eventdata, handles)
+% hObject    handle to y_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of y_box
+
+
+% --- Executes on button press in z_box.
+function z_box_Callback(hObject, eventdata, handles)
+% hObject    handle to z_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of z_box
+
+
+% --- Executes on button press in density.
+function density_Callback(hObject, eventdata, handles)
+% hObject    handle to density (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of density
+if get(hObject,'Value')
+    handles.cond.Value = 0
 end
