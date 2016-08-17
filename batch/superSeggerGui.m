@@ -74,7 +74,7 @@ msgbox({'NAMING CONVERSION:',
     '',
     'The convert script accepts the characters before and after the frame and position numbers, and the characters indicating the channels.',
   '',
-    'For example if your naming convetion is \bf[name]-pos1-p-001.tif\rm, you can use for channel names : \bf-p-\rm, position prefix : \bfpos\rm, time suffix : \bf.tif\rm.',
+    'For example if your naming convention is \bf[name]-pos1-p-001.tif\rm, you can use for channel names : \bf-p-\rm, position prefix : \bfpos\rm, time suffix : \bf.tif\rm.',
 'If your naming convetion is \bf[name]{\_}00000000t{\_}BF.tif\rm and \bfname{\_}00000000t{\_}GFP.tif\rm, you can use for channel names : \bfBF,GFP\rm, time prefix : \bf{\_}\rm and time suffix : \bft{\_}\rm.'
 }, 'Title','none',Opt);
 
