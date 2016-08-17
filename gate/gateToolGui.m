@@ -59,6 +59,7 @@ handles.time_flag = 0
 handles.clist_found = 0;
 handles.multi_clist = [];
 updateGui(hObject,handles)
+set(handles.figure1, 'units', 'normalized', 'position', [0.2 0.2 0.3 0.7])
 % Update handles structure
 guidata(hObject, handles);
 

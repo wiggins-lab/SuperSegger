@@ -330,7 +330,7 @@ else
                     data.log_flag( [1,2] ) = true;
                     counter = counter-1;
                 end
-            case 'skip3D'
+            case 'skip3d'
                 data.skip3D_flag = true;
                 
             case 'drill'
@@ -520,7 +520,7 @@ else
                 disp( ['Adding field ',field_name] );
                 
                 
-            case 'add3D'
+            case 'add3d'
                 
                          
                 if numel( data.clist ) ~= 1
@@ -563,7 +563,7 @@ else
                 disp( ['Adding field ',field_name] );
                 
 
-            case 'add3Dt'               
+            case 'add3dt'               
                 data.clist = intDoAddT( data.clist );
             case 'trace'
                 data.trace_flag = true;
