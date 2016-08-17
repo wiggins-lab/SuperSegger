@@ -33,6 +33,7 @@ for jj = 1:nc
     end
     
     ped_vec{ii} = ped;
+    gen(ii)     = numel(ped);
 end
 
 data.ped = ped_vec;
