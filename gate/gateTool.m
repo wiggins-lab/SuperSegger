@@ -1,4 +1,4 @@
-function [clist, out] = gateTool2(varargin)
+function [clist, out] = gateTool(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
 % GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
@@ -144,6 +144,8 @@ if data.merge_flag
 end
 
 
+
+
 %% make a new gate if required
 if data.make_flag
     data = intMakeGate( data, data.ind );
@@ -211,6 +213,12 @@ end
 
 %% internal funciton that processes that input arguments
 function data = intProcessInput( varargin )
+
+
+
+
+
+
 
 varargin = varargin{1};
 nargin   = numel( varargin );
@@ -288,8 +296,13 @@ else
     if (~iscell( next_arg )) && (~isstruct( next_arg ))
         error( 'First argument must be a clist' );
     end
+
+    % fix naming of def3D
+    clist = next_arg;
+    clist = intFixDef3D( clist );
+
+    data.clist = clist;
     
-    data.clist = next_arg;
     
     if iscell( next_arg );
         data.array_flag  = true;
@@ -301,6 +314,7 @@ else
     if  nargin == 1 && ~load_flag
         data.strip_flag = true;
     end
+    
     
     while counter < nargin
         
@@ -783,6 +797,11 @@ else
   
 end
 
+ if numel( data.ind ) == 2
+    data.stat_flag = false; 
+ end
+ 
+     
 if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
     if (numel( data.ind ) == 2)
@@ -2344,7 +2363,14 @@ else
             tmp(tmp==maxID) = 0;
             
             clist_.data(:,ID_ind) = tmp;
-             
+            
+            ss1 = size( clistM.data );
+            ss2 = size( clist_.data );
+            
+            if ss1(2) ~= ss2(2)
+                error( 'Clists with a different number of data descriptors are being compared. Descriptor number must match.' );   
+            end
+            
             clistM.data = [clistM.data;...
                 clist_.data];
             
@@ -2356,6 +2382,9 @@ else
                 ss1 = size(clistM.data3D);
                 ss2 = size(clist_.data3D);
                 
+                if ss1(2) ~= ss2(2)
+                   error( 'Clists with a different number of data3D descriptors are being compared. Descriptor number must match.' );   
+                end
                 
                 if numel(ss1) == 2
                     ss1(3) = 1;
@@ -2820,4 +2849,22 @@ if fid
     end
     fclose(fid) ;
 end
+end
+
+
+%% Get 3D field definition from the structure
+function clist = intFixDef3D( clist );
+
+if isstruct( clist )
+    if isfield( clist, 'def3d' )
+        clist.def3D = clist.def3d;
+        clist = rmfield( clist, 'def3d' );
+    end
+elseif iscell( clist )
+    nc = numel( clist );
+    for ii = 1:nc
+        clist{ii} = intFixDef3D( clist{ii} );
+    end
+end
+
 end
