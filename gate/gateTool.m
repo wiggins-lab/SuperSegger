@@ -2241,6 +2241,8 @@ function def = intGetDef3D( clist );
 if isstruct( clist )
     if isfield( clist, 'def3D' )
         def = clist.def3D;
+    elseif isfield( clist, 'def3d' )
+        def = clist.def3d;
     else
         def = {};
     end
