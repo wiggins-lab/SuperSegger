@@ -289,7 +289,11 @@ else
         error( 'First argument must be a clist' );
     end
     
-    data.clist = next_arg;
+    % do conversion is required
+    clist = next_arg;
+    clist = intDoConversion( clist );
+    
+    data.clist = clist;
     
     if iscell( next_arg );
         data.array_flag  = true;
