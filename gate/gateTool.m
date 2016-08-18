@@ -1,7 +1,7 @@
-function [clist, out] = gateTool2(varargin)
+function [clist, out] = gateTool(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
-% GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
+% GATETOOL( [clist,clist cell array,directory,filename], [command string], [argument], ... ) 
 % 
 % clist must be (i) a clist struct or (ii) a cell array of clists or (iii)
 % a data directory, xy1 directory or a clist file name. 
@@ -144,6 +144,8 @@ if data.merge_flag
 end
 
 
+
+
 %% make a new gate if required
 if data.make_flag
     data = intMakeGate( data, data.ind );
@@ -180,6 +182,7 @@ elseif data.stat_flag
     %disp( ['Gated cells: ',num2str(out(1))] );
     %disp( ['Total cells:  ',num2str(out(2))] );
     %disp( [num2str(100*out(1)/out(2)),' %'] );
+    intShowKS( data );
 elseif data.get_gate_flag
     
     if ~data.time_flag
@@ -205,12 +208,20 @@ end
 
 clist = data.clist;
 
-
+if data.save_flag
+    intSaveClist( data ); 
+end
 
 end
 
 %% internal funciton that processes that input arguments
 function data = intProcessInput( varargin )
+
+
+
+
+
+
 
 varargin = varargin{1};
 nargin   = numel( varargin );
@@ -235,6 +246,7 @@ data.drill_flag     = false;
 data.error_flag     = false;
 data.newfig_flag    = false;
 data.line_flag      = false;
+data.save_flag      = false;
 
 data.trace_flag     = false;
 
@@ -288,12 +300,13 @@ else
     if (~iscell( next_arg )) && (~isstruct( next_arg ))
         error( 'First argument must be a clist' );
     end
-    
-    % do conversion is required
+
+    % fix naming of def3D
     clist = next_arg;
-    clist = intDoConversion( clist );
-    
+    clist = intFixDef3D( clist );
+
     data.clist = clist;
+    
     
     if iscell( next_arg );
         data.array_flag  = true;
@@ -305,6 +318,7 @@ else
     if  nargin == 1 && ~load_flag
         data.strip_flag = true;
     end
+    
     
     while counter < nargin
         
@@ -334,7 +348,7 @@ else
                     data.log_flag( [1,2] ) = true;
                     counter = counter-1;
                 end
-            case 'skip3D'
+            case 'skip3d'
                 data.skip3D_flag = true;
                 
             case 'drill'
@@ -347,6 +361,21 @@ else
             case 'line'
                 data.line_flag = true;
                 data.dot_flag = true;
+            case 'save'
+                data.save_flag = true;
+                
+                counter  = counter + 1;
+                next_arg = varargin{counter};
+                
+                if counter > nargin
+                    error( 'Not enough arguments for add' )
+                end
+                next_arg = varargin{counter};
+                if ~ischar( next_arg )
+                    error( '2nd argument of add must be a str name for the field' );
+                end
+                
+                data.save_name = next_arg;
                 
             case 'mult'
                 counter = counter + 1;
@@ -524,7 +553,7 @@ else
                 disp( ['Adding field ',field_name] );
                 
                 
-            case 'add3D'
+            case 'add3d'
                 
                          
                 if numel( data.clist ) ~= 1
@@ -558,6 +587,10 @@ else
                 end
                 field_name = next_arg;
                 
+                if numel(ss) == 2
+                    ss(3) = 1;
+                end
+                
                 data.clist.data3D = cat(2,data.clist.data3D,reshape(tmp_data,[ss(1),1,ss(3)]));
                 
                 field_name = [num2str( ss(2)+1 ),': ',field_name];
@@ -567,7 +600,7 @@ else
                 disp( ['Adding field ',field_name] );
                 
 
-            case 'add3Dt'               
+            case 'add3dt'               
                 data.clist = intDoAddT( data.clist );
             case 'trace'
                 data.trace_flag = true;
@@ -588,9 +621,13 @@ else
     
                 
             case 'def'
-                disp( intGetDef( data.clist )' );
-            case 'def3D'
-                disp( intGetDef3D( data.clist )' );
+                def = intGetDef( data.clist );
+                def = intFixDef( def )';
+                disp( def );
+            case 'def3d'
+                def = intGetDef3D( data.clist );
+                def = intFixDef( def )';
+                disp( def );              
             case 'merge' % set merge flag
                 data.merge_flag = true;
             case 'den' % set density flag
@@ -709,7 +746,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'make3D','gate3D'}
+            case {'make3d','gate3d'}
                 
                 counter  = counter + 1;
                 next_arg = varargin{counter};
@@ -726,7 +763,7 @@ else
                     error( 'gate must be numeric ind list or struct' );
                 end
                 
-            case {'time','3D' }
+            case {'time','3d' }
                 
                 data.time_flag = true;
                 
@@ -783,6 +820,11 @@ else
   
 end
 
+ if numel( data.ind ) == 2
+    data.stat_flag = false; 
+ end
+ 
+     
 if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
     if (numel( data.ind ) == 2)
@@ -861,7 +903,13 @@ else
                     clist.gate(ii).xx(:,1), clist.gate(ii).xx(:,2) ));
             else
                 x = clist.data(:,clist.gate(ii).ind);
-                inflag = and( inflag, and( x > min(clist.gate(ii).x), x < max(clist.gate(ii).x)));
+                xg = clist.gate(ii).x;
+                
+                if numel(xg)==1
+                    inflag =  and( inflag, xg==x ); 
+                else
+                    inflag = and( inflag, and( x > min(xg), x < max(xg)));
+                end
             end
         end
     end
@@ -1286,6 +1334,9 @@ if data.stat_flag
     figure;
     intDoBoxIt( data );
 end
+
+data0.stat = data.stat;
+
 end
 
 function intFixColorBar( im )
@@ -1518,6 +1569,8 @@ data.h = [data.h,h];
 
 nc = size( clist.data, 1 );
 
+stat.name0 = name;
+
 if data.time_flag
     name = [name,' (',num2str( data.n, '%1.2g' ),' points)'];
 else
@@ -1629,6 +1682,7 @@ function stat = intDoStatAn( x1, x, y, n, data, cc, name )
    stat.max  = x1_max;
    stat.min  = x1_min;
    stat.n    = n;
+   stat.x    = x1;
    
    if data.log_flag(2)
        del = [1e-1,1];
@@ -1962,6 +2016,17 @@ x2 = x_vec(:,2);
 
 [y,xx] = hist3( [x2,x1], {data.binS(2).xx,data.binS(1).xx} );
 
+if data.cond_flag
+   ys = sum( y, 1 );
+   
+   ys(ys==0) = 1;
+   
+   y = y./(ones([size(y,1),1])*ys);
+ %  cutt = 1/(2*data.mult);
+ %  y(y>cutt) = cutt;
+   
+end
+
 if data.log_flag(3)
     y = log(y);
     y(isinf(y)) = nan;
@@ -2044,7 +2109,7 @@ y = y/prod(dx);
 if data.log_flag(3)
     y = log(y);
     y(isinf(y)) = nan;
-    y(isnan(y)) = min(y(:));
+    %y(isnan(y)) = min(y(:));
 end
 
 
@@ -2210,11 +2275,11 @@ else
         if data.line_flag
             plot( x1(ii,:), x2(ii,:), 'color', cc_ii );
             
-            start_ind = find( ~isnan( x1(ii,:) ), 1, 'first' );
-            end_ind   = find( ~isnan( x1(ii,:) ), 1, 'last' );
+            start_ind = find( ~isnan( x1(ii,:)+x2(ii,:) ), 1, 'first' );
+            end_ind   = find( ~isnan( x1(ii,:)+x2(ii,:) ), 1, 'last' );
             
             plot( x1(ii,start_ind), x2(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
-            plot( x1(ii,start_ind), x2(ii,end_ind  ), 'x','MarkerSize', 10, 'color', cc_ii );
+            plot( x1(ii,end_ind), x2(ii,end_ind  ), '.','MarkerSize', 10, 'color', cc_ii );
         else
             plot( x1(ii,:), x2(ii,:), '.', 'color', cc_ii );           
         end
@@ -2226,16 +2291,32 @@ end
 end
 
 %% Get field definition from the structure
-function def = intGetDef( clist );
+function def = intGetDef( clist )
 
 if isstruct( clist )
     def = clist.def;
 elseif iscell( clist )
     def = intGetDef( clist{1} );
+    %def = intFixDef( def );
 else
     error( 'empty clist in intGetDef' );
 end
 
+
+end
+
+function def = intFixDef( def )
+
+if ~isempty( def )
+    
+    nd = numel( def );
+    for ii = 1:nd
+        def{ii} = [num2str(ii),' : ',def{ii}];
+    end
+    
+    def = {'Index : Descriptor', def{:} };
+    
+end
 
 end
 
@@ -2245,6 +2326,9 @@ function def = intGetDef3D( clist );
 if isstruct( clist )
     if isfield( clist, 'def3D' )
         def = clist.def3D;
+    elseif isfield( clist, 'def3d' )
+        def = clist.def3d;
+        %def = intFixDef( def );
     else
         def = {};
     end
@@ -2333,7 +2417,14 @@ else
             tmp(tmp==maxID) = 0;
             
             clist_.data(:,ID_ind) = tmp;
-             
+            
+            ss1 = size( clistM.data );
+            ss2 = size( clist_.data );
+            
+            if ss1(2) ~= ss2(2)
+                error( 'Clists with a different number of data descriptors are being compared. Descriptor number must match.' );   
+            end
+            
             clistM.data = [clistM.data;...
                 clist_.data];
             
@@ -2344,6 +2435,10 @@ else
                 
                 ss1 = size(clistM.data3D);
                 ss2 = size(clist_.data3D);
+                
+                if ss1(2) ~= ss2(2)
+                   error( 'Clists with a different number of data3D descriptors are being compared. Descriptor number must match.' );   
+                end
                 
                 if numel(ss1) == 2
                     ss1(3) = 1;
@@ -2417,14 +2512,23 @@ clist = {};
 
 if exist( dirname, 'file' ) == 2
     
-    tmp = load( dirname );
     
-    if isstruct( tmp ) && isfield( tmp, 'clist' );
-        clist = tmp.clist;
+    [dir_,file_,ext_] = fileparts( dirname );
+    
+    if strcmp( ext_, '.mat' )
+        tmp = load( dirname );
+        
+        
+        if isstruct( tmp ) && isfield( tmp, 'clist' );
+            clist = tmp.clist;
+        else
+            clist = tmp;
+        end
+    elseif strcmp( ext_, '.csv' )
+        clist = intLoadCSV( dirname );
     else
-        clist = tmp;
+        error( 'Loading files must be either .mat or .csv' );
     end
-    
     
 else
     dirname = fixDir( dirname );
@@ -2688,6 +2792,9 @@ elseif isstruct( clist )
     
     [~,tmp] = gateTool( clist, 'get', 2, 'time' );
     
+    if numel(ss) == 2
+        ss(3) = 1;
+    end
     len  = reshape( ~isnan(squeeze(tmp)),[ss(1),ss(3)]);
     age = cumsum( len, 2 );
     age(~len) = nan;
@@ -2804,5 +2911,164 @@ if fid
         fprintf(fid, '\n');
     end
     fclose(fid) ;
+end
+end
+
+
+%% Get 3D field definition from the structure
+function clist = intFixDef3D( clist );
+
+
+if isstruct( clist )
+    % convert struct data to clist
+    if ~isfield( clist, 'data' ) || ~isfield( clist, 'def' )
+        disp( 'Trying to convert structure to clist.' )
+        
+        fieldnames_  = fieldnames( clist )';
+        tmp  =  { 'Cell ID',fieldnames_{:}};
+        
+        ntmp = numel( tmp );
+        
+        %for ii = 1:ntmp
+            %tmp{ii} = [num2str(ii),' : ',tmp{ii}];
+        %   
+        %end
+        
+        def = tmp;
+        clist_conv.def = def;
+        
+        nc =  numel( clist );
+        
+        if nc == 1
+            ncc = numel( getfield( clist, fieldnames_{1} ) );
+        else
+            ncc = nc;
+        end
+        
+        clist_conv.data = nan( [ncc,ntmp] );
+        clist_conv.data(:,1) = 1:ncc;
+        
+        for ii = 2:ntmp
+            if nc ~= 1
+                tmp_ = drill( clist, fieldnames_{ii-1} );
+            else
+                tmp_ = getfield( clist, fieldnames_{ii-1} );
+            end
+            
+            if isnumeric( tmp_ )
+                clist_conv.data(:,ii) = tmp_;
+            end
+            
+        end
+        
+        clist = clist_conv;
+    end
+    
+    if isfield( clist, 'def3d' )
+        clist.def3D = clist.def3d;
+        clist = rmfield( clist, 'def3d' );
+    end
+    
+    % strip out header numbers if they exist
+    if ~isempty( clist )
+        if isfield( clist, 'def' )
+            clist.def = intRemoveNumDef( clist.def );
+        end
+        if isfield( clist, 'def3D' )
+            clist.def3D = intRemoveNumDef( clist.def3D );
+        end
+    end
+    
+elseif iscell( clist )
+    nc = numel( clist );
+    for ii = 1:nc
+        clist{ii} = intFixDef3D( clist{ii} );
+    end
+end
+
+
+
+end
+
+% legacy issues. Strip out numbers from clists defs
+function def = intRemoveNumDef( def )
+nd = numel( def );
+if numel( def{1} ) > 4 && strcmp( def{1}(1:4), '1 : ' )
+    for ii = 1:nd
+        ind = find( def{ii} == ':', 1, 'last' );
+        if ~isempty(ind)
+           if all(ismember(def{ii}(1:ind),'0123456789 :' ))
+               def{ii} = def{ii}(ind+1:end);
+               ind = find( def{ii}~=' ',1, 'first');
+               if ~isempty( ind )
+                   def{ii} = def{ii}(ind:end);
+               end
+           end
+        end
+    end
+end
+end
+
+
+function intSaveClist( data )
+
+clist = data.clist;
+
+if isstruct( clist )
+    save( data.save_name, '-struct', 'clist' );
+else
+    save( data.save_name, 'clist' ); 
+end
+
+end
+
+% Draw Kolmogorov-Smirnov p value
+function intShowKS( data )
+if isfield( data, 'stat' )
+
+ns = numel( data.stat );
+
+pp = nan( [ns,ns] );
+dd = nan( [ns,ns] );
+for ii = 1:ns
+    for jj = 1:ii
+        [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(ii).x );
+        
+        pp(ii,jj) = pp_;
+        pp(jj,ii) = pp_;
+        
+        dd(ii,jj) = dd_;
+        dd(jj,ii) = dd_;     
+    end
+end
+
+figure;
+subplot( 1,2,1);
+imagesc( pp );
+colormap default;
+set( gca, 'Ytick', 1:ns )
+set( gca, 'Yticklabels', {data.stat.name0} )
+set( gca, 'Xtick', 1:ns )
+set( gca, 'Xticklabels', {data.stat.name0} )
+set( gca, 'XTickLabelRotation', 90 )
+axis equal tight
+title( 'K-S P value' );
+colorbar
+caxis([0,1]);
+
+subplot( 1,2,2);
+imagesc( dd );
+colormap default;
+set( gca, 'Ytick', 1:ns )
+set( gca, 'Yticklabels', {data.stat.name0} )
+set( gca, 'Xtick', 1:ns )
+set( gca, 'Xticklabels', {data.stat.name0} )
+set( gca, 'XTickLabelRotation', 90 )
+axis equal tight
+title( 'Statistically Distinct' );
+colorbar
+caxis([0,1]);
+
+
 end
 end
