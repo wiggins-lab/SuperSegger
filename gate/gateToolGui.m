@@ -22,7 +22,7 @@ function varargout = gateToolGui(varargin)
 
 % Edit the above text to modify the response to help gateToolGui
 
-% Last Modified by GUIDE v2.5 17-Aug-2016 13:24:38
+% Last Modified by GUIDE v2.5 17-Aug-2016 15:27:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -136,7 +136,9 @@ if handles.clist_found
         end
     end
     handles.clist_choice.String = ['All';names'];
-    handles.msgbox.String = ['Clists : ', num2str(num_clist)];
+    size1 = num2str(size(handles.multi_clist,1));
+    size2 = num2str(size(handles.multi_clist,2));
+    handles.msgbox.String = ['Clists : ', size1, ' x ', size2 ];
     set(findall(handles.action_panel, '-property', 'enable'), 'enable', 'on');
     set(findall(handles.show_panel, '-property', 'enable'), 'enable', 'on');
     set(findall(handles.save_panel, '-property', 'enable'), 'enable', 'on');
@@ -192,7 +194,11 @@ gateTool(which_clist,'save',[pathName,filesep,filename]);
 
 function [tmp_clist] = loadClistFromDir()
 folderOrClist = uigetdir;
-tmp_clist = gateTool(folderOrClist);
+if folderOrClist~=0
+    tmp_clist = gateTool(folderOrClist);
+else 
+    tmp_clist = [];
+end
 
 % --- Executes on button press in load_clist.
 function load_clist_Callback(hObject, eventdata, handles)
@@ -248,7 +254,13 @@ function strip_Callback(hObject, eventdata, handles)
 
 
 if handles.clist_choice.Value == 1
-    handles.multi_clist = gateTool(handles.multi_clist,'strip');
+    if handles.replace_flag
+        handles.multi_clist = gateTool(handles.multi_clist,'strip');
+    else
+       tmp_clist = gateTool(handles.multi_clist,'strip','merge');
+       tmp_clist.name = 'all_strip';
+       handles.multi_clist{end+1} = tmp_clist;
+    end
 elseif isstruct(handles.multi_clist)
     if handles.replace_flag
         handles.multi_clist(handles.clist_choice.Value-1) =  gateTool(handles.multi_clist(handles.clist_choice.Value-1),'strip');
@@ -285,6 +297,7 @@ function squeeze_Callback(hObject, eventdata, handles)
 
 handles.multi_clist = gateTool(handles.multi_clist,'squeeze');
 guidata(hObject,handles);
+updateGui(hObject,handles)
 
 % --- Executes on button press in expand.
 function expand_Callback(hObject, eventdata, handles)
@@ -293,6 +306,7 @@ function expand_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 handles.multi_clist = gateTool(handles.multi_clist,'expand');
 guidata(hObject,handles);
+updateGui(hObject,handles)
 
 % --- Executes on button press in kde.
 function kde_Callback(hObject, eventdata, handles)
@@ -475,6 +489,9 @@ if handles.hist.Value
 end
 if handles.dot.Value
     varg{end+1} = 'dot';
+    if handles.line.Value
+        varg{end+1} = 'line';
+    end
 end
 
 if handles.log.Value
@@ -624,7 +641,13 @@ end
 
 if index1 || index2
     if handles.clist_choice.Value == 1
-        handles.multi_clist = gateTool(handles.multi_clist,varg{:},'no clear','newfig');
+        if handles.replace_flag        
+            handles.multi_clist = gateTool(handles.multi_clist,varg{:},'no clear','newfig');
+        else
+            tmp_clist = gateTool(handles.multi_clist,varg{:},'merge','no clear','newfig');
+            tmp_clist.name = 'all_gated';
+            handles.multi_clist{end+1} = tmp_clist;
+        end
     elseif isstruct(handles.multi_clist)
         if handles.replace_flag
             handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),varg{:},'no clear','newfig');
@@ -635,8 +658,7 @@ if index1 || index2
             name_bef = tmp.name;
             handles.multi_clist{2} = gateTool(tmp,varg{:},'no clear','newfig');
             handles.clist_choice.Value = numel(handles.multi_clist)+1;
-            naming_func (handles,[name_bef,'gated']);
-            handles = naming_func (handles,name);
+            handles  = naming_func (handles,[name_bef,'gated']);
         end
     else
         if handles.replace_flag
@@ -860,3 +882,12 @@ function density_Callback(hObject, eventdata, handles)
 if get(hObject,'Value')
     handles.cond.Value = 0
 end
+
+
+% --- Executes on button press in line.
+function line_Callback(hObject, eventdata, handles)
+% hObject    handle to line (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of line
