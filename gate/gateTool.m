@@ -1416,8 +1416,11 @@ bin = 1:ns;
 % end
 
 
-
-imagesc( bin, xx, px );
+if data.log_flag(1)
+    imagesc( bin, log10(xx), px );
+else
+    imagesc( bin, xx, px );
+end
 
 hold on;
 
@@ -1438,12 +1441,17 @@ for jj = 1:ns
 %         yy3 = log10( yy3 );
 %         yy4 = log10( yy4 );
 %     end
-    
+if data.log_flag(1)
+    plot( jj + zz, log10(yy1), ':', 'color', cc ),
+    plot( jj + zz, log10(yy2), '-', 'color', cc ),
+    plot( jj + zz, log10(yy3), '-', 'color', cc, 'LineWidth', 2 ),
+    plot( jj     , log10(yy4), '.', 'color', cc, 'MarkerSize', 10 ),
+else   
     plot( jj + zz, yy1, ':', 'color', cc ),
     plot( jj + zz, yy2, '-', 'color', cc ),
     plot( jj + zz, yy3, '-', 'color', cc, 'LineWidth', 2 ),
     plot( jj     , yy4, '.', 'color', cc, 'MarkerSize', 10 ),
- 
+end
     name_tmp  = stat(ii).name;
     ind = find(name_tmp == '(',1,'last');
     names{jj} = name_tmp(1:ind-2);
@@ -1479,12 +1487,14 @@ if (numel(data.ind)==2) && ( data.kde_flag || data.hist_flag )
     end
 end
 
+tmp = labs{1};
+if data.log_flag(1)
+tmp = {'log ', tmp };
+end
 ylabel( labs{1}, 'Interpreter','none'  );
 
 
-if data.log_flag(1)
- set( gca, 'YScale','log' );   
-end
+
 
 end
 
@@ -2993,7 +3003,10 @@ end
 % legacy issues. Strip out numbers from clists defs
 function def = intRemoveNumDef( def )
 nd = numel( def );
-if numel( def{1} ) > 4 && strcmp( def{1}(1:4), '1 : ' )
+
+tmp = def{1};
+tmp = tmp(tmp~=' ' );
+if numel( tmp ) > 1 && strcmp( def{1}(1:2), '1:' )
     for ii = 1:nd
         ind = find( def{ii} == ':', 1, 'last' );
         if ~isempty(ind)
@@ -3032,7 +3045,7 @@ pp = nan( [ns,ns] );
 dd = nan( [ns,ns] );
 for ii = 1:ns
     for jj = 1:ii
-        [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(ii).x );
+        [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(jj).x );
         
         pp(ii,jj) = pp_;
         pp(jj,ii) = pp_;
@@ -3071,4 +3084,54 @@ caxis([0,1]);
 
 
 end
+end
+
+
+
+function clist = intLoadCSV( name )
+
+fileptr = fopen( name );
+
+if ~fileptr
+    error( ['Can''t load file: ',name] );
+end
+
+str = fgets( fileptr );
+
+def = textscan(str,'%s','Delimiter',',');
+def = def{1}';
+
+nd = numel( def );
+
+for ii = 1:nd
+    def{ii} = [num2str(ii),' : ',def{ii}];
+end
+
+clist.def = def;
+
+wflag = true;
+
+data = [];
+
+while wflag
+    
+    str = fgets( fileptr );
+    
+    if isnumeric( str ) && str == -1
+        wflag = false;
+    else
+        
+        ent = textscan(str,'%s','Delimiter',',');
+        ent = ent{1};
+        ent = cellfun( @str2num,ent )';
+        
+        data = [data;ent];
+    end
+    
+end
+
+clist.data = data;
+
+fclose( fileptr );
+
 end
