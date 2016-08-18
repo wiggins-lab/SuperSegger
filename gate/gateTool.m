@@ -1,7 +1,7 @@
 function [clist, out] = gateTool(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
-% GATETOOL( [clist,clist cell array], [command string], [argument], ... ) 
+% GATETOOL( [clist,clist cell array,directory,filename], [command string], [argument], ... ) 
 % 
 % clist must be (i) a clist struct or (ii) a cell array of clists or (iii)
 % a data directory, xy1 directory or a clist file name. 
@@ -182,6 +182,7 @@ elseif data.stat_flag
     %disp( ['Gated cells: ',num2str(out(1))] );
     %disp( ['Total cells:  ',num2str(out(2))] );
     %disp( [num2str(100*out(1)/out(2)),' %'] );
+    intShowKS( data );
 elseif data.get_gate_flag
     
     if ~data.time_flag
@@ -207,7 +208,9 @@ end
 
 clist = data.clist;
 
-
+if data.save_flag
+    intSaveClist( data ); 
+end
 
 end
 
@@ -243,6 +246,7 @@ data.drill_flag     = false;
 data.error_flag     = false;
 data.newfig_flag    = false;
 data.line_flag      = false;
+data.save_flag      = false;
 
 data.trace_flag     = false;
 
@@ -357,6 +361,21 @@ else
             case 'line'
                 data.line_flag = true;
                 data.dot_flag = true;
+            case 'save'
+                data.save_flag = true;
+                
+                counter  = counter + 1;
+                next_arg = varargin{counter};
+                
+                if counter > nargin
+                    error( 'Not enough arguments for add' )
+                end
+                next_arg = varargin{counter};
+                if ~ischar( next_arg )
+                    error( '2nd argument of add must be a str name for the field' );
+                end
+                
+                data.save_name = next_arg;
                 
             case 'mult'
                 counter = counter + 1;
@@ -602,9 +621,13 @@ else
     
                 
             case 'def'
-                disp( intGetDef( data.clist )' );
+                def = intGetDef( data.clist );
+                def = intFixDef( def )';
+                disp( def );
             case 'def3d'
-                disp( intGetDef3D( data.clist )' );
+                def = intGetDef3D( data.clist );
+                def = intFixDef( def )';
+                disp( def );              
             case 'merge' % set merge flag
                 data.merge_flag = true;
             case 'den' % set density flag
@@ -1311,6 +1334,9 @@ if data.stat_flag
     figure;
     intDoBoxIt( data );
 end
+
+data0.stat = data.stat;
+
 end
 
 function intFixColorBar( im )
@@ -1543,6 +1569,8 @@ data.h = [data.h,h];
 
 nc = size( clist.data, 1 );
 
+stat.name0 = name;
+
 if data.time_flag
     name = [name,' (',num2str( data.n, '%1.2g' ),' points)'];
 else
@@ -1654,6 +1682,7 @@ function stat = intDoStatAn( x1, x, y, n, data, cc, name )
    stat.max  = x1_max;
    stat.min  = x1_min;
    stat.n    = n;
+   stat.x    = x1;
    
    if data.log_flag(2)
        del = [1e-1,1];
@@ -2080,7 +2109,7 @@ y = y/prod(dx);
 if data.log_flag(3)
     y = log(y);
     y(isinf(y)) = nan;
-    y(isnan(y)) = min(y(:));
+    %y(isnan(y)) = min(y(:));
 end
 
 
@@ -2268,10 +2297,26 @@ if isstruct( clist )
     def = clist.def;
 elseif iscell( clist )
     def = intGetDef( clist{1} );
+    %def = intFixDef( def );
 else
     error( 'empty clist in intGetDef' );
 end
 
+
+end
+
+function def = intFixDef( def )
+
+if ~isempty( def )
+    
+    nd = numel( def );
+    for ii = 1:nd
+        def{ii} = [num2str(ii),' : ',def{ii}];
+    end
+    
+    def = {'Index : Descriptor', def{:} };
+    
+end
 
 end
 
@@ -2283,6 +2328,7 @@ if isstruct( clist )
         def = clist.def3D;
     elseif isfield( clist, 'def3d' )
         def = clist.def3d;
+        %def = intFixDef( def );
     else
         def = {};
     end
@@ -2466,14 +2512,23 @@ clist = {};
 
 if exist( dirname, 'file' ) == 2
     
-    tmp = load( dirname );
     
-    if isstruct( tmp ) && isfield( tmp, 'clist' );
-        clist = tmp.clist;
+    [dir_,file_,ext_] = fileparts( dirname );
+    
+    if strcmp( ext_, '.mat' )
+        tmp = load( dirname );
+        
+        
+        if isstruct( tmp ) && isfield( tmp, 'clist' );
+            clist = tmp.clist;
+        else
+            clist = tmp;
+        end
+    elseif strcmp( ext_, '.csv' )
+        clist = intLoadCSV( dirname );
     else
-        clist = tmp;
+        error( 'Loading files must be either .mat or .csv' );
     end
-    
     
 else
     dirname = fixDir( dirname );
@@ -2863,11 +2918,67 @@ end
 %% Get 3D field definition from the structure
 function clist = intFixDef3D( clist );
 
+
 if isstruct( clist )
+    % convert struct data to clist
+    if ~isfield( clist, 'data' ) || ~isfield( clist, 'def' )
+        disp( 'Trying to convert structure to clist.' )
+        
+        fieldnames_  = fieldnames( clist )';
+        tmp  =  { 'Cell ID',fieldnames_{:}};
+        
+        ntmp = numel( tmp );
+        
+        %for ii = 1:ntmp
+            %tmp{ii} = [num2str(ii),' : ',tmp{ii}];
+        %   
+        %end
+        
+        def = tmp;
+        clist_conv.def = def;
+        
+        nc =  numel( clist );
+        
+        if nc == 1
+            ncc = numel( getfield( clist, fieldnames_{1} ) );
+        else
+            ncc = nc;
+        end
+        
+        clist_conv.data = nan( [ncc,ntmp] );
+        clist_conv.data(:,1) = 1:ncc;
+        
+        for ii = 2:ntmp
+            if nc ~= 1
+                tmp_ = drill( clist, fieldnames_{ii-1} );
+            else
+                tmp_ = getfield( clist, fieldnames_{ii-1} );
+            end
+            
+            if isnumeric( tmp_ )
+                clist_conv.data(:,ii) = tmp_;
+            end
+            
+        end
+        
+        clist = clist_conv;
+    end
+    
     if isfield( clist, 'def3d' )
         clist.def3D = clist.def3d;
         clist = rmfield( clist, 'def3d' );
     end
+    
+    % strip out header numbers if they exist
+    if ~isempty( clist )
+        if isfield( clist, 'def' )
+            clist.def = intRemoveNumDef( clist.def );
+        end
+        if isfield( clist, 'def3D' )
+            clist.def3D = intRemoveNumDef( clist.def3D );
+        end
+    end
+    
 elseif iscell( clist )
     nc = numel( clist );
     for ii = 1:nc
@@ -2875,4 +2986,89 @@ elseif iscell( clist )
     end
 end
 
+
+
+end
+
+% legacy issues. Strip out numbers from clists defs
+function def = intRemoveNumDef( def )
+nd = numel( def );
+if numel( def{1} ) > 4 && strcmp( def{1}(1:4), '1 : ' )
+    for ii = 1:nd
+        ind = find( def{ii} == ':', 1, 'last' );
+        if ~isempty(ind)
+           if all(ismember(def{ii}(1:ind),'0123456789 :' ))
+               def{ii} = def{ii}(ind+1:end);
+               ind = find( def{ii}~=' ',1, 'first');
+               if ~isempty( ind )
+                   def{ii} = def{ii}(ind:end);
+               end
+           end
+        end
+    end
+end
+end
+
+
+function intSaveClist( data )
+
+clist = data.clist;
+
+if isstruct( clist )
+    save( data.save_name, '-struct', 'clist' );
+else
+    save( data.save_name, 'clist' ); 
+end
+
+end
+
+% Draw Kolmogorov-Smirnov p value
+function intShowKS( data )
+if isfield( data, 'stat' )
+
+ns = numel( data.stat );
+
+pp = nan( [ns,ns] );
+dd = nan( [ns,ns] );
+for ii = 1:ns
+    for jj = 1:ii
+        [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(ii).x );
+        
+        pp(ii,jj) = pp_;
+        pp(jj,ii) = pp_;
+        
+        dd(ii,jj) = dd_;
+        dd(jj,ii) = dd_;     
+    end
+end
+
+figure;
+subplot( 1,2,1);
+imagesc( pp );
+colormap default;
+set( gca, 'Ytick', 1:ns )
+set( gca, 'Yticklabels', {data.stat.name0} )
+set( gca, 'Xtick', 1:ns )
+set( gca, 'Xticklabels', {data.stat.name0} )
+set( gca, 'XTickLabelRotation', 90 )
+axis equal tight
+title( 'K-S P value' );
+colorbar
+caxis([0,1]);
+
+subplot( 1,2,2);
+imagesc( dd );
+colormap default;
+set( gca, 'Ytick', 1:ns )
+set( gca, 'Yticklabels', {data.stat.name0} )
+set( gca, 'Xtick', 1:ns )
+set( gca, 'Xticklabels', {data.stat.name0} )
+set( gca, 'XTickLabelRotation', 90 )
+axis equal tight
+title( 'Statistically Distinct' );
+colorbar
+caxis([0,1]);
+
+
+end
 end
