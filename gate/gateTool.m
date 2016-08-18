@@ -546,11 +546,11 @@ else
                 
                 data.clist.data = [data.clist.data,tmp_data];
                 
-                field_name = [num2str( size(data.clist.data,2) ),': ',field_name];
+                field_name_ = [num2str( size(data.clist.data,2) ),': ',field_name];
                 
                 data.clist.def{ss(2)+1} = field_name;
                 
-                disp( ['Adding field ',field_name] );
+                disp( ['Adding field ',field_name_] );
                 
                 
             case 'add3d'
@@ -593,11 +593,11 @@ else
                 
                 data.clist.data3D = cat(2,data.clist.data3D,reshape(tmp_data,[ss(1),1,ss(3)]));
                 
-                field_name = [num2str( ss(2)+1 ),': ',field_name];
+                field_name_ = [num2str( ss(2)+1 ),': ',field_name];
                 
                 data.clist.def3D{ss(2)+1} = field_name;
                 
-                disp( ['Adding field ',field_name] );
+                disp( ['Adding field ',field_name_] );
                 
 
             case 'add3dt'               
@@ -1489,9 +1489,9 @@ end
 
 tmp = labs{1};
 if data.log_flag(1)
-tmp = {'log ', tmp };
+tmp = ['log ', tmp ];
 end
-ylabel( labs{1}, 'Interpreter','none'  );
+ylabel(tmp, 'Interpreter','none'  );
 
 
 
@@ -3006,7 +3006,7 @@ nd = numel( def );
 
 tmp = def{1};
 tmp = tmp(tmp~=' ' );
-if numel( tmp ) > 1 && strcmp( def{1}(1:2), '1:' )
+if numel( tmp ) > 1 && strcmp( tmp(1:2), '1:' )
     for ii = 1:nd
         ind = find( def{ii} == ':', 1, 'last' );
         if ~isempty(ind)
