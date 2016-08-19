@@ -755,7 +755,6 @@ for i = 1 : numel(fh)
     end
 end
 
-
 % --- Executes on button press in clear_gate.
 function clear_gate_Callback(hObject, eventdata, handles)
 % hObject    handle to clear_gate (see GCBO)
