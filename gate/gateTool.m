@@ -153,7 +153,7 @@ end
 
 %% Show the gates if the show flag is true
 if data.show_all_flag
-    data.clist = intShowAll( data.clist, 1 );
+    data.clist = intShowAll( data.clist, 1, data );
 elseif data.show_flag
     data = intShow( data );
 end
@@ -217,12 +217,6 @@ end
 %% internal funciton that processes that input arguments
 function data = intProcessInput( varargin )
 
-
-
-
-
-
-
 varargin = varargin{1};
 nargin   = numel( varargin );
 
@@ -247,6 +241,7 @@ data.error_flag     = false;
 data.newfig_flag    = false;
 data.line_flag      = false;
 data.save_flag      = false;
+data.noshow_flag    = false;
 
 data.trace_flag     = false;
 
@@ -286,12 +281,24 @@ if nargin == 0
     error( 'gate must have at least one argument (a clist)' );
 else
     next_arg = varargin{1};
-        
+    
+    if any(strcmp( 'time',varargin )) || ...
+            any(strcmp( '3d',varargin ))   || ...
+            any(strcmp( '3D',varargin ))
+        data.time_flag = true;
+    end
+    
+    if any(strcmp( 'noshow',varargin )) 
+        data.noshow_flag = true;
+    end
+    
     if ischar( next_arg )
         
         if any(strcmp( 'drill',varargin ))
             data.drill_flag = true;
         end
+        
+        
         
         next_arg = intLoadClist( next_arg, data );
         load_flag = true;
@@ -300,7 +307,7 @@ else
     if (~iscell( next_arg )) && (~isstruct( next_arg ))
         error( 'First argument must be a clist' );
     end
-
+    
     % fix naming of def3D
     clist = next_arg;
     clist = intFixDef3D( clist );
@@ -376,6 +383,10 @@ else
                 end
                 
                 data.save_name = next_arg;
+                
+            case 'noshow'
+                
+                data.noshow_flag = true;
                 
             case 'mult'
                 counter = counter + 1;
@@ -691,7 +702,7 @@ else
                     if ~data.array_flag
                         data.clist.name = name;
                     else
-                        data.clist = intDoAll( data.clist, 'name', name);
+                        data.clist = intDoAll( data.clist, 'name', name, data.time_flag);
                     end
                 end
                 
@@ -806,7 +817,7 @@ else
                 if ~data.array_flag
                     data.clist.color = color;
                 else
-                    data.clist = intDoAll( data.clist, 'color', color);
+                    data.clist = intDoAll( data.clist, 'color', color, data.time_flag);
                 end
             case ''
                 % this is just an empty
@@ -849,16 +860,29 @@ end
 end
 
 %% run gate too  on all clists in a clist
-function clist = intDoAll( clist, comm_, arg_ )
+function clist = intDoAll( clist, comm_, arg_, time_flag )
 
 if ~exist( 'arg_', 'var' )
     arg_ = '';
 end
 
-nc = numel( clist );
-for ii = 1:nc
-    clist{ii} = gateTool( clist{ii}, comm_, arg_ );
+if iscell( clist )
+    nc = numel( clist );
+    for ii = 1:nc
+        if time_flag
+            clist{ii} = gateTool( clist{ii}, comm_, arg_, 'noshow', '3d' );
+        else
+            clist{ii} = gateTool( clist{ii}, comm_, arg_, 'noshow' );
+        end
+    end
+elseif isstruct( clist )
+       if time_flag
+            clist = gateTool( clist, comm_, arg_, 'noshow', '3d' );
+        else
+            clist = gateTool( clist, comm_, arg_, 'noshow' );
+        end          
 end
+
 end
 
 
@@ -867,7 +891,7 @@ end
 function data = intDoStrip( data )
 
 if data.array_flag
-    data.clist = intDoAll( data.clist, 'strip' );
+    data.clist = intDoAll( data.clist, 'strip', '', data.time_flag );
 else
     clist  = data.clist;
     clist0 = clist;
@@ -933,10 +957,15 @@ end
 %% Add another gate. Interactive if info is not specified at the command line
 function data = intMakeGate( data, arg_ )
 
+clist0 = data.clist;
+
 % if you pass the gate structure whole just put it in the field
 if isstruct(arg_)
+    
+    ind = arg_.ind;
+    
     if iscell( data.clist )
-        data.clist = intDoAll( data.clist, 'make', arg_ );
+        data.clist = intDoAll( data.clist, 'make', arg_, data.time_flag );        
     else
         if ~data.time_flag
             if isfield( data.clist, 'gate' ) && ~isempty( data.clist.gate )
@@ -974,6 +1003,7 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
             end
         end
         
+        ind = data.ind;
         tmp_gate.x    = gxx(:,1);
         tmp_gate.ind  = data.ind;
         tmp_gate.xx   = [];
@@ -1051,67 +1081,92 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     else
         error( 'Too many ind to gate. Must be either 1 or 2.' );
     end
-   
+    
     % copy the gate in
     if ~data.time_flag
-        data.clist = gateTool( data.clist, 'make', tmp_gate );
-        % Show the gate
-        figure
-        gateTool( data.clist, 'show', data.ind);  
-    else 
-        data.clist = gateTool( data.clist, 'make3D', tmp_gate );
-        % Show the gate
-        figure
-        gateTool( data.clist, 'show', data.ind, 'time' );
+        data.clist = gateTool( data.clist, 'make', tmp_gate, 'noshow' );
+        
+    else
+        data.clist = gateTool( data.clist, 'make', tmp_gate, 'noshow', '3d' );
+       
     end
+    
     
     
 else
     error( 'Make gate in must be gate structure of indices' );
 end
 
+% if the noshow flag isn't set, show the gate
+if ~data.noshow_flag
+    tmp_clist = data.clist;
+    
+    if data.time_flag
+        gates = intDrillForGate3D(tmp_clist);
+        intShowGate( clist0, gates(end), numel(gates), data.time_flag );        
+    else
+        gates = intDrillForGate(tmp_clist);
+        intShowGate( clist0, gates(end), numel(gates), data.time_flag );
+    end
+end
+
+end
+
+%%
+function gate_ = intDrillForGate( clist )
+    if iscell( clist )
+        gate_ = intDrillForGate( clist{1} );
+    elseif isstruct( clist )
+        gate_ = clist(1).gate;
+    else
+        error( 'clist type not expected' );
+    end
+end
+        
+function gate_ = intDrillForGate3D( clist )
+if iscell( clist )
+        gate_ = intDrillForGate( clist{1} );
+    elseif isstruct( clist )
+        gate_ = clist(1).gate3D;
+    else
+        error( 'clist type not expected' );
+    end
 end
 
 %% Show the gates if the show flag is true
-function [clist, fignum] = intShowAll( clist, fignum )
+function [clist, fignum] = intShowAll( clist, fignum, data )
 
 if ~exist( 'fignum', 'var' )
     fignum = 1;
 end
 
-if iscell( clist )
-    nc = numel( clist )
-    for ii = 1:nc
-        [clist{ii},fignum] =  intShowAll( clist{ii}, fignum );
-    end
-elseif isstruct( clist )
 
-    if isfield( clist, 'gate' )
-        ng = numel( clist.gate );
-    else
-        ng = 0;
-    end
-        
-    clist0 = clist;
+
+clist0 = clist;
+
+clist0 = gateTool( clist, 'clear' );
+gates  = intDrillForGate( clist );
+ng = numel( gates );
+
+for ii = 1:ng
     
-    for ii = 1:ng
-        
-        fignum = fignum + 1;
-        
-        figure(fignum);
-        clf;
-        
-        clist0 = clist;
-        clist0.gate = clist.gate(1:ii-1);
-        
-        [N,N0] = intShowGate( clist0, clist.gate(ii), ii );
-        
-        clist.gate(ii).N = N;
-        clist.gate(ii).N0 = N0;
-    end
-else
-    error( 'internal non clist error');
+    fignum = fignum + 1;
+    
+    figure(fignum);
+    clf;
+    
+    
+    [N,N0] = intShowGate( clist0, gates(ii), ii, data.time_flag );
+    
+    
+    data.N(ii)  = N;
+    data.N0(ii) = N0;
+    
+    %clist.gate(ii).N = N;
+    %clist.gate(ii).N0 = N0;
+    clist0 = gateTool( clist0, 'gate', gates(ii), 'noshow' );
 end
+
 end
 
 %% get the number of gate and ungated cells...not used.
@@ -1129,22 +1184,31 @@ end
 
 
 %% Show the gate info on the plot
-function [N,N0] = intShowGate( clist, gate_var, gate_num )
+function [N,N0] = intShowGate( clist, gate_var, gate_num, time_flag )
 
 if ~exist( 'gate_num', 'var' )
     gate_num = 0;
 end
 
 
-tmp = gateTool( clist );
-N0  = size( tmp.data, 1);
-tmp = gateTool( tmp, 'gate',gate_var  );
-tmp = gateTool( tmp );
-N   = size( tmp.data, 1);
+if time_flag
+    tmp = gateTool( clist, 'strip', 'merge' );
+    N0  = size( tmp.data3D, 1);
+    tmp = gateTool( tmp, 'gate', gate_var, 'noshow', '3d','strip'  );
+    N   = size( tmp.data3D, 1);
+    
+    gateTool( clist, 'show', gate_var.ind, '3d' );
+else
+    tmp = gateTool( clist, 'strip', 'merge', 'skip3d' );
+    N0  = size( tmp.data, 1);
+    tmp = gateTool( tmp, 'gate', gate_var, 'noshow', 'skip3d','strip' );
+    N   = size( tmp.data, 1);
+    
+    gateTool( clist, 'show', gate_var.ind );
+end
 
 
 
-gateTool( clist, 'show', gate_var.ind );
 
         
 hold on;
@@ -1152,7 +1216,9 @@ if numel(gate_var.ind)==1
     ylim_ = ylim;
     
     plot( gate_var.x(1)+0*ylim_,ylim_, '.--', 'color','r' );
-    plot( gate_var.x(2)+0*ylim_,ylim_, '.--', 'color','r' );
+    if numel( gate_var.x )>1
+        plot( gate_var.x(2)+0*ylim_,ylim_, '.--', 'color','r' );
+    end
 else
     plot( gate_var.xx([1:end,1],1), gate_var.xx([1:end,1],2), '.--', 'color', 'r' );
 end
@@ -1948,7 +2014,7 @@ else
         if switcher(1) < cutt
             ind_n = 1;
             num_ = n_vec(ind_n);
-        else switcher(end) > cutt
+        elseif switcher(end) > cutt
             num_ = maxBinNum;
             ind_n = num_n;
         end
@@ -1999,7 +2065,7 @@ else
     if isempty( ind_n ) || ind_n < 1 || ind_n > num_n
         if switcher(1) < cutt
             ind_n = 1;
-        else switcher(end) > cutt
+        elseif switcher(end) > cutt
             ind_n = num_n;
         end
     end
@@ -2137,7 +2203,7 @@ end
 cc = h.Color;
 
 if ischar( cc )
-    cc = convert_color( cc)
+    cc = convert_color( cc);
 end
 
 if data.inv_flag
@@ -2558,7 +2624,7 @@ else
                 filename = [dirname,'clist.mat'];
                 if exist( filename, 'file' );
                     clist = load( filename );
-                    clist.filename = [fixDir(pwd),filename];
+                    clist.filename = GetFullPath(filename);
                 else
                     error([ 'Can''t find file ', filename] );
                 end
@@ -2581,8 +2647,9 @@ else
                     if exist( filename, 'file' )
                         counter = counter+1;
                         tmp = load( filename );
-                        tmp.filename = [fixDir(pwd),filename];
                         
+                        tmp.filename = GetFullPath(filename);
+                          
                         clist{counter} = tmp;
                         
                         if ~isempty(header)
@@ -2888,7 +2955,7 @@ function csvwrite2( filename, data )
 
 cellflag = iscell( data );
 
-nn = size( data )
+nn = size( data );
 
 fid = fopen(filename, 'w') ;
 
@@ -3135,3 +3202,331 @@ clist.data = data;
 fclose( fileptr );
 
 end
+
+%% This stuff is from  Jan Simon on the matlab file exchange
+function File = GetFullPath(File, Style)
+% GetFullPath - Get absolute canonical path of a file or folder
+% Absolute path names are safer than relative paths, when e.g. a GUI or TIMER
+% callback changes the current directory. Only canonical paths without "." and
+% ".." can be recognized uniquely.
+% Long path names (>259 characters) require a magic initial key "\\?\" to be
+% handled by Windows API functions, e.g. for Matlab's FOPEN, DIR and EXIST.
+%
+% FullName = GetFullPath(Name, Style)
+% INPUT:
+%   Name:  String or cell string, absolute or relative name of a file or
+%          folder. The path need not exist. Unicode strings, UNC paths and long
+%          names are supported.
+%   Style: Style of the output as string, optional, default: 'auto'.
+%          'auto': Add '\\?\' or '\\?\UNC\' for long names on demand.
+%          'lean': Magic string is not added.
+%          'fat':  Magic string is added for short names also.
+%          The Style is ignored when not running under Windows.
+%
+% OUTPUT:
+%   FullName: Absolute canonical path name as string or cell string.
+%          For empty strings the current directory is replied.
+%          '\\?\' or '\\?\UNC' is added on demand.
+%
+% NOTE: The M- and the MEX-version create the same results, the faster MEX
+%   function works under Windows only.
+%   Some functions of the Windows-API still do not support long file names.
+%   E.g. the Recycler and the Windows Explorer fail even with the magic '\\?\'
+%   prefix. Some functions of Matlab accept 260 characters (value of MAX_PATH),
+%   some at 259 already. Don't blame me.
+%   The 'fat' style is useful e.g. when Matlab's DIR command is called for a
+%   folder with les than 260 characters, but together with the file name this
+%   limit is exceeded. Then "dir(GetFullPath([folder, '\*.*], 'fat'))" helps.
+%
+% EXAMPLES:
+%   cd(tempdir);                    % Assumed as 'C:\Temp' here
+%   GetFullPath('File.Ext')         % 'C:\Temp\File.Ext'
+%   GetFullPath('..\File.Ext')      % 'C:\File.Ext'
+%   GetFullPath('..\..\File.Ext')   % 'C:\File.Ext'
+%   GetFullPath('.\File.Ext')       % 'C:\Temp\File.Ext'
+%   GetFullPath('*.txt')            % 'C:\Temp\*.txt'
+%   GetFullPath('..')               % 'C:\'
+%   GetFullPath('..\..\..')         % 'C:\'
+%   GetFullPath('Folder\')          % 'C:\Temp\Folder\'
+%   GetFullPath('D:\A\..\B')        % 'D:\B'
+%   GetFullPath('\\Server\Folder\Sub\..\File.ext')
+%                                   % '\\Server\Folder\File.ext'
+%   GetFullPath({'..', 'new'})      % {'C:\', 'C:\Temp\new'}
+%   GetFullPath('.', 'fat')         % '\\?\C:\Temp\File.Ext'
+%
+% COMPILE:
+%   Automatic: InstallMex GetFullPath.c uTest_GetFullPath
+%   Manual:    mex -O GetFullPath.c
+%   Download:  http://www.n-simon.de/mex
+% Run the unit-test uTest_GetFullPath after compiling.
+%
+% Tested: Matlab 6.5, 7.7, 7.8, 7.13, WinXP/32, Win7/64
+%         Compiler: LCC2.4/3.8, BCC5.5, OWC1.8, MSVC2008/2010
+% Assumed Compatibility: higher Matlab versions
+% Author: Jan Simon, Heidelberg, (C) 2009-2013 matlab.THISYEAR(a)nMINUSsimon.de
+%
+% See also: CD, FULLFILE, FILEPARTS.
+
+% $JRev: R-G V:032 Sum:7Xd/JS0+yfax Date:15-Jan-2013 01:06:12 $
+% $License: BSD (use/copy/change/redistribute on own risk, mention the author) $
+% $UnitTest: uTest_GetFullPath $
+% $File: Tools\GLFile\GetFullPath.m $
+% History:
+% 001: 20-Apr-2010 22:28, Successor of Rel2AbsPath.
+% 010: 27-Jul-2008 21:59, Consider leading separator in M-version also.
+% 011: 24-Jan-2011 12:11, Cell strings, '~File' under linux.
+%      Check of input types in the M-version.
+% 015: 31-Mar-2011 10:48, BUGFIX: Accept [] as input as in the Mex version.
+%      Thanks to Jiro Doke, who found this bug by running the test function for
+%      the M-version.
+% 020: 18-Oct-2011 00:57, BUGFIX: Linux version created bad results.
+%      Thanks to Daniel.
+% 024: 10-Dec-2011 14:00, Care for long names under Windows in M-version.
+%      Improved the unittest function for Linux. Thanks to Paul Sexton.
+% 025: 09-Aug-2012 14:00, In MEX: Paths starting with "\\" can be non-UNC.
+%      The former version treated "\\?\C:\<longpath>\file" as UNC path and
+%      replied "\\?\UNC\?\C:\<longpath>\file".
+% 032: 12-Jan-2013 21:16, 'auto', 'lean' and 'fat' style.
+
+% Initialize: ==================================================================
+% Do the work: =================================================================
+
+% #############################################
+% ### USE THE MUCH FASTER MEX ON WINDOWS!!! ###
+% #############################################
+
+% Difference between M- and Mex-version:
+% - Mex does not work under MacOS/Unix.
+% - Mex calls Windows API function GetFullPath.
+% - Mex is much faster.
+
+% Magix prefix for long Windows names:
+if nargin < 2
+   Style = 'auto';
+end
+
+% Handle cell strings:
+% NOTE: It is faster to create a function @cell\GetFullPath.m under Linux, but
+% under Windows this would shadow the fast C-Mex.
+if isa(File, 'cell')
+   for iC = 1:numel(File)
+      File{iC} = GetFullPath(File{iC}, Style);
+   end
+   return;
+end
+
+% Check this once only:
+isWIN    = strncmpi(computer, 'PC', 2);
+MAX_PATH = 260;
+
+% Warn once per session (disable this under Linux/MacOS):
+persistent hasDataRead
+if isempty(hasDataRead)
+   % Test this once only - there is no relation to the existence of DATAREAD!
+   %if isWIN
+   %   Show a warning, if the slower Matlab version is used - commented, because
+   %   this is not a problem and it might be even useful when the MEX-folder is
+   %   not inlcuded in the path yet.
+   %   warning('JSimon:GetFullPath:NoMex', ...
+   %      ['GetFullPath: Using slow Matlab-version instead of fast Mex.', ...
+   %       char(10), 'Compile: InstallMex GetFullPath.c']);
+   %end
+   
+   % DATAREAD is deprecated in 2011b, but still available. In Matlab 6.5, REGEXP
+   % does not know the 'split' command, therefore DATAREAD is preferred:
+   hasDataRead = ~isempty(which('dataread'));
+end
+
+if isempty(File)  % Accept empty matrix as input:
+   if ischar(File) || isnumeric(File)
+      File = cd;
+      return;
+   else
+      error(['JSimon:', mfilename, ':BadTypeInput1'], ...
+         ['*** ', mfilename, ': Input must be a string or cell string']);
+   end
+end
+
+if ischar(File) == 0  % Non-empty inputs must be strings
+   error(['JSimon:', mfilename, ':BadTypeInput1'], ...
+      ['*** ', mfilename, ': Input must be a string or cell string']);
+end
+
+if isWIN  % Windows: --------------------------------------------------------
+   FSep = '\';
+   File = strrep(File, '/', FSep);
+   
+   % Remove the magic key on demand, it is appended finally again:
+   if strncmp(File, '\\?\', 4)
+      if strncmpi(File, '\\?\UNC\', 8)
+         File = ['\', File(7:length(File))];  % Two leading backslashes!
+      else
+         File = File(5:length(File));
+      end
+   end
+   
+   isUNC   = strncmp(File, '\\', 2);
+   FileLen = length(File);
+   if isUNC == 0                        % File is not a UNC path
+      % Leading file separator means relative to current drive or base folder:
+      ThePath = cd;
+      if File(1) == FSep
+         if strncmp(ThePath, '\\', 2)   % Current directory is a UNC path
+            sepInd  = strfind(ThePath, '\');
+            ThePath = ThePath(1:sepInd(4));
+         else
+            ThePath = ThePath(1:3);     % Drive letter only
+         end
+      end
+      
+      if FileLen < 2 || File(2) ~= ':'  % Does not start with drive letter
+         if ThePath(length(ThePath)) ~= FSep
+            if File(1) ~= FSep
+               File = [ThePath, FSep, File];
+            else                        % File starts with separator:
+               File = [ThePath, File];
+            end
+         else                           % Current path ends with separator:
+            if File(1) ~= FSep
+               File = [ThePath, File];
+            else                        % File starts with separator:
+               ThePath(length(ThePath)) = [];
+               File = [ThePath, File];
+            end
+         end
+         
+      elseif FileLen == 2 && File(2) == ':'   % "C:" current directory on C!
+         % "C:" is the current directory on the C-disk, even if the current
+         % directory is on another disk! This was ignored in Matlab 6.5, but
+         % modern versions considers this strange behaviour.
+         if strncmpi(ThePath, File, 2)
+            File = ThePath;
+         else
+            try
+               File = cd(cd(File));
+            catch    % No MException to support Matlab6.5...
+               if exist(File, 'dir')  % No idea what could cause an error then!
+                  rethrow(lasterror);
+               else  % Reply "K:\" for not existing disk:
+                  File = [File, FSep];
+               end
+            end
+         end
+      end
+   end
+   
+else         % Linux, MacOS: ---------------------------------------------------
+   FSep = '/';
+   File = strrep(File, '\', FSep);
+   
+   if strcmp(File, '~') || strncmp(File, '~/', 2)  % Home directory:
+      HomeDir = getenv('HOME');
+      if ~isempty(HomeDir)
+         File(1) = [];
+         File    = [HomeDir, File];
+      end
+      
+   elseif strncmpi(File, FSep, 1) == 0
+      % Append relative path to current folder:
+      ThePath = cd;
+      if ThePath(length(ThePath)) == FSep
+         File = [ThePath, File];
+      else
+         File = [ThePath, FSep, File];
+      end
+   end
+end
+
+% Care for "\." and "\.." - no efficient algorithm, but the fast Mex is
+% recommended at all!
+if ~isempty(strfind(File, [FSep, '.']))
+   if isWIN
+      if strncmp(File, '\\', 2)  % UNC path
+         index = strfind(File, '\');
+         if length(index) < 4    % UNC path without separator after the folder:
+            return;
+         end
+         Drive            = File(1:index(4));
+         File(1:index(4)) = [];
+      else
+         Drive     = File(1:3);
+         File(1:3) = [];
+      end
+   else  % Unix, MacOS:
+      isUNC   = false;
+      Drive   = FSep;
+      File(1) = [];
+   end
+   
+   hasTrailFSep = (File(length(File)) == FSep);
+   if hasTrailFSep
+      File(length(File)) = [];
+   end
+   
+   if hasDataRead
+      if isWIN  % Need "\\" as separator:
+         C = dataread('string', File, '%s', 'delimiter', '\\');  %#ok<REMFF1>
+      else
+         C = dataread('string', File, '%s', 'delimiter', FSep);  %#ok<REMFF1>
+      end
+   else  % Use the slower REGEXP, when DATAREAD is not available anymore:
+      C = regexp(File, FSep, 'split');
+   end
+   
+   % Remove '\.\' directly without side effects:
+   C(strcmp(C, '.')) = [];
+   
+   % Remove '\..' with the parent recursively:
+   R = 1:length(C);
+   for dd = reshape(find(strcmp(C, '..')), 1, [])
+      index    = find(R == dd);
+      R(index) = [];
+      if index > 1
+         R(index - 1) = [];
+      end
+   end
+   
+   if isempty(R)
+      File = Drive;
+      if isUNC && ~hasTrailFSep
+         File(length(File)) = [];
+      end
+      
+   elseif isWIN
+      % If you have CStr2String, use the faster:
+      %   File = CStr2String(C(R), FSep, hasTrailFSep);
+      File = sprintf('%s\\', C{R});
+      if hasTrailFSep
+         File = [Drive, File];
+      else
+         File = [Drive, File(1:length(File) - 1)];
+      end
+      
+   else  % Unix:
+      File = [Drive, sprintf('%s/', C{R})];
+      if ~hasTrailFSep
+         File(length(File)) = [];
+      end
+   end
+end
+
+% "Very" long names under Windows:
+if isWIN
+   if ~ischar(Style)
+      error(['JSimon:', mfilename, ':BadTypeInput2'], ...
+         ['*** ', mfilename, ': Input must be a string or cell string']);
+   end
+   
+   if (strncmpi(Style, 'a', 1) && length(File) >= MAX_PATH) || ...
+         strncmpi(Style, 'f', 1)
+      % Do not use [isUNC] here, because this concerns the input, which can
+      % '.\File', while the current directory is an UNC path.
+      if strncmp(File, '\\', 2)  % UNC path
+         File = ['\\?\UNC', File(2:end)];
+      else
+         File = ['\\?\', File];
+      end
+   end
+end
+end
+% return;
