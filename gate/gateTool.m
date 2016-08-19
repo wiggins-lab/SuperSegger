@@ -153,7 +153,7 @@ end
 
 %% Show the gates if the show flag is true
 if data.show_all_flag
-    data.clist = intShowAll( data.clist, 1 );
+    data.clist = intShowAll( data.clist, 1, data );
 elseif data.show_flag
     data = intShow( data );
 end
@@ -217,12 +217,6 @@ end
 %% internal funciton that processes that input arguments
 function data = intProcessInput( varargin )
 
-
-
-
-
-
-
 varargin = varargin{1};
 nargin   = numel( varargin );
 
@@ -247,6 +241,7 @@ data.error_flag     = false;
 data.newfig_flag    = false;
 data.line_flag      = false;
 data.save_flag      = false;
+data.noshow_flag    = false;
 
 data.trace_flag     = false;
 
@@ -286,12 +281,24 @@ if nargin == 0
     error( 'gate must have at least one argument (a clist)' );
 else
     next_arg = varargin{1};
-        
+    
+    if any(strcmp( 'time',varargin )) || ...
+            any(strcmp( '3d',varargin ))   || ...
+            any(strcmp( '3D',varargin ))
+        data.time_flag = true;
+    end
+    
+    if any(strcmp( 'noshow',varargin )) 
+        data.noshow_flag = true;
+    end
+    
     if ischar( next_arg )
         
         if any(strcmp( 'drill',varargin ))
             data.drill_flag = true;
         end
+        
+        
         
         next_arg = intLoadClist( next_arg, data );
         load_flag = true;
@@ -300,7 +307,7 @@ else
     if (~iscell( next_arg )) && (~isstruct( next_arg ))
         error( 'First argument must be a clist' );
     end
-
+    
     % fix naming of def3D
     clist = next_arg;
     clist = intFixDef3D( clist );
@@ -376,6 +383,10 @@ else
                 end
                 
                 data.save_name = next_arg;
+                
+            case 'noshow'
+                
+                data.noshow_flag = true;
                 
             case 'mult'
                 counter = counter + 1;
@@ -691,7 +702,7 @@ else
                     if ~data.array_flag
                         data.clist.name = name;
                     else
-                        data.clist = intDoAll( data.clist, 'name', name);
+                        data.clist = intDoAll( data.clist, 'name', name, data.time_flag);
                     end
                 end
                 
@@ -806,7 +817,7 @@ else
                 if ~data.array_flag
                     data.clist.color = color;
                 else
-                    data.clist = intDoAll( data.clist, 'color', color);
+                    data.clist = intDoAll( data.clist, 'color', color, data.time_flag);
                 end
             case ''
                 % this is just an empty
@@ -849,16 +860,29 @@ end
 end
 
 %% run gate too  on all clists in a clist
-function clist = intDoAll( clist, comm_, arg_ )
+function clist = intDoAll( clist, comm_, arg_, time_flag )
 
 if ~exist( 'arg_', 'var' )
     arg_ = '';
 end
 
-nc = numel( clist );
-for ii = 1:nc
-    clist{ii} = gateTool( clist{ii}, comm_, arg_ );
+if iscell( clist )
+    nc = numel( clist );
+    for ii = 1:nc
+        if time_flag
+            clist{ii} = gateTool( clist{ii}, comm_, arg_, 'noshow', '3d' );
+        else
+            clist{ii} = gateTool( clist{ii}, comm_, arg_, 'noshow' );
+        end
+    end
+elseif isstruct( clist )
+       if time_flag
+            clist = gateTool( clist, comm_, arg_, 'noshow', '3d' );
+        else
+            clist = gateTool( clist, comm_, arg_, 'noshow' );
+        end          
 end
+
 end
 
 
@@ -867,7 +891,7 @@ end
 function data = intDoStrip( data )
 
 if data.array_flag
-    data.clist = intDoAll( data.clist, 'strip' );
+    data.clist = intDoAll( data.clist, 'strip', '', data.time_flag );
 else
     clist  = data.clist;
     clist0 = clist;
@@ -933,10 +957,15 @@ end
 %% Add another gate. Interactive if info is not specified at the command line
 function data = intMakeGate( data, arg_ )
 
+clist0 = data.clist;
+
 % if you pass the gate structure whole just put it in the field
 if isstruct(arg_)
+    
+    ind = arg_.ind;
+    
     if iscell( data.clist )
-        data.clist = intDoAll( data.clist, 'make', arg_ );
+        data.clist = intDoAll( data.clist, 'make', arg_, data.time_flag );        
     else
         if ~data.time_flag
             if isfield( data.clist, 'gate' ) && ~isempty( data.clist.gate )
@@ -974,6 +1003,7 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
             end
         end
         
+        ind = data.ind;
         tmp_gate.x    = gxx(:,1);
         tmp_gate.ind  = data.ind;
         tmp_gate.xx   = [];
@@ -1051,67 +1081,92 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     else
         error( 'Too many ind to gate. Must be either 1 or 2.' );
     end
-   
+    
     % copy the gate in
     if ~data.time_flag
-        data.clist = gateTool( data.clist, 'make', tmp_gate );
-        % Show the gate
-        figure
-        gateTool( data.clist, 'show', data.ind);  
-    else 
-        data.clist = gateTool( data.clist, 'make3D', tmp_gate );
-        % Show the gate
-        figure
-        gateTool( data.clist, 'show', data.ind, 'time' );
+        data.clist = gateTool( data.clist, 'make', tmp_gate, 'noshow' );
+        
+    else
+        data.clist = gateTool( data.clist, 'make', tmp_gate, 'noshow', '3d' );
+       
     end
+    
     
     
 else
     error( 'Make gate in must be gate structure of indices' );
 end
 
+% if the noshow flag isn't set, show the gate
+if ~data.noshow_flag
+    tmp_clist = data.clist;
+    
+    if data.time_flag
+        gates = intDrillForGate3D(tmp_clist);
+        intShowGate( clist0, gates(end), numel(gates), data.time_flag );        
+    else
+        gates = intDrillForGate(tmp_clist);
+        intShowGate( clist0, gates(end), numel(gates), data.time_flag );
+    end
+end
+
+end
+
+%%
+function gate_ = intDrillForGate( clist )
+    if iscell( clist )
+        gate_ = intDrillForGate( clist{1} );
+    elseif isstruct( clist )
+        gate_ = clist(1).gate;
+    else
+        error( 'clist type not expected' );
+    end
+end
+        
+function gate_ = intDrillForGate3D( clist )
+if iscell( clist )
+        gate_ = intDrillForGate( clist{1} );
+    elseif isstruct( clist )
+        gate_ = clist(1).gate3D;
+    else
+        error( 'clist type not expected' );
+    end
 end
 
 %% Show the gates if the show flag is true
-function [clist, fignum] = intShowAll( clist, fignum )
+function [clist, fignum] = intShowAll( clist, fignum, data )
 
 if ~exist( 'fignum', 'var' )
     fignum = 1;
 end
 
-if iscell( clist )
-    nc = numel( clist )
-    for ii = 1:nc
-        [clist{ii},fignum] =  intShowAll( clist{ii}, fignum );
-    end
-elseif isstruct( clist )
 
-    if isfield( clist, 'gate' )
-        ng = numel( clist.gate );
-    else
-        ng = 0;
-    end
-        
-    clist0 = clist;
+
+clist0 = clist;
+
+clist0 = gateTool( clist, 'clear' );
+gates  = intDrillForGate( clist );
+ng = numel( gates );
+
+for ii = 1:ng
     
-    for ii = 1:ng
-        
-        fignum = fignum + 1;
-        
-        figure(fignum);
-        clf;
-        
-        clist0 = clist;
-        clist0.gate = clist.gate(1:ii-1);
-        
-        [N,N0] = intShowGate( clist0, clist.gate(ii), ii );
-        
-        clist.gate(ii).N = N;
-        clist.gate(ii).N0 = N0;
-    end
-else
-    error( 'internal non clist error');
+    fignum = fignum + 1;
+    
+    figure(fignum);
+    clf;
+    
+    
+    [N,N0] = intShowGate( clist0, gates(ii), ii, data.time_flag );
+    
+    
+    data.N(ii)  = N;
+    data.N0(ii) = N0;
+    
+    %clist.gate(ii).N = N;
+    %clist.gate(ii).N0 = N0;
+    clist0 = gateTool( clist0, 'gate', gates(ii), 'noshow' );
 end
+
 end
 
 %% get the number of gate and ungated cells...not used.
@@ -1129,22 +1184,31 @@ end
 
 
 %% Show the gate info on the plot
-function [N,N0] = intShowGate( clist, gate_var, gate_num )
+function [N,N0] = intShowGate( clist, gate_var, gate_num, time_flag )
 
 if ~exist( 'gate_num', 'var' )
     gate_num = 0;
 end
 
 
-tmp = gateTool( clist );
-N0  = size( tmp.data, 1);
-tmp = gateTool( tmp, 'gate',gate_var  );
-tmp = gateTool( tmp );
-N   = size( tmp.data, 1);
+if time_flag
+    tmp = gateTool( clist, 'strip', 'merge' );
+    N0  = size( tmp.data3D, 1);
+    tmp = gateTool( tmp, 'gate', gate_var, 'noshow', '3d','strip'  );
+    N   = size( tmp.data3D, 1);
+    
+    gateTool( clist, 'show', gate_var.ind, '3d' );
+else
+    tmp = gateTool( clist, 'strip', 'merge', 'skip3d' );
+    N0  = size( tmp.data, 1);
+    tmp = gateTool( tmp, 'gate', gate_var, 'noshow', 'skip3d','strip' );
+    N   = size( tmp.data, 1);
+    
+    gateTool( clist, 'show', gate_var.ind );
+end
 
 
 
-gateTool( clist, 'show', gate_var.ind );
 
         
 hold on;
@@ -1152,7 +1216,9 @@ if numel(gate_var.ind)==1
     ylim_ = ylim;
     
     plot( gate_var.x(1)+0*ylim_,ylim_, '.--', 'color','r' );
-    plot( gate_var.x(2)+0*ylim_,ylim_, '.--', 'color','r' );
+    if numel( gate_var.x )>1
+        plot( gate_var.x(2)+0*ylim_,ylim_, '.--', 'color','r' );
+    end
 else
     plot( gate_var.xx([1:end,1],1), gate_var.xx([1:end,1],2), '.--', 'color', 'r' );
 end
@@ -1948,7 +2014,7 @@ else
         if switcher(1) < cutt
             ind_n = 1;
             num_ = n_vec(ind_n);
-        else switcher(end) > cutt
+        elseif switcher(end) > cutt
             num_ = maxBinNum;
             ind_n = num_n;
         end
@@ -1999,7 +2065,7 @@ else
     if isempty( ind_n ) || ind_n < 1 || ind_n > num_n
         if switcher(1) < cutt
             ind_n = 1;
-        else switcher(end) > cutt
+        elseif switcher(end) > cutt
             ind_n = num_n;
         end
     end
@@ -2137,7 +2203,7 @@ end
 cc = h.Color;
 
 if ischar( cc )
-    cc = convert_color( cc)
+    cc = convert_color( cc);
 end
 
 if data.inv_flag
@@ -2889,7 +2955,7 @@ function csvwrite2( filename, data )
 
 cellflag = iscell( data );
 
-nn = size( data )
+nn = size( data );
 
 fid = fopen(filename, 'w') ;
 
