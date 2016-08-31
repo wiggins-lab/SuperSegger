@@ -64,7 +64,7 @@ seg_info(4) = mean(segs_props_tmp.phase(mask_ii_out)) - seg_info(2);
 %     sub1_ = sub1-1+yymin;
 %     sub2_ = sub2-1+xxmin;
 
-% calculate the local second d of the phase at the min pixel
+% calculate the local second derivative of the phase at the min pixel
 % normal to the seg and parallel to it.
 % min_pixel is the mask of the min pixel
 min_pixel = false(sim_ii);

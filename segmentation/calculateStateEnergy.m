@@ -34,11 +34,12 @@ function [regionScore,state] = calculateStateEnergy(cell_mask,vect,segs_list,dat
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 
 state =  caclulateState(cell_mask,vect,segs_list,data,xx,yy,CONST);
 sigma = 1-2*double(state.seg_vect0);
 allGoodScore = double(all(state.reg_E> 0));
-allWidth = double(all(CONST.superSeggerOpti.MAX_WIDTH < state.short_axis_mean));
+allWidth = double(all(CONST.superSeggerOpti.MAX_WIDTH/pixelFactor < state.short_axis_mean));
 regionScore = mean(-state.reg_E)+ mean(sigma.*state.seg_E) - allGoodScore * 50 - allWidth * 10;
 
 end
@@ -66,7 +67,7 @@ ss_regs_label_mod = size( regs_label_mod );
 for mm = 1:num_regs_mod;
     [xx_,yy_] = getBBpad( regs_props_mod(mm).BoundingBox, ss_regs_label_mod, 1);
     mask = regs_label_mod(yy_,xx_)==mm;
-    info(mm,:) = CONST.regionScoreFun.props( mask, regs_props_mod(mm));
+    info(mm,:) = CONST.regionScoreFun.props( mask, regs_props_mod(mm), CONST);
 end
 
 state.reg_E = CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);

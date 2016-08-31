@@ -87,7 +87,7 @@ numSegs    = max( segs_label(:) );
 segs_props = regionprops(segs_label,  {'Area', 'BoundingBox','MinorAxisLength',...
     'MajorAxisLength', 'Orientation', 'Centroid' } );
 
-[~, ~, ~, ~, ~, G, C1, C2, f_xx, f_yy, f_xy] = curveFilter (double(phaseNorm),1.5);
+[~, ~, ~, ~, ~, G, C1, C2, f_xx, f_yy, f_xy] = curveFilter (double(phaseNorm),1.5/pixelFactor);
 
 % resize by pixelFactor : 
 G =  G / pixelFactor^4;
@@ -152,14 +152,10 @@ scoreRaw = zeros(numSegs,1);
 % bad.
 for ii = 1:numSegs
     
-    if ii == 6
-        disp('hi')
-    end
     % Crop around each segment with two pixels of padding in x and y
     padbox = round(2 /pixelFactor);
     [xx,yy] = getBBpad( segs_props(ii).BoundingBox, sim, padbox );
-    
- 
+     
     % here we get the cropped segment mask and corresponding phase image
     segs_props_tmp = [];
     

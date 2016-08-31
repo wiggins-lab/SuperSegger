@@ -1,4 +1,4 @@
-function seg_info = segInfoL2(segs_props, segs_props_tmp, regs_prop, regs_label,disk1)
+function seg_info = segInfoL2(segs_props, segs_props_tmp, regs_prop, regs_label,disk1,pixelFactor)
 % segInfoL2 : Calculates the properties of the segments used for segment scoring.
 %
 % INPUT :

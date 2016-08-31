@@ -31,14 +31,15 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 
-MIN_LENGTH = CONST.regionOpti.MIN_LENGTH;
+MIN_LENGTH = CONST.regionOpti.MIN_LENGTH/pixelFactor;
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 MAX_NUM_RESOLVE  = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;
 NUM_INFO = CONST.regionScoreFun.NUM_INFO;
 E = CONST.regionScoreFun.E;
-
+se2 = strel('square',2/pixelFactor);
 minGoodRegScore = CONST.regionOpti.minGoodRegScore ;
 neighMaxScore = CONST.regionOpti.neighMaxScore;
 verbose = CONST.parallel.verbose;
@@ -79,7 +80,7 @@ data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
 for ii = 1:data.regs.num_regs
     [xx,yy] = getBBpad( data.regs.props(ii).BoundingBox, ss, 1);
     mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii) );
+    data.regs.info(ii,:) = CONST.regionScoreFun.props( mask, data.regs.props(ii), CONST);
     data.regs.scoreRaw(ii) = CONST.regionScoreFun.fun(data.regs.info(ii,:), E);
     data.regs.score(ii) = data.regs.scoreRaw(ii) > 0;
 end
@@ -109,14 +110,14 @@ while ~isempty(badReg)
     
     % get padded box
     originalBBbox = data.regs.props(ii).BoundingBox;
-    [xx_,yy_] = getBBpad( originalBBbox, ss, 5);
+    [xx_,yy_] = getBBpad( originalBBbox, ss, 5/pixelFactor);
     cellMask = (regs_label(yy_,xx_) == ii);
     
     % get neigbors with scores below neighMaxScore
     neighborIds = unique(regs_label(yy_,xx_));
     neighborIds = neighborIds(neighborIds~=0);
     neighbordIds = neighborIds(data.regs.scoreRaw(neighborIds) < neighMaxScore);
-    cellMaskDil = imdilate(cellMask, strel('square',3));
+    cellMaskDil = imdilate(cellMask, strel('square',3/pixelFactor));
     combinedCellMask = regs_label *0;
     
     for kk = 1 : numel(neighborIds)
@@ -155,7 +156,7 @@ while ~isempty(badReg)
     ind = find(overlapArea ==1);
     
     % bounding box of overlapping region
-    [xx,yy] = getBBpad(combRegProps(ind).BoundingBox,ss,3);
+    [xx,yy] = getBBpad(combRegProps(ind).BoundingBox,ss,3/pixelFactor);
     combMask = (regCombLabels(yy,xx) == ind);
     
     % get indices of neighbors we are checking and remove them from
@@ -164,8 +165,8 @@ while ~isempty(badReg)
     badReg = setdiff (badReg,neighborsToCheck);
     
     % dilate and erode mask to add more segments.
-    combMaskDil = imdilate(combMask, strel('square',2));
-    combMaskErode = imerode(combMaskDil, strel('square',2));
+    combMaskDil = imdilate(combMask, se2);
+    combMaskErode = imerode(combMaskDil, se2);
     segs_list_extra = unique(combMaskErode.*segsLabelMod(yy,xx));
     segs_list = [segs_list;segs_list_extra];
     segs_list = unique(segs_list);

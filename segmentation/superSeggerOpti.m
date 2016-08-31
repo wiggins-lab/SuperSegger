@@ -190,7 +190,8 @@ if isempty(mask)
     filt_4 = fspecial( 'gaussian', round(5/ pixelFactor), 1/2/ pixelFactor );
     mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4, CONST, crop_box, pixelFactor);
     
-    [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3/pixelFactor );
+    % k is G
+    [~,~,~,~,~,K] = curveFilter( phaseNormUnfilt, 3/pixelFactor );
     aK = abs(K)/pixelFactor^4;
     mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK, CONST, pixelFactor);
     

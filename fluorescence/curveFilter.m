@@ -50,10 +50,10 @@ R2 = X.^2+Y.^2;
 
 v = filterWidth^2;
 
-gau = 1/(2*pi*v) * exp( -R2/(2*v) );
-f_xx = ((X/v).^2-1/v).*gau;
-f_yy = ((Y/v).^2-1/v).*gau;
-f_xy =  X.*Y.*gau/v^2;
+gau = 1/(2*pi*v) * exp( -R2/(2*v) ); % units 1/filterWidth (is it 1/x^2)?
+f_xx = ((X/v).^2-1/v).*gau; % units 2
+f_yy = ((Y/v).^2-1/v).*gau; % units 2
+f_xy =  X.*Y.*gau/v^2; % units 2
 
 % Do filtering
 im_xx = imfilter( im, f_xx, 'replicate' );
@@ -61,13 +61,13 @@ im_yy = imfilter( im, f_yy, 'replicate' );
 im_xy = imfilter( im, f_xy, 'replicate' );
 
 % gaussian curvature
-G = im_xx.*im_yy-im_xy.^2;
+G = im_xx.*im_yy-im_xy.^2; % units 4
 
 % mean curvature
-M = -(im_xx+im_yy)/2;
+M = -(im_xx+im_yy)/2; % 2
 
 % compute principal curvatures
-C1 = (M-sqrt(abs(M.^2-G)));
+C1 = (M-sqrt(abs(M.^2-G))); % 2
 C2 = (M+sqrt(abs(M.^2-G)));
 
 % remove negative values
