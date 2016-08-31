@@ -1,4 +1,4 @@
-function [im,im_min,im_max] = ag (im,imin,imax)
+function [im,im_min,imax] = ag (im,imin,imax)
 % ag : autogain, it increases the contrast of image im, using imin and imax.
 % It subtracts the the minimum from of the image, divides by the max and
 % then normalizes to 255.
@@ -39,16 +39,17 @@ else
     im_min = min(im(:));
 end
 
+if ~exist( 'imax', 'var') || isempty(imax)
+    imax = max(im(:));
+end
+
+im_max = imax-im_min;
+
 % subtract min
 im = im - double(im_min);
 
-if exist( 'imax', 'var') && ~isempty(imax)
-    im_max = imax-imin;
-else
-    im_max = max(im(:));
-end
-    
-% autogain and normalization to uint8
+
+   % autogain and normalization to uint8
 im = uint8(255*im/double(im_max));
 
 end
