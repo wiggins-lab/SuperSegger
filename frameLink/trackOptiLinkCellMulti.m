@@ -27,9 +27,6 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,star
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-USE_NEW_ERROR_REZ = 0;
-USE_LARGE_REGION_SPLITTING = 0;
-
 
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir();
@@ -101,7 +98,6 @@ end
 
 
 ignoreError = 0;
-ignoreAreaError = restartFlag; %Don't split big regions on restart (already done)
 maxIterPerFrame = 3;
 curIter = 1;
 
@@ -128,7 +124,7 @@ while time <= numIm
     if (time == numIm)
         data_f = [];
     else
-        datafName = [dirname,contents(time+1).name];  
+        datafName = [dirname,contents(time+1).name];
         data_f = intDataLoader (datafName);
         data_f = updateRegionFields (data_f,CONST);  % make regions
     end
@@ -137,7 +133,7 @@ while time <= numIm
     data_c = intDataLoader (datacName);
     data_c = updateRegionFields (data_c,CONST);  % make regions
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
-        
+    
     if verbose
         disp (['Linking for frame ', num2str(time)])
     end
@@ -148,13 +144,8 @@ while time <= numIm
     end
     [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
     
-    %Split any regions that have too much growth
     resetRegions = 1;
     madeChanges = 0;
-    if USE_LARGE_REGION_SPLITTING && ~ignoreAreaError && ~isempty(data_r)
-        [madeChanges, data_c, data_r] = splitAreaErrors(data_c, data_r, CONST, time, verbose);               
-        ignoreAreaError = 1; % Only split cells once
-    end
     
     if ~madeChanges
         [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
@@ -163,14 +154,9 @@ while time <= numIm
         if curIter >= maxIterPerFrame
             ignoreError = 1;
         end
-
-
+        
         % error resolution and id assignment
-        if USE_NEW_ERROR_REZ
-            [data_c,data_r,cell_count,resetRegions] = errorRezFw (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
-        else
-            [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
-        end
+        [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
         
         curIter = curIter + 1;
     end
@@ -184,7 +170,6 @@ while time <= numIm
     else
         time = time + 1;
         ignoreError = 0;
-        ignoreAreaError = 0;
         curIter = 1;
     end
     

@@ -29,11 +29,11 @@ function [ mask_mod ] = removeDebris( mask_bg, phase, aK, CONST, pixelFactor)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-INTENSITY_DIF = 0.2;
-PEBBLE_CONST = 1.9304e-05;
-
 debugFlag = false;
+
+INTENSITY_DIF = CONST.seg.INTENSITY_DIF;
+PEBBLE_CONST = CONST.seg.PEBBLE_CONST;
+
 pad = round(6 * 1/pixelFactor);
 
 ss = size( phase );

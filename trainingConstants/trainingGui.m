@@ -76,15 +76,13 @@ settings.imageDirectory = 0;
 settings.hasBadRegions = 0;
 settings.currentIsBad = 0;
 settings.constantModified = 0;
-settings.recalculateSegs = 0;
-%settings.segsInfo = @segInfoResizeNorm;
-%settings.segsInfo  = @segInfoResCurvNoD;
-settings.segsInfo  = @segInfoResizeCurv;
+settings.recalculateSegs = 1;
+settings.segsInfo = @segInfoCurv;
 settings.numSegsInfo = 25;
 settings.recalculateRegs = 0;
 settings.regsInfo = @cellprops3;
 settings.numRegsInfo = 21;
-settings.cropTime = 0;
+
 setWorkingDirectory(handles.directory.String, 1, 0);
 
 updateUI(handles);
@@ -136,7 +134,7 @@ CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
-BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, start_end_steps, 1);
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, start_end_steps);
 mkdir([settings.loadDirectory(1:end-1),'_backup'])
 copyfile ([settings.loadDirectory,'*seg.mat'],[settings.loadDirectory(1:end-1),'_backup'],'f')
 settings.frameNumber = 1;
@@ -204,18 +202,15 @@ settings.errorHandle = errordlg(message);
 
 function del_areas_Callback(hObject, eventdata, handles)
 global settings;
-if  hObject.Value
-    if settings.dataSegmented
-        settings.cropTime = 1;
-        settings.firstPosition = [];
-        updateUI(handles);
-        hObject.Value
-    else
-        warning(['Plese segment files first']);
-    end
+
+if settings.dataSegmented
+    settings.axisFlag = 3;
+    settings.firstPosition = [];
+    updateUI(handles);
 else
-    settings.cropTime = 0;
+    warning(['Plese segment files first']);
 end
+
 function del_reg_Callback(hObject, eventdata, handles)
 global settings
 if settings.dataSegmented
@@ -405,7 +400,6 @@ updateUI(handles);
 function updateUI(handles)
 global settings;
 
-
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -434,7 +428,20 @@ if settings.dataSegmented
         if numel(handles.viewport_train.Children) > 0
             set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
         end
-   
+    elseif settings.axisFlag == 3
+        % deleting areas in square
+        maskFigure()
+        %backer = ag(settings.currentData.phase);
+        %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
+       
+        if numel(handles.viewport_train.Children) > 0
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        end
+        
+        if numel(settings.firstPosition) > 0
+            hold on;
+            plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
+        end
     elseif settings.axisFlag == 4
         % showing phase image
         axes(handles.viewport_train);
@@ -460,28 +467,11 @@ elseif settings.imagesLoaded
     imshow(settings.currentData, []);
 end
 
-
-if settings.cropTime
-    % deleting areas in square
-    %maskFigure()
-    %backer = ag(settings.currentData.phase);
-    %imshow(cat(3,0.5*backer+0.5*ag(settings.currentData.mask_cell),0.5*backer,0.5*backer));
-    
-    if numel(handles.viewport_train.Children) > 0
-        set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
-    end
-    
-    if numel(settings.firstPosition) > 0
-        hold on;
-        plot( settings.firstPosition(1), settings.firstPosition(2), 'w+','MarkerSize', 30)
-    end
-end
-
 handles.regions_radio.Value = 0;
 handles.phase_radio.Value = 0;
 handles.segs_radio.Value = 0;
 handles.mask_radio.Value = 0;
-if settings.axisFlag == 5 ||  settings.axisFlag == 6
+if settings.axisFlag == 5 || settings.axisFlag == 3 || settings.axisFlag == 6
     handles.mask_radio.Value = 1;
 elseif settings.axisFlag == 4
     handles.phase_radio.Value = 1;
@@ -753,19 +743,7 @@ function imageButtonDownFcn(hObject, eventdata, handles)
 
 global settings;
 
-if settings.cropTime
-    if numel(settings.firstPosition) == 0
-        settings.firstPosition = eventdata.IntersectionPoint;
-    else
-        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
-        drawnow;
-        addUndo();
-        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
-        saveData();        
-        settings.firstPosition = [];
-    end
-
-elseif settings.axisFlag == 1 || settings.axisFlag == 2
+if settings.axisFlag == 1 || settings.axisFlag == 2
     FLAGS.im_flag = settings.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
@@ -778,7 +756,17 @@ elseif settings.axisFlag == 1 || settings.axisFlag == 2
     saveData();
     
 
-
+elseif settings.axisFlag == 3
+    if numel(settings.firstPosition) == 0
+        settings.firstPosition = eventdata.IntersectionPoint;
+    else
+        plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)        
+        drawnow;
+        addUndo();
+        settings.currentData = killRegionsGUI(settings.currentData, settings.CONST, settings.firstPosition, eventdata.IntersectionPoint(1:2));
+        saveData();        
+        settings.firstPosition = [];
+    end
     
 elseif settings.axisFlag == 6
         plot(eventdata.IntersectionPoint(1), eventdata.IntersectionPoint(2), 'w+','MarkerSize', 30)       

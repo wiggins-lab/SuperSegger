@@ -43,20 +43,27 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 global REMOVE_STRAY
 global header_string
 global regToDelete
+
 header_string = header;
 verbose = CONST.parallel.verbose;
-MIN_LENGTH = 10;
 REMOVE_STRAY = CONST.trackOpti.REMOVE_STRAY;
 DA_MIN = CONST.trackOpti.DA_MIN;
 DA_MAX =  CONST.trackOpti.DA_MAX;
 regToDelete = [];
 resetRegions = false;
 minAreaToMerge = CONST.trackOpti.SMALL_AREA_MERGE;
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 
+% convert areas by pixel factor
+cArea = [data_c.regs.props.Area] / pixelFactor^2;
+if ~isempty(data_r)
+    rArea = [data_r.regs.props.Area] / pixelFactor^2;
+else
+    rArea = [];
+end
 
-% set all ids to 0
-cArea = [data_c.regs.props.Area];
-data_c.regs.ID = zeros(1,data_c.regs.num_regs);
+data_c.regs.ID = zeros(1,data_c.regs.num_regs); % set all ids to 0
+
 modRegions = [];
 for regNum =  1 : data_c.regs.num_regs;
     
@@ -133,8 +140,8 @@ for regNum =  1 : data_c.regs.num_regs;
                     ag(data_r.regs.regs_label == mother),ag(data_c.regs.regs_label==sister2)));
             end
             
-            totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
-            totAreaR =  data_r.regs.props(mother).Area;
+            totAreaC = cArea(sister1) + cArea(sister2);
+            totAreaR = rArea(mother);
             AreaChange = (totAreaC-totAreaR)/totAreaC;
             goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
             haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
@@ -168,8 +175,8 @@ for regNum =  1 : data_c.regs.num_regs;
                 
                 
                 
-                totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
-                totAreaR =  data_r.regs.props(mother).Area;
+                totAreaC = cArea(sister1) + cArea(sister2);
+                totAreaR =  cArea(mother);
                 AreaChange = (totAreaC-totAreaR)/totAreaC;
                 goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
                 haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));

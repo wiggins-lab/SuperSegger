@@ -72,7 +72,7 @@ for ii = 1:data.regs.num_regs
      
     [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
     mask = data.regs.regs_label(yy,xx)==ii;
-    data.regs.info(ii,:) = CONST.regionScoreFun.props(mask,data.regs.props(ii) );       
+    data.regs.info(ii,:) = CONST.regionScoreFun.props(mask,data.regs.props(ii), CONST);       
     data.regs.L1(ii)= data.regs.info(ii,1);
     data.regs.L2(ii)= data.regs.info(ii,2);
     

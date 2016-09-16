@@ -226,7 +226,7 @@ for i = 1  : num_comb
         for kk = kk_range;
             [xx_,yy_] = getBB( cell_mod_props(kk).BoundingBox);
             mask_reg{kk} = (regs_label_mod==kk);
-            info = CONST.regionScoreFun.props(mask_reg{kk}(yy_,xx_), cell_mod_props(kk));
+            info = CONST.regionScoreFun.props(mask_reg{kk}(yy_,xx_), cell_mod_props(kk),CONST);
             reg_E(kk) = CONST.regionScoreFun.fun(info,CONST.regionScoreFun.E);
         end
         

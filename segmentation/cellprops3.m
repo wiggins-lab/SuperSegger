@@ -71,16 +71,17 @@ end
 % short axis width
 width       = sum(double(imRot),2);
 ymask       = (width>=1);
+ymin = find(ymask,1,'first');
+ymax = find(ymask,1,'last');
+ind = (ymin):(ymax);
+widmask = width(ind);
 widthWindow = ([0;width(1:end-1)] + width + [width(2:end);0] )/3;
 
 L1          = sum(ymask); % long axis
 L2max       = max(widthWindow); % max of short axis
 L2v         = var(widthWindow); % variance of short axis
 
-ymin = find(ymask,1,'first');
-ymax = find(ymask,1,'last');
-ind = (ymin):(ymax);
-L2mean = mean(width(ind)); % mean of short axis
+L2mean = mean(widmask); % mean of short axis
 
 if L2mean<1
     L2mean=1;
@@ -91,15 +92,17 @@ end
 
 nn = (numel(ind)-1); % long axis width
 s  = 2*pi*(0:nn)/nn;
-s1 = mean(width(ind)'.*sin(s/2));
-s2 = mean(width(ind)'.*sin(s));
-s3 = mean(width(ind)'.*sin(s/3));
+s1 = mean(widmask'.*sin(s/2));
+s2 = mean(widmask'.*sin(s));
+s3 = mean(widmask'.*sin(s/3));
 
 
 % neck width
-if numel(widthWindow) > 6;
+if numel(widthWindow) > 6 / pixelFactor
     ww       = widthWindow';
-    v        = ww(3:end)-ww(1:end-2); % change in width from i3 to i1
+    start_width = 3/ pixelFactor;
+    end_width = start_width-1;
+    v        = ww(start_width:end)-ww(1:end-end_width); % change in width from i3 to i1
     
     s_change = logical([0, sign(v(2:end))-sign(v(1:end-1)),0,0]); % positive change in change
     s_change(2:end) = logical(s_change(2:end)+s_change(1:end-1));
@@ -136,15 +139,14 @@ if debug
     y=pos*ones(1,numel(x))
     plot(y,x, 'r--'); % marks position of neck
     plot( xx(ind_), ww(ind_), 'g.' );
-    figure(2)
-    
+    figure(2)    
 end
 
 
 % finds thin ends
 im = find( logical(width), 1, 'first' );
 ip = find( logical(width), 1, 'last' );
-if ip-im >= 3
+if ip-im >= 3 / pixelFactor
    m1 = mean( width(im+[ 0, 1]) );
    m4 = mean( width(ip+[-1, 0]) );
    minWidthEnd = min(m1,m4);
@@ -153,7 +155,7 @@ else
 end
 
 % finds square ends
-if ip-im >= 7
+if ip-im >= 7 / pixelFactor
     m2 = mean( width(im+[ 2, 3]) );
     m3 = mean( width(ip+[-3,-2]) );
 
@@ -168,11 +170,11 @@ else
 end
 
 % maximum bend angle
-dr  = 3;
-dr2 = 3;
+dr  = 3 / pixelFactor;
+dr2 = 3 / pixelFactor;
 yy = (ymin+dr):dr2:(ymax-dr);
 
-if numel(yy) > 4
+if numel(yy) > 4 / pixelFactor
     tmp = imRot(yy,:);
     
     x = 1:ss(2);
@@ -181,11 +183,12 @@ if numel(yy) > 4
     
     xx = sum( X.*tmp,2 )./sum(tmp,2);
     
-    d1 = [xx(1:end-2)-xx(3:end),yy(1:end-2)'-yy(3:end)'];
+    endPoint = 3;
+    d1 = [xx(1:end-endPoint+1)-xx(endPoint:end),yy(1:end-endPoint+1)'-yy(endPoint:end)'];
     
-    dangle = ((d1(1:end-2,1).*d1(3:end,2)...
-        -d1(1:end-2,2).*d1(3:end,1))./...
-        (norm2(d1(1:end-2,:)).*norm2(d1(3:end,:))));
+    dangle = ((d1(1:end-endPoint+1,1).*d1(endPoint:end,2)...
+        -d1(1:end-endPoint+1,2).*d1(endPoint:end,1))./...
+        (norm2(d1(1:end-endPoint+1,:)).*norm2(d1(endPoint:end,:))));
             
     stm1 = max( dangle.^2 );
     
@@ -236,7 +239,6 @@ if numel(yy) > 4
     
     if debug
         phi = 0:.1:2*pi;
-        
         plot(xx,yyd,'go');
         xxx = r(1)*cos(phi);
         yyy = r(1)*sin(phi);
@@ -247,8 +249,7 @@ if numel(yy) > 4
         plot(xx(2)+xxx,yyd(2)+yyy,'g:')
         
         plot( [1,ss(2)],[ymax,ymax],':r')
-        plot( [1,ss(2)],[ymin,ymin],':r')
-        
+        plot( [1,ss(2)],[ymin,ymin],':r')        
     end
     
     xcen = xx;

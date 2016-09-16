@@ -124,6 +124,7 @@ CONST.trackLoci.gate  = [];
 %     CONST.getLocusTracks.PixelSize        = [];
 % end
 
+
 % getLocusTracks Constants
 CONST.getLocusTracks.FLUOR1_MIN_SCORE = 3; % only foci above this score are shown in the viewer
 CONST.getLocusTracks.FLUOR2_MIN_SCORE = 3;
@@ -253,19 +254,32 @@ CONST.superSeggerOpti.NUM_INFO= ConstLoaded.superSeggerOpti.NUM_INFO; % number o
 
 CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 
+if ~isfield (CONST.seg,'INTENSITY_DIF')
+CONST.seg.INTENSITY_DIF = 0.2;
+end
+
+if ~isfield (CONST.seg,'PEBBLE_CONST')
+CONST.seg.PEBBLE_CONST = 1e-05;
+end
+
 % region optimizing parameters parameters
 % regions with smaller length than min_length are optimized by using all segments surrounding them
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
-if isfield(ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
+if isfield (ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
 CONST.trackOpti.SMALL_AREA_MERGE = ConstLoaded.trackOpti.SMALL_AREA_MERGE; % in the linking phase, this regions with this area are merged with the ones next to them.
+end
+
+if isfield (ConstLoaded.trackOpti,'MIN_AREA_NO_NEIGH')
 CONST.trackOpti.MIN_AREA_NO_NEIGH = ConstLoaded.trackOpti.MIN_AREA_NO_NEIGH; % regions with area below this and no neighbors are discarded;
 end
 
-if isfield(ConstLoaded.trackOpti,'MIN_AREA')
+
+if isfield (ConstLoaded.trackOpti,'MIN_AREA')
 CONST.trackOpti.MIN_AREA = ConstLoaded.trackOpti.MIN_AREA;  % minimum area a cell region can have, otherwise it is discarded.
 end
+
 
 %% Parallel processing on multiple cores settings :
 if PARALLEL_FLAG

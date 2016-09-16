@@ -40,7 +40,9 @@ end
 
 cellNames = {contents.name}';
 rightCells=regexpi(cellNames,'[cC]ell\d+.mat','once');
-rightCellNames = cellNames(cell2mat(rightCells));
+ids = find(cell2mat(rightCells));
+
+rightCellNames = {cellNames{ids}};
 
 if numel(rightCellNames) == 0
     error('No cell files found')
