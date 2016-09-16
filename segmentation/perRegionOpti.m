@@ -33,7 +33,7 @@ function [data] = perRegionOpti( data, disp_flag, CONST,header)
 
 pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 
-MIN_LENGTH = CONST.regionOpti.MIN_LENGTH/pixelFactor;
+MIN_LENGTH = CONST.regionOpti.MIN_LENGTH; % not converted - info is converted
 CutOffScoreHi = CONST.regionOpti.CutOffScoreHi;
 MAX_NUM_RESOLVE  = CONST.regionOpti.MAX_NUM_RESOLVE;
 MAX_NUM_SYSTEMATIC = CONST.regionOpti.MAX_NUM_SYSTEMATIC;

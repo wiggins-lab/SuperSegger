@@ -27,9 +27,10 @@ function trackOptiStripSmall(dirname, CONST, disp_flag)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+pixelFactor = CONST.general.dataPixelSize / CONST.general.trainedPixelSize;
 
-VERY_SMALL_AREA = CONST.trackOpti.MIN_AREA; % smaller that this is stripped
-MIN_AREA = CONST.trackOpti.MIN_AREA_NO_NEIGH; % smaller that this is stripped if no neighbors
+VERY_SMALL_AREA = CONST.trackOpti.MIN_AREA / pixelFactor^2; % smaller that this is stripped
+MIN_AREA = CONST.trackOpti.MIN_AREA_NO_NEIGH / pixelFactor^2; % smaller that this is stripped if no neighbors
 dirname = fixDir(dirname);
 contents=dir([dirname '*_seg.mat']);
 num_im = length(contents);
