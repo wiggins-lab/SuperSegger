@@ -1,6 +1,6 @@
 function x = plotClist3D(clist, ind)
-% gateHist : makes a plot for from the 3dclist for all cells with time. 
-% It uses the given clist index. It first gates the list if there is a 
+% gateHist : makes a plot for from the 3dclist for all cells with time.
+% It uses the given clist index. It first gates the list if there is a
 % gate field in clist.
 %
 % INPUT :
@@ -42,7 +42,11 @@ if nind == 1
     x = squeeze(clist.data3D(:,ind,:))';
     plot(x);
     set( gca, 'YDir', 'normal' );
-    ylabel( clist.def3d{ind} );
+    if isfield (clist,'def3d')
+        ylabel( clist.def3d{ind} );
+    elseif isfield (clist,'def3D')
+        ylabel( clist.def3D{ind} );
+    end
     xlabel( 'Time (frame)' );
 else
     disp('Error in plotClist3D: too many indices in ind');

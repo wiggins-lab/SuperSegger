@@ -305,60 +305,61 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
         cellBorn = or(and(data.regs.birthF,data.regs.stat0),data.regs.divide);
         
-        % cells with ehist & error current->reverse or ignoreError
-        map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
-            data.regs.error.r),ignoreErrorV)));
-        map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
-        
-        % cells with ehist in this frame, but no error current->reverse or ignoreError
-        map_ehist_in_frame_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
-            ~data.regs.error.r),ignoreErrorV)));
-        map_ehist_in_frame  = double(ismember( data.regs.regs_label, map_ehist_in_frame_ind ));
-        
-        
-        % cells without error history
-        map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
-        map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
-        
-        % in list, cell was not born in this frame with good division or divided
-        % but stat0==2 : succesfful division was observed
-        map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
-        map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));
-        
-        % outline the ones that were just born with stat0 == 2
-        map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
-        map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
-        
-        
-        % in list, cell was not born in this frame with good division or divided
-        % stat0==1 : cell was result of succesfful division
-        map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
-        map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
-        
-        % outline the ones that were just born with stat0 == 1
-        map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
-        map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
-        
-        
-        % in list, cell was not born in this frame with good division or divided
-        % stat0 == 0  : cell has errors, or division not observed
-        map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
-        map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
-        
-        % outline the ones that were just born with stat0 == 1
-        map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
-        map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
-        
-        
-        
-        redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
-        greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
-        blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
-        
-        reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
-        
-        im = reg_color + im;
-        
+        if ~isempty(cells_In_Frame)
+            % cells with ehist & error current->reverse or ignoreError
+            map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+                data.regs.error.r),ignoreErrorV)));
+            map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
+            
+            % cells with ehist in this frame, but no error current->reverse or ignoreError
+            map_ehist_in_frame_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
+                ~data.regs.error.r),ignoreErrorV)));
+            map_ehist_in_frame  = double(ismember( data.regs.regs_label, map_ehist_in_frame_ind ));
+            
+            
+            % cells without error history
+            map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
+            map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
+            
+            % in list, cell was not born in this frame with good division or divided
+            % but stat0==2 : succesfful division was observed
+            map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
+            map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));
+            
+            % outline the ones that were just born with stat0 == 2
+            map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
+            map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
+            
+            
+            % in list, cell was not born in this frame with good division or divided
+            % stat0==1 : cell was result of succesfful division
+            map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
+            map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
+            
+            % outline the ones that were just born with stat0 == 1
+            map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
+            map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
+            
+            
+            % in list, cell was not born in this frame with good division or divided
+            % stat0 == 0  : cell has errors, or division not observed
+            map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
+            map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
+            
+            % outline the ones that were just born with stat0 == 1
+            map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
+            map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
+            
+            
+            
+            redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+            greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
+            blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
+            
+            reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
+            
+            im = reg_color + im;
+        end
     end
     %% colors :
     % baby-blue : no errors, stat0=2 cells
