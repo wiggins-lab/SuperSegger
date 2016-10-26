@@ -53,6 +53,9 @@ if isempty( contents )
 else
     data_c = loaderInternal([dirname,contents(end).name]);
     MAX_CELL = max(10000, max(data_c.regs.ID) + 100);
+    if isempty(MAX_CELL)
+        MAX_CELL = 10000;
+    end
     num_im = numel(contents);
     
     if CONST.parallel.show_status

@@ -370,7 +370,7 @@ end
             
             bestAssgnC = findBestSingleAssign (jj, totCost, indexF, indexC) ;
             
-            if bestAssgnC <= numel(assignments)
+            if ~isnan(bestAssgnC) && bestAssgnC <= numel(assignments)
                 FAlready = assignments{bestAssgnC};
                 if isempty(FAlready)
                     assignments{bestAssgnC} = jj;
@@ -418,8 +418,12 @@ end
         
         fAssign =  ((indexF(1,:)== value_f) & (isnan(indexF(2,:))));
         totCost(~fAssign) = NaN;
-        [~,indC] = min(totCost);
-        bestAssignC = indexC (1,indC);
+        if sum(~isnan(totCost))
+            [~,indC] = min(totCost);
+            bestAssignC = indexC (1,indC);
+        else
+            bestAssignC = NaN;
+        end
         
     end
 
@@ -488,7 +492,7 @@ end
             [~,ind] = min(totCostTemp);
             badCSecondF = indexF(:,ind);
             
-            if isnan(badCSecondF(2)) &&  any(leftInF == badCSecondF(1))
+            if ~isempty(badCSecondF) && isnan(badCSecondF(2)) &&  any(leftInF == badCSecondF(1))
                % disp (['Exchanging assignment for ', num2str(badC), '  and  ', num2str(currentCreg),  ' ', num2str(bestF)]);
                 assignments{badC} = badCSecondF(1);
                 revAssign{badCSecondF(1)} = badC;

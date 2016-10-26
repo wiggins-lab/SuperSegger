@@ -39,10 +39,10 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 global REMOVE_STRAY
 global header_string
 global regToDelete
+
 header_string = header;
 verbose = CONST.parallel.verbose;
 MIN_LENGTH = 10;
@@ -53,21 +53,19 @@ regToDelete = [];
 resetRegions = false;
 minAreaToMerge = CONST.trackOpti.SMALL_AREA_MERGE;
 
-
 % set all ids to 0
 cArea = [data_c.regs.props.Area];
 data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
+
 for regNum =  1 : data_c.regs.num_regs;
-    
-    
-    
     
     if data_c.regs.ID(regNum) ~= 0
         disp ([header, 'ErRes: Frame: ', num2str(time), ' already has an id ',num2str(regNum)]);
     elseif ismember (regNum,modRegions)
         disp ([header, 'ErRes: Frame: ', num2str(time), ' already modified ',num2str(regNum)]);
     else
+        
         rCellsFromC = data_c.regs.map.r{regNum}; % where regNum maps in reverse
         
         if ~isempty(rCellsFromC)
@@ -77,8 +75,7 @@ for regNum =  1 : data_c.regs.num_regs;
             cCellsFromR = [];
             cCellsTransp = [];
         end
-        
-        
+               
         %%% maps to 0
         if numel(rCellsFromC) == 0 % maps to 0 in the previous frame - stray
             
@@ -115,9 +112,7 @@ for regNum =  1 : data_c.regs.num_regs;
             % map with an error flag...
             errorStat = (data_c.regs.error.r(regNum)>0);
             [data_c, data_r] = continueCellLine( data_c, regNum, data_r, rCellsFromC, time, errorStat);
-            
-            
-            
+                        
         elseif numel(rCellsFromC) == 1 && numel(cCellsFromR) == 1 &&  numel (cCellsTransp) == 2
             % regNum and another cell map to one in reverse
             % but one in reverse only maps to one forward
@@ -165,18 +160,16 @@ for regNum =  1 : data_c.regs.num_regs;
             sister2Mapping = data_c.regs.map.r{sister2};
             
             if numel(sister2) == 1 && any(mapRC==regNum) && ~isempty(sister2Mapping) && all(sister2Mapping == mother)
-                
-                
-                
+
                 totAreaC = data_c.regs.props(sister1).Area + data_c.regs.props(sister2).Area;
                 totAreaR =  data_r.regs.props(mother).Area;
                 AreaChange = (totAreaC-totAreaR)/totAreaC;
                 goodAreaChange = (AreaChange > DA_MIN && AreaChange < DA_MAX);
-                haveNoMatch = (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
-                matchToTheSame = ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
+                haveNoMatch = ~isempty(data_f) && (isempty(data_c.regs.map.f{sister1}) || isempty(data_c.regs.map.f{sister2}));
+                matchToTheSame = ~isempty(data_f) && ~haveNoMatch && all(ismember(data_c.regs.map.f{sister1}, data_c.regs.map.f{sister2}));
                 oneIsSmall = (cArea(sister1) < minAreaToMerge) || (cArea(sister2) < minAreaToMerge);
+                
                 if goodAreaChange && ~ignoreError && (haveNoMatch || matchToTheSame || oneIsSmall)
-                    
                     % wrong division merge cells
                     if ~ignoreError
                         [data_c,reset_tmp] = merge2Regions (data_c, [sister1, sister2], CONST);
