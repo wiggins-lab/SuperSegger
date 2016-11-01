@@ -52,8 +52,6 @@ if ~exist('dispText','var') || isempty( dispText )
     dispText = true;
 end
 
-
-
 % default values for numbers
 resFlag = [];
 if isa(res,'double' ) && res == 60
@@ -78,6 +76,11 @@ CONST.imAlign.AlignChannel = 1; % channel to use for alignment
 CONST.imAlign.medFilt = false; % use median filter during alignment
 CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
+% segmenation default parameters
+CONST.superSeggerOpti.remove_debris = true;
+CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
+CONST.superSeggerOpti.PEBBLE_CONST = 3;
+CONST.superSeggerOpti.remove_microcolonies = true;
 
 % region optimization parameters
 CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
@@ -98,13 +101,12 @@ CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
 CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.2; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
-CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
+CONST.trackOpti.REMOVE_STRAY = 0; % deletes stray regions and their children
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
 CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
 CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
 CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
-
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
@@ -139,7 +141,6 @@ CONST.view.fluorColor = {'g','r','b','c','o','y'}; % order of channel colors to 
 CONST.view.LogView = false;
 CONST.view.filtered = 1;
 CONST.view.maxNumCell = []; % maximum number of cells used for analysis tools
-
 
 % super resolution constants - not used in released version
 % Const for findFocusSR
@@ -197,15 +198,31 @@ else
     return;
 end
 
-
-
-
-
 %% Parameters overwritten separately for each constant : 
 % Set by the loaded constant. - you can add here values that you have changed 
 % from the default and should be loaded from your constants file.
 
 % segmentation parameters
+
+% removes debris using the texture of the colonies, and the intensity
+% difference of the halo and inside the cells
+if isfield (ConstLoaded.superSeggerOpti,'remove_debris')
+    CONST.superSeggerOpti.remove_debris = ConstLoaded.superSeggerOpti.remove_debris;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'INTENSITY_DIF')
+   CONST.superSeggerOpti.INTENSITY_DIF = ConstLoaded.superSeggerOpti.INTENSITY_DIF;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'PEBBLE_CONST')
+  CONST.superSeggerOpti.PEBBLE_CONST = ConstLoaded.superSeggerOpti.PEBBLE_CONST;
+end
+
+% removes false microcolonies if using the mean intensity
+if isfield (ConstLoaded.superSeggerOpti,'remove_microcolonies')
+  CONST.superSeggerOpti.remove_microcolonies = ConstLoaded.superSeggerOpti.remove_microcolonies;
+end
+
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
 
