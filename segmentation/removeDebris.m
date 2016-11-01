@@ -1,4 +1,4 @@
-function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
+function [ mask_mod ] = removeDebris( mask_bg, phase, aK, CONST )
 % removeDebris : removes false positives from microcolony mask
 % It uses the brightness of the halos versus the darkness of the ecoli
 % and the curvature of the image  
@@ -30,8 +30,8 @@ function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
 
 
 
-INTENSITY_DIF = 0.15;
-PEBBLE_CONST = 3;
+INTENSITY_DIF = CONST.superSeggerOpti.INTENSITY_DIF;
+PEBBLE_CONST = CONST.superSeggerOpti.PEBBLE_CONST;
 debugFlag = false;
 pad = 6;
 
