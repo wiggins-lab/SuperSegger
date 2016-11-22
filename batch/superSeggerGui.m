@@ -202,10 +202,15 @@ CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
+CONST.superSeggerOpti.REMOVE_STRAY = handles.remove_stray.Value;
+CONST.superSeggerOpti.segmenting_fluorescence = handles.segmenting_fluor.Value;
+
 clean_flag = handles.clean_flag.Value;
 skip = str2double(handles.skip.String);
-
-BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST);
+start_step = str2num(handles.start_step.String);
+end_step = str2num(handles.end_step.String);
+startEnd = [start_step end_step];
+BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST, startEnd);
 
 
 % tries different constants
@@ -255,6 +260,61 @@ end
 
 function constants_list_Callback(hObject, eventdata, handles)
 function constants_list_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in segmenting_fluor.
+function segmenting_fluor_Callback(hObject, eventdata, handles)
+% hObject    handle to segmenting_fluor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of segmenting_fluor
+
+
+
+function start_step_Callback(hObject, eventdata, handles)
+% hObject    handle to start_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of start_step as text
+%        str2double(get(hObject,'String')) returns contents of start_step as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function start_step_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to start_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function end_step_Callback(hObject, eventdata, handles)
+% hObject    handle to end_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of end_step as text
+%        str2double(get(hObject,'String')) returns contents of end_step as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function end_step_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to end_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

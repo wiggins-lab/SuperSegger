@@ -78,6 +78,12 @@ CONST.imAlign.AlignChannel = 1; % channel to use for alignment
 CONST.imAlign.medFilt = false; % use median filter during alignment
 CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
+% segmenation default parameters
+CONST.superSeggerOpti.segmenting_fluorescence = false;
+CONST.superSeggerOpti.remove_debris = true;
+CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
+CONST.superSeggerOpti.PEBBLE_CONST = 3;
+CONST.superSeggerOpti.remove_microcolonies = true;
 
 % region optimization parameters
 CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
@@ -104,7 +110,6 @@ CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking ce
 CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
 CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
 CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
-
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
