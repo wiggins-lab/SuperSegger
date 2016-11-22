@@ -80,6 +80,11 @@ if ~exist( 'showWarnings', 'var' ) || isempty( showWarnings )
     showWarnings = 1;
 end
 
+
+if ~checkToolboxes
+    return;
+end
+
 %if you pass a res value, write over CONST values. If it isn't passed,
 % use existing values, if they exist. If not, load the default values.
 if isstruct(res)
@@ -107,40 +112,43 @@ if clean_flag && showWarnings
     end
 end
 
+if startEnd(1)>1 
+    CONST.align.ALIGN_FLAG = 0;
+end
+
 % align frames
-if exist( dirname_, 'dir' ) 
-
-        if startEnd(1) >1 || exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
-                (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
-                exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
-             disp('BatchSuperSeggerOpti : images already aligned');
-            if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
-                tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
-                crop_box_array = tmp.crop_box_array;
-            else
-                crop_box_array = cell(1,10000);
-            end
-        elseif numel(dir ([dirname_,filesep,'*.tif']))
-            % check naming convention
-            if ~isRightNameFormat(dirname_)
-                disp('Images in incorrect naming format. Using convertImageNames to convert names.')
-                convertImageNames(dirname_)
-            end
-
-            mkdir( [dirname_,filesep,'raw_im'] );
-            if CONST.align.ALIGN_FLAG
-                crop_box_array = trackOptiAlignPad( dirname_,...
-                    CONST.parallel.parallel_pool_num, CONST);
-                movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
-                movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
-                rmdir( [dirname_,'align'] ); % removes _align directory
-            else
-                crop_box_array = cell(1,10000);
-            end
+if exist( dirname_, 'dir' )    
+    if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
+            (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
+            exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
+        disp('BatchSuperSeggerOpti : images already aligned');
+        if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
+            tmp = load( [dirname_,filesep,'raw_im',filesep,'cropbox.mat'] );
+            crop_box_array = tmp.crop_box_array;
+        else
+            crop_box_array = cell(1,10000);
+        end
+    elseif numel(dir ([dirname_,filesep,'*.tif']))
+        % check naming convention
+        if ~isRightNameFormat(dirname_)
+            disp('Images in incorrect naming format. Using convertImageNames to convert names.')
+            convertImageNames(dirname_)
+        end
+        
+        mkdir( [dirname_,filesep,'raw_im'] );
+        if CONST.align.ALIGN_FLAG
+            crop_box_array = trackOptiAlignPad( dirname_,...
+                CONST.parallel.parallel_pool_num, CONST);
+            movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
+            movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
+            rmdir( [dirname_,'align'] ); % removes _align directory
+        else
+            crop_box_array = cell(1,10000);
+        end
     else
         error('No images found');
     end
- 
+    
 else
     error(['BatchSuperSeggerOpti : Can''t find directory ''',dirname_,'''. Exiting.'] );
 end
@@ -202,7 +210,7 @@ else
     end
     
    % parfor(j = 1:num_xy,workers)
-        for j = 1:num_xy
+   for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
@@ -303,8 +311,8 @@ end
 
 % does the segmentations for all the frames in parallel
 if startEnd(1) <= 2 && startEnd(2) >=2 && ~exist( stamp_name, 'file' )
-    %parfor(i=1:num_t,workers) % through all frames
-        for i = 1:num_t
+   % parfor(i=1:num_t,workers) % through all frames
+   for i = 1:num_t
         
         if isempty( crop_box )
             crop_box_tmp = [];

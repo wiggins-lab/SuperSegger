@@ -76,6 +76,7 @@ CONST.imAlign.AlignChannel = 1; % channel to use for alignment
 CONST.imAlign.medFilt = false; % use median filter during alignment
 CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
+
 % segmenation default parameters
 CONST.superSeggerOpti.remove_debris = true;
 CONST.superSeggerOpti.INTENSITY_DIF = 0.15;

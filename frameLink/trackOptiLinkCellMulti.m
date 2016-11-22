@@ -106,7 +106,7 @@ maxIterPerFrame = 3;
 curIter = 1;
 
 if CONST.parallel.show_status
-    h = waitbar( 0, 'Strip small cells.');
+    h = waitbar( 0, 'Linking.');
     cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
@@ -151,10 +151,6 @@ while time <= numIm
     %Split any regions that have too much growth
     resetRegions = 1;
     madeChanges = 0;
-    if USE_LARGE_REGION_SPLITTING && ~ignoreAreaError && ~isempty(data_r)
-        [madeChanges, data_c, data_r] = splitAreaErrors(data_c, data_r, CONST, time, verbose);               
-        ignoreAreaError = 1; % Only split cells once
-    end
     
     if ~madeChanges
         [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
@@ -166,12 +162,7 @@ while time <= numIm
 
 
         % error resolution and id assignment
-        if USE_NEW_ERROR_REZ
-            [data_c,data_r,cell_count,resetRegions] = errorRezNew (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
-        else
-            [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);
-        end
-        
+        [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);       
         curIter = curIter + 1;
     end
     
@@ -184,7 +175,6 @@ while time <= numIm
     else
         time = time + 1;
         ignoreError = 0;
-        ignoreAreaError = 0;
         curIter = 1;
     end
     
@@ -202,7 +192,7 @@ end
     function data = intDataLoader (dataName)
         % intDataLoader : loads the data files.
         % if first tries to load the fiele ending with filt2, if it doesn't find it
-        % it loads the dataName given, and if that is not found either it
+        % it loads the dataName given, and if that is notund either it
         % return empty.
         
         dataNameMod = [dataName(1:end-7),filt2];
