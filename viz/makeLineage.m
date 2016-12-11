@@ -90,7 +90,7 @@ count = 0;
 mother_index = grabClistIndex(clist, 'mother id');
 daughter1_index = grabClistIndex(clist, 'daughter1 id');
 daughter2_index = grabClistIndex(clist, 'daughter2 id');
-cell_div_index = grabClistIndex(clist, 'Cell Division Time');
+cell_div_index = grabClistIndex(clist, 'Cell Death Time');
 stat_0_index = grabClistIndex(clist,'stat0');
 cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
 cell_error_index = grabClistIndex(clist,'Error Frame');
@@ -265,7 +265,7 @@ else
     if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0) || ~isnan(error_)
         starter = [starter,ID];
         
-        if death_ ~= end_time && isnan(error_);
+        if death_ ~= end_time && isnan(error_)
             error_ = death_;
         end
             
