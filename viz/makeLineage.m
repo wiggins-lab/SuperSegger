@@ -85,7 +85,7 @@ count = 0;
 mother_index = grabClistIndex(clist, 'mother id');
 daughter1_index = grabClistIndex(clist, 'daughter1 id');
 daughter2_index = grabClistIndex(clist, 'daughter2 id');
-cell_div_index = grabClistIndex(clist, 'Cell Division Time');
+cell_div_index = grabClistIndex(clist, 'Cell Death Time');
 stat_0_index = grabClistIndex(clist,'stat0');
 cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
 cell_error_index = grabClistIndex(clist,'Error Frame');
@@ -208,10 +208,7 @@ global stat_0_index;
 global cell_error_index;
 global pole_age_index;
 
-
 end_time = max( clist.data(:,cell_div_index) );
-
-
 ind = find( clist.data(:,1)==ID );
 
 if isempty(ind) || (ID == 0) || isnan(ID)
