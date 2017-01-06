@@ -84,6 +84,7 @@ CONST.superSeggerOpti.remove_debris = true;
 CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
 CONST.superSeggerOpti.PEBBLE_CONST = 3;
 CONST.superSeggerOpti.remove_microcolonies = true;
+CONST.superSeggerOpti.segmenting_fluorescence = 0;
 
 % region optimization parameters
 CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
@@ -214,9 +215,23 @@ end
 
 % removes debris using the texture of the colonies, and the intensity
 % difference of the halo and inside the cells
-CONST.superSeggerOpti.remove_debris = true;
-CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
-CONST.superSeggerOpti.PEBBLE_CONST = 3;
+
+% updated values
+if isfield (ConstLoaded.superSeggerOpti,'remove_debris')
+    CONST.superSeggerOpti.remove_debris = ConstLoaded.superSeggerOpti.remove_debris;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'INTENSITY_DIF')
+   CONST.superSeggerOpti.INTENSITY_DIF = ConstLoaded.superSeggerOpti.INTENSITY_DIF;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'PEBBLE_CONST')
+  CONST.superSeggerOpti.PEBBLE_CONST = ConstLoaded.superSeggerOpti.PEBBLE_CONST;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'segmenting_fluorescence')
+    CONST.superSeggerOpti.segmenting_fluorescence = ConstLoaded.superSeggerOpti.segmenting_fluorescence;
+end
 
 % removes false microcolonies if using the mean intensity
 CONST.superSeggerOpti.remove_microcolonies = true;
