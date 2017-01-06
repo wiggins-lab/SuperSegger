@@ -48,24 +48,24 @@ function modifyConstValuesGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to modifyConstValuesGUI (see VARARGIN)
-global settings;
+global settings_mod;
 
 handles.output = hObject;
 set(handles.figure1, 'units', 'normalized', 'position', [0.1 0.1 0.8 0.8])
 load_listbox(handles)
 handles.directory.String = 'Image filename';
-
 handles.display_flag = 3;
-settings.data = [];
-settings.phaseImage = [];
-settings.axisFlag = 0;
-settings.loadDirectory = [];
+settings_mod.data = [];
+settings_mod.phaseImage = [];
+settings_mod.axisFlag = 0;
+settings_mod.loadDirectory = [];
+
 % phase : 1, mask : 2, seg : 3
 handles.seg_radio.Value = 1;
 initialize_all(handles)
 
 guidata(hObject, handles);
-settings.handles = handles;
+settings_mod.handles = handles;
 updateUI(handles);
 
 % UIWAIT makes modifyConstValuesGUI wait for user response (see UIRESUME)
@@ -78,7 +78,6 @@ function varargout = modifyConstValuesGUI_OutputFcn(hObject, eventdata, handles)
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
@@ -96,16 +95,12 @@ if ~strcmp(dirname(end-3:end), '.tif')
 end
 tryDifferentConstants(dirname, []);
 
-
 function load_listbox(handles)
 [~,resFlags] = getConstantsList();
 [sorted_names,sorted_index] = sortrows(resFlags');
 handles.file_names = sorted_names;
 handles.sorted_index = sorted_index;
-set(handles.constants_list,'String',handles.file_names,...
-    'Value',1)
-
-
+set(handles.constants_list,'String',handles.file_names,'Value',1)
 
 % --- Executes on selection change in constants_list.
 function constants_list_Callback(hObject, eventdata, handles)
@@ -118,7 +113,7 @@ function constants_list_Callback(hObject, eventdata, handles)
 getValuesFromConst(handles)
 
 function getValuesFromConst(handles)
-global settings;
+global settings_mod;
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
 CONST = loadConstants (res,0,0);
@@ -130,13 +125,12 @@ handles.magic_thresh.Value = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 handles.magic_radius.Value = CONST.superSeggerOpti.MAGIC_RADIUS ;
 handles.maxLengRegOpti.String = CONST.regionOpti.MIN_LENGTH ;
 handles.gaus_wid.Value = CONST.superSeggerOpti.SMOOTH_WIDTH;
-
 update_text_values (handles)
-settings.CONST = CONST;
+settings_mod.CONST = CONST;
 
 
 function putValuesInConstants(handles)
-global settings
+global settings_mod
 resValue = get(handles.constants_list,'Value');
 res = handles.constants_list.String{resValue};
 CONST = loadConstants (res,0,0);
@@ -148,7 +142,7 @@ CONST.superSeggerOpti.MAGIC_THRESHOLD = handles.magic_thresh.Value;
 CONST.superSeggerOpti.MAGIC_RADIUS = handles.magic_radius.Value;
 CONST.regionOpti.MIN_LENGTH = handles.maxLengRegOpti.Value;
 CONST.superSeggerOpti.SMOOTH_WIDTH = handles.gaus_wid.Value;
-settings.CONST = CONST;
+settings_mod.CONST = CONST;
 
 % --- Executes during object creation, after setting all properties.
 function constants_list_CreateFcn(hObject, eventdata, handles)
@@ -190,9 +184,9 @@ function save_Callback(hObject, eventdata, handles)
 % hObject    handle to save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global settings;
+global settings_mod;
 putValuesInConstants(handles)
-CONST = settings.CONST;
+CONST = settings_mod.CONST;
 [FileName,PathName,~] = uiputfile('newConstantsName.mat');
 if FileName~=0
     save([PathName,FileName], '-struct', 'CONST');
@@ -215,29 +209,30 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 [imageName,directoryName , ~] = uigetfile('*.tif', 'Pick an image file');
 if imageName~=0
     handles.directory.String = [directoryName,filesep,imageName];
-    settings.phaseImage = imread(handles.directory.String);
+    settings_mod.phaseImage = imread(handles.directory.String);
     axes(handles.viewport_modify);
-    imshow(settings.phaseImage,[]);
+    imshow(settings_mod.phaseImage,[]);
 end
 
 
 function updateUI(handles)
-global settings;
-if ~isempty(settings.data)
+global settings_mod;
+if ~isempty(settings_mod.data)
     if handles.display_flag == 3
-        showSegDataPhase(settings.data, handles.viewport_modify);
+        showSegDataPhase(settings_mod.data, handles.viewport_modify);
     elseif handles.display_flag == 2
         axes(handles.viewport_modify);
-        imshow(settings.data.mask_bg,[])
+        imshow(settings_mod.data.mask_bg,[])
     elseif handles.display_flag == 1
         axes(handles.viewport_modify);
-        imshow(settings.data.phase,[])
+        imshow(settings_mod.data.phase,[])
     end
 end
 if numel(handles.viewport_modify.Children) > 0
     set(handles.viewport_modify.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
     hold on;
 end
+
 % --- Executes on slider movement.
 function slider3_Callback(hObject, eventdata, handles)
 % hObject    handle to slider3 (see GCBO)
@@ -284,8 +279,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
-
 % --- Executes on slider movement.
 function cut_intensity_Callback(hObject, eventdata, handles)
 % hObject    handle to cut_intensity (see GCBO)
@@ -297,8 +290,6 @@ function cut_intensity_Callback(hObject, eventdata, handles)
 val = hObject.Value;
 hObject.Value = round(val);
 handles.cut_int_text.String = num2str(handles.cut_intensity.Value);
-
-
 
 % --- Executes during object creation, after setting all properties.
 function cut_intensity_CreateFcn(hObject, eventdata, handles)
@@ -320,7 +311,6 @@ function mask_th1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
 val = hObject.Value;
 hObject.Value = round(val);
 handles.mask_th1_text.String = num2str(hObject.Value);
@@ -330,7 +320,6 @@ function mask_th1_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to mask_th1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
@@ -345,8 +334,6 @@ handles.mask_th2_text.String = num2str(handles.mask_th2.Value);
 handles.max_wid_text.String = num2str(handles.max_wid.Value);
 handles.gaus_wid_text.String = num2str(handles.gaus_wid.Value);
 
-
-
 % --- Executes on slider movement.
 function mask_th2_Callback(hObject, eventdata, handles)
 % hObject    handle to mask_th2 (see GCBO)
@@ -355,11 +342,9 @@ function mask_th2_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
 val = hObject.Value;
 hObject.Value = round(val);
 handles.mask_th2_text.String = num2str(hObject.Value);
-
 
 % --- Executes during object creation, after setting all properties.
 function mask_th2_CreateFcn(hObject, eventdata, handles)
@@ -372,7 +357,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
 % --- Executes on slider movement.
 function magic_radius_Callback(hObject, eventdata, handles)
 % hObject    handle to magic_radius (see GCBO)
@@ -381,7 +365,6 @@ function magic_radius_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
 val = round(hObject.Value);
 hObject.Value =val;
 handles.magic_rad_text.String = num2str(hObject.Value);
@@ -406,7 +389,6 @@ function min_thresh_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
 val = hObject.Value;
 hObject.Value = round(val);
 handles.min_thresh_text.String = num2str(hObject.Value);
@@ -488,11 +470,9 @@ set(handles.magic_thresh,'SliderStep',[0.1 1])
 set(handles.magic_radius,'Max',15,'Min',0.1)
 set(handles.magic_radius,'SliderStep',[0.1 1])
 
-
 % cut_intensity
 set(handles.cut_intensity,'Max',150,'Min',10)
 set(handles.cut_intensity,'SliderStep',[0.1 1])
-
 
 % gaussian smooth/blur width
 set(handles.gaus_wid,'Max',1,'Min',0.1)
@@ -519,9 +499,9 @@ function run_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global settings;
+global settings_mod;
 putValuesInConstants(handles)
-CONST = settings.CONST;
+CONST = settings_mod.CONST;
 imageName = handles.directory.String;
 if numel(imageName)<3 || ~strcmp(imageName(end-3:end), '.tif')
     image_folder_ClickedCallback([],[],handles);
@@ -529,14 +509,11 @@ end
 phaseIm = imread(handles.directory.String);
 
 set(gcf,'Pointer','watch');
-settings.data = superSeggerOpti(phaseIm,[],0,CONST);
+settings_mod.data = superSeggerOpti(phaseIm,[],0,CONST);
 
 guidata(hObject, handles);
 updateUI(handles);
 set(gcf,'Pointer','arrow');
-
-
-
 
 function max_width_regOpt_Callback(hObject, eventdata, handles)
 % hObject    handle to max_width_regOpt (see GCBO)
@@ -545,9 +522,6 @@ function max_width_regOpt_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of max_width_regOpt as text
 %        str2double(get(hObject,'String')) returns contents of max_width_regOpt as a double
-
-
-
 
 % --- Executes during object creation, after setting all properties.
 function max_width_regOpt_CreateFcn(hObject, eventdata, handles)
@@ -560,7 +534,6 @@ function max_width_regOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 function maxLengRegOpti_Callback(hObject, eventdata, handles)
 % hObject    handle to maxLengRegOpti (see GCBO)
@@ -582,25 +555,22 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-
 % --- Executes on mouse press over axes background.
 function imageButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to viewport_modify (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global settings;
-updateUI(settings.handles);
+global settings_mod;
+updateUI(settings_mod.handles);
 point = round(eventdata.IntersectionPoint(1:2));
-if isempty(settings.data)
+if isempty(settings_mod.data)
     errordlg('Press find segments first');
 end
-if ~isfield(settings.data,'regs')
-    settings.data = intMakeRegs( settings.data, settings.CONST, [], [] );
+if ~isfield(settings_mod.data,'regs')
+    settings_mod.data = intMakeRegs( settings_mod.data, settings_mod.CONST, [], [] );
 end
 
-data = settings.data;
+data = settings_mod.data;
 ss = size(data.phase);
 tmp = zeros([51,51]);
 tmp(26,26) = 1;
@@ -620,9 +590,8 @@ ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
 hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 
-
 if ii ~=0
-    settings.handles.width_length_image.String =  (['length : ', num2str(data.regs.info(ii,1)), ...
+    settings_mod.handles.width_length_image.String =  (['length : ', num2str(data.regs.info(ii,1)), ...
         ' max width : ',  num2str(data.regs.info(ii,4))]);
 else
     disp ('empty')
@@ -638,7 +607,7 @@ function help_button_ClickedCallback(hObject, eventdata, handles)
 message = ({'SuperSeggerOpti - Modifying Constants Module'
     '------------------------------------------------------------'
     '   '
-    'Hover over the names to get more information about the different variables. Choose a constant, change the slider''s values and click run to see the result. Save the constants in the settings folder to use them immediately.  '
+    'Hover over the names to get more information about the different variables. Choose a constant, change the slider''s values and click run to see the result. Save the constants in the settings_mod folder to use them immediately.  '
     '   '
     });
 
@@ -674,7 +643,6 @@ guidata(hObject, handles);
 updateUI(handles);
 % Hint: get(hObject,'Value') returns toggle state of mask_radio
 
-
 % --- Executes on button press in seg_radio.
 function seg_radio_Callback(hObject, eventdata, handles)
 % hObject    handle to seg_radio (see GCBO)
@@ -689,7 +657,6 @@ guidata(hObject, handles);
 updateUI(handles);
 % Hint: get(hObject,'Value') returns toggle state of seg_radio
 
-
 % --- Executes on slider movement.
 function gaus_wid_Callback(hObject, eventdata, handles)
 % hObject    handle to gaus_wid (see GCBO)
@@ -698,9 +665,7 @@ function gaus_wid_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
 handles.gaus_wid_text.String = num2str(hObject.Value);
-
 
 
 % --- Executes during object creation, after setting all properties.
