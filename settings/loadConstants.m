@@ -84,7 +84,6 @@ CONST.superSeggerOpti.remove_debris = true;
 CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
 CONST.superSeggerOpti.PEBBLE_CONST = 3;
 CONST.superSeggerOpti.remove_microcolonies = true;
-CONST.superSeggerOpti.segmenting_fluorescence = 0;
 
 % region optimization parameters
 CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
@@ -105,7 +104,7 @@ CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
 CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.2; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
-CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
+CONST.trackOpti.REMOVE_STRAY = 0; % deletes stray regions and their children
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
 CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
@@ -234,7 +233,9 @@ if isfield (ConstLoaded.superSeggerOpti,'segmenting_fluorescence')
 end
 
 % removes false microcolonies if using the mean intensity
-CONST.superSeggerOpti.remove_microcolonies = true;
+if isfield (ConstLoaded.superSeggerOpti,'remove_microcolonies')
+    CONST.superSeggerOpti.remove_microcolonies = ConstLoaded.superSeggerOpti.remove_microcolonies;
+end
 
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
