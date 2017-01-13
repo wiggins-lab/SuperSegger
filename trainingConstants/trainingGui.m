@@ -134,7 +134,7 @@ CONSTtemp = settings.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
-BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, 1, start_end_steps);
+BatchSuperSeggerOpti(settings.imageDirectory, skip, clean_flag, CONSTtemp, start_end_steps);
 mkdir([settings.loadDirectory(1:end-1),'_backup'])
 copyfile ([settings.loadDirectory,'*seg.mat'],[settings.loadDirectory(1:end-1),'_backup'],'f')
 settings.frameNumber = 1;
