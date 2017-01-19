@@ -396,7 +396,7 @@ else
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg )
-                    data.mult = next_arg; 
+                    data.multi = next_arg; 
                 end
                 
             
@@ -675,7 +675,7 @@ else
                 next_arg = varargin{counter};
                 
                  if isnumeric( next_arg ) % if numeic set the ind's to log
-                    data.mult = next_arg;
+                    data.multi = next_arg;
 
                  else % if there is no numeric ind's turn all to log
                     error( 'Resolution must be a double.' );
