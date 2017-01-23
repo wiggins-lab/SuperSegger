@@ -37,31 +37,33 @@ THRESH1  = CONST.superSeggerOpti.THRESH1; % to remove background
 THRESH2  = CONST.superSeggerOpti.THRESH2; % to remove background between cells
 Amax     = CONST.superSeggerOpti.Amax;
 
-% applies the two filters
-im_filt3 = imfilter(double(phase),filt_3,'replicate');
-im_filt4 = imfilter(double(phase),filt_4,'replicate');
+% the large filter blurs the white halos with the cells
+large_colony_fitler = imfilter(double(phase),filt_3,'replicate');
+% smaller filter to blur any small structure
+small_filter = imfilter(double(phase),filt_4,'replicate');
 
-tmp      = uint16(-(im_filt4-im_filt3));
+% Subtracting the two filters results in the cells regions as white.
+tmp      = uint16(large_colony_fitler-small_filter);
 nnn      = ag(tmp);
 
-% intensity thresholding to get the cell colonies
-% dilating and filling the areas below Amax
+% Intensity thresholding to identify the cells from the background.
+% Cell colonies are found by dilating and filling the areas below Amax.
 maskth1    = imdilate(nnn>THRESH1,strel('disk',5));
 maskth1    = fill_max_area( maskth1, Amax );
 
-% dilated mask for values above low threshold
-% emphasizes the structure in cells and background
+% Dilated mask for values above a lower threshold THRESH2.
+% Emphasizes the structure in cells and background.
 maskth2     = imdilate(nnn>THRESH2,strel('disk',1));
 
-% Logical and of two masks where the two masks match
+% Keep where the two masks match.
 mask     = and(maskth2,maskth1);
 
-% dilate, fills the max area, and erodes
+% Dilate, fill the max area, and erode.
 mask     = imdilate( mask, strel('disk',2));
 mask     = fill_max_area( mask, Amax );
 mask     = imerode( mask, strel('disk',crop_rad));
 
-% remove from mask objects with area smaller than AREA
+% Remove from mask objects with area smaller than AREA.
 cc       = bwconncomp(mask);
 stats    = regionprops(cc, 'Area');
 idx      = find([stats.Area] > AREA);

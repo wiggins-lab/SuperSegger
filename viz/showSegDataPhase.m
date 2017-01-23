@@ -31,5 +31,5 @@ end
     back + 0.4*double(ag(segs_good)) + 0.3*double(ag(segs_bad)),...
     back + 0.7*double(ag(segs_bad)) + 0.2*double(ag(~cell_mask)-outline) )));
     drawnow; 
-
+    axis image;
 end

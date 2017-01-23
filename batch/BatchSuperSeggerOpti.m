@@ -143,6 +143,7 @@ if exist( dirname_, 'dir' )
             movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
         else
+            copyfile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
             crop_box_array = cell(1,10000);
         end
     else

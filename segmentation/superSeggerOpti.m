@@ -91,7 +91,7 @@ CUT_INT         = CONST.superSeggerOpti.CUT_INT;
 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
 A               = CONST.superSeggerOpti.A;
-verbose = CONST.parallel.verbose;
+verbose         = CONST.parallel.verbose;
 
 
 if ~isfield( CONST.seg, 'segScoreInfo' )
@@ -118,14 +118,14 @@ mask_colonies = [];
 
 % If data structure is passed, rescue the phase image and mask
 if isstruct( phaseOrData )
-    data      = phaseOrData;
+    data  = phaseOrData;
     phaseOrig = data.phase;
     dataFlag  = true;
     segs_old = data.segs;
         
     % Copy the mask from data into mask if it is empty 
     if isempty( mask )
-        mask      = data.mask_bg;
+        mask  = data.mask_bg;
     end
 else
     phaseOrig = phaseOrData;
@@ -134,19 +134,14 @@ else
     data.phase = phaseOrig;
 end
 
-
-
-
-% Initial image smoothing
-%this step is necessary to reduce the camera and read noise in the raw
-%phase image. Without it, the watershed algorithm will over-segment the
-%image.
+% Initial image smoothing to reduce the camera and read noise in the raw
+% phase image. Without it, the watershed algorithm will over-segment the
+% image.
 if all(ismember('100X',CONST.ResFlag))
     phaseNorm = imfilter(phaseOrig,fspecial('disk',1),'replicate');
 else
     phaseNorm = phaseOrig;
 end
-
 
 % fix the range, set the max and min value of the phase image
 mult_max = 2.5;
@@ -155,18 +150,19 @@ mean_phase = mean(phaseNorm(:));
 phaseNorm(phaseNorm > (mult_max*mean_phase)) = mult_max*mean_phase;
 phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
 
+% if the size of the matrix is even, we get a half pixel shift in the
+% position of the mask which turns out to be a problem later.
 
-% if the size of the meditatrix is even, we get a half pixel shift in the
-% position of the mask which turns out to be a probablem later.
+% autogain smoothed image
 f = fspecial('gaussian', 11, SMOOTH_WIDTH);
 phaseNormFilt = imfilter(phaseNorm, f,'replicate');
+[phaseNormFilt,imin,imax] = ag(phaseNormFilt);
 
+% autogained non smoothed phase image
+phaseNormUnfilt = (double(phaseOrig)-imin)/(imax-imin); 
 
 % Minimum constrast filter to enhance inter-cellular image contrast
-[phaseNormFilt,imin,imax] = ag(phaseNormFilt);
 magicPhase = magicContrast(phaseNormFilt, MAGIC_RADIUS);
-
-phaseNormUnfilt = (double(phaseOrig)-imin)/(imax-imin);
 
 % C2phase is the Principal curvature 2 of the image without negative values
 % it also enhances subcellular contrast. We subtract the magic threshold
@@ -222,7 +218,6 @@ else
     % watershed just the cell mask to identify segments
     phaseMask = uint8(agd(C2phaseThresh) + 255*(1-(mask_bg)));
     ws = 1-(1-double(~watershed(phaseMask,8))).*mask_bg;
-    
     
     if adapt_flag
         % If the adapt_flag is set to true (on by default) it watersheds the C2phase
@@ -285,9 +280,9 @@ end
 % Determine the "good" and "bad" segments
 data = defineGoodSegs(data,ws,phaseNormUnfilt,C2phaseThresh,mask_bg, A,CONST, ~dataFlag );
 data.mask_colonies = mask_colonies;
+
 % copy the existing score into the data structure
 if dataFlag
-    
     data.segs.score = nan( [size(data.segs.info,1),1] );
     % map the regions
     props_tmp = regionprops( data.segs.segs_label, segs_old.segs_label, {'MinIntensity','MaxIntensity'} );
@@ -304,10 +299,6 @@ if dataFlag
     data.segs.segs_good = segs_old.segs_good;
     data.segs.segs_bad  = segs_old.segs_bad;
     data.segs.segs_3n   = segs_old.segs_3n;
-    
-    %disp( ['New segments lost: ',num2str(sum( ~flagger))] );
-    %disp( ['Old segments lost: ',num2str(    sum(~ismember(unique(segs_old.segs_label(:)),tmp_max(flagger))))] );  
-
 end
 
 % Calculate and return the final cell mask
@@ -320,9 +311,6 @@ if disp_flag
     showSegDataPhase(data);
     drawnow;
 end
-
-
-
 
 end
 

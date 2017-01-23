@@ -1,10 +1,10 @@
 function [clist, out] = gateTool(varargin)
 % gateTool : tool for gating and plotting functionality of clists.
 %
-% GATETOOL( [clist,clist cell array,directory,filename], [command string], [argument], ... ) 
-% 
+% GATETOOL( [clist,clist cell array,directory,filename], [command string], [argument], ... )
+%
 % clist must be (i) a clist struct or (ii) a cell array of clists or (iii)
-% a data directory, xy1 directory or a clist file name. 
+% a data directory, xy1 directory or a clist file name.
 %
 %  If there are no arguments specified, the 'strip' command is run
 %
@@ -13,17 +13,17 @@ function [clist, out] = gateTool(varargin)
 % 'merge'      : Merge all clist input into a single output clist (no
 %                arguments accepted)
 %
-% 'name', str  : Add name in str to all input clists as a label                 
+% 'name', str  : Add name in str to all input clists as a label
 %
 % 'color', cc  : Set color cc for all clists
 %
-% 'strip'      : Remove all un-gated cells (no arguments)           
+% 'strip'      : Remove all un-gated cells (no arguments)
 %
-% 'make', ind  : Gate on indices in ind. Specify either 1 or 2 as a vector 
-%                index names are stored in def and can be view by running 
-%                the def command. If the ind is a structure it assumes it 
-%                is a preformed gate and adds it to the gate array in all 
-%                clists. Any gating is performed on all clists input.  
+% 'make', ind  : Gate on indices in ind. Specify either 1 or 2 as a vector
+%                index names are stored in def and can be view by running
+%                the def command. If the ind is a structure it assumes it
+%                is a preformed gate and adds it to the gate array in all
+%                clists. Any gating is performed on all clists input.
 %
 % 'squeeze'     : make a clist vertical so all entries are treated as
 %                 identifcal conditions.
@@ -37,17 +37,17 @@ function [clist, out] = gateTool(varargin)
 % 'add3D' data, name : add a field (name) to the clist data with values
 %                 (data)
 %
-% 'get', index  : gets data from data column index  
+% 'get', index  : gets data from data column index
 %%
 % 'getgate', index : gets the indexed gate.
 %
 %Visualization commands:
 %
-% 'show', ind   : This command will make a figure for viewing without 
-%                 modifying the clist. ind is either and index or pair of 
-%                 indices specifying what is to be visualized. If no ind is 
-%                 passed then all gates are displayed on a single clist 
-%                 input         
+% 'show', ind   : This command will make a figure for viewing without
+%                 modifying the clist. ind is either and index or pair of
+%                 indices specifying what is to be visualized. If no ind is
+%                 passed then all gates are displayed on a single clist
+%                 input
 %
 % 'kde'         : Make either a 1 or 2D KDE (depending on dimension of ind)
 %                 'show' must be called as well.
@@ -56,15 +56,15 @@ function [clist, out] = gateTool(varargin)
 %                 'show' must be called as well.
 %
 % 'hist'        : Make a 1 or 2D histogram (depending on dimension of ind)
-%                 'show' must be called as well.   
-%           
+%                 'show' must be called as well.
+%
 % 'dot'         : Make a dot plot. Dim of ind must equal 2.
 %                 'show' must be called as well.
 %
 % 'line'        :
 %
 %
-% 'log', axes   : Set of axes to set with log scales. axes = [1,2,3] will 
+% 'log', axes   : Set of axes to set with log scales. axes = [1,2,3] will
 %                 set x, y and color axis to have log scale.
 %
 % 'den'         : Normalize KDE and hist like a probability density
@@ -75,12 +75,12 @@ function [clist, out] = gateTool(varargin)
 %
 % 'rk', rk      : radius of the gaussian kernel for KDE
 %
-% 'rm', rm      : radius of the point mask for KDE              
+% 'rm', rm      : radius of the point mask for KDE
 %
-% 'inv'         : invert 2D hist/KDE image for printing 
+% 'inv'         : invert 2D hist/KDE image for printing
 %
 % 'mult', mult  : set the resolution for the KDE. Set the number of pixels
-%                 in the image created to make ke 
+%                 in the image created to make ke
 %
 % 'bin', bin    : set the binning for the hist and KDE. In 1D, if bin is a
 %                 scalar it is interpretted as the number of bins. If it is
@@ -209,7 +209,7 @@ end
 clist = data.clist;
 
 if data.save_flag
-    intSaveClist( data ); 
+    intSaveClist( data );
 end
 
 end
@@ -288,7 +288,7 @@ else
         data.time_flag = true;
     end
     
-    if any(strcmp( 'noshow',varargin )) 
+    if any(strcmp( 'noshow',varargin ))
         data.noshow_flag = true;
     end
     
@@ -311,7 +311,7 @@ else
     % fix naming of def3D
     clist = next_arg;
     clist = intFixDef3D( clist );
-
+    
     data.clist = clist;
     
     
@@ -396,23 +396,23 @@ else
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg )
-                    data.mult = next_arg; 
+                    data.multi = next_arg;
                 end
                 
-            
-%             case 'e'
-%                 
-%                 counter = counter + 1;
-%                 if counter > nargin
-%                     error( 'Not enough arguments for target error.' )
-%                 end
-%                 next_arg = varargin{counter};
-%                 
-%                 if isnumeric( next_arg )
-%                     data.err = next_arg; 
-%                 else
-%                     error( 'Estimated error must be a double.' );
-%                 end
+                
+                %             case 'e'
+                %
+                %                 counter = counter + 1;
+                %                 if counter > nargin
+                %                     error( 'Not enough arguments for target error.' )
+                %                 end
+                %                 next_arg = varargin{counter};
+                %
+                %                 if isnumeric( next_arg )
+                %                     data.err = next_arg;
+                %                 else
+                %                     error( 'Estimated error must be a double.' );
+                %                 end
                 
             case 'newfig'
                 data.newfig_flag = true;
@@ -420,7 +420,7 @@ else
             case 'getgate'
                 
                 
-                counter = counter + 1;                
+                counter = counter + 1;
                 if counter > nargin
                     error( 'Need to specify which clist.' );
                 end
@@ -428,35 +428,35 @@ else
                 next_arg = varargin{counter};
                 if isnumeric( next_arg ) % if numeic set the ind's to log
                     data.which_gate = next_arg;
-                     
-                     if numel(data.clist) ~= 1 || ~isstruct(data.clist)
+                    
+                    if numel(data.clist) ~= 1 || ~isstruct(data.clist)
                         error('Get gate only works with a single clist');
-                     end
-                         
-                     data.get_gate_flag = true;
+                    end
+                    
+                    data.get_gate_flag = true;
                 else
-                     error( 'getGate needs a numeric argument .' );
+                    error( 'getGate needs a numeric argument .' );
                 end
-                        
+                
                 
             case 'clear'
-
-                counter = counter + 1;                
+                
+                counter = counter + 1;
                 if counter > nargin
                     cind = [];
                 else
                     cind = [];
                     next_arg = varargin{counter};
-                     if isnumeric( next_arg ) % if numeic set the ind's to log
+                    if isnumeric( next_arg ) % if numeic set the ind's to log
                         cind = next_arg;
                         
                     else % if there is no numeric ind's t
-                        counter = counter - 1;      
+                        counter = counter - 1;
                     end
                 end
                 
                 data.clist = intClear( data.clist, cind );
-
+                
             case {'xls','csv'}
                 counter = counter + 1;
                 if counter > nargin
@@ -483,7 +483,7 @@ else
                     case 'csv'
                         data.which_export_flag = 1;
                 end
-                        
+                
                 data.export_flag = true;
                 
             case 'save'
@@ -504,10 +504,10 @@ else
                 else
                     save( filename,'-v7.3','clist' );
                 end
-        
-           
                 
-            
+                
+                
+                
             case 'units'
                 counter = counter + 1;
                 if counter > nargin
@@ -517,16 +517,16 @@ else
                 if ~isnumeric( next_arg )
                     error( 'units must be scalar or vector.' );
                 else
-                    data.units =  next_arg;   
+                    data.units =  next_arg;
                 end
                 
                 
             case 'add'
                 
                 if numel( data.clist ) ~= 1
-                    error( 'You can only add a field to a clist structure, not a cell array' );     
+                    error( 'You can only add a field to a clist structure, not a cell array' );
                 end
-               
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -566,11 +566,11 @@ else
                 
             case 'add3d'
                 
-                         
+                
                 if numel( data.clist ) ~= 1
-                    error( 'You can only add a field to a clist structure, not a cell array' );     
+                    error( 'You can only add a field to a clist structure, not a cell array' );
                 end
-               
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -587,7 +587,7 @@ else
                 tmp_data = next_arg;
                 
                 ss = size(data.clist.data3D);
-                 
+                
                 counter = counter + 1;
                 if counter > nargin
                     error( 'Not enough arguments for add' )
@@ -610,8 +610,8 @@ else
                 
                 disp( ['Adding field ',field_name_] );
                 
-
-            case 'add3dt'               
+                
+            case 'add3dt'
                 data.clist = intDoAddT( data.clist );
             case 'trace'
                 data.trace_flag = true;
@@ -629,7 +629,7 @@ else
                 end
                 
                 data.g_ind = next_arg;
-    
+                
                 
             case 'def'
                 def = intGetDef( data.clist );
@@ -638,7 +638,7 @@ else
             case 'def3d'
                 def = intGetDef3D( data.clist );
                 def = intFixDef( def )';
-                disp( def );              
+                disp( def );
             case 'merge' % set merge flag
                 data.merge_flag = true;
             case 'den' % set density flag
@@ -646,18 +646,18 @@ else
             case 'no clear' % set the names
                 data.noclear_flag = true;
             case 'kde'
-                data.kde_flag = true; 
+                data.kde_flag = true;
                 
             case 'rk' % kernal radius
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg ) % if numeic set the ind's to log
-                    data.rk = next_arg;                
+                    data.rk = next_arg;
                 else % if there is no numeric ind's turn all to log
                     error( 'KDE kernal radius must be a double' );
                 end
-            case 'rm'              
+            case 'rm'
                 counter = counter + 1;
                 next_arg = varargin{counter};
                 
@@ -671,15 +671,15 @@ else
             case 'inv'
                 data.inv_flag = true;
             case 'res'
-                 counter = counter + 1;
+                counter = counter + 1;
                 next_arg = varargin{counter};
                 
-                 if isnumeric( next_arg ) % if numeic set the ind's to log
-                    data.mult = next_arg;
-
-                 else % if there is no numeric ind's turn all to log
+                if isnumeric( next_arg ) % if numeic set the ind's to log
+                    data.multi = next_arg;
+                    
+                else % if there is no numeric ind's turn all to log
                     error( 'Resolution must be a double.' );
-                 end
+                end
                 
             case 'squeeze'
                 
@@ -797,10 +797,10 @@ else
             case 'stat'
                 data.stat_flag = true;
                 
-             case 'dothist'
+            case 'dothist'
                 
                 data.dothist_flag = true;
-                    
+                
             case 'dot'
                 
                 data.dot_flag = true;
@@ -828,14 +828,14 @@ else
         
     end
     
-  
+    
 end
 
- if numel( data.ind ) == 2
-    data.stat_flag = false; 
- end
- 
-     
+if numel( data.ind ) == 2
+    data.stat_flag = false;
+end
+
+
 if ~data.hist_flag && ~data.kde_flag && ~data.dot_flag
     
     if (numel( data.ind ) == 2)
@@ -876,11 +876,11 @@ if iscell( clist )
         end
     end
 elseif isstruct( clist )
-       if time_flag
-            clist = gateTool( clist, comm_, arg_, 'noshow', '3d' );
-        else
-            clist = gateTool( clist, comm_, arg_, 'noshow' );
-        end          
+    if time_flag
+        clist = gateTool( clist, comm_, arg_, 'noshow', '3d' );
+    else
+        clist = gateTool( clist, comm_, arg_, 'noshow' );
+    end
 end
 
 end
@@ -930,7 +930,7 @@ else
                 xg = clist.gate(ii).x;
                 
                 if numel(xg)==1
-                    inflag =  and( inflag, xg==x ); 
+                    inflag =  and( inflag, xg==x );
                 else
                     inflag = and( inflag, and( x > min(xg), x < max(xg)));
                 end
@@ -948,7 +948,7 @@ else
     data.clist = clist0;
     
     if numel(clist0.data) == 0
-       disp( 'Warning: At least one clist is empty after gating.' ); 
+        disp( 'Warning: At least one clist is empty after gating.' );
     end
 end
 
@@ -965,7 +965,7 @@ if isstruct(arg_)
     ind = arg_.ind;
     
     if iscell( data.clist )
-        data.clist = intDoAll( data.clist, 'make', arg_, data.time_flag );        
+        data.clist = intDoAll( data.clist, 'make', arg_, data.time_flag );
     else
         if ~data.time_flag
             if isfield( data.clist, 'gate' ) && ~isempty( data.clist.gate )
@@ -980,7 +980,7 @@ if isstruct(arg_)
                 data.clist.gate3D = arg_;
             end
         end
-    end 
+    end
 elseif isnumeric( arg_ ) % fire up the gui and do it by hand
     intShow( data );
     hold on;
@@ -1088,7 +1088,7 @@ elseif isnumeric( arg_ ) % fire up the gui and do it by hand
         
     else
         data.clist = gateTool( data.clist, 'make', tmp_gate, 'noshow', '3d' );
-       
+        
     end
     
     
@@ -1103,7 +1103,7 @@ if ~data.noshow_flag
     
     if data.time_flag
         gates = intDrillForGate3D(tmp_clist);
-        intShowGate( clist0, gates(end), numel(gates), data.time_flag );        
+        intShowGate( clist0, gates(end), numel(gates), data.time_flag );
     else
         gates = intDrillForGate(tmp_clist);
         intShowGate( clist0, gates(end), numel(gates), data.time_flag );
@@ -1114,23 +1114,23 @@ end
 
 %%
 function gate_ = intDrillForGate( clist )
-    if iscell( clist )
-        gate_ = intDrillForGate( clist{1} );
-    elseif isstruct( clist )
-        gate_ = clist(1).gate;
-    else
-        error( 'clist type not expected' );
-    end
+if iscell( clist )
+    gate_ = intDrillForGate( clist{1} );
+elseif isstruct( clist )
+    gate_ = clist(1).gate;
+else
+    error( 'clist type not expected' );
 end
-        
+end
+
 function gate_ = intDrillForGate3D( clist )
 if iscell( clist )
-        gate_ = intDrillForGate( clist{1} );
-    elseif isstruct( clist )
-        gate_ = clist(1).gate3D;
-    else
-        error( 'clist type not expected' );
-    end
+    gate_ = intDrillForGate( clist{1} );
+elseif isstruct( clist )
+    gate_ = clist(1).gate3D;
+else
+    error( 'clist type not expected' );
+end
 end
 
 %% Show the gates if the show flag is true
@@ -1210,7 +1210,7 @@ end
 
 
 
-        
+
 hold on;
 if numel(gate_var.ind)==1
     ylim_ = ylim;
@@ -1229,7 +1229,7 @@ if isfield( clist, 'name' )
     name = clist.name;
 end
 
-title( [name,' Gate: ',num2str(gate_num), ' Cell count: ',num2str(N), ' / ', num2str( N0 )] ); 
+title( [name,' Gate: ',num2str(gate_num), ' Cell count: ',num2str(N), ' / ', num2str( N0 )] );
 
 
 end
@@ -1262,7 +1262,6 @@ end
 
 % Int show function: Take care of all top level operations
 data = intIntShow( data.clist, data );
-
 nf = max( [1, numel( data.fig_ptr )] );
 
 for jj = 1:nf
@@ -1274,7 +1273,6 @@ for jj = 1:nf
     if (numel( data.ind ) == 2) && ...
             (~data.dot_flag)
         
-        
         xx1 = data.xx{1};
         xx2 = data.xx{2};
         
@@ -1284,7 +1282,7 @@ for jj = 1:nf
         if data.log_flag(1)
             xx2 = exp(xx2);
         end
-        
+         
         if size(data.clist,2)>1 && ~data.newfig_flag
             if ~data.log_flag(3)
                 data.im = data.im/max(data.im(:));
@@ -1294,11 +1292,11 @@ for jj = 1:nf
             end
         end
         
-        if data.log_flag(1) 
+        if data.log_flag(1)
             xx2 = log10(xx2);
         end
         
-        if data.log_flag(2) 
+        if data.log_flag(2)
             xx1 = log10(xx1);
         end
         
@@ -1306,29 +1304,24 @@ for jj = 1:nf
             im = data.im{jj};
         else
             im = data.im;
-        end
+        end       
         
-         imagesc( xx2, xx1, im );
-        
-        
-        
+        imagesc( xx2, xx1, im );        
         hold on;
         
         if size(data.clist,2)==1 || data.newfig_flag
-          intFixColorBar(im);
+            intFixColorBar(im);
         end
-        
-        
-        axis( [xx2(1),xx2(end),xx1(1),xx1(end)] );
+                
+        axis([xx2(1),xx2(end),xx1(1),xx1(end)] );
         set(gca,'layer','top')
     end
-    
-    
+        
     % set the scale on the axes
     if data.log_flag(1)
-         if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
+        if (numel(data.ind)==1) || ~( data.kde_flag || data.hist_flag )
             set(gca,'XScale','log' );
-         end
+        end
     end
     
     if data.log_flag(2)
@@ -1349,21 +1342,19 @@ for jj = 1:nf
     
     
     if (numel(data.ind)==2) && ( data.kde_flag || data.hist_flag )
-       if data.log_flag(1)
-           labs{1} = [labs{1},' (log10)']; 
-       end
-       
-       if data.log_flag(2)
-           labs{2} = [labs{2},' (log10)']; 
-       end
+        if data.log_flag(1)
+            labs{1} = [labs{1},' (log10)'];
+        end
+        
+        if data.log_flag(2)
+            labs{2} = [labs{2},' (log10)'];
+        end
         
     end
     
     
     if data.trace_flag
         xlabel( 'Time (Frames)', 'Interpreter','none' );
-        
-        
         ylabel(  labs{1}, 'Interpreter','none' );
     else
         if numel( data.ind )
@@ -1407,41 +1398,41 @@ end
 
 function intFixColorBar( im )
 try
-colorbar
-
-cc = colormap;
-cc(1,:) = [0.5,0.5,0.5];
-colormap(cc);
-
-tmp = im;
-tmp(tmp==0) = nan;
-min_caxis = min(tmp(:));
-max_caxis = max(tmp(:));
-
-N = size(cc,1);
-c = (N*min_caxis-max_caxis)/(N-1);
-if ~isnan( max_caxis )
-    caxis( [c,max_caxis] );
+    colorbar
+    
+    cc = colormap;
+    cc(1,:) = [0.5,0.5,0.5];
+    colormap(cc);
+    
+    tmp = im;
+    tmp(tmp==0) = nan;
+    min_caxis = min(tmp(:));
+    max_caxis = max(tmp(:));
+    
+    N = size(cc,1);
+    c = (N*min_caxis-max_caxis)/(N-1);
+    if ~isnan( max_caxis )
+        caxis( [c,max_caxis] );
+    end
+    
 end
-
 end
-end
-%% 
+%%
 % function intDoBoxIt( stat, h )
-% 
+%
 % ns = numel( stat );
 % zz = [0,0];
-% 
+%
 % for ii = 1:ns
-%    
+%
 %     plot( ii + zz, [stat(ii).min,stat(ii).max], ':', 'color', 'b' ),
 %     hold on;
 %     plot( ii + zz, stat(ii).mean+stat(ii).std*[-1,1], '-', 'color', 'b' ),
 %     plot( ii + zz, stat(ii).mean+stat(ii).err*[-1,1], '-', 'color', 'b', 'LineWidth', 2 ),
 % end
-% 
-% 
-% 
+%
+%
+%
 % end
 
 
@@ -1501,23 +1492,23 @@ for jj = 1:ns
     yy3 = stat(ii).mean+stat(ii).err*[-1,1];
     yy4 =  stat(ii).mean;
     
-%     if data.log_flag(1)
-%         yy1 = log10( yy1 );
-%         yy2 = log10( yy2 );
-%         yy3 = log10( yy3 );
-%         yy4 = log10( yy4 );
-%     end
-if data.log_flag(1)
-    plot( jj + zz, log10(yy1), ':', 'color', cc ),
-    plot( jj + zz, log10(yy2), '-', 'color', cc ),
-    plot( jj + zz, log10(yy3), '-', 'color', cc, 'LineWidth', 2 ),
-    plot( jj     , log10(yy4), '.', 'color', cc, 'MarkerSize', 10 ),
-else   
-    plot( jj + zz, yy1, ':', 'color', cc ),
-    plot( jj + zz, yy2, '-', 'color', cc ),
-    plot( jj + zz, yy3, '-', 'color', cc, 'LineWidth', 2 ),
-    plot( jj     , yy4, '.', 'color', cc, 'MarkerSize', 10 ),
-end
+    %     if data.log_flag(1)
+    %         yy1 = log10( yy1 );
+    %         yy2 = log10( yy2 );
+    %         yy3 = log10( yy3 );
+    %         yy4 = log10( yy4 );
+    %     end
+    if data.log_flag(1)
+        plot( jj + zz, log10(yy1), ':', 'color', cc ),
+        plot( jj + zz, log10(yy2), '-', 'color', cc ),
+        plot( jj + zz, log10(yy3), '-', 'color', cc, 'LineWidth', 2 ),
+        plot( jj     , log10(yy4), '.', 'color', cc, 'MarkerSize', 10 ),
+    else
+        plot( jj + zz, yy1, ':', 'color', cc ),
+        plot( jj + zz, yy2, '-', 'color', cc ),
+        plot( jj + zz, yy3, '-', 'color', cc, 'LineWidth', 2 ),
+        plot( jj     , yy4, '.', 'color', cc, 'MarkerSize', 10 ),
+    end
     name_tmp  = stat(ii).name;
     ind = find(name_tmp == '(',1,'last');
     names{jj} = name_tmp(1:ind-2);
@@ -1555,7 +1546,7 @@ end
 
 tmp = labs{1};
 if data.log_flag(1)
-tmp = ['log ', tmp ];
+    tmp = ['log ', tmp ];
 end
 ylabel(tmp, 'Interpreter','none'  );
 
@@ -1565,7 +1556,7 @@ ylabel(tmp, 'Interpreter','none'  );
 end
 
 
-%% internal show data fuction 
+%% internal show data fuction
 function data = intIntShow( clist, data )
 
 
@@ -1600,7 +1591,7 @@ end
 end
 
 
-%% internal show data fuction 
+%% internal show data fuction
 function [data] = intIntIntShow( clist, data )
 
 stat = [];
@@ -1622,8 +1613,8 @@ switch numel( data.ind )
     case 1 % 1D
         if data.kde_flag
             [data,h,stat] = intShowKDE1D(  clist, data, name );
-        %elseif data.time_flag
-        %    [data,h] = intTime( clist, data );
+            %elseif data.time_flag
+            %    [data,h] = intTime( clist, data );
         else
             [data,h,stat] = intShowHist1D( clist, data, name );
         end
@@ -1654,7 +1645,7 @@ else
 end
 
 stat.name = name;
-   
+
 if data.newfig_flag
     legend( h, name );
 else
@@ -1678,7 +1669,7 @@ stat = [];
 data.n = n;
 
 [y,x] = hist( x1, data.binS.xx );
-dy    = intDoError(y); 
+dy    = intDoError(y);
 
 if data.den_flag
     dx = diff(x(1:2));
@@ -1693,7 +1684,7 @@ end
 if data.log_flag(1)
     x_plot = exp(x);
 else
-     x_plot = x;
+    x_plot = x;
 end
 
 if isfield( clist, 'color' )
@@ -1724,87 +1715,87 @@ end
 %% Do statistical analysis.
 function stat = intDoStatAn( x1, x, y, n, data, cc, name )
 
-   hold on;
-   
-   styl = '%1.3e';
-   
-   
-   x1_mean = mean( x1 );
-   x1_std  = std(  x1 );
-   x1_max  = max(  x1 );
-   x1_min  = min(  x1 );
-   x1_p1   = x1_mean+x1_std;
-   x1_p1m  = x1_mean+x1_std/sqrt(n);
-   x1_m1   = x1_mean-x1_std;
-   x1_m1m  = x1_mean-x1_std/sqrt(n);
-   
-   all_out_text = [name,' -- stats: n = ',num2str( n, styl ),', '];
-   
-   y1_mean = interp1( x,y, x1_mean );
-   y1_p1   = interp1( x,y, x1_p1 );
-   y1_p1m  = interp1( x,y, x1_p1m );
-   y1_m1   = interp1( x,y, x1_m1 );
-   y1_m1m  = interp1( x,y, x1_m1m );
-   y1_max  = interp1( x,y, x1_max ,'linear','extrap');
-   y1_min  = interp1( x,y, x1_min,'linear','extrap' );
-   
-   
-   stat      = [];
-   stat.mean = x1_mean;
-   stat.std  = x1_std;
-   stat.err  = x1_std/sqrt(n);
-   stat.px   = y;
-   stat.xx   = x;
-   stat.max  = x1_max;
-   stat.min  = x1_min;
-   stat.n    = n;
-   stat.x    = x1;
-   
-   if data.log_flag(2)
-       del = [1e-1,1];
-   else
-       del = [0,1];
-   end
-   
-   
-   plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' mean: ',num2str( x1_mean, styl )];
-   text( x1_mean, y1_mean/2, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' std: ',num2str( x1_std, styl )];
-   text( x1_p1, y1_p1*.75, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   %out_text = [' std: ',num2str( x1_std, styl )];
-   %text( x1_p1, y1_p1*.75, out_text, 'color', cc );
-   %all_out_text = [ all_out_text, out_text,','];
-   
-   plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-   plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
-   % plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
-   % plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
-   
-   out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
-   text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
-   all_out_text = [ all_out_text, out_text,','];
-   
-   out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
-   %text( x1_max, y1_max, out_text, 'color', cc,...
-   %    'VerticalAlignment', 'baseline');
-   all_out_text = [ all_out_text, out_text,','];
-   
-   out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
-   %text( x1_min, y1_min, out_text, 'color', cc,...
-   %    'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
-   all_out_text = [ all_out_text, out_text,'.'];
-   
-   disp( all_out_text );
+hold on;
+
+styl = '%1.3e';
+
+
+x1_mean = mean( x1 );
+x1_std  = std(  x1 );
+x1_max  = max(  x1 );
+x1_min  = min(  x1 );
+x1_p1   = x1_mean+x1_std;
+x1_p1m  = x1_mean+x1_std/sqrt(n);
+x1_m1   = x1_mean-x1_std;
+x1_m1m  = x1_mean-x1_std/sqrt(n);
+
+all_out_text = [name,' -- stats: n = ',num2str( n, styl ),', '];
+
+y1_mean = interp1( x,y, x1_mean );
+y1_p1   = interp1( x,y, x1_p1 );
+y1_p1m  = interp1( x,y, x1_p1m );
+y1_m1   = interp1( x,y, x1_m1 );
+y1_m1m  = interp1( x,y, x1_m1m );
+y1_max  = interp1( x,y, x1_max ,'linear','extrap');
+y1_min  = interp1( x,y, x1_min,'linear','extrap' );
+
+
+stat      = [];
+stat.mean = x1_mean;
+stat.std  = x1_std;
+stat.err  = x1_std/sqrt(n);
+stat.px   = y;
+stat.xx   = x;
+stat.max  = x1_max;
+stat.min  = x1_min;
+stat.n    = n;
+stat.x    = x1;
+
+if data.log_flag(2)
+    del = [1e-1,1];
+else
+    del = [0,1];
+end
+
+
+plot( x1_mean+[0,0], del*y1_mean, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' mean: ',num2str( x1_mean, styl )];
+text( x1_mean, y1_mean/2, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_p1+[0,0], del*y1_p1, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' std: ',num2str( x1_std, styl )];
+text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_m1+[0,0], del*y1_m1, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+%out_text = [' std: ',num2str( x1_std, styl )];
+%text( x1_p1, y1_p1*.75, out_text, 'color', cc );
+%all_out_text = [ all_out_text, out_text,','];
+
+plot( x1_p1m+[0,0], del*y1_p1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+plot( x1_m1m+[0,0], del*y1_m1m, 'x:', 'color', cc, 'MarkerSize', 10 );
+% plot( x1_max+[0,0], del*y1_max, 'x:', 'color', cc, 'MarkerSize', 10 );
+% plot( x1_min+[0,0], del*y1_min, 'x:', 'color', cc, 'MarkerSize', 10 );
+
+out_text = [' error: ',num2str( x1_std/sqrt(n), styl )];
+text( x1_p1m, y1_p1m*.25, out_text, 'color', cc );
+all_out_text = [ all_out_text, out_text,','];
+
+out_text = [' max: ',num2str( x1_std/sqrt(n), styl )];
+%text( x1_max, y1_max, out_text, 'color', cc,...
+%    'VerticalAlignment', 'baseline');
+all_out_text = [ all_out_text, out_text,','];
+
+out_text = [' min: ',num2str( x1_std/sqrt(n), styl )];
+%text( x1_min, y1_min, out_text, 'color', cc,...
+%    'HorizontalAlignment', 'right', 'VerticalAlignment', 'baseline');
+all_out_text = [ all_out_text, out_text,'.'];
+
+disp( all_out_text );
 end
 
 
@@ -1886,16 +1877,16 @@ function binS_vec = intMakeBins( clist, data )
 
 for ii = 1:numel( data.ind )
     if data.kde_flag
-           num = data.multi;
+        num = data.multi;
     else
-       if isfield( data, 'bin' ) && ~isempty( data.bin ) 
-           num = data.bin(ii);
-       else
-           num = intChooseBin(clist, data, ii);
-       end
+        if isfield( data, 'bin' ) && ~isempty( data.bin )
+            num = data.bin(ii);
+        else
+            num = intChooseBin(clist, data, ii);
+        end
     end
-
-   binS = intMakeDX( clist, data, num, ii );
+    
+    binS = intMakeDX( clist, data, num, ii );
     
     if ~data.kde_flag
         binS.rk_pix = [];
@@ -2053,7 +2044,7 @@ else
         
         delta_y = rk_vec(ii)*abs(diff(y));
         dy      = (dy(1:end-1)+dy(2:end))/2;
-        y_      = (y(2:end)+y(1:end-1))/2; 
+        y_      = (y(2:end)+y(1:end-1))/2;
         
         switcher(ii) =sum( y_.*(delta_y > 2*dy))/sum(y_);
     end
@@ -2093,14 +2084,14 @@ x2 = x_vec(:,2);
 [y,xx] = hist3( [x2,x1], {data.binS(2).xx,data.binS(1).xx} );
 
 if data.cond_flag
-   ys = sum( y, 1 );
-   
-   ys(ys==0) = 1;
-   
-   y = y./(ones([size(y,1),1])*ys);
- %  cutt = 1/(2*data.mult);
- %  y(y>cutt) = cutt;
-   
+    ys = sum( y, 1 );
+    
+    ys(ys==0) = 1;
+    
+    y = y./(ones([size(y,1),1])*ys);
+    %  cutt = 1/(2*data.mult);
+    %  y(y>cutt) = cutt;
+    
 end
 
 if data.log_flag(3)
@@ -2114,7 +2105,7 @@ hold on;
 if isfield( clist, 'color' )
     cc = clist.color;
     h = plot( nan, nan, '.', 'color', cc);
-
+    
 else
     h = plot( nan, nan, '.');
 end
@@ -2127,7 +2118,7 @@ end
 
 
 
-if (size( data.clist,2 ) > 1) && ~data.newfig_flag    
+if (size( data.clist,2 ) > 1) && ~data.newfig_flag
     dd = y/max(y(:));
     
     im = cat(3, dd*cc(1), dd*cc(2), dd*cc(3) );
@@ -2163,14 +2154,14 @@ dx  = [data.binS(2).dx,data.binS(1).dx];
 
 
 if data.cond_flag
-   ys = sum( y, 1 );
-   
-   ys(ys==0) = 1;
-   
-   y = y./(ones([size(y,1),1])*ys);
- %  cutt = 1/(2*data.mult);
- %  y(y>cutt) = cutt;
-   
+    ys = sum( y, 1 );
+    
+    ys(ys==0) = 1;
+    
+    y = y./(ones([size(y,1),1])*ys);
+    %  cutt = 1/(2*data.mult);
+    %  y(y>cutt) = cutt;
+    
 end
 
 %y = intConv2Dadd( y, data, dx );
@@ -2194,7 +2185,7 @@ hold on;
 if isfield( clist, 'color' )
     cc = clist.color;
     h = plot( nan, nan, '.', 'color', cc);
-
+    
 else
     h = plot( nan, nan, '.');
 end
@@ -2207,11 +2198,11 @@ if ischar( cc )
 end
 
 if data.inv_flag
-   cc = 1-cc; 
+    cc = 1-cc;
 end
 
-if size( data.clist, 2 ) > 1 && ~data.newfig_flag 
-
+if size( data.clist, 2 ) > 1 && ~data.newfig_flag
+    
     
     dd = y/max(y(:));
     
@@ -2307,13 +2298,13 @@ end
 %% Show do plot in 2D
 function [data,h] = intShowDot( clist, data, name )
 
-    hold on;
+hold on;
 
-    
+
 if ~data.time_flag
     x1 = intGetData( clist, data, data.ind(1), data.units(1) );
     x2 = intGetData( clist, data, data.ind(2), data.units(2) );
-
+    
     
     if isfield( clist, 'color' )
         h = scatter( x1, x2, [], clist.color, '.' );
@@ -2335,7 +2326,7 @@ else
         h = plot( nan,nan, '.' );
         cc = h.Color;
     end
-   
+    
     if ischar( cc )
         cc = convert_color(cc);
     end
@@ -2357,7 +2348,7 @@ else
             plot( x1(ii,start_ind), x2(ii,start_ind), '.','MarkerSize', 10, 'color', cc_ii );
             plot( x1(ii,end_ind), x2(ii,end_ind  ), '.','MarkerSize', 10, 'color', cc_ii );
         else
-            plot( x1(ii,:), x2(ii,:), '.', 'color', cc_ii );           
+            plot( x1(ii,:), x2(ii,:), '.', 'color', cc_ii );
         end
     end
     
@@ -2498,7 +2489,7 @@ else
             ss2 = size( clist_.data );
             
             if ss1(2) ~= ss2(2)
-                error( 'Clists with a different number of data descriptors are being compared. Descriptor number must match.' );   
+                error( 'Clists with a different number of data descriptors are being compared. Descriptor number must match.' );
             end
             
             clistM.data = [clistM.data;...
@@ -2513,7 +2504,7 @@ else
                 ss2 = size(clist_.data3D);
                 
                 if ss1(2) ~= ss2(2)
-                   error( 'Clists with a different number of data3D descriptors are being compared. Descriptor number must match.' );   
+                    error( 'Clists with a different number of data3D descriptors are being compared. Descriptor number must match.' );
                 end
                 
                 if numel(ss1) == 2
@@ -2523,7 +2514,7 @@ else
                 if numel(ss2) == 2
                     ss2(3) = 1;
                 end
-                    
+                
                 if ss1(3) >  ss2(3)
                     clist_.data3D = cat(3,clist_.data3D,nan( [ss2(1:2),ss1(3)-ss2(3)] ) );
                 elseif ss1(3) <  ss2(3)
@@ -2553,7 +2544,7 @@ names = unique({tmp1{:},tmp2{:}});
 nnames = numel(names);
 
 for ii = (ng1+ng2):-1:1
-
+    
     tmp_gate = [];
     
     for jj = 1:nnames
@@ -2567,7 +2558,7 @@ for ii = (ng1+ng2):-1:1
         if isfield( tmps, names{jj} )
             tmp = getfield( tmps, names{jj} );
         else
-           tmp = []; 
+            tmp = [];
         end
         
         tmp_gate = setfield( tmp_gate,  names{jj}, tmp );
@@ -2608,7 +2599,7 @@ if exist( dirname, 'file' ) == 2
     
 else
     dirname = fixDir( dirname );
-
+    
     if ~exist( dirname, 'dir' )
         error( ['Directory ', dirname, 'does not exist.' ] );
     else
@@ -2620,7 +2611,7 @@ else
             nc = numel( contentsD );
             
             if nc == 0
-                               
+                
                 filename = [dirname,'clist.mat'];
                 if exist( filename, 'file' );
                     clist = load( filename );
@@ -2631,13 +2622,13 @@ else
                 
             else
                 
-                filename =  [dirname,'header.mat'];               
+                filename =  [dirname,'header.mat'];
                 if exist(filename ) == 2
                     header = load( filename );
                 else
                     header = [];
                 end
-
+                
                 counter = 0;
                 for ii = 1:nc
                     dirname_xy = fixDir( [dirname,contentsD(ii).name] );
@@ -2649,11 +2640,11 @@ else
                         tmp = load( filename );
                         
                         tmp.filename = GetFullPath(filename);
-                          
+                        
                         clist{counter} = tmp;
                         
                         if ~isempty(header)
-                           clist{counter}.name =  header.xydata(ii).geneName;
+                            clist{counter}.name =  header.xydata(ii).geneName;
                         end
                     end
                 end
@@ -2690,7 +2681,7 @@ for ii = 1:nc
             clist{1,count} = tmp;
         end
         
-        end
+    end
 end
 
 
@@ -2700,7 +2691,7 @@ end
 function clistS = intSqueeze( varargin )
 
 if nargin == 1
-    clistS = {};    
+    clistS = {};
     clistS = intSqueeze( clistS, varargin{1} );
 elseif nargin == 2
     clistS = varargin{1};
@@ -2709,7 +2700,7 @@ elseif nargin == 2
     nc  = numel( clist );
     
     for ii = 1:nc
-       
+        
         if iscell( clist{ii} )
             clistS = intSqueeze( clistS, clist{ii} );
         elseif isstruct( clist{ii} )
@@ -2725,7 +2716,7 @@ end
 function clistS = intExpand( varargin )
 
 if nargin == 1
-    clistS = {};    
+    clistS = {};
     clistS = intExpand( clistS, varargin{1} );
 elseif nargin == 2
     clistS = varargin{1};
@@ -2734,7 +2725,7 @@ elseif nargin == 2
     nc  = numel( clist );
     
     for ii = 1:nc
-       
+        
         if iscell( clist{ii} )
             clistS = intExpand( clistS, clist{ii} );
         elseif isstruct( clist{ii} )
@@ -2812,7 +2803,7 @@ for ii = 1:n_ind
     tmp = intGetData( clist, data, data.ind(wind(ii)), data.units(wind(ii)) );
     
     x0(:,ii) = tmp;
-
+    
     if data.log_flag(wind(ii))
         tmp = log(tmp);
     end
@@ -2855,7 +2846,7 @@ x = x(inflag);
 
 end
 
-%% Add time fields to 3D data structure 
+%% Add time fields to 3D data structure
 function clist = intDoAddT( clist )
 
 if iscell( clist )
@@ -2879,7 +2870,7 @@ elseif isstruct( clist )
     age_rel = age;
     age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));
     
-    time = ones([ss(1),1])*(1:ss(3)); 
+    time = ones([ss(1),1])*(1:ss(3));
     
     clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
     clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
@@ -3007,8 +2998,8 @@ if isstruct( clist )
         ntmp = numel( tmp );
         
         %for ii = 1:ntmp
-            %tmp{ii} = [num2str(ii),' : ',tmp{ii}];
-        %   
+        %tmp{ii} = [num2str(ii),' : ',tmp{ii}];
+        %
         %end
         
         def = tmp;
@@ -3077,13 +3068,13 @@ if numel( tmp ) > 1 && strcmp( tmp(1:2), '1:' )
     for ii = 1:nd
         ind = find( def{ii} == ':', 1, 'last' );
         if ~isempty(ind)
-           if all(ismember(def{ii}(1:ind),'0123456789 :' ))
-               def{ii} = def{ii}(ind+1:end);
-               ind = find( def{ii}~=' ',1, 'first');
-               if ~isempty( ind )
-                   def{ii} = def{ii}(ind:end);
-               end
-           end
+            if all(ismember(def{ii}(1:ind),'0123456789 :' ))
+                def{ii} = def{ii}(ind+1:end);
+                ind = find( def{ii}~=' ',1, 'first');
+                if ~isempty( ind )
+                    def{ii} = def{ii}(ind:end);
+                end
+            end
         end
     end
 end
@@ -3097,7 +3088,7 @@ clist = data.clist;
 if isstruct( clist )
     save( data.save_name, '-struct', 'clist' );
 else
-    save( data.save_name, 'clist' ); 
+    save( data.save_name, 'clist' );
 end
 
 end
@@ -3105,51 +3096,51 @@ end
 % Draw Kolmogorov-Smirnov p value
 function intShowKS( data )
 if isfield( data, 'stat' )
-
-ns = numel( data.stat );
-
-pp = nan( [ns,ns] );
-dd = nan( [ns,ns] );
-for ii = 1:ns
-    for jj = 1:ii
-        [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(jj).x );
-        
-        pp(ii,jj) = pp_;
-        pp(jj,ii) = pp_;
-        
-        dd(ii,jj) = dd_;
-        dd(jj,ii) = dd_;     
+    
+    ns = numel( data.stat );
+    
+    pp = nan( [ns,ns] );
+    dd = nan( [ns,ns] );
+    for ii = 1:ns
+        for jj = 1:ii
+            [dd_,pp_] = kstest2( data.stat(ii).x, data.stat(jj).x );
+            
+            pp(ii,jj) = pp_;
+            pp(jj,ii) = pp_;
+            
+            dd(ii,jj) = dd_;
+            dd(jj,ii) = dd_;
+        end
     end
-end
-
-figure;
-subplot( 1,2,1);
-imagesc( pp );
-colormap default;
-set( gca, 'Ytick', 1:ns )
-set( gca, 'Yticklabels', {data.stat.name0} )
-set( gca, 'Xtick', 1:ns )
-set( gca, 'Xticklabels', {data.stat.name0} )
-set( gca, 'XTickLabelRotation', 90 )
-axis equal tight
-title( 'K-S P value' );
-colorbar
-caxis([0,1]);
-
-subplot( 1,2,2);
-imagesc( dd );
-colormap default;
-set( gca, 'Ytick', 1:ns )
-set( gca, 'Yticklabels', {data.stat.name0} )
-set( gca, 'Xtick', 1:ns )
-set( gca, 'Xticklabels', {data.stat.name0} )
-set( gca, 'XTickLabelRotation', 90 )
-axis equal tight
-title( 'Statistically Distinct' );
-colorbar
-caxis([0,1]);
-
-
+    
+    figure;
+    subplot( 1,2,1);
+    imagesc( pp );
+    colormap default;
+    set( gca, 'Ytick', 1:ns )
+    set( gca, 'Yticklabels', {data.stat.name0} )
+    set( gca, 'Xtick', 1:ns )
+    set( gca, 'Xticklabels', {data.stat.name0} )
+    set( gca, 'XTickLabelRotation', 90 )
+    axis equal tight
+    title( 'K-S P value' );
+    colorbar
+    caxis([0,1]);
+    
+    subplot( 1,2,2);
+    imagesc( dd );
+    colormap default;
+    set( gca, 'Ytick', 1:ns )
+    set( gca, 'Yticklabels', {data.stat.name0} )
+    set( gca, 'Xtick', 1:ns )
+    set( gca, 'Xticklabels', {data.stat.name0} )
+    set( gca, 'XTickLabelRotation', 90 )
+    axis equal tight
+    title( 'Statistically Distinct' );
+    colorbar
+    caxis([0,1]);
+    
+    
 end
 end
 
@@ -3302,17 +3293,17 @@ function File = GetFullPath(File, Style)
 
 % Magix prefix for long Windows names:
 if nargin < 2
-   Style = 'auto';
+    Style = 'auto';
 end
 
 % Handle cell strings:
 % NOTE: It is faster to create a function @cell\GetFullPath.m under Linux, but
 % under Windows this would shadow the fast C-Mex.
 if isa(File, 'cell')
-   for iC = 1:numel(File)
-      File{iC} = GetFullPath(File{iC}, Style);
-   end
-   return;
+    for iC = 1:numel(File)
+        File{iC} = GetFullPath(File{iC}, Style);
+    end
+    return;
 end
 
 % Check this once only:
@@ -3322,211 +3313,211 @@ MAX_PATH = 260;
 % Warn once per session (disable this under Linux/MacOS):
 persistent hasDataRead
 if isempty(hasDataRead)
-   % Test this once only - there is no relation to the existence of DATAREAD!
-   %if isWIN
-   %   Show a warning, if the slower Matlab version is used - commented, because
-   %   this is not a problem and it might be even useful when the MEX-folder is
-   %   not inlcuded in the path yet.
-   %   warning('JSimon:GetFullPath:NoMex', ...
-   %      ['GetFullPath: Using slow Matlab-version instead of fast Mex.', ...
-   %       char(10), 'Compile: InstallMex GetFullPath.c']);
-   %end
-   
-   % DATAREAD is deprecated in 2011b, but still available. In Matlab 6.5, REGEXP
-   % does not know the 'split' command, therefore DATAREAD is preferred:
-   hasDataRead = ~isempty(which('dataread'));
+    % Test this once only - there is no relation to the existence of DATAREAD!
+    %if isWIN
+    %   Show a warning, if the slower Matlab version is used - commented, because
+    %   this is not a problem and it might be even useful when the MEX-folder is
+    %   not inlcuded in the path yet.
+    %   warning('JSimon:GetFullPath:NoMex', ...
+    %      ['GetFullPath: Using slow Matlab-version instead of fast Mex.', ...
+    %       char(10), 'Compile: InstallMex GetFullPath.c']);
+    %end
+    
+    % DATAREAD is deprecated in 2011b, but still available. In Matlab 6.5, REGEXP
+    % does not know the 'split' command, therefore DATAREAD is preferred:
+    hasDataRead = ~isempty(which('dataread'));
 end
 
 if isempty(File)  % Accept empty matrix as input:
-   if ischar(File) || isnumeric(File)
-      File = cd;
-      return;
-   else
-      error(['JSimon:', mfilename, ':BadTypeInput1'], ...
-         ['*** ', mfilename, ': Input must be a string or cell string']);
-   end
+    if ischar(File) || isnumeric(File)
+        File = cd;
+        return;
+    else
+        error(['JSimon:', mfilename, ':BadTypeInput1'], ...
+            ['*** ', mfilename, ': Input must be a string or cell string']);
+    end
 end
 
 if ischar(File) == 0  % Non-empty inputs must be strings
-   error(['JSimon:', mfilename, ':BadTypeInput1'], ...
-      ['*** ', mfilename, ': Input must be a string or cell string']);
+    error(['JSimon:', mfilename, ':BadTypeInput1'], ...
+        ['*** ', mfilename, ': Input must be a string or cell string']);
 end
 
 if isWIN  % Windows: --------------------------------------------------------
-   FSep = '\';
-   File = strrep(File, '/', FSep);
-   
-   % Remove the magic key on demand, it is appended finally again:
-   if strncmp(File, '\\?\', 4)
-      if strncmpi(File, '\\?\UNC\', 8)
-         File = ['\', File(7:length(File))];  % Two leading backslashes!
-      else
-         File = File(5:length(File));
-      end
-   end
-   
-   isUNC   = strncmp(File, '\\', 2);
-   FileLen = length(File);
-   if isUNC == 0                        % File is not a UNC path
-      % Leading file separator means relative to current drive or base folder:
-      ThePath = cd;
-      if File(1) == FSep
-         if strncmp(ThePath, '\\', 2)   % Current directory is a UNC path
-            sepInd  = strfind(ThePath, '\');
-            ThePath = ThePath(1:sepInd(4));
-         else
-            ThePath = ThePath(1:3);     % Drive letter only
-         end
-      end
-      
-      if FileLen < 2 || File(2) ~= ':'  % Does not start with drive letter
-         if ThePath(length(ThePath)) ~= FSep
-            if File(1) ~= FSep
-               File = [ThePath, FSep, File];
-            else                        % File starts with separator:
-               File = [ThePath, File];
+    FSep = '\';
+    File = strrep(File, '/', FSep);
+    
+    % Remove the magic key on demand, it is appended finally again:
+    if strncmp(File, '\\?\', 4)
+        if strncmpi(File, '\\?\UNC\', 8)
+            File = ['\', File(7:length(File))];  % Two leading backslashes!
+        else
+            File = File(5:length(File));
+        end
+    end
+    
+    isUNC   = strncmp(File, '\\', 2);
+    FileLen = length(File);
+    if isUNC == 0                        % File is not a UNC path
+        % Leading file separator means relative to current drive or base folder:
+        ThePath = cd;
+        if File(1) == FSep
+            if strncmp(ThePath, '\\', 2)   % Current directory is a UNC path
+                sepInd  = strfind(ThePath, '\');
+                ThePath = ThePath(1:sepInd(4));
+            else
+                ThePath = ThePath(1:3);     % Drive letter only
             end
-         else                           % Current path ends with separator:
-            if File(1) ~= FSep
-               File = [ThePath, File];
-            else                        % File starts with separator:
-               ThePath(length(ThePath)) = [];
-               File = [ThePath, File];
+        end
+        
+        if FileLen < 2 || File(2) ~= ':'  % Does not start with drive letter
+            if ThePath(length(ThePath)) ~= FSep
+                if File(1) ~= FSep
+                    File = [ThePath, FSep, File];
+                else                        % File starts with separator:
+                    File = [ThePath, File];
+                end
+            else                           % Current path ends with separator:
+                if File(1) ~= FSep
+                    File = [ThePath, File];
+                else                        % File starts with separator:
+                    ThePath(length(ThePath)) = [];
+                    File = [ThePath, File];
+                end
             end
-         end
-         
-      elseif FileLen == 2 && File(2) == ':'   % "C:" current directory on C!
-         % "C:" is the current directory on the C-disk, even if the current
-         % directory is on another disk! This was ignored in Matlab 6.5, but
-         % modern versions considers this strange behaviour.
-         if strncmpi(ThePath, File, 2)
-            File = ThePath;
-         else
-            try
-               File = cd(cd(File));
-            catch    % No MException to support Matlab6.5...
-               if exist(File, 'dir')  % No idea what could cause an error then!
-                  rethrow(lasterror);
-               else  % Reply "K:\" for not existing disk:
-                  File = [File, FSep];
-               end
+            
+        elseif FileLen == 2 && File(2) == ':'   % "C:" current directory on C!
+            % "C:" is the current directory on the C-disk, even if the current
+            % directory is on another disk! This was ignored in Matlab 6.5, but
+            % modern versions considers this strange behaviour.
+            if strncmpi(ThePath, File, 2)
+                File = ThePath;
+            else
+                try
+                    File = cd(cd(File));
+                catch    % No MException to support Matlab6.5...
+                    if exist(File, 'dir')  % No idea what could cause an error then!
+                        rethrow(lasterror);
+                    else  % Reply "K:\" for not existing disk:
+                        File = [File, FSep];
+                    end
+                end
             end
-         end
-      end
-   end
-   
+        end
+    end
+    
 else         % Linux, MacOS: ---------------------------------------------------
-   FSep = '/';
-   File = strrep(File, '\', FSep);
-   
-   if strcmp(File, '~') || strncmp(File, '~/', 2)  % Home directory:
-      HomeDir = getenv('HOME');
-      if ~isempty(HomeDir)
-         File(1) = [];
-         File    = [HomeDir, File];
-      end
-      
-   elseif strncmpi(File, FSep, 1) == 0
-      % Append relative path to current folder:
-      ThePath = cd;
-      if ThePath(length(ThePath)) == FSep
-         File = [ThePath, File];
-      else
-         File = [ThePath, FSep, File];
-      end
-   end
+    FSep = '/';
+    File = strrep(File, '\', FSep);
+    
+    if strcmp(File, '~') || strncmp(File, '~/', 2)  % Home directory:
+        HomeDir = getenv('HOME');
+        if ~isempty(HomeDir)
+            File(1) = [];
+            File    = [HomeDir, File];
+        end
+        
+    elseif strncmpi(File, FSep, 1) == 0
+        % Append relative path to current folder:
+        ThePath = cd;
+        if ThePath(length(ThePath)) == FSep
+            File = [ThePath, File];
+        else
+            File = [ThePath, FSep, File];
+        end
+    end
 end
 
 % Care for "\." and "\.." - no efficient algorithm, but the fast Mex is
 % recommended at all!
 if ~isempty(strfind(File, [FSep, '.']))
-   if isWIN
-      if strncmp(File, '\\', 2)  % UNC path
-         index = strfind(File, '\');
-         if length(index) < 4    % UNC path without separator after the folder:
-            return;
-         end
-         Drive            = File(1:index(4));
-         File(1:index(4)) = [];
-      else
-         Drive     = File(1:3);
-         File(1:3) = [];
-      end
-   else  % Unix, MacOS:
-      isUNC   = false;
-      Drive   = FSep;
-      File(1) = [];
-   end
-   
-   hasTrailFSep = (File(length(File)) == FSep);
-   if hasTrailFSep
-      File(length(File)) = [];
-   end
-   
-   if hasDataRead
-      if isWIN  % Need "\\" as separator:
-         C = dataread('string', File, '%s', 'delimiter', '\\');  %#ok<REMFF1>
-      else
-         C = dataread('string', File, '%s', 'delimiter', FSep);  %#ok<REMFF1>
-      end
-   else  % Use the slower REGEXP, when DATAREAD is not available anymore:
-      C = regexp(File, FSep, 'split');
-   end
-   
-   % Remove '\.\' directly without side effects:
-   C(strcmp(C, '.')) = [];
-   
-   % Remove '\..' with the parent recursively:
-   R = 1:length(C);
-   for dd = reshape(find(strcmp(C, '..')), 1, [])
-      index    = find(R == dd);
-      R(index) = [];
-      if index > 1
-         R(index - 1) = [];
-      end
-   end
-   
-   if isempty(R)
-      File = Drive;
-      if isUNC && ~hasTrailFSep
-         File(length(File)) = [];
-      end
-      
-   elseif isWIN
-      % If you have CStr2String, use the faster:
-      %   File = CStr2String(C(R), FSep, hasTrailFSep);
-      File = sprintf('%s\\', C{R});
-      if hasTrailFSep
-         File = [Drive, File];
-      else
-         File = [Drive, File(1:length(File) - 1)];
-      end
-      
-   else  % Unix:
-      File = [Drive, sprintf('%s/', C{R})];
-      if ~hasTrailFSep
-         File(length(File)) = [];
-      end
-   end
+    if isWIN
+        if strncmp(File, '\\', 2)  % UNC path
+            index = strfind(File, '\');
+            if length(index) < 4    % UNC path without separator after the folder:
+                return;
+            end
+            Drive            = File(1:index(4));
+            File(1:index(4)) = [];
+        else
+            Drive     = File(1:3);
+            File(1:3) = [];
+        end
+    else  % Unix, MacOS:
+        isUNC   = false;
+        Drive   = FSep;
+        File(1) = [];
+    end
+    
+    hasTrailFSep = (File(length(File)) == FSep);
+    if hasTrailFSep
+        File(length(File)) = [];
+    end
+    
+    if hasDataRead
+        if isWIN  % Need "\\" as separator:
+            C = dataread('string', File, '%s', 'delimiter', '\\');  %#ok<REMFF1>
+        else
+            C = dataread('string', File, '%s', 'delimiter', FSep);  %#ok<REMFF1>
+        end
+    else  % Use the slower REGEXP, when DATAREAD is not available anymore:
+        C = regexp(File, FSep, 'split');
+    end
+    
+    % Remove '\.\' directly without side effects:
+    C(strcmp(C, '.')) = [];
+    
+    % Remove '\..' with the parent recursively:
+    R = 1:length(C);
+    for dd = reshape(find(strcmp(C, '..')), 1, [])
+        index    = find(R == dd);
+        R(index) = [];
+        if index > 1
+            R(index - 1) = [];
+        end
+    end
+    
+    if isempty(R)
+        File = Drive;
+        if isUNC && ~hasTrailFSep
+            File(length(File)) = [];
+        end
+        
+    elseif isWIN
+        % If you have CStr2String, use the faster:
+        %   File = CStr2String(C(R), FSep, hasTrailFSep);
+        File = sprintf('%s\\', C{R});
+        if hasTrailFSep
+            File = [Drive, File];
+        else
+            File = [Drive, File(1:length(File) - 1)];
+        end
+        
+    else  % Unix:
+        File = [Drive, sprintf('%s/', C{R})];
+        if ~hasTrailFSep
+            File(length(File)) = [];
+        end
+    end
 end
 
 % "Very" long names under Windows:
 if isWIN
-   if ~ischar(Style)
-      error(['JSimon:', mfilename, ':BadTypeInput2'], ...
-         ['*** ', mfilename, ': Input must be a string or cell string']);
-   end
-   
-   if (strncmpi(Style, 'a', 1) && length(File) >= MAX_PATH) || ...
-         strncmpi(Style, 'f', 1)
-      % Do not use [isUNC] here, because this concerns the input, which can
-      % '.\File', while the current directory is an UNC path.
-      if strncmp(File, '\\', 2)  % UNC path
-         File = ['\\?\UNC', File(2:end)];
-      else
-         File = ['\\?\', File];
-      end
-   end
+    if ~ischar(Style)
+        error(['JSimon:', mfilename, ':BadTypeInput2'], ...
+            ['*** ', mfilename, ': Input must be a string or cell string']);
+    end
+    
+    if (strncmpi(Style, 'a', 1) && length(File) >= MAX_PATH) || ...
+            strncmpi(Style, 'f', 1)
+        % Do not use [isUNC] here, because this concerns the input, which can
+        % '.\File', while the current directory is an UNC path.
+        if strncmp(File, '\\', 2)  % UNC path
+            File = ['\\?\UNC', File(2:end)];
+        else
+            File = ['\\?\', File];
+        end
+    end
 end
 end
 % return;

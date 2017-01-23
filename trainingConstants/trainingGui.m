@@ -110,9 +110,21 @@ if numTrainingFrames > 50
     end
 end
 
-%strip xy positions
+contents = dir([settings_train.imageDirectory, '*c*.tif']);
+originalDir = [settings_train.imageDirectory,filesep,'image_backup',filesep];
+mkdir(originalDir);
+
+% move original images to originalDir
+for i = 1:numel(contents)
+    prevName = [settings_train.imageDirectory, contents(i).name];
+    newName = [originalDir, contents(i).name];
+    movefile(prevName, newName);
+end
+
+% Strip xy positions from bright field images, and move them back to
+% imageDirectory
 for i = 1:numTrainingFrames
-    originalName = [settings_train.imageDirectory, trainingFrames(i).name];
+    originalName = [originalDir, trainingFrames(i).name];
     saveName = [settings_train.imageDirectory, strrep(trainingFrames(i).name, 'xy', '')];
     if ~strcmp(originalName,saveName)
         movefile(originalName, saveName);
@@ -127,8 +139,11 @@ CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
 BatchSuperSeggerOpti(settings_train.imageDirectory, skip, clean_flag, CONSTtemp, start_end_steps, 1);
+
+% make a backup of the seg files
 mkdir([settings_train.loadDirectory(1:end-1),'_backup'])
 copyfile ([settings_train.loadDirectory,'*seg.mat'],[settings_train.loadDirectory(1:end-1),'_backup'],'f')
+
 settings_train.frameNumber = 1;
 setWorkingDirectory(settings_train.loadDirectory(1:end-9));
 updateUI(handles);
@@ -753,7 +768,7 @@ global settings_train;
 shouldCancel = 0;
 if exist(settings_train.saveFolder, 'dir')
     if numel(dir(settings_train.saveFolder)) > 2
-        answer = questdlg('You have unsaved changes to the data.', 'Save data changes?', 'Save', 'Ignore', 'Cancel', 'Save');        
+        answer = questdlg('You have unsaved changes to the data.', 'Save data changes?', 'Save', 'Ignore', 'Cancel', 'Save');
         if strcmp(answer, 'Save')
             saveData_Callback();
         elseif strcmp(answer, 'Cancel')
@@ -761,13 +776,13 @@ if exist(settings_train.saveFolder, 'dir')
             
             return;
         end
-    end    
+    end
     delete([settings_train.saveFolder, '*']);
     rmdir(settings_train.saveFolder);
 end
 
 if settings_train.constantModified == 1
-    answer = questdlg('You have unsaved changes to the constants.', 'Save constants changes?', 'Save', 'Ignore', 'Cancel', 'Save');   
+    answer = questdlg('You have unsaved changes to the constants.', 'Save constants changes?', 'Save', 'Ignore', 'Cancel', 'Save');
     if strcmp(answer, 'Save')
         save_Callback();
     elseif strcmp(answer, 'Cancel')
@@ -884,7 +899,7 @@ global settings_train;
 if FileName ~= 0
     settings_train.CONST = loadConstants([PathName, FileName],0,0);
     settings_train.nameCONST = settings_train.CONST.ResFlag;
-    settings_train.nameCONST = settings_train.nameCONST((max(strfind(settings_train.nameCONST, filesep)) + 1):end);   
+    settings_train.nameCONST = settings_train.nameCONST((max(strfind(settings_train.nameCONST, filesep)) + 1):end);
     updateUI(handles);
 end
 
@@ -922,7 +937,7 @@ if get(hObject,'Value')
     settings_train.axisFlag = 2;
     handles.phase_radio.Value = 0;
     handles.segs_radio.Value = 0;
-    handles.mask_radio.Value = 0;    
+    handles.mask_radio.Value = 0;
     if isempty(settings_train.CONST)
         loadConstants_Callback([], [], settings_train.handles)
     end
