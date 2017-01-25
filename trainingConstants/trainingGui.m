@@ -127,7 +127,7 @@ for i = 1:numTrainingFrames
     originalName = [originalDir, trainingFrames(i).name];
     saveName = [settings_train.imageDirectory, strrep(trainingFrames(i).name, 'xy', '')];
     if ~strcmp(originalName,saveName)
-        movefile(originalName, saveName);
+        copyfile(originalName, saveName);
     end
 end
 

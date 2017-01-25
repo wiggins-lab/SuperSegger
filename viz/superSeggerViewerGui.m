@@ -281,6 +281,13 @@ if exist([dirname0, 'CONST.mat'], 'file')
         CONST = CONST.CONST;
     end
 end
+
+f = 0;
+while isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
+    f = f+1;
+end
+
+handles.num_fluor = f;
 handles.CONST = CONST;
 handles.FLAGS = FLAGS;
 handles.dirnum = dirnum;
@@ -564,12 +571,8 @@ end
 function channel_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
     f = 0;
-    while true
-        if isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
-            f = f+1;
-        else
-            break
-        end
+    while isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
+       f = f+1;
     end
     c = round(str2double(handles.channel.String));
     if isnan(c) || c < 0 || c > f
@@ -976,7 +979,10 @@ else
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
             disp(['Area : ', num2str(data.regs.props(ii).Area)]);
+            
+            
             if isfield(data,'CellA')
+                fieldsCellA = fieldnames(data.CellA{ii});
                 disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
                 disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
                 disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
@@ -986,17 +992,16 @@ else
                 disp(['Cell Old Pole Age : ', num2str( data.CellA{ii}.pole.op_age)]);
                 disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);
                 
-                if isfield(data.CellA{ii},'fl1')
-                    disp('fluorescence 1 statistics: ')
-                    disp( (data.CellA{ii}.fl1));
-                end
-                if isfield(data.CellA{ii},'fl2')
-                    disp('fluorescence 2 statistics : ')
-                    disp( (data.CellA{ii}.fl1));
+                for (u = 1 : settings.handles.num_fluor)
+                    if isfield(data.CellA{ii},['fl',num2str(u)])
+                        fluor_name = ['fl',num2str(u)];
+                        fluor_field = data.CellA{ii}.(fluor_name);
+                        disp(['fluorescence ', num2str(u), ' statistics: '])
+                        disp(fluor_field);
+                    end
                 end
             end
-            % disp(data.CellA{ii});
-            
+           
             updateImage(settings.hObject, settings.handles);
             plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
             cell_info_Callback(settings.hObject, settings.eventdata, settings.handles);

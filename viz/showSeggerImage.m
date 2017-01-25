@@ -539,76 +539,50 @@ end
 
 function intPlotSpot( data, x_, y_, FLAGS, ID_LIST, CONST )
 % intPlotSpot : plots each foci in the cells
+channel_num = FLAGS.f_flag;
+locus_name = ['locus',num2str(channel_num)];
 
+min_score_name = (['FLUOR',num2str(channel_num),'_MIN_SCORE']);
+if ~isfield(CONST.getLocusTracks,min_score_name)
+    CONST.getLocusTracks.(min_score_name) = 3;
+end
 
-if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
-        (isfield( data.CellA{1}, 'locus1') || (isfield( data.CellA{1}, 'locus2')))
-    
-    counter1 = 0;
-    counter2 = 0;
-    maxCounter1 = 500;
-    maxCounter2 = 500;
-    locus_1_txt = {};
-    locus1_x = [];
-    locus1_y = [];
-    locus_2_txt = {};
-    locus2_x = [];
-    locus2_y = [];
+min_score = CONST.getLocusTracks.(min_score_name);
+
+if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && isfield(data.CellA{1},locus_name)
+    counter = 0;
+    maxCounter = 500;
+    locus_txt = {};
+    locus_x = [];
+    locus_y = [];
     for kk = 1:data.regs.num_regs
         % only plot spots in the cell that are gated.
-        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
-            % locus 1
-            if isfield( data.CellA{kk}, 'locus1') &&  ( FLAGS.f_flag == 1 );
-                num_spot = numel( data.CellA{kk}.locus1);
+        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))         
+            if isfield( data.CellA{kk},(locus_name))
+                locus_field = data.CellA{kk}.(locus_name);
+                num_spot = numel(locus_field);
                 mm = 0;
-                while mm < num_spot && counter1 < maxCounter1
+                while mm < num_spot && counter < maxCounter
                     mm = mm + 1;
-                    r = data.CellA{kk}.locus1(mm).r;
-                    text_ = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE
+                    r = locus_field(mm).r;
+                    text_ = [num2str(locus_field(mm).score, '%0.1f')];
+                    if locus_field(mm).score > min_score
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
                                 (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
-                            counter1 = counter1 + 1;
-                            locus_1_txt{end+1} = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                            locus1_x = [locus1_x;xpos];
-                            locus1_y = [locus1_y;ypos];
-                        end
-                    end
-                end
-            end
-            
-            % locus 2
-            if isfield( data.CellA{kk}, 'locus2') && (FLAGS.f_flag == 2 )
-                num_spot = numel( data.CellA{kk}.locus2);
-                mm = 0;
-                while mm < num_spot && counter2 < maxCounter2
-                    mm = mm + 1;
-                    r = data.CellA{kk}.locus2(mm).r;
-                    if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
-                            data.CellA{kk}.locus2(mm).b < 3
-                        xpos = r(1)+x_;
-                        ypos = r(2)+y_;
-                        if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
-                            counter2 = counter2 + 1;
-                            locus_2_txt{end+1} = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];
-                            locus2_x = [locus2_x;xpos];
-                            locus2_y = [locus2_y;ypos];
+                            counter = counter + 1;
+                            locus_txt{end+1} = [num2str(locus_field(mm).score, '%0.1f')];
+                            locus_x = [locus_x;xpos];
+                            locus_y = [locus_y;ypos];
                         end
                     end
                 end
             end
         end
     end
-    
-    
-    text( locus2_x+1, locus2_y, locus_2_txt, 'Color', [1,0.5,0.5]);
-    plot( locus2_x, locus2_y, '.', 'Color', [1,0.5,0.5]);
-    
-    text( locus1_x+1, locus1_y, locus_1_txt, 'Color', [0.5,1,0.5]);
-    plot( locus1_x, locus1_y, '.', 'Color', [0.5,1,0.5]);
+    text( locus_x+1, locus_y, locus_txt, 'Color', [1,1,1]);
+    plot( locus_x, locus_y, '.', 'Color', [1,1,1]);
     
 end
 end

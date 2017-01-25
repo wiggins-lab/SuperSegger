@@ -107,7 +107,7 @@ CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
 CONST.trackOpti.REMOVE_STRAY = 0; % deletes stray regions and their children
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
-CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
+CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, regions with smaller than this area may be merged with the ones next to them.
 CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
 CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
 
