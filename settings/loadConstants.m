@@ -82,7 +82,7 @@ CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 CONST.superSeggerOpti.segmenting_fluorescence = false;
 CONST.superSeggerOpti.remove_debris = true;
 CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
-CONST.superSeggerOpti.PEBBLE_CONST = 3;
+CONST.superSeggerOpti.PEBBLE_CONST = 1.5;
 CONST.superSeggerOpti.remove_microcolonies = true;
 
 % region optimization parameters
