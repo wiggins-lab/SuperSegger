@@ -738,6 +738,63 @@ if ~isempty(handles.FLAGS)
     end
 end
 
+% Spencer Peters MIN_FLUOR
+
+function min_fluor_Callback(hObject, eventdata, handles)
+% hObject    handle to min_fluor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of min_fluor as text
+%        str2double(get(hObject,'String')) returns contents of min_fluor as a double
+% 
+% min_score = CONST.getLocusTracks.(min_score_name);
+global settings;
+if ~isempty(handles.FLAGS)  % presumably if something has been initialized
+    % grab the min_score from the box, insist that it is an integer
+    min_score = round(str2double(get(hObject, 'String')));
+    
+    %boilerplate to guard against invalid input
+    if min_score > handles.num_im % this condition is WRONG, need different 
+        % upper bound
+        hObject.String = num2str(handles.num_im);
+    elseif isnan(min_score) || min_score < 1
+        hObject.String = '1';
+    else
+        % if the (rounded) input is valid, display it in the box
+        hObject.String = num2str(min_score);
+    end
+    
+    % now to save the result in CONST
+    
+    % first, get the score variable name corresponding to the current
+    % channel
+    channel_num = handles.FLAGS.f_flag;
+    min_score_name = (['FLUOR',num2str(channel_num),'_MIN_SCORE']);
+    
+    % Save the value!
+    % Check: did the value save?
+    settings.handles.CONST.getLocusTracks.(min_score_name) = min_score;
+    
+    
+    % not sure if this is necessary depending on what the 
+    % fluor-adjustment does, will ask 
+    % updateImage(hObject, handles); 
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function min_fluor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to min_fluor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
 % Gate options
 
 function clear_gates_Callback(hObject, eventdata, handles)
@@ -825,6 +882,7 @@ end
 
 function stop_tool_ClickedCallback(hObject, eventdata, handles)
 % button on toolstrip to debug
+global settings;
 keyboard;
 
 
