@@ -139,7 +139,9 @@ for i = 1:num_im;
         tmp_fn = fieldnames( data_c );
         nf = numel( tmp_fn );
         for j = 1:nf;
-            if numel(strfind(tmp_fn{j},'fluor')==1)&& ~numel((strfind(tmp_fn{j},'fluor0')))
+            if numel(strfind(tmp_fn{j},'fluor')==1) && ...
+                    ~numel((strfind(tmp_fn{j},'fluor0'))) && ...
+                    ~numel((strfind(tmp_fn{j},'filtered')))
                 nc = nc+1;
             end
         end

@@ -1,12 +1,12 @@
 function trackOptiFluor(dirname,CONST,header)
 % trackOptiFluor calculates the mean background fluorescence for each frame.
-% This is the fluroscence outside the background mask. It does not do any focus
-% fitting at this stage. It saves the information in the err/seg
-% files under data_c.fl1bg for channel 1 and data_c.fl2bg for channel 2.
+% This is the mean fluorescence of the non cell regions. No focus fitting is
+% done at this stage. It saves the information in the err/seg
+% files under data_c.fl1bg for channel 1, data_c.fl2bg for channel 2, etc.
 %
 % INPUT :
 %   dirname: seg folder eg. maindirectory/xy1/seg
-%   CONST: are the segmentation constants.
+%   CONST: segmentation constants.
 %   header : string displayed with information
 %
 % Copyright (C) 2016 Wiggins Lab
@@ -32,9 +32,7 @@ if ~exist('header','var')
     header = [];
 end
 
-
 SE = strel( 'disk', 5 );
-
 
 if(nargin<1 || isempty(dirname))
     dirname = '.';
@@ -53,26 +51,26 @@ else
 end
 
 nc = 0;
-
 if numel(contents) > 0
     data_c = loaderInternal([dirname,contents(1).name]);
     datacFields = fieldnames(data_c);
     nf = numel(datacFields);
     % goes through the fields in data_c and calculates the number of fluorescence channels
     for j = 1:nf;
-        if numel(strfind(datacFields{j},'fluor')==1) && ~numel((strfind(datacFields{j},'fluor0')))
+        if numel(strfind(datacFields{j},'fluor')==1) && ...
+                ~numel(strfind(datacFields{j},'filtered')) && ...
+                ~numel((strfind(datacFields{j},'fluor0')))
             nc = nc+1;
         end
     end
 end
-
 
 % loop through all the cells.
 if nc > 0
     for i = 1:num_im
         data_c = loaderInternal([dirname,contents(i).name]);
         
-        % Compute the background fluorescence level in both channel
+        % Compute the background fluorescence level in every channel
         ss = size( data_c.mask_cell );
         
         for j = 1 : nc
