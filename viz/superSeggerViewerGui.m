@@ -747,23 +747,20 @@ function min_fluor_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of min_fluor as text
 %        str2double(get(hObject,'String')) returns contents of min_fluor as a double
-% 
-% min_score = CONST.getLocusTracks.(min_score_name);
-global settings;
+
 if ~isempty(handles.FLAGS)  % presumably if something has been initialized
     % grab the min_score from the box, insist that it is an integer
     min_score = round(str2double(get(hObject, 'String')));
     
-    %boilerplate to guard against invalid input
-    if min_score > handles.num_im % this condition is WRONG, need different 
-        % upper bound
-        hObject.String = num2str(handles.num_im);
-    elseif isnan(min_score) || min_score < 1
-        hObject.String = '1';
-    else
-        % if the (rounded) input is valid, display it in the box
-        hObject.String = num2str(min_score);
+    % boilerplate to guard against invalid input
+    if isnan(min_score) || min_score < 1
+        min_score = 1;
+%     elseif min_score > handles.num_im
+%       min_score = handles.num_im;% this condition is WRONG, need different
     end
+    
+    % display the corrrected input
+    hObject.String = num2str(min_score);
     
     % now to save the result in CONST
     
@@ -771,15 +768,16 @@ if ~isempty(handles.FLAGS)  % presumably if something has been initialized
     % channel
     channel_num = handles.FLAGS.f_flag;
     min_score_name = (['FLUOR',num2str(channel_num),'_MIN_SCORE']);
-    
     % Save the value!
-    % Check: did the value save?
-    settings.handles.CONST.getLocusTracks.(min_score_name) = min_score;
     
+    handles.CONST.getLocusTracks.(min_score_name) = min_score;
+    guidata(hObject, handles);
+
+    updateImage(hObject, handles); 
     
-    % not sure if this is necessary depending on what the 
-    % fluor-adjustment does, will ask 
-    % updateImage(hObject, handles); 
+    % Questions for Stella
+    % Any upper bound on MIN_FLUOR
+    % Should I allow decimal values?
 end
 
 
