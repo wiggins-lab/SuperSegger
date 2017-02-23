@@ -59,7 +59,7 @@ end
 
 
 if CONST.parallel.show_status
-    h = waitbar( 0, 'Find Loci.');
+    h = waitbar( 0, 'Find Foci.');
     cleanup = onCleanup( @()( delete( h ) ) );
 else
     h = [];
@@ -68,9 +68,9 @@ end
 for i = 1:num_im; % finding loci through every image
     intDoFoci( i, dirname, contents, nc, CONST);
     if CONST.parallel.show_status
-        waitbar(i/num_im,h,['Find Loci--Frame: ',num2str(i),'/',num2str(num_im)]);
+        waitbar(i/num_im,h,['Find Foci--Frame: ',num2str(i),'/',num2str(num_im)]);
     else
-        disp( [header, 'FindLoci: No status bar. Frame ',num2str(i), ...
+        disp( [header, 'FindFoci: No status bar. Frame ',num2str(i), ...
             ' of ', num2str(num_im),'.']);
    end
 end

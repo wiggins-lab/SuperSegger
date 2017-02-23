@@ -1,7 +1,7 @@
 function targetd = trackOptiCropMulti(dirname,xydir,targetd)
 % trackOptiCropMulti : user chooses two corners to crops multiple images
 % Images must be in NIS name-format.
-% New cut images are saved in dirname/crop folder.
+% New cropped images are saved in dirname/crop folder.
 %
 % INPUT :
 %       dirname : directory with .tif images named in NIS name-format.

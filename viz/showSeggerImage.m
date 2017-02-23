@@ -566,13 +566,13 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && isfield(data.CellA{1},l
                     mm = mm + 1;
                     r = locus_field(mm).r;
                     text_ = [num2str(locus_field(mm).score, '%0.1f')];
-                    if locus_field(mm).score > min_score
+                    if locus_field(mm).normIntensityScore > 1;%min_score
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
                                 (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
                             counter = counter + 1;
-                            locus_txt{end+1} = [num2str(locus_field(mm).score, '%0.1f')];
+                            locus_txt{end+1} = ['is:',num2str(locus_field(mm).normIntensityScore, '%0.1f'), '-in:',num2str(locus_field(mm).normIntensity, '%0.1f'),'-s:',num2str(locus_field(mm).score, '%0.1f')];
                             locus_x = [locus_x;xpos];
                             locus_y = [locus_y;ypos];
                         end

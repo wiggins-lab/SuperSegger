@@ -191,9 +191,8 @@ end
 
     function data = intDataLoader (dataName)
         % intDataLoader : loads the data files.
-        % if first tries to load the fiele ending with filt2, if it doesn't find it
-        % it loads the dataName given, and if that is notund either it
-        % return empty.
+        % It first tries to load the file with extension filt2, if not 
+        % found it loads the given dataName. Returns empty if neither is found
         
         dataNameMod = [dataName(1:end-7),filt2];
         fidMod = fopen(dataNameMod);

@@ -30,7 +30,7 @@ dirname_xy = fixDir(dirname_xy);
 dirname_full  = [dirname_xy,'seg_full',filesep];
 dirname_seg = [dirname_xy,'seg',filesep];
 dirname_cell = [dirname_xy,'cell',filesep];
-%warning('off','MATLAB:DELETE:Permission')
+warning('off','MATLAB:DELETE:Permission')
 
 if startEnd(1) <= 2 && startEnd(2) >=2     
     stamp_name = [dirname_seg,'.doSegFull'];
@@ -95,7 +95,6 @@ if startEnd(1) <= 10 && startEnd(2) >=10
     delete ([dirname_cell,'*.mat']); % cell files
 end
 
-
-
+warning('on','MATLAB:DELETE:Permission')
 
 end

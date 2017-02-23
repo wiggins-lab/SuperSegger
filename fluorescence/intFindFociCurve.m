@@ -47,20 +47,21 @@ options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
 % Get images out of the structures.
 originalImage = double(data.(['fluor',num2str(channelID)]));
 
-% Subtract gaussian blurred image 
-% to get rid of big structure
+% Subtract gaussian blurred image to get rid of big structure
 hg = fspecial( 'gaussian' , 210, 30 );
 highPassImage = originalImage - imfilter( originalImage, hg, 'replicate' );
+
+% Normalization of image for cytoplasmic intensity std to be 1;
 cytoplasmicFlourescenceSTD = std(double(highPassImage(data.mask_bg)));
 if isnan(cytoplasmicFlourescenceSTD)
     cytoplasmicFlourescenceSTD = 1;
     disp ('Possibly empty mask for image - foci may not be found');
 end
-normalizedImage = originalImage/cytoplasmicFlourescenceSTD; % normalization so that intensities;
+normalizedImage = originalImage/cytoplasmicFlourescenceSTD;
 
-%Take only pixels above 1 std (noise reduction?)
+%Take only pixels above 1 std (noise reduction)
 normalizedImage = normalizedImage - 1;
-normalizedImage(normalizedImage < 0) = 0; % logical mask of foci found
+normalizedImage(normalizedImage < 0) = 0; % logical mask of foci
 
 filter_width = 1.5;
 [~,~,fluorFiltered] = curveFilter(normalizedImage,filter_width);
@@ -81,19 +82,21 @@ focusInit.r = [nan,nan];
 focusInit.score = nan;
 focusInit.intensity = nan;
 focusInit.normIntensity = nan;
+focusInit.normIntensityScore = nan;
 focusInit.shortaxis = nan;
 focusInit.longaxis = nan;
 focusInit.fitSigma = nan;
 focusInit.fitScore = nan;
-
-fociData = [];
-cellIDs = [];
+cellIDs = NaN * zeros(1,numFociRegions);  
 
 if DEBUG_FLAG
     figure(2);
     clf;
+    imshow(normalizedImage,[]);
 end
 
+% the value of the intensity is from the filtered image (check?!)
+% what should i subtract if i want to subtract background fluorescence?
 for ii = 1:numFociRegions
     tempData = focusInit;
     
@@ -133,10 +136,7 @@ for ii = 1:numFociRegions
     bestCellID = cellIDList(minDistanceIndex);
     
     if ~isempty( bestCellID )
-        croppedImage = highPassImage(data.CellA{bestCellID}.yy, data.CellA{bestCellID}.xx);
-        cellFlouresenseSTD = std(croppedImage(data.CellA{bestCellID}.mask));  
-        
-        if tempData.intensity >0
+        if tempData.intensity > 1
             %Initialize parameters
             backgroundIntensity = 0;
             gaussianIntensity = fluorFiltered(fociY, fociX) - backgroundIntensity;
@@ -160,44 +160,48 @@ for ii = 1:numFociRegions
             guassianTotal = sqrt(sum(sum(gaussianApproximation)));
 
             fitScore = sum(sum(sqrt(croppedImage) .* sqrt(gaussianApproximation))) / (imageTotal * guassianTotal);
+            
+            if fitScore > 0.5
+                if DEBUG_FLAG
+                    figure(1);
+                    clf;
+                    subplot(2, 2, 1);
+                    imshow(imageToFit, []);
+                    subplot(2, 2, 2);        
+                    imshow(croppedImage, []);    
+                    subplot(2, 2, 3);        
+                    imshow(gaussianApproximation, []);   
+                    subplot(2, 2, 4);     
+                    if ~isnan(fitScore)
+                    title(['Score: ', num2str(fitScore)]);
+                    end
+                end
 
-            if DEBUG_FLAG
-                figure(1);
-                clf;
-                subplot(2, 2, 1);
-                imshow(imageToFit, []);
-                subplot(2, 2, 2);        
-                imshow(croppedImage, []);    
-                subplot(2, 2, 3);        
-                imshow(gaussianApproximation, []);   
-                subplot(2, 2, 4);          
-                title(['Score: ', num2str(fitScore)]);
-                keyboard;
-            end
+                tempData.r(1) = parameters(1);
+                tempData.r(2) = parameters(2);
+                tempData.fitSigma = parameters(4);
+                tempData.intensity = parameters(3);
+                tempData.fitScore = fitScore;
 
-            tempData.r(1) = parameters(1);
-            tempData.r(2) = parameters(2);
-            tempData.fitSigma = parameters(4);
-            tempData.intensity = parameters(3);
-            tempData.fitScore = fitScore;
+                %Calculate scores        
+                tempData.normIntensity = normalizedImage(fociY, fociX);
+                tempData.normIntensityScore = normalizedImage(fociY, fociX);
+                tempData.score = tempData.intensity / (tempData.fitSigma) * tempData.fitScore;
+                tempData.shortaxis = ...
+                    (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
+                tempData.longaxis = ...
+                    (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e1;
 
-            %Calculate scores        
-            tempData.normIntensity = tempData.intensity;
-            tempData.score = tempData.intensity / (sqrt(pi)*tempData.fitSigma) * tempData.fitScore;
-            tempData.shortaxis = ...
-                (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e2;
-            tempData.longaxis = ...
-                (tempData.r-data.CellA{bestCellID}.coord.rcm)*data.CellA{bestCellID}.coord.e1;
+                %Assign to array
+                cellIDs(ii) = bestCellID;  
+                focusData(ii) = tempData;
 
-
-            %Assign to array
-            cellIDs(ii) = bestCellID;  
-            focusData(ii) = tempData;
-            if DEBUG_FLAG
-               figure(2);
-               hold on;
-               plot(fociX, fociY, '.r' );
-               text(fociX, fociY, num2str( tempData.intensity, '%1.2g' ));
+                if DEBUG_FLAG
+                   figure(2);
+                   hold on;
+                   plot(fociX, fociY, '.r' );
+                   text(fociX, fociY, num2str( tempData.normIntensity, '%1.2g' ),'color','r');
+                end
             end
         end
     end
@@ -215,18 +219,45 @@ for ii = 1:data.regs.num_regs
     
     focus = focusInit;
     if numel(sortedFoci) > 0
-        maxIndex = find([sortedFoci.intensity] > 0.333 * sortedFoci(1).intensity);
+        flagFoci =  ([sortedFoci.intensity] > 0.33 * sortedFoci(1).intensity) ...
+            | [sortedFoci.intensity] > 5;
+        maxIndex = find(flagFoci);
         if numel(maxIndex) > CONST.trackLoci.numSpots(channelID)
             maxIndex = maxIndex(1:CONST.trackLoci.numSpots(channelID));
         end
-
+        
+       
+        % make cell mask without foci
+        cytoplasmicFluorMask =  data.CellA{ii}.mask*0;
         numFoci = numel(maxIndex);
-
+        offset = data.CellA{ii}.r_offset;
+        for jj = 1:numFoci
+            x_loc = round(sortedFoci(jj).r - offset+1);
+            cytoplasmicFluorMask(x_loc(2),x_loc(1)) = 1;
+        end 
+        se = strel('disk',3);
+        cytoplasmicFluorMask = imdilate(cytoplasmicFluorMask,se);
+        maskWithoutFoci = ~cytoplasmicFluorMask & data.CellA{ii}.mask;
+        cellFluor = normalizedImage(data.CellA{ii}.yy, data.CellA{ii}.xx);
+        meanCytoplasmicFluor = mean(cellFluor(maskWithoutFoci));
+        
         for jj = 1:numFoci
             focus(jj) = sortedFoci(jj);
+            focus(jj).normIntensity = 3*(focus(jj).normIntensity - meanCytoplasmicFluor);
+            focus(jj).normIntensityScore = focus(jj).fitScore*(focus(jj).normIntensity - meanCytoplasmicFluor)/ (focus(jj).fitSigma);
+            if DEBUG_FLAG
+               figure(2);
+               hold on;
+               plot(focus(jj).r(1), focus(jj).r(2), '.r' );
+               text(focus(jj).r(1), focus(jj).r(2), num2str( focus(jj).normIntensity, '%1.2g' ),'color','r');
+               text(focus(jj).r(1)+1, focus(jj).r(2)+1, num2str( focus(jj).intensity, '%1.2g' ),'color','g');
+               text(focus(jj).r(1)-1, focus(jj).r(2)-1, num2str( focus(jj).score, '%1.2g' ),'color','y');
+           
+            end
         end 
+        
     end
-    
+  
     scores = [focus(:).score];
     focus = focus(~isnan(scores));  
     data.CellA{ii}.(fieldname) = focus;
