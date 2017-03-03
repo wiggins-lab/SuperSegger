@@ -233,7 +233,9 @@ for ii = 1:data.regs.num_regs
         offset = data.CellA{ii}.r_offset;
         for jj = 1:numFoci
             x_loc = round(sortedFoci(jj).r - offset+1);
-            cytoplasmicFluorMask(x_loc(2),x_loc(1)) = 1;
+            if all(~isnan(x_loc))
+                cytoplasmicFluorMask(x_loc(2),x_loc(1)) = 1;
+            end
         end 
         se = strel('disk',3);
         cytoplasmicFluorMask = imdilate(cytoplasmicFluorMask,se);
