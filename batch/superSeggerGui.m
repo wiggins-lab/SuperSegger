@@ -210,8 +210,12 @@ skip = str2double(handles.skip.String);
 start_step = str2num(handles.start_step.String);
 end_step = str2num(handles.end_step.String);
 startEnd = [start_step end_step];
-BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST, startEnd);
-
+debug_flag = 0;
+if debug_flag
+    BatchSuperSeggerDebug(dirname, skip, clean_flag, CONST, startEnd);
+else
+    BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST, startEnd);
+end
 
 % tries different constants
 function try_constants_Callback(hObject, eventdata, handles)
