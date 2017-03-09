@@ -235,11 +235,12 @@ for ii = 1:data.regs.num_regs
         for jj = 1:numFoci
             x_loc = round(sortedFoci(jj).r - offset+1);
             if all(~isnan(x_loc))
-                x_loc(1) = max(min(x_loc(1),mask_size(1)),1);
-                x_loc(2) = max(min(x_loc(2),mask_size(2)),1);
+                x_loc(1) = max(min(x_loc(1),mask_size(2)),1);
+                x_loc(2) = max(min(x_loc(2),mask_size(1)),1);
                 cytoplasmicFluorMask(x_loc(2),x_loc(1)) = 1;
             end
         end
+        
         se = strel('disk',3);
         cytoplasmicFluorMask = imdilate(cytoplasmicFluorMask,se);
         maskWithoutFoci = ~cytoplasmicFluorMask & data.CellA{ii}.mask;
