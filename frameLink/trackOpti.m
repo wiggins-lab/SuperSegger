@@ -224,6 +224,8 @@ end
 
 warning('on','MATLAB:DELETE:Permission')
 
+disp([header,'SuperSegger complete!']);
+
 end
 
 

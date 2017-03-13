@@ -43,6 +43,7 @@ function [ data ] = intFindFociCurve( data, CONST, channelID )
 DEBUG_FLAG = false;
 fieldname = ['locus', num2str(channelID)];
 options =  optimset('MaxIter', 1000, 'Display', 'off', 'TolX', 1/10);
+se3 = strel('disk',3);
 
 % Get images out of the structures.
 originalImage = double(data.(['fluor',num2str(channelID)]));
@@ -213,19 +214,17 @@ for ii = 1:data.regs.num_regs
     
     fociIndex = find(cellIDs == ii);
     tempData = focusData(fociIndex);
-    
-    [~, order] = sort( [tempData.intensity], 'descend' );
+    [~, order] = sort( [tempData.intensity], 'descend');
     sortedFoci = tempData(order);
     
     focus = focusInit;
     if numel(sortedFoci) > 0
-        flagFoci =  ([sortedFoci.intensity] > 0.33 * sortedFoci(1).intensity) ...
-            | [sortedFoci.intensity] > 5;
+        flagFoci =  (([sortedFoci.intensity] > 0.33 * ...
+            sortedFoci(1).intensity) | [sortedFoci.intensity] > 5);
         maxIndex = find(flagFoci);
         if numel(maxIndex) > CONST.trackLoci.numSpots(channelID)
             maxIndex = maxIndex(1:CONST.trackLoci.numSpots(channelID));
         end
-        
         
         % make cell mask without foci
         cytoplasmicFluorMask =  data.CellA{ii}.mask*0;
@@ -240,9 +239,8 @@ for ii = 1:data.regs.num_regs
                 cytoplasmicFluorMask(x_loc(2),x_loc(1)) = 1;
             end
         end
-        
-        se = strel('disk',3);
-        cytoplasmicFluorMask = imdilate(cytoplasmicFluorMask,se);
+              
+        cytoplasmicFluorMask = imdilate(cytoplasmicFluorMask,se3);
         maskWithoutFoci = ~cytoplasmicFluorMask & data.CellA{ii}.mask;
         cellFluor = normalizedImage(data.CellA{ii}.yy, data.CellA{ii}.xx);
         meanCytoplasmicFluor = mean(cellFluor(maskWithoutFoci));
@@ -250,7 +248,7 @@ for ii = 1:data.regs.num_regs
         for jj = 1:numFoci
             focus(jj) = sortedFoci(jj);
             focus(jj).normIntensity = 3*(focus(jj).normIntensity - meanCytoplasmicFluor);
-            focus(jj).normIntensityScore = focus(jj).fitScore*(focus(jj).normIntensity - meanCytoplasmicFluor)/ (focus(jj).fitSigma);
+            focus(jj).normIntensityScore = 3*focus(jj).fitScore*(focus(jj).normIntensityScore - meanCytoplasmicFluor)/ (focus(jj).fitSigma);
             if DEBUG_FLAG
                 figure(2);
                 hold on;
