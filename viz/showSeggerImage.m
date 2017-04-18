@@ -60,6 +60,9 @@ if ~exist('gui_fig','var') || isempty(gui_fig)
     clf;
 end
 
+if isempty(data)
+    return
+end
 % fix are any missing flags
 FLAGS = intFixFlags( FLAGS );
 
@@ -494,30 +497,34 @@ while (counter > 0 && kk < data.regs.num_regs)
             (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
         
         counter = counter - 1;
-        if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
-            xpos_id = [xpos_id;xpos];
-            ypos_id = [ypos_id;ypos];
-            if setRed
-                str_id{end+1} = ['{\color{red}',num2str(data.regs.ID(kk)),'}'];
-            else
-                str_id{end+1} = num2str(data.regs.ID(kk));
-            end
-            
-        else % region view cell_flag is 0
-            xpos_id = [xpos_id;xpos];
-            ypos_id = [ypos_id;ypos];
-            if setRed
-                str_id{end+1} = ['{\color{red}',num2str(kk),'}'];
-            else
-                str_id{end+1} = num2str(num2str(kk));
-            end
+        xpos_id = [xpos_id;xpos];
+        ypos_id = [ypos_id;ypos];
+        
+        if FLAGS.edit_links == 1 || FLAGS.cell_flag == 0 || ~isfield( data.regs, 'ID' )
+            id_txt = num2str(kk);
+        else
+            id_txt = num2str(data.regs.ID(kk));
+        end
+        
+        if setRed
+            str_id{end+1} = ['{\color{red}',id_txt,'}'];
+        else
+            str_id{end+1} = num2str(id_txt);
         end
     end
     
 end
 
 
-if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
+if FLAGS.edit_links 
+     hhh = title('Region Number');
+    set(hhh, 'Color', [0,0,0] );
+    text( xpos_id-2, ypos_id-2,str_id,...
+        'color','w',...
+        'HorizontalAlignment','Center',...
+        'VerticalAlignment','Middle',...
+        'FontSize', 8);
+elseif FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' ) 
     hhh = title('Cell ID');
     set(hhh, 'Color', [0,0,0] );
     text( xpos_id, ypos_id,str_id,...

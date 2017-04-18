@@ -84,8 +84,11 @@ if ~isempty(data_c)
     if ~isfield(data_c,'regs')
         data_c = updateRegionFields (data_c,CONST);
     end
-    ss = size(data_c.phase);
     
+    % check for manually linked assignments..
+    manualFlagC = data_c.regs.ignoreError;
+    
+    ss = size(data_c.phase);
     numRegs1 = data_c.regs.num_regs;
     assignments  = cell( 1, numRegs1);
     errorR = zeros(1,numRegs1);
@@ -96,15 +99,19 @@ if ~isempty(data_c)
             data_f = updateRegionFields (data_f,CONST);
         end
         
+        manualFlagF = data_f.regs.ignoreError;
+    
         numRegs2 = data_f.regs.num_regs;
         regsInC = 1:data_c.regs.num_regs;
+        regsInC = regsInC(~manualFlagC);
         regsInF = 1:data_f.regs.num_regs;
+        regsInF = regsInF(~manualFlagF);
         
-        idsC(1,regsInC) = regsInC;
-        idsC(2,regsInC) = NaN;
+        idsC(1,1:numel(regsInC)) = regsInC;
+        idsC(2,1:numel(regsInC)) = NaN;
         
-        idsF(1,regsInF) = regsInF;
-        idsF(2,regsInF) = NaN;
+        idsF(1,1:numel(regsInF)) = regsInF;
+        idsF(2,1:numel(regsInF)) = NaN;
         
         % colony calculation
         maskBgFill= imfill(data_c.mask_bg,'holes');
@@ -112,10 +119,10 @@ if ~isempty(data_c)
         colony_props = regionprops( colony_labels,'Centroid','Area');
         
         % find possible pairs
-        [pairsF,~] = findNeighborPairs (data_f, numRegs2, regsInF,[]);
+        [pairsF,~] = findNeighborPairs (data_f, regsInF,[]);
         allF = [idsF,pairsF];
         
-        [pairsC,neighF] = findNeighborPairs (data_c, numRegs1, regsInC, data_f);
+        [pairsC,neighF] = findNeighborPairs (data_c, regsInC, data_f);
         allC = [idsC,pairsC];
         
         % initialize
@@ -334,6 +341,11 @@ if ~isempty(data_c)
             flagger(colToDelF) = 0;            
         end
         
+        % assign the manual assignments
+        manualRegsC = find(manualFlagC);
+        for yy = manualRegsC
+            assignments{yy} =  data_c.regs.map.f{yy};
+        end
         % make list of revAssign
         revAssign = getRevAssign();
         
@@ -341,8 +353,8 @@ if ~isempty(data_c)
         fArea = [data_f.regs.props.Area];
        
         % attempt to fix assignment error for cells left without assignment
-        [assignments,revAssign] =fixProblems(assignments,revAssign, overlapCost, indexF,indexC, cArea, fArea);
-        [revAssign,assignments] =fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);        
+        [assignments,revAssign] = fixProblems(assignments,revAssign, overlapCost, indexF,indexC, cArea, fArea);
+        [revAssign,assignments] = fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);        
         [assignments,revAssign] = exchangeAssignment (assignments,revAssign, totCost, indexF, indexC);
         [revAssign,assignments] = exchangeAssignment (revAssign,assignments, totCost, indexC, indexF);
         
@@ -529,10 +541,11 @@ end
 
 
 
-function [pairsC,neighF] = findNeighborPairs (data_c, numRegs1, regsInC, data_f)
+function [pairsC,neighF] = findNeighborPairs (data_c, regsInC, data_f)
 % findNeighborPairs : finds neighboring regions to be considered as pairs
 
 global str8
+numRegs1 = numel(regsInC);
 counter = 1;
 pairsC = NaN * zeros(2,numRegs1 * numRegs1);
 neighF = cell( 1, numRegs1);
@@ -545,24 +558,27 @@ for jj = regsInC
     [bbx,bby] = getBoxLimits (data_c,jj);
     labels_c_box = labels_c(bby,bbx);
     maskc = (labels_c_box==jj);
+    
+    % dilate the mask of region jj and get unique neighbors
     tmp_mask = imdilate(maskc, str8);
-    neigh = labels_c_box(tmp_mask);% get neighbors
-    
-    
-    ind_neigh = unique(neigh)'; % unique neighbors
+    neigh = labels_c_box(tmp_mask);
+    ind_neigh = unique(neigh)';
     ind_neigh = ind_neigh(ind_neigh > jj); % not already made pairs
     
+    % make into pairs
+    for uu = ind_neigh
+        if any(regsInC == uu)
+            pairsC(:,counter) = [jj;uu];
+            counter = counter + 1;
+        end
+    end
+    
+    % get also neighboring region in data_f, to be used later
     if  ~isempty(data_f)
         labels_f_box = labels_f(bby,bbx);
         fneigh = labels_f_box(tmp_mask);
         fneigh = fneigh (fneigh~=0);
         neighF {jj} = unique(fneigh)';
-    end
-    
-    % make pairs
-    for uu = ind_neigh
-        pairsC(:,counter) = [jj;uu];
-        counter = counter + 1;
     end
 end
 

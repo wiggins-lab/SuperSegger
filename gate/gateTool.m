@@ -1306,6 +1306,7 @@ for jj = 1:nf
             im = data.im;
         end       
         
+        im = sqrt(im);
         imagesc( xx2, xx1, im );        
         hold on;
         
@@ -2151,21 +2152,25 @@ bin = {data.binS(2).xx,data.binS(1).xx};
 dx  = [data.binS(2).dx,data.binS(1).dx];
 
 [y,xx] = hist3( [x2,x1], bin );
+%imagesc( xx{1},xx{2},sqrt((y)) )
 
 
 if data.cond_flag
-    ys = sum( y, 1 );
-    
-    ys(ys==0) = 1;
-    
+    ys = sum( y, 1 );    
+    ys(ys==0) = 1;    
     y = y./(ones([size(y,1),1])*ys);
-    %  cutt = 1/(2*data.mult);
-    %  y(y>cutt) = cutt;
-    
+    %cutt = 1/(.1*data.multi);
+    %y(y>cutt) = cutt;
 end
 
-%y = intConv2Dadd( y, data, dx );
 y = intConv2D( y, data );
+
+%y = intConv2Dadd( y, data, dx );
+
+
+
+
+
 
 if data.den_flag
     y = y./sum(y(:));

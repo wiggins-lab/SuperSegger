@@ -39,7 +39,7 @@ if shouldLoadNeighborFrames(FLAGS)
     if nn > 1
         data_r = loaderInternal([dirname,contents(nn-1).name], clist);
     end
-    if nn < num_im-1
+    if nn < num_im
         data_f = loaderInternal([dirname,contents(nn+1).name], clist);
     end
 end
@@ -48,7 +48,8 @@ end
 function value = shouldLoadNeighborFrames(FLAGS)
 % shouldLoadNeighborFrames : checks if reverse and forward frame should be
 % loaded.
-value = FLAGS.m_flag == 1 || FLAGS.showLinks == 1;
+value = (FLAGS.m_flag == 1 || FLAGS.showLinks == 1) || ...
+    (isfield(FLAGS,'edit_links') && FLAGS.edit_links == 1);
 end
 
 function data = loaderInternal(filename, clist)

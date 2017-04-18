@@ -24,6 +24,10 @@ function FLAGS = fixFlags(FLAGS)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+% displays legend for regions/ poles
+if ~isfield(FLAGS,'edit_links')
+    FLAGS.edit_links = 0;
+end
 
 % displays legend for regions/ poles
 if ~isfield(FLAGS,'legend')

@@ -1527,3 +1527,15 @@ try
 catch
     disp('Error saving.' );
 end
+
+% --- Executes on button press in edit_links.
+function edit_links_Callback(hObject, eventdata, handles)
+choice = questdlg('Are you sure you want to edit the links?', 'Edit links?', 'Yes', 'No', 'No');
+if strcmp(choice, 'Yes')
+    setappdata(0, 'CONST', handles.CONST);
+    setappdata(0, 'dirname_xy', [handles.dirname0,handles.contents_xy(handles.dirnum).name,filesep]);
+    setappdata(0, 'dirname_seg', handles.dirname_seg);
+    setappdata(0, 'dirname_cell', handles.dirname_cell);
+    setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
+    editLinks();
+end

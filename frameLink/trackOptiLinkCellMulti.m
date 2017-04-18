@@ -27,10 +27,6 @@ function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,star
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-USE_NEW_ERROR_REZ = 0;
-USE_LARGE_REGION_SPLITTING = 0;
-
-
 if(nargin<1 || isempty(dirname))
     dirname=uigetdir();
 end
@@ -46,6 +42,15 @@ if ~exist('clean_flag','var') || isempty( clean_flag );
 end
 
 
+manualLink = 0;
+if ~exist('manualLink','var') || isempty( manualLink );
+    manualLink = 0;
+end
+if manualLink == 1
+    clean_flag = 0;
+    startFrom = 0;
+end
+    
 if ~exist('header','var')
     header = [];
 end
@@ -74,24 +79,26 @@ end
 
 cell_count = 0;
 time = 1;
-restartFlag = 0;
 
-if clean_flag
+if startFrom == -1
+    % this is the re-link flag - don't delete any err files!
+elseif clean_flag || startFrom == 0
+    % deletes all err files and starts from 0
     if numel(contents) ~=0
         delete([dirname,'*err.mat'])
     end
 elseif startFrom~=0 && numel(contents2)>startFrom
+    % starts from startFrom frame, and deletes extra err frame files
     time = startFrom;
     dataLast = load([dirname,contents2(time).name]);
     cell_count = max(dataLast.regs.ID);
-    restartFlag = 1;
     for xx = startFrom:numel(contents2)
         delete([dirname,contents2(xx).name])
     end
     disp (['starting from time : ', num2str(time)]);
 elseif ~isempty(contents2)
+    % continues from wherever it stopped if startFrom is 0
     time = numel(contents2);
-    restartFlag = 1;
     if time > 1
         disp (['continuing from where I stopped - time : ', num2str(time)]);
         dataLast = load([dirname,contents2(end-1).name]);
@@ -100,8 +107,7 @@ elseif ~isempty(contents2)
 end
 
 
-ignoreError = 0;
-ignoreAreaError = restartFlag; %Don't split big regions on restart (already done)
+finalIteration = 0;
 maxIterPerFrame = 3;
 curIter = 1;
 
@@ -144,27 +150,28 @@ while time <= numIm
     
     
     if ~isempty(data_r)
-        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f,data_r.regs.revmap.f] = assignmentFun (data_r, data_c,CONST,1,0);
+        [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,...
+            data_r.regs.idsC.f,data_r.regs.idsF.f,data_r.regs.dA.f,...
+            data_r.regs.revmap.f] = assignmentFun (data_r, data_c,CONST,1,0);
     end
-    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.r,data_c.regs.error.r,data_c.regs.cost.r,...
+        data_c.regs.idsC.r,data_c.regs.idsR.r,data_c.regs.dA.r,...
+        data_c.regs.revmap.r]  = assignmentFun (data_c, data_r,CONST,0,0);
+    [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,...
+        data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,...
+        data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
     
-    %Split any regions that have too much growth
-    resetRegions = 1;
-    madeChanges = 0;
-    
-    if ~madeChanges
-        [data_c.regs.map.f,data_c.regs.error.f,data_c.regs.cost.f,data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
-        
-        % error resolution for each frame up to maxIterPerFrame
-        if curIter >= maxIterPerFrame
-            ignoreError = 1;
-        end
-
-
-        % error resolution and id assignment
-        [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, data_r, data_f, CONST, cell_count,header, ignoreError, debug_flag);       
-        curIter = curIter + 1;
+    % error resolution for each frame up to maxIterPerFrame
+    if curIter >= maxIterPerFrame
+        finalIteration = 1;
     end
+    
+
+    % error resolution and id assignment
+    [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, ...
+        data_r, data_f, CONST, cell_count,header, finalIteration, debug_flag);
+    curIter = curIter + 1;
+    
     
     if resetRegions
         if verbose
@@ -174,7 +181,7 @@ while time <= numIm
         data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
     else
         time = time + 1;
-        ignoreError = 0;
+        finalIteration = 0;
         curIter = 1;
     end
     
