@@ -11,6 +11,7 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 %   CONST : segmentation parameters.
 %   cell_count : last cell id used.
 %   header : last cell id used.
+%   ignoreError : when set to true, no cells are merged or divided.
 %   debug_flag : 1 to display figures for debugging
 %
 % OUTPUT :
@@ -280,9 +281,9 @@ for regNum =  1 : data_c.regs.num_regs;
                 if ~ignoreError
                     [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
                     modRegions = [modRegions;col(cCellsFromR)];
-%                 else
-%                     [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-%                     modRegions = [modRegions;col(modids_tmp)];
+                else
+                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+                    modRegions = [modRegions;col(modids_tmp)];
                 end
                 resetRegions = or(reset_tmp,resetRegions);
             elseif ~isempty(data_f) && (someMatchToSame)
