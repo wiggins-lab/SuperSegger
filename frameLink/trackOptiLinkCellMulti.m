@@ -55,8 +55,6 @@ if ~exist('startFrom','var') || isempty(startFrom)
     startFrom = 0;
 end
 
-
-
 verbose = CONST.parallel.verbose;
 assignmentFun = CONST.trackOpti.linkFun;
 

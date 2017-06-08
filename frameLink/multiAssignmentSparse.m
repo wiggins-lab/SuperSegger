@@ -65,8 +65,6 @@ end
 maxDA = max(sign * DA_MIN,sign * DA_MAX);
 minDA = min(sign * DA_MIN,sign * DA_MAX);
 
-
-
 revAssign = [];
 assignments = [];
 errorR = [];
