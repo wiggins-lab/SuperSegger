@@ -11,6 +11,7 @@ function [data_c, data_r, cell_count,resetRegions] =  errorRez (time, ...
 %   CONST : segmentation parameters.
 %   cell_count : last cell id used.
 %   header : last cell id used.
+%   ignoreError : when set to true, no cells are merged or divided.
 %   debug_flag : 1 to display figures for debugging
 %
 % OUTPUT :
@@ -280,9 +281,9 @@ for regNum =  1 : data_c.regs.num_regs;
                 if ~ignoreError
                     [data_c,reset_tmp] = merge2Regions (data_c, cCellsFromR, CONST);
                     modRegions = [modRegions;col(cCellsFromR)];
-%                 else
-%                     [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
-%                     modRegions = [modRegions;col(modids_tmp)];
+                else
+                    [data_c,data_r,cell_count,reset_tmp,modids_tmp] = mapBestOfTwo (data_c, cCellsTransp, data_r, rCellsFromC, time, verbose, cell_count,header,data_f);
+                    modRegions = [modRegions;col(modids_tmp)];
                 end
                 resetRegions = or(reset_tmp,resetRegions);
             elseif ~isempty(data_f) && (someMatchToSame)
@@ -422,7 +423,8 @@ end
 
 function [data_c,data_r,cell_count,resetRegions,idsOfModRegions] = mapBestOfTwo ...
     (data_c, mapRC, data_r, mapCR, time, verbose, cell_count,header,data_f)
-% maps to best from two forward
+% Cell in reverse is mapped to the best of the cells in current. The other 
+% cells are made into new cells.
 global regToDelete
 global REMOVE_STRAY
 resetRegions = 0;
@@ -445,11 +447,13 @@ if REMOVE_STRAY && ~isempty(data_f) && hasNoFwMapping(data_c,remove)
     regToDelete = [regToDelete;remove];
     resetRegions = true;
 else
-    [data_c,cell_count] = createNewCell (data_c, remove, time, cell_count);
-    data_c.regs.error.label{remove} = (['Frame: ', num2str(time),...
-        ', reg: ', num2str(remove),' was not the best match for ', num2str(mapCR),' made into a new cell.']);
-    if verbose
-        disp([header, 'ErRes: ', data_c.regs.error.label{remove}] );
+    for i = 1 : numel(remove)
+        [data_c,cell_count] = createNewCell (data_c, remove(i), time, cell_count);
+        data_c.regs.error.label{remove(i)} = (['Frame: ', num2str(time),...
+            ', reg: ', num2str(remove(i)),' was not the best match for ', num2str(mapCR),'. Converted into a new cell.']);
+        if verbose
+            disp([header, 'ErRes: ', data_c.regs.error.label{remove(i)}] );
+        end
     end
 end
 end

@@ -16,7 +16,7 @@ function [assignments,errorR,totCost,indexC,indexF,dA,revAssign]  = multiAssignm
 %    debug_flag : 1 to display assignment result.
 %
 % OUTPUT :
-%   assignments : cell matrix. cell of region c is assigned id of region f 
+%   assignments : cell matrix. cell of region c is assigned id of region f
 %   errorR : matrix with 2 (DA<MIN) or 3(DA>MAX) if error, 0 if no error
 %   totCost : cost matrix
 %   indexC : region ids in data_c for cost matrix
@@ -64,8 +64,6 @@ end
 
 maxDA = max(sign * DA_MIN,sign * DA_MAX);
 minDA = min(sign * DA_MIN,sign * DA_MAX);
-
-
 
 revAssign = [];
 assignments = [];
@@ -144,7 +142,7 @@ if ~isempty(data_c)
         for ii = 1:size(allC,2) % loop through the regions
             % ind : list of regions that overlap with region ii in data 1
             
-         
+            
             % if it already has a good mapping don't bother..
             cRegs = allC(:,ii);
             isSingleRegC = sum(isnan(cRegs)); % has a nan
@@ -252,7 +250,7 @@ if ~isempty(data_c)
                                 
                                 indexC(:,counter) = cRegs;
                                 indexF(:,counter) = sis;
-                                                                
+                                
                                 % combined masks, areas, centroids
                                 [maskF,areaF,centroidF] = regProperties (data_f,sis,BB_c_xx,BB_c_yy);
                                 overlapMask = maskF(maskC);
@@ -315,8 +313,8 @@ if ~isempty(data_c)
         totCost = totCost(1:counter-1);
         indexC = indexC(:,1:counter-1);
         indexF = indexF(:,1:counter-1);
-                
-        costMat= totCost;        
+        
+        costMat= totCost;
         flagger = ~isnan(costMat);
         
         while any( flagger(:)) >0
@@ -324,7 +322,7 @@ if ~isempty(data_c)
             [~,ind] = min(costMat(:));
             assignTemp = indexF(:,ind)';
             assignTemp = assignTemp (~isnan(assignTemp));
-            regionsInC = indexC (:,ind);            
+            regionsInC = indexC (:,ind);
             assignments {regionsInC(1)} = assignTemp;
             if ~isnan(regionsInC(2))
                 assignments {regionsInC(2)} = assignTemp;
@@ -338,7 +336,7 @@ if ~isempty(data_c)
             costMat (colToDelC) = NaN; % add nans to already assigned
             costMat (colToDelF) = NaN; % add nans to already assigned
             flagger(colToDelC) = 0;
-            flagger(colToDelF) = 0;            
+            flagger(colToDelF) = 0;
         end
         
         % assign the manual assignments
@@ -351,7 +349,7 @@ if ~isempty(data_c)
         
         cArea = [data_c.regs.props.Area];
         fArea = [data_f.regs.props.Area];
-       
+        
         % attempt to fix assignment error for cells left without assignment
         [assignments,revAssign] = fixProblems(assignments,revAssign, overlapCost, indexF,indexC, cArea, fArea);
         [revAssign,assignments] = fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);        
@@ -367,10 +365,6 @@ if ~isempty(data_c)
         
     end
 end
-
-
-
-
 
     function [assignments, revAssign] = fixProblems (assignments, revAssign, ...
             totCost, indexF, indexC, cArea, fArea)
@@ -484,33 +478,30 @@ end
         leftInF = find(cellfun('isempty',revAssign));
         
         for kk = 1 : numel(leftInC)
-            currentCreg = leftInC(kk);
-            
+            currentCreg = leftInC(kk);            
             bestF = findBestSingleAssign (currentCreg, totCost, indexC, indexF);
-            if ~isempty(bestF)
-       
-            for badC = 1 : numel(assignments)
-                tempAss = assignments{badC};
-                if ~isempty(tempAss) && any(tempAss ==bestF)
-                    break
+            if ~isempty(bestF) && ~isnan(bestF)                
+                for badC = 1 : numel(assignments)
+                    tempAss = assignments{badC};
+                    if ~isempty(tempAss) && any(tempAss ==bestF)
+                        break
+                    end
                 end
-            end
-            
-            flaggerC = (indexC(1,:) == badC) & (isnan(indexC(2,:)));
-            flaggerF = (indexF(1,:) == bestF) & (isnan(indexF(2,:)));
-            totCostTemp = totCost;
-            totCostTemp (~flaggerC) = NaN;
-            totCostTemp(flaggerF) = NaN;
-            [~,ind] = min(totCostTemp);
-            badCSecondF = indexF(:,ind);
-            
-            if ~isempty(badCSecondF) && isnan(badCSecondF(2)) &&  any(leftInF == badCSecondF(1))
-               % disp (['Exchanging assignment for ', num2str(badC), '  and  ', num2str(currentCreg),  ' ', num2str(bestF)]);
-                assignments{badC} = badCSecondF(1);
-                revAssign{badCSecondF(1)} = badC;
-                revAssign{bestF} = currentCreg;
-                assignments{currentCreg} = bestF;
-            end
+                
+                flaggerC = (indexC(1,:) == badC) & (isnan(indexC(2,:)));
+                flaggerF = (indexF(1,:) == bestF) & (isnan(indexF(2,:)));
+                totCostTemp = totCost;
+                totCostTemp (~flaggerC) = NaN;
+                totCostTemp(flaggerF) = NaN;
+                [~,ind] = min(totCostTemp);
+                badCSecondF = indexF(:,ind);
+                
+                if ~isempty(badCSecondF) && isnan(badCSecondF(2)) &&  any(leftInF == badCSecondF(1))
+                    assignments{badC} = badCSecondF(1);
+                    revAssign{badCSecondF(1)} = badC;
+                    revAssign{bestF} = currentCreg;
+                    assignments{currentCreg} = bestF;
+                end
             end
         end
     end
@@ -608,26 +599,6 @@ comboCentroid = comboCentroid/numel(regNums); % mean centroid
 comboMask = (comboMask>0);
 
 end
-
-
-%         [~,minIndxC] = min(totCost,[],1);
-%         % check if it can be added to an assignment?
-%         for kk = 1 : numel(leftInF)
-%             fToAssign = leftInF(kk);
-%             bestAssgn = minIndxC(fToAssign);
-%             fAlready = assignments{bestAssgn};
-%             tempAssgn = [fAlready,fToAssign];
-%             areaF = data_f.regs.props(fAlready).Area + data_f.regs.props(fToAssign).Area;
-%             areaC = data_c.regs.props(bestAssgn).Area;
-%             dAtmp = (areaF - areaC)/(areaC);
-%
-%             if  setError(dA(bestAssgn),minDA,maxDA) > 0 && ...
-%                  ~setError(dAtmp,minDA,maxDA)
-%                 assignments{bestAssgn} = tempAssgn;
-%             end
-%         end
-
-
 
 function visualizeLinking(data_c,data_f,assignments)
 figure(1)

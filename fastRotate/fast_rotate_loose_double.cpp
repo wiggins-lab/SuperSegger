@@ -18,7 +18,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nrhs != 2) mexErrMsgTxt("Usage : fast_rotate(image,ang)");
     float angle = (float)mxGetScalar(prhs[1]);
-    const int *dims = mxGetDimensions(prhs[0]);
+    const int *dims = mxGetDimensions_700(prhs[0]);
     int width = dims[0];
     int height = dims[1];
     const int num_of_dims=mxGetNumberOfDimensions(prhs[0]);
@@ -47,7 +47,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             WIDTH = 2*DW2+1, HEIGHT = 2*DH2+1,
             DIMS[2] = { WIDTH, HEIGHT };
             
-            plhs[0] = mxCreateNumericArray(num_of_dims, DIMS, mxDOUBLE_CLASS, mxREAL);
+            plhs[0] = mxCreateNumericArray_700(num_of_dims, DIMS, mxDOUBLE_CLASS, mxREAL);
             
             source=(unsigned char *)mxGetData(prhs[0]);
             dest=(double *)mxGetData(plhs[0]);

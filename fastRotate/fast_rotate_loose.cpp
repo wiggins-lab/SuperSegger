@@ -19,7 +19,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const int *dims = mxGetDimensions(prhs[0]);
     int width = dims[0];
     int height = dims[1];
-    const int num_of_dims=mxGetNumberOfDimensions(prhs[0]);
+    const int num_of_dims=mxGetNumberOfDimensions_700(prhs[0]);
     int dim	= 1; // Number of colors (default - gray scale)
     if(num_of_dims==3) dim=dims[2];
     
@@ -45,7 +45,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             WIDTH = 2*DW2+1, HEIGHT = 2*DH2+1,
             DIMS[2] = { WIDTH, HEIGHT };
             
-            plhs[0] = mxCreateNumericArray(num_of_dims, DIMS, mxUINT8_CLASS, mxREAL);
+            plhs[0] = mxCreateNumericArray_700(num_of_dims, DIMS, mxUINT8_CLASS, mxREAL);
             
             source=(unsigned char *)mxGetData(prhs[0]);
             dest=(unsigned char *)mxGetData(plhs[0]);
