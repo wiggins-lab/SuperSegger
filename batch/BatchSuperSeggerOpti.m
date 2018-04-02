@@ -100,9 +100,9 @@ end
 
 
 if clean_flag && showWarnings
+    disp ('Clean flag is set to true. Do you want to continue, Y/N [Y]:')
     try
-        disp ('Clean flag is set to true.')
-        answer=input('Do you want to continue, Y/N [Y]:','s');
+        answer=input('','s');
         if lower(answer) ~='y'
             disp ('Exiting BatchSuperSegger. Reset clean flag and rerun');
             return
@@ -112,12 +112,12 @@ if clean_flag && showWarnings
     end
 end
 
-if startEnd(1) >1 
+if startEnd(1) >1
     CONST.align.ALIGN_FLAG = 0;
 end
 
 % align frames
-if exist( dirname_, 'dir' )    
+if exist( dirname_, 'dir' )
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
             (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
             exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))

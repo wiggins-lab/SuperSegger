@@ -1,4 +1,5 @@
-function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,debug_flag,startFrom)
+function trackOptiLinkCellMulti (dirname,clean_flag,CONST,header,...
+    debug_flag,startFrom)
 % trackOptiLinkCellMulti : links the cells frame-to-frame and resolves errors.
 %
 % INPUT :
@@ -50,7 +51,7 @@ if manualLink == 1
     clean_flag = 0;
     startFrom = 0;
 end
-    
+
 if ~exist('header','var')
     header = [];
 end
@@ -132,7 +133,7 @@ while time <= numIm
     if (time == numIm)
         data_f = [];
     else
-        datafName = [dirname,contents(time+1).name];  
+        datafName = [dirname,contents(time+1).name];
         data_f = intDataLoader (datafName);
         data_f = updateRegionFields (data_f,CONST);  % make regions
     end
@@ -141,7 +142,7 @@ while time <= numIm
     data_c = intDataLoader (datacName);
     data_c = updateRegionFields (data_c,CONST);  % make regions
     lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
-        
+    
     if verbose
         disp (['Linking for frame ', num2str(time)])
     end
@@ -164,7 +165,7 @@ while time <= numIm
         finalIteration = 1;
     end
     
-
+    
     % error resolution and id assignment
     [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, ...
         data_r, data_f, CONST, cell_count,header, finalIteration, debug_flag);
@@ -176,7 +177,8 @@ while time <= numIm
             disp (['Frame ', num2str(time), ' : segments were reset to resolve error, repeating frame.']);
         end
         cell_count = lastCellCount;
-        data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
+        %data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
+        data_c = updateRegionFields (data_c,CONST);    % make regions
     else
         time = time + 1;
         finalIteration = 0;
@@ -196,7 +198,7 @@ end
 
     function data = intDataLoader (dataName)
         % intDataLoader : loads the data files.
-        % It first tries to load the file with extension filt2, if not 
+        % It first tries to load the file with extension filt2, if not
         % found it loads the given dataName. Returns empty if neither is found
         
         dataNameMod = [dataName(1:end-7),filt2];

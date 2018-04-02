@@ -191,8 +191,7 @@ else
     
     
     if numel(direct_contents_err) == 0 &&  numel(direct_contents_seg) == 0   % no images found abort.
-        cla(handles.axes1)
-        
+        cla(handles.axes1)        
         if numel(dir([dirname, '*.tif'])) > 0
             handles.message.String = ['Directory does not contain segmented data. Please use superSeggerGui to segment your data.'];
         else
@@ -423,7 +422,7 @@ guidata(hObject, handles);
 
 function save_figure_ClickedCallback(hObject, eventdata, handles)
 [filename, pathName] = uiputfile('image.fig', 'Save current image', handles.dirSave);
-if ~isempty(strfind(filename, '.'))
+if contains(filename, '.')
     filename = filename(1:(max(strfind(filename, '.')) - 1));
 end
 if filename ~= 0
@@ -950,26 +949,12 @@ elseif ~isfield(settings.handles,'data_c')
 else
     data = settings.handles.data_c;
     if ~isfield(data,'regs')
-        data = intMakeRegs( data, settings.handles.CONST, [], [] );
+        data = intMakeRegs(data, settings.handles.CONST, [], []);
     end
-    ss = size(data.phase);
-    tmp = zeros([51,51]);
-    tmp(26,26) = 1;
-    tmp = 8000-double(bwdist(tmp));
-    rmin = max([1,point(2)-25]);
-    rmax = min([ss(1),point(2)+25]);
-    cmin = max([1,point(1)-25]);
-    cmax = min([ss(2),point(1)+25]);
-    rrind = rmin:rmax;
-    ccind = cmin:cmax;
-    pointSize = [numel(rrind),numel(ccind)];
-    tmp = tmp(26-point(2)+rrind,26-point(1)+ccind).*data.mask_cell(rrind,ccind);
-    [~,ind] = max( tmp(:) );
-    [sub1, sub2] = ind2sub( pointSize, ind );
-    ii = data.regs.regs_label(sub1-1+rmin,sub2-1+cmin);
+    [ii,x_point,y_point] = getClosestCellToPoint(data,point);
     hold on;
-    plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
-    if ii ~=0
+    plot(x_point, y_point, 'o', 'MarkerFaceColor', 'g' );
+    if ii ~= 0
         if strcmp(settings.function, 'exclude')
             settings.id_list(end+1) = data.regs.ID(ii);
             settings.handles.exclude_ids.String = num2str(settings.id_list);
@@ -979,10 +964,8 @@ else
         else
             disp(['ID : ', num2str(data.regs.ID(ii))]);
             disp(['Area : ', num2str(data.regs.props(ii).Area)]);
-            
-            
+                     
             if isfield(data,'CellA')
-                fieldsCellA = fieldnames(data.CellA{ii});
                 disp(['Pole orientation : ', num2str(data.CellA{ii}.pole.op_ori)]);
                 disp(['BoundingBox : ', num2str(data.CellA{ii}.BB)]);
                 disp(['Axis Lengths : ', num2str(data.CellA{ii}.length)]);
@@ -990,9 +973,8 @@ else
                 disp(['Mean Width : ', num2str(data.CellA{ii}.cellLength(2))]);
                 disp(['Cell distance : ', num2str(data.CellA{ii}.cell_dist)]);
                 disp(['Cell Old Pole Age : ', num2str( data.CellA{ii}.pole.op_age)]);
-                disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);
-                
-                for (u = 1 : settings.handles.num_fluor)
+                disp(['Cell New Pole Age : ', num2str(data.CellA{ii}.pole.np_age)]);              
+                for u = 1 : settings.handles.num_fluor
                     if isfield(data.CellA{ii},['fl',num2str(u)])
                         fluor_name = ['fl',num2str(u)];
                         fluor_field = data.CellA{ii}.(fluor_name);
@@ -1000,10 +982,9 @@ else
                         disp(fluor_field);
                     end
                 end
-            end
-           
+            end         
             updateImage(settings.hObject, settings.handles);
-            plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
+            plot(x_point, y_point, 'o', 'MarkerFaceColor', 'g' );
             cell_info_Callback(settings.hObject, settings.eventdata, settings.handles);
         end
     end
@@ -1179,7 +1160,7 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
             errordlg('No clist found');
         else
             min_width = 3;
-            ids = str2num(handles.cell_no.String);
+            ids = str2double(handles.cell_no.String);
             if isnan(ids)
                 ids = [];
             end
@@ -1266,7 +1247,7 @@ function makeCellKymo(handles)
 if ~areCellsLoaded(handles)
     errordlg('No cell files found');
 else
-    c = str2num(handles.cell_no.String);
+    c = str2double(handles.cell_no.String);
     if numel(c) > 1
         c = c(1);
     end
@@ -1291,7 +1272,7 @@ function intMakeCellMovie(handles)
 if ~areCellsLoaded(handles)
     errordlg('No cell files found');
 else
-    c = str2num(handles.cell_no.String);
+    c = str2double(handles.cell_no.String);
     if numel(c) > 1
         c = c(1);
     end
@@ -1320,12 +1301,12 @@ else
 end
 
 
-function hanldes = makeCellTower( handles)
+function handles = makeCellTower( handles)
 if ~areCellsLoaded(handles)
     errordlg('No cell files found');
 else
     if ~isempty(handles.FLAGS)
-        c = str2num(handles.cell_no.String);
+        c = str2double(handles.cell_no.String);
         if numel(c) > 1
             c = c(1);
         end
@@ -1397,7 +1378,7 @@ if ~isempty(handles.FLAGS)
     [startFr,endFr,skip] = dialogBoxStartEndSkip (handles);
     if ~isempty(startFr)
         counter = 0;
-        time = round(startFr:skip: endFr);
+        time = round(startFr:skip:endFr);
         for ii = time
             delete(get(handles.axes1, 'Children'));
             counter = counter  + 1;

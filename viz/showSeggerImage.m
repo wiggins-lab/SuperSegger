@@ -67,13 +67,13 @@ end
 FLAGS = intFixFlags( FLAGS );
 
 % if there is a clist enables look only cells included in the clist
-if exist('clist','var') && ~isempty( clist );
-    clist = gate( clist );
+if exist('clist','var') && ~isempty(clist)
+    clist = gate(clist);
     ID_LIST = clist.data(:,1);
     ID_LIST = ID_LIST(logical(ID_LIST));
 else
     clist = [];
-    if isfield(data, 'regs') && isfield( data.regs, 'ID' );
+    if isfield(data, 'regs') && isfield( data.regs, 'ID' )
         ID_LIST = data.regs.ID;
     else
         ID_LIST = [];
@@ -184,8 +184,7 @@ end
     end
 
 
-    function doFrameMerge( x_, y_ )
-        
+    function doFrameMerge( x_, y_ )   
         if ~isempty( data )
             for kk = 1:data.regs.num_regs
                 rr3 = [x_,y_ ];
@@ -195,24 +194,24 @@ end
                     if isfield(data.regs,'ID') && data.regs.ID(kk)
                         ID  = data.regs.ID(kk);
                         if ~isempty(data_r) && isfield(data_r.regs,'ID')
-                            ind_r = find(ID == data_r.ID);
-                            if ~isempty( ind_r );
-                                rr_r = data_r.props(ind_r).Centroid ;
+                            ind_r = find(ID == data_r.regs.ID);
+                            if ~isempty( ind_r )
+                                rr_r = data_r.regs.props(ind_r).Centroid ;
                                 plot( [rr_c(1),rr_r(1)]+rr3(1), [rr_c(2),rr_r(2)]+rr3(2), 'r');
                             end
                         end
                         
                         if ~isempty(data_f) && isfield(data_f.regs,'ID')
-                            ind_f = find(ID == data_f.ID);
-                            if ~isempty( ind_f );
-                                rr_f = data_f.props(ind_f).Centroid ;
+                            ind_f = find(ID == data_f.regs.ID);
+                            if ~isempty( ind_f )
+                                rr_f = data_f.regs.props(ind_f).Centroid ;
                                 plot( [rr_c(1),rr_f(1)]+rr3(1), [rr_c(2),rr_f(2)]+rr3(2), 'b');
                             end
                         end
                     end
                     
                 catch ME
-                    printEroor(ME);
+                    printError(ME);
                 end
             end
             
@@ -268,7 +267,6 @@ end
 % if you are in fluorescence mode (f_flag) draw the fluor channels
 if FLAGS.composite
     nc = numel(find(~cellfun('isempty',strfind(fieldnames(data),'fluor'))));
-    
     for i = 1 : nc
         im = updateFluorImage(data, im, i, FLAGS, CONST);
     end
@@ -277,7 +275,9 @@ elseif FLAGS.f_flag > 0
     im = updateFluorImage(data, im, FLAGS.f_flag, FLAGS, CONST);
 end
 
-if FLAGS.Outline_flag  % it just outlines the cells
+if FLAGS.colored_regions
+    im = label2rgb (data.regs.regs_label, 'lines', 'k');
+elseif FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
         im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
     elseif isfield(data,'outline')
@@ -285,18 +285,20 @@ if FLAGS.Outline_flag  % it just outlines the cells
     elseif isfield(data,'mask_cell')% no outline field (not loaded through super segger viewer)
         data.outline = xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
         im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
-    end
-    
-elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
-    
-    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files
-        
+    end   
+elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.  
+    %% colors :
+    % baby-blue : no errors, stat0=2 cells
+    % tirquaz :  stat0 = 1 cells
+    % deep green : stat0 = 0 cells
+    % pink : has error in reverse frame
+    % purple : has error in forward frame
+    % red outlines : dividing or has just divided
+    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files        
         blueChannel = 0.3*(data.mask_cell);
         reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
         im = reg_color + im;
-        
-    else
-        
+    else        
         if isfield( data.regs, 'ignoreError' )
             ignoreErrorV = data.regs.ignoreError;
         else
@@ -352,9 +354,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             % outline the ones that were just born with stat0 == 1
             map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
             map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
-            
-            
-            
+                    
             redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
             greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
             blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
@@ -364,23 +364,12 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             im = reg_color + im;
         end
     end
-    %% colors :
-    % baby-blue : no errors, stat0=2 cells
-    % tirquaz :  stat0 = 1 cells
-    % deep green : stat0 = 0 cells
-    % pink : has error in reverse frame
-    % purple : has error in forward frame
-    % red outlines : dividing or has just divided
-    
 end
 
 end
 
 
 function im = updateFluorImage(data, im, channel, FLAGS, CONST)
-
-fluorName =  ['fluor',num2str(channel)];
-
 fluorName =  ['fluor',num2str(channel)];
 flbgName =  ['fl',num2str(channel),'bg'];
 if isfield(data, fluorName )
@@ -426,12 +415,10 @@ end
 
 
 function intPlotScores( data, x_, y_ , FLAGS )
-% intPlotNum : Plot cell number or region numbers
-
+% intPlotScores : Plot region scores
 counter = 200; % max amount of cell numbers to be plotted
 kk = 0; % counter for regions
 while (counter > 0 && kk < data.regs.num_regs)
-    % disp(counter)
     kk = kk + 1;
     rr = data.regs.props(kk).Centroid;
     
@@ -442,7 +429,6 @@ while (counter > 0 && kk < data.regs.num_regs)
     end
     
     score = 1 - (data.regs.scoreRaw(kk) + 50) / 100;
-    
     colorMap = spring(256);
     colorIndex = floor(min(score, 1) * 255) + 1;
     
@@ -490,19 +476,19 @@ while (counter > 0 && kk < data.regs.num_regs)
         setRed = true;
     end
     
-    xpos = rr(1)+x_;
-    ypos = rr(2)+y_;
+    xpos = rr(1)+x_+1;
+    ypos = rr(2)+y_+1;
     
     if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
-        
+            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)       
         counter = counter - 1;
         xpos_id = [xpos_id;xpos];
-        ypos_id = [ypos_id;ypos];
-        
-        if FLAGS.edit_links == 1 || FLAGS.cell_flag == 0 || ~isfield( data.regs, 'ID' )
+        ypos_id = [ypos_id;ypos];     
+        if FLAGS.cell_flag == 0 || ~isfield( data.regs, 'ID' )
+            % plotting region numbers
             id_txt = num2str(kk);
         else
+            % plotting cell numbers
             id_txt = num2str(data.regs.ID(kk));
         end
         
@@ -516,18 +502,10 @@ while (counter > 0 && kk < data.regs.num_regs)
 end
 
 
-if FLAGS.edit_links 
-     hhh = title('Region Number');
-    set(hhh, 'Color', [0,0,0] );
-    text( xpos_id-2, ypos_id-2,str_id,...
-        'color','w',...
-        'HorizontalAlignment','Center',...
-        'VerticalAlignment','Middle',...
-        'FontSize', 8);
-elseif FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' ) 
+if FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
     hhh = title('Cell ID');
     set(hhh, 'Color', [0,0,0] );
-    text( xpos_id, ypos_id,str_id,...
+    text(xpos_id, ypos_id, str_id,...
         'color','w',...
         'FontWeight', 'Bold',...
         'HorizontalAlignment','Center',...
@@ -536,7 +514,7 @@ elseif FLAGS.cell_flag == 1 && isfield( data.regs, 'ID' )
 else
     hhh = title('Region Number');
     set(hhh, 'Color', [0,0,0] );
-    text( xpos_id, ypos_id,str_id,...
+    text(xpos_id, ypos_id, str_id,...
         'color','w',...
         'HorizontalAlignment','Center',...
         'VerticalAlignment','Middle',...
@@ -574,7 +552,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && isfield(data.CellA{1},l
                     r = locus_field(mm).r;
                     text_ = [num2str(locus_field(mm).score, '%0.1f')];
                     
-                    if isfield (locus_field(mm),'score') && locus_field(mm).score > 1;%min_score
+                    if isfield (locus_field(mm),'score') && locus_field(mm).score > 1 %min_score
                         xpos = r(1)+x_;
                         ypos = r(2)+y_;
                         if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
@@ -605,7 +583,7 @@ if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && isfield(data.CellA{1},l
 end
 end
 
-function intPlotLinks( data, data_r, data_f, x_, y_, FLAGS, ID_LIST, CONST )
+function intPlotLinks( data, data_r, data_f, x_, y_, FLAGS, ID_LIST, ~ )
 % intPlotLinks : plots the links to the next and previous frames
 
 dataHasIds = isfield( data, 'regs' ) && isfield( data.regs,'ID' );
@@ -802,19 +780,15 @@ function [xx,yy] = intGetImSize( data, FLAGS )
 % intGetImSize : gets size of regions labels  and fills up xx and yy
 % from 1 to the size of the image.
 
-
 if isfield( data, 'regs' )
     ss = size(data.regs.regs_label);
-    
     if FLAGS.T_flag % tight flag
         tmp_props = regionprops( data.regs.regs_label, 'BoundingBox' );
         pad = 10;
-        
         yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
         yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
         xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
-        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
-        
+        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;        
         num_segs = max(data.regs.regs_label(:));
         
         for ii = 2:num_segs
@@ -849,108 +823,113 @@ function FLAGS = intFixFlags( FLAGS )
 % m_flag
 % c_flag
 
-if ~isfield(FLAGS, 'legend');
-    disp('there is no flag field legend');
+if ~isfield(FLAGS, 'legend')
+    disp('there is no flag legend');
     FLAGS.legend = 1;
 end
 
-if ~isfield(FLAGS, 'Outline_flag');
-    disp('there is no flag field Outline_flag');
+if ~isfield(FLAGS, 'Outline_flag')
+    disp('there is no flag Outline_flag');
     FLAGS.Outline_flag = 0;
 end
-if ~isfield(FLAGS, 'ID_flag');
-    disp('there is no flag field ID_flag');
+if ~isfield(FLAGS, 'ID_flag')
+    disp('there is no flag ID_flag');
     FLAGS.ID_flag = 1;
 end
 
-if ~isfield(FLAGS, 'lyse_flag');
-    disp('there is no flag field lyse_flag')
+if ~isfield(FLAGS, 'lyse_flag')
+    disp('there is no flag lyse_flag')
     FLAGS.lyse_flag = 0;
 end
 
-if ~isfield(FLAGS,'m_flag');
-    disp('there is no flag field m_flag')
+if ~isfield(FLAGS,'m_flag')
+    disp('there is no flag m_flag')
     FLAGS.m_flag = 0;
 end
 
-if ~isfield(FLAGS, 'c_flag');
-    disp('there is no flag field c_flag')
+if ~isfield(FLAGS, 'c_flag')
+    disp('there is no flag c_flag')
     FLAGS.c_flag = 0;
 end
 
-if ~isfield(FLAGS, 'P_flag');
-    disp('there is no flag field P_flag')
+if ~isfield(FLAGS, 'P_flag')
+    disp('there is no flag P_flag')
     FLAGS.P_flag = 1;
 end
 
 
-if ~isfield(FLAGS, 'phase_flag');
-    disp('there is no flag field P_flag')
+if ~isfield(FLAGS, 'phase_flag')
+    disp('there is no flag phase_flag')
     FLAGS.phase_flag = 1;
 end
 
-if ~isfield(FLAGS, 'phase_level');
-    disp('there is no flag field P_flag')
+if ~isfield(FLAGS, 'phase_level')
+    disp('there is no flag phase_level')
     FLAGS.phase_level = 1;
 end
 
-if ~isfield(FLAGS, 'cell_flag' );
-    disp('there is no flag field cell_flag')
+if ~isfield(FLAGS, 'cell_flag' )
+    disp('there is no flag cell_flag')
     FLAGS.cell_flag = 0;
 end
 
-if ~isfield(FLAGS, 'f_flag');
-    disp('there is no flag field f_flag')
+if ~isfield(FLAGS, 'f_flag')
+    disp('there is no flag f_flag')
     FLAGS.f_flag = 0;
 end
 
-if ~isfield(FLAGS, 's_flag');
-    disp('there is no flag field s_flag')
+if ~isfield(FLAGS, 's_flag')
+    disp('there is no flag s_flag')
     FLAGS.s_flag = 0;
 end
 
-if ~isfield(FLAGS, 'T_flag');
-    disp('there is no flag field T_flag')
+if ~isfield(FLAGS, 'T_flag')
+    disp('there is no flag T_flag')
     FLAGS.T_flag = 0;
 end
 
 if ~isfield(FLAGS, 'filt')
-    disp('there is not field filt_flag')
+    disp('there is no flag filt')
     FLAGS.filt = [0,0,0];
 end
 
-if ~isfield(FLAGS, 'p_flag');
-    disp('there is not field p_flag')
+if ~isfield(FLAGS, 'p_flag')
+    disp('there is no field p_flag')
     FLAGS.p_flag = 0;
 end
 
 if ~isfield(FLAGS,'composite')
-    disp('there is not field composite')
+    disp('there is no flag composite')
     FLAGS.composite  = 0;
 end
 
 
-if ~isfield(FLAGS, 'showLinks');
-    disp('there is not field showLinks')
+if ~isfield(FLAGS, 'showLinks')
+    disp('there is no flag showLinks')
     FLAGS.showLinks = 0;
+end
+
+if ~isfield(FLAGS, 'colored_regions')
+    disp('there is no flag colored_regions')
+    FLAGS.colored_regions = 0;
 end
 
 FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
 
 end
 
-function outline = intDoOutline( map )
+function outline = intDoOutline(map)
 persistent sqrStrel;
-if isempty( sqrStrel );
+if isempty( sqrStrel )
     sqrStrel = strel('square',3);
 end
 outline = 2*double(imdilate( map, sqrStrel ))-double(map);
 end
 
 
-function outline = intDoOutline2( map )
+function outline = intDoOutline2(map)
 persistent sqrStrel;
-if isempty( sqrStrel );
+if isempty( sqrStrel )
     sqrStrel = strel('square',3);
 end
 outline = double(imdilate( map, sqrStrel ))-double(map);

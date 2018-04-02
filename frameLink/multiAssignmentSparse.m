@@ -1,5 +1,5 @@
 function [assignments,errorR,totCost,indexC,indexF,dA,revAssign]  = multiAssignmentSparse ...
-    (data_c, data_f,CONST, forward, debug_flag)
+    (data_c, data_f, CONST, forward, debug_flag)
 % multiAssignmentSparse : assigns regions in data_c to regions in data_f.
 % Uses a combination of area overlap, centroid distance, and outward push
 % in colonies. Regions are assigned one-to-one or one-to-pair or
@@ -83,27 +83,43 @@ if ~isempty(data_c)
         data_c = updateRegionFields (data_c,CONST);
     end
     
-    % check for manually linked assignments..
-    manualFlagC = data_c.regs.ignoreError;
-    
     ss = size(data_c.phase);
     numRegs1 = data_c.regs.num_regs;
     assignments  = cell( 1, numRegs1);
     errorR = zeros(1,numRegs1);
     dA = nan*zeros(1,numRegs1);
-    
+    mapC = cell( 1, numRegs1);
     if ~isempty(data_f)
         if ~isfield(data_f,'regs')
             data_f = updateRegionFields (data_f,CONST);
         end
         
-        manualFlagF = data_f.regs.ignoreError;
-    
-        numRegs2 = data_f.regs.num_regs;
+        if ~isfield (data_c.regs, 'manual_link')
+            data_c.regs.manual_link.f = zeros(1,numel(data_c.regs.num_regs));
+        end
         regsInC = 1:data_c.regs.num_regs;
-        regsInC = regsInC(~manualFlagC);
+        
+        if forward
+            manualC = data_c.regs.manual_link.f;
+            if any(manualC)
+                mapC = data_c.regs.map.f;
+            end
+            manualF = data_f.regs.manual_link.r;
+        else
+            manualC = data_c.regs.manual_link.r;
+            if any(manualC)
+                mapC = data_c.regs.map.r;
+            end
+            manualF = data_f.regs.manual_link.f;
+        end
+        regsInC = regsInC(~manualC); % Remove manually linked regions.
+        
+        if ~isfield (data_f.regs, 'manual_link')
+            data_f.regs.manual_link = zeros(1,numel(data_f.regs.num_regs));
+        end
+        numRegs2 = data_f.regs.num_regs;
         regsInF = 1:data_f.regs.num_regs;
-        regsInF = regsInF(~manualFlagF);
+        regsInF = regsInF(~manualF);  % Remove manually linked regions.
         
         idsC(1,1:numel(regsInC)) = regsInC;
         idsC(2,1:numel(regsInC)) = NaN;
@@ -111,21 +127,18 @@ if ~isempty(data_c)
         idsF(1,1:numel(regsInF)) = regsInF;
         idsF(2,1:numel(regsInF)) = NaN;
         
-        % colony calculation
+        % Colony calculation.
         maskBgFill= imfill(data_c.mask_bg,'holes');
         colony_labels = bwlabel(maskBgFill);
         colony_props = regionprops( colony_labels,'Centroid','Area');
         
-        % find possible pairs
+        % Find possible neighboring pairs.
         [pairsF,~] = findNeighborPairs (data_f, regsInF,[]);
         allF = [idsF,pairsF];
-        
         [pairsC,neighF] = findNeighborPairs (data_c, regsInC, data_f);
         allC = [idsC,pairsC];
         
         % initialize
-        
-        
         indexC =  NaN * ones(2,size(allC,2)*10);
         indexF = indexC;
         totCost =  NaN * ones(1,size(allC,2)*10);
@@ -140,24 +153,20 @@ if ~isempty(data_c)
         counter = 1;
         
         for ii = 1:size(allC,2) % loop through the regions
-            % ind : list of regions that overlap with region ii in data 1
-            
-            
-            % if it already has a good mapping don't bother..
             cRegs = allC(:,ii);
             isSingleRegC = sum(isnan(cRegs)); % has a nan
             
-            % condition for good one to one to mapping
+            % Pair in C that one of its regions already has a good
+            % one-to-one mapping.
             alreadyFoundOneToOne = ~isSingleRegC  && (goodOneToOne(cRegs(1)) ...
                 || goodOneToOne(cRegs(2))) ;
             
-            % only check pairs if not good one-to-one mapping
-            if  ~alreadyFoundOneToOne %&& regionExists
-                
+            % Only check pairs in C if not good one-to-one mapping.
+            if  ~alreadyFoundOneToOne
                 [BB_c_xx,BB_c_yy] = getBoxLimits (data_c,cRegs);
                 [maskC,areaC,centroidC] = regProperties (data_c,cRegs,BB_c_xx,BB_c_yy);
                 
-                % colony it belongs to
+                % Find the colony it belongs to.
                 colony_labels_temp = colony_labels(BB_c_yy,BB_c_xx);
                 colOverlap = colony_labels_temp(maskC);
                 if sum(colOverlap(:)) == 0
@@ -169,21 +178,23 @@ if ~isempty(data_c)
                     distFromColn (ii) = sqrt(sum(distFromColony.^2));
                 end
                 
-                % dilate mask and get adjacent regions within dilated area
+                % Get regions in forward frame within dilated mask area.
                 nonNanCregs = cRegs(~isnan(cRegs));
-                tmpregs2 = [neighF{[nonNanCregs]}];
+                tmpregs2 = [neighF{nonNanCregs}];
                 possibleMapInd = unique(tmpregs2);
-                possibleMapInd = possibleMapInd(possibleMapInd~=0)'; % remove 0
+                % Remove regions not in regsInF (manual_links etc).
+                possibleMapInd = possibleMapInd(ismember(possibleMapInd,regsInF));
                 
                 startcounter = counter;
                 for yy = 1:numel(possibleMapInd)
-                    % one to one mapping
+                    % One to one mapping.
                     idF = possibleMapInd(yy);
                     [maskF,areaF,centroidF] = regProperties (data_f,idF,BB_c_xx,BB_c_yy);
                     indexC(:,counter) = cRegs;
                     indexF(1,counter) = idF;
                     overlapMask = maskF(maskC);
-                    areaOverlap = sum(overlapMask(:)); % area of overlap between jj and ii
+                    % Area of overlap between jj and ii.
+                    areaOverlap = sum(overlapMask(:));
                     areaOverlapCost(counter) = areaOverlap/areaC;
                     
                     if  (areaOverlapCost(counter) == 0)
@@ -199,7 +210,6 @@ if ~isempty(data_c)
                     end
                     
                     distFromColonyMat (counter) = exp(-distFromColn(ii)/outwardMotFactor);
-                    
                     areaChange(counter) = (areaF - areaC)/(areaC);
                     
                     % moved area
@@ -212,10 +222,8 @@ if ~isempty(data_c)
                     if (areaOverlapTransCost(counter) == 0)
                         areaOverlapTransCost(counter) = noOverlap;
                     end
+                    % Move the counter for every one-to-one-cell.
                     counter = counter + 1;
-                    
-                    
-                    
                 end
                 
                 if isSingleRegC && startcounter~=counter % one cell to be mapped
@@ -228,26 +236,22 @@ if ~isempty(data_c)
                     goodOneToOne(ii) = abs(areaChange(startcounter+indx-1)) < 0.15 &&...
                         areaOverlapCost(startcounter+indx-1) > 0.7 ...
                         && areaOverlapTransCost(startcounter+indx-1) > 0.8;
-                    
                 else
-                    goodOneToOne (ii) = 1; % no two to two mappings
+                    % We are mapping a pair in C, set goodOneToOne so that
+                    % we don't map two-to-two cells.
+                    goodOneToOne (ii) = 1;
                 end
                 
-                
-                % if the one to one mapping looks good don't bother with
-                % pairs - to make faster
-                
+                % Only check for pairs in F, if the one-to-one mapping was
+                % not good.
                 if ~goodOneToOne(ii)
                     for yy = 1:numel(possibleMapInd)
                         for kk = (yy+1) : numel(possibleMapInd)
-                            
                             sis(1) = possibleMapInd(yy);
                             sis(2) = possibleMapInd(kk);
-                            
                             isItPair = all(ismember(allF,[sis(1),sis(2)]));
                             if any(isItPair)
                                 % find their location
-                                
                                 indexC(:,counter) = cRegs;
                                 indexF(:,counter) = sis;
                                 
@@ -290,9 +294,7 @@ if ~isempty(data_c)
             end
         end
         
-        
         areaChangePenalty = zeros(size(areaChange,1),size(areaChange,2));
-        
         if forward
             % area decreases
             areaChangePenalty((areaChange) < -0.1) = 100;
@@ -309,16 +311,15 @@ if ~isempty(data_c)
             centroidWeight * centroidCost +  areaChangeFactor * abs(areaChange) + ...
             distFromColonyMat * areaFactor * 1./areaOverlapCost + outwardMotFactor * outwardMot ;
         
-        %nonNanCost = ~isnan(totCost);
-        totCost = totCost(1:counter-1);
-        indexC = indexC(:,1:counter-1);
-        indexF = indexF(:,1:counter-1);
+        non_nan_regions = any(~isnan(indexC));
+        totCost = totCost(non_nan_regions);
+        indexC = indexC(:,non_nan_regions);
+        indexF = indexF(:,non_nan_regions);
         
         costMat= totCost;
         flagger = ~isnan(costMat);
         
         while any( flagger(:)) >0
-            
             [~,ind] = min(costMat(:));
             assignTemp = indexF(:,ind)';
             assignTemp = assignTemp (~isnan(assignTemp));
@@ -340,9 +341,9 @@ if ~isempty(data_c)
         end
         
         % assign the manual assignments
-        manualRegsC = find(manualFlagC);
-        for yy = manualRegsC
-            assignments{yy} =  data_c.regs.map.f{yy};
+        manualRegsIdsC = find(manualC);
+        for yy = manualRegsIdsC
+            assignments{yy} =  mapC{yy};
         end
         % make list of revAssign
         revAssign = getRevAssign();
@@ -352,7 +353,7 @@ if ~isempty(data_c)
         
         % attempt to fix assignment error for cells left without assignment
         [assignments,revAssign] = fixProblems(assignments,revAssign, overlapCost, indexF,indexC, cArea, fArea);
-        [revAssign,assignments] = fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);        
+        [revAssign,assignments] = fixProblems(revAssign,assignments, overlapCost, indexC, indexF,fArea, cArea);
         [assignments,revAssign] = exchangeAssignment (assignments,revAssign, totCost, indexF, indexC);
         [revAssign,assignments] = exchangeAssignment (revAssign,assignments, totCost, indexC, indexF);
         
@@ -478,9 +479,9 @@ end
         leftInF = find(cellfun('isempty',revAssign));
         
         for kk = 1 : numel(leftInC)
-            currentCreg = leftInC(kk);            
+            currentCreg = leftInC(kk);
             bestF = findBestSingleAssign (currentCreg, totCost, indexC, indexF);
-            if ~isempty(bestF) && ~isnan(bestF)                
+            if ~isempty(bestF) && ~isnan(bestF)
                 for badC = 1 : numel(assignments)
                     tempAss = assignments{badC};
                     if ~isempty(tempAss) && any(tempAss ==bestF)
@@ -505,10 +506,6 @@ end
             end
         end
     end
-
-
-
-
 end
 
 
@@ -635,5 +632,4 @@ subplot(1,2,1)
 title('data-c')
 subplot(1,2,2)
 title('data-f')
-
 end

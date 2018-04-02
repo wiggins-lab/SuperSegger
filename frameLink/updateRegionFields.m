@@ -28,18 +28,16 @@ function data  = updateRegionFields (data,CONST)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 if ~isempty(data)
     % create regions
-    data.regs.regs_label = bwlabel( data.mask_cell );
+    data.regs.regs_label = bwlabel(data.mask_cell);
     num_regs =  max(data.regs.regs_label(:));
     
-    data.regs.num_regs =num_regs;
+    data.regs.num_regs = num_regs;
     data.regs.props = regionprops( data.regs.regs_label, ...
         'BoundingBox','Orientation','Centroid','Area');
     NUM_INFO = CONST.regionScoreFun.NUM_INFO;
     data.regs.info = zeros( data.regs.num_regs, NUM_INFO );
-    
     
     % initializing region fields
     data.regs.eccentricity = zeros(1,data.regs.num_regs);
@@ -64,17 +62,22 @@ if ~isempty(data)
     data.regs.daughterID = cell(1,data.regs.num_regs);% daughter cell ID
     data.regs.ID  = zeros(1,data.regs.num_regs); % cell ID number
     data.regs.error.label = cell(1,data.regs.num_regs);% err
-    if ~isfield (data.regs,'ignoreError')
-        data.regs.ignoreError = zeros(1,data.regs.num_regs); % a flag for ignoring the error in a region.
+    if ~isfield (data.regs,'ignoreError') || (numel (data.regs.ignoreError) ~= data.regs.num_regs)
+        % a flag for ignoring the error in a region.
+        data.regs.ignoreError = zeros(1,data.regs.num_regs);
     end
-    
+    if ~isfield (data.regs,'manual_link') ||(numel(data.regs.manual_link.f) ~= data.regs.num_regs)
+        % Notes that a region was linked manually.
+        data.regs.manual_link.f = zeros(1,data.regs.num_regs);
+        data.regs.manual_link.r = zeros(1,data.regs.num_regs);
+    end
     % go through the regions and update info,L1,L2 and scoreRaw.
     for ii = 1:data.regs.num_regs
         [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
         mask = data.regs.regs_label(yy,xx)==ii;
         data.regs.info(ii,:) = CONST.regionScoreFun.props(mask,data.regs.props(ii) );
         data.regs.L1(ii)= data.regs.info(ii,1);
-        data.regs.L2(ii)= data.regs.info(ii,2);        
+        data.regs.L2(ii)= data.regs.info(ii,2);
         if CONST.trackOpti.NEIGHBOR_FLAG
             try
                 data.regs.neighbors{ii} = trackOptiNeighbors(data,ii);
@@ -85,15 +88,9 @@ if ~isempty(data)
         end
     end
     
-    
     data.regs.scoreRaw = CONST.regionScoreFun.fun(data.regs.info, CONST.regionScoreFun.E);
     data.regs.score = data.regs.scoreRaw > 0;
     data.regs.eccentricity = drill(data.regs.props,'.MinorAxisLength')'...
         ./drill(data.regs.props,'.MajorAxisLength')';
 end
-
 end
-
-
-
-

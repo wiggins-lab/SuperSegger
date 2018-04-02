@@ -140,4 +140,7 @@ if ~isfield(FLAGS,'showDaughters')
     FLAGS.showDaughters = 0;
 end
 
+if ~isfield(FLAGS, 'colored_regions')
+    FLAGS.colored_regions = 0;
+end
 end
