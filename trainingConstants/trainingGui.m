@@ -261,7 +261,6 @@ updateUI(handles);
 
 function bad_regs_Callback(hObject, eventdata, handles)
 global settings_train;
-
 if settings_train.dataSegmented
     if settings_train.hasBadRegions
         answer = questdlg('Are you sure you want to remove bad region frames?.', 'Clear bad regions?', 'Yes', 'No', 'No');
@@ -288,7 +287,6 @@ end
 
 function train_regs_Callback(hObject, eventdata, handles)
 global settings_train;
-
 if isempty(settings_train.CONST)
     dispError('You must load a CONST file to create bad regions')
     return;
@@ -362,7 +360,6 @@ if FileName ~= 0
     end
 end
 
-% --------------------------------------------------------------------
 function image_folder_ClickedCallback(hObject, eventdata, handles)
 newDir = uigetdir;
 if newDir ~= 0
@@ -382,7 +379,6 @@ updateUI(handles);
 
 function updateUI(handles)
 global settings_train;
-
 set(gca,'xcolor',get(gcf,'color'));
 set(gca,'ycolor',get(gcf,'color'));
 set(gca,'ytick',[]);
@@ -433,7 +429,6 @@ elseif settings_train.imagesLoaded
     axes(handles.viewport_train);
     imshow(settings_train.currentData, []);
 end
-
 
 if settings_train.cropTime
     % deleting areas in square
@@ -575,7 +570,6 @@ imshow(RGB_label);
 
 function saveData()
 global settings_train
-
 try
     data = settings_train.currentData;
     save([settings_train.saveFolder, settings_train.loadFiles(settings_train.frameNumber).name],'-STRUCT','data');
@@ -586,7 +580,6 @@ end
 
 function addUndo()
 global settings_train
-
 try
     settings_train.oldData = [settings_train.currentData(1), settings_train.oldData(1)];
 catch
@@ -604,7 +597,6 @@ end
 
 function setWorkingDirectory(directory, clearCONST, checkSave)
 global settings_train;
-
 if ~exist('checkSave') || isempty(checkSave)
     checkSave = 1;
 end
@@ -631,7 +623,7 @@ isSegFolder = numel(dir([directory,filesep,'*seg.mat'])) > 0;
 if isSegFolder
     settings_train.loadDirectory = [directory,filesep];
 else
-    xyPositions = dir([directory,filesep,'xy*',filesep]);
+    xyPositions = dir([directory,filesep,'xy*']);
     if numel(xyPositions) > 0
         settings_train.loadDirectory = [directory,filesep,xyPositions(1).name,filesep,'seg',filesep];
         settings_train.currentDirectory = settings_train.loadDirectory(1:end-9);
@@ -675,8 +667,7 @@ if exist(settings_train.loadDirectory, 'dir')
     if settings_train.numFrames > 0
         settings_train.dataSegmented = 1;
         settings_train.axisFlag = 4;
-        loadData(settings_train.frameNumber);
-        
+        loadData(settings_train.frameNumber);        
         settings_train.hasBadRegions = 0;
         if settings_train.numFrames < numel(settings_train.loadFiles)
             settings_train.hasBadRegions = 1;
@@ -997,38 +988,20 @@ end
 
 % --------------------------------------------------------------------
 function debug_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to debug (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global settings_train;
 keyboard;
 
 % --- Executes on button press in show_score.
 function show_score_Callback(hObject, eventdata, handles)
-% hObject    handle to show_score (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of show_score
 updateUI(handles);
 
 function score_txt_Callback(hObject, eventdata, handles)
-% hObject    handle to score_txt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of score_txt as text
-%        str2double(get(hObject,'String')) returns contents of score_txt as a double
+% Shows value for one of the 19 region parameters that enter the
+% model.
 updateUI(handles);
 
 % --- Executes during object creation, after setting all properties.
 function score_txt_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to score_txt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
