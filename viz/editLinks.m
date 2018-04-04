@@ -1,5 +1,5 @@
 function varargout = editLinks(varargin)
-% editLinks : gui used to turn on/off segments
+% editLinks : gui used to edit the links between cells.
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou.

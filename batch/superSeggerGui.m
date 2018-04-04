@@ -67,7 +67,7 @@ msgbox('Examples for image conversion : ')
 function convert_names_help_Callback(hObject, eventdata, handles)
 Opt.Interpreter = 'tex';
 Opt.WindowStyle = 'normal';
-h = msgbox({'Your file names have to be on the format \bf[basename]t[number]xy[number]c[number].tif\rm, where the first number (after \bft\rm) indicates the time frame number, the second number (after \bfxy\rm) is for the different timelapse positions, and finally the third number (after \bfc\rm) are for the different channels (\bfc1\rm are the phase images while \bfc2\rm and onwards are for fluorescence channels), e.g. \bfMG1655{\_}t001xy1c1.tif\rm (where the basename is \bfMG1655{\_}\rm).',
+h = msgbox({'Your images files have to have the format \bf[basename]t[number]xy[number]c[number].tif\rm, where the first number (after \bft\rm) indicates the time frame number, the second number (after \bfxy\rm) is for the different timelapse positions, and finally the third number (after \bfc\rm) are for the different channels (\bfc1\rm are the phase images while \bfc2\rm and onwards are for fluorescence channels), e.g. \bfMG1655{\_}t001xy1c1.tif\rm (where the basename is \bfMG1655{\_}\rm).',
 '',
 'If your image files do not have this name format you can use the GUI to convert the names. The way the name conversion works is that the user indicates the characters before and after the time frame numbers, before and after the xy numbers, and the characters that indicate the channel. The program can then find the numbers and rename the images to the required naming convention.',
 '',
@@ -77,11 +77,7 @@ h = msgbox({'Your file names have to be on the format \bf[basename]t[number]xy[n
 '',
 'The program can still rename the images if you leave blank either the prefix or the suffix. If both the prefix and suffix are left blank the number 1 is set as default.',
 '',
-'Example 1: Suppose your images files currently are named \bfstrain-pos1-p-0001.tif\rm and \bfstrain-pos1-g-0001.tif\rm. Then in order to convert the names to the required naming convention, you will have to type: \bfBasename\rm: strain \bfChannels\rm: -p-,-g- \bfTime prefix\rm: - \bfTime suffix\rm: .tif \bfXY prefix\rm: pos \bfXY suffix\rm: - When you press the Name Conversion button, your image files will then be renamed to \bfstraint0001xy1c1.tif\rm and \bfstraint0001xy1c2.tif\rm.',
-'',
-'Example 2: Suppose your image files currently are named \bfstrain{\_}0001t{\_}BF.tif\rm and \bfstrain{\_}0001t{\_}GFP.tif\rm. Then in order to convert the names to the required naming convention, you will have to type: \bfBasename\rm: strain \bfChannels\rm: BF,GFP \bfTime prefix\rm: {\_} \bfTime suffix\rm: t{\_} \bfXY prefix\rm: (left empty) \bfXY suffix\rm: (left empty) When you press the Name Conversion button, your image files will then be renamed to \bfstraint001xy1c1.tif\rm and \bfstraint001xy1c2.tif\rm.',
-'',
-'Keep in mind that the program will search for the specified prefixes and suffixes in your current file names, and use them to identify which number in the current file names correspond for time and which number that correpond for xy position. It is therefore important that you type in as much as possible in the prefixes and suffixes fields so the program is able to uniquely identify the correct numbers.'
+'For more details and examples: https://github.com/wiggins-lab/SuperSegger/wiki/Segmenting-with-SuperSegger'
 }, 'Naming Conversion', 'none', Opt);
 
 function convert_names_help_CreateFcn(hObject, eventdata, handles)

@@ -58,9 +58,6 @@ data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
 
 for regNum =  1 : data_c.regs.num_regs
-    if regNum == 4 || regNum == 5 || regNum == 10
-     %   keyboard;
-    end
     if isfield (data_c.regs, 'manual_link')
         manual_link = data_c.regs.manual_link.r(regNum);
     else

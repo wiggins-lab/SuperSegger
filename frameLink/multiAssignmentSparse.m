@@ -363,7 +363,6 @@ if ~isempty(data_c)
         if debug_flag
             visualizeLinking(data_c,data_f,assignments);
         end
-        
     end
 end
 
@@ -372,11 +371,8 @@ end
         % fixProblems : used to fix cells not assigned to anything.
         
         leftInF = find(cellfun('isempty',revAssign));
-        
-        for jj = leftInF
-            
-            bestAssgnC = findBestSingleAssign (jj, totCost, indexF, indexC) ;
-            
+        for jj = leftInF            
+            bestAssgnC = findBestSingleAssign (jj, totCost, indexF, indexC) ;            
             if ~isnan(bestAssgnC) && bestAssgnC <= numel(assignments)
                 FAlready = assignments{bestAssgnC};
                 if isempty(FAlready)
@@ -422,7 +418,6 @@ end
     end
 
     function bestAssignC = findBestSingleAssign (value_f, totCost, indexF, indexC)
-        
         fAssign =  ((indexF(1,:)== value_f) & (isnan(indexF(2,:))));
         totCost(~fAssign) = NaN;
         if sum(~isnan(totCost))
@@ -473,8 +468,7 @@ end
             revAssign, totCost, indexF, indexC)
         % finds cells without assignment, and finds their best possible assignment.
         % exchanges assignments for the one that has taken that assignment if
-        % it is second best possible choice was also left without assignment.
-        
+        % it is second best possible choice was also left without assignment.        
         leftInC = find(cellfun('isempty',assignments));
         leftInF = find(cellfun('isempty',revAssign));
         
@@ -572,7 +566,6 @@ end
 
 cleanpairIDs = (nansum(pairsC)~=0);
 pairsC = pairsC(:,cleanpairIDs);
-
 end
 
 
