@@ -35,7 +35,9 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 
+
 function varargout = editLinks_OutputFcn(hObject, eventdata, handles)
+
 
 function plotCells (data, viewport, cell_ids)
 axes(viewport);
@@ -45,6 +47,7 @@ for jj = cell_ids
     y_cell = rr(2)-0.5;
     plot(x_cell, y_cell, 'o', 'MarkerFaceColor', 'r');
 end
+
 
 function displayDotsToCurrentAndPrevious(hObject, eventdata, handles)
 [ii,x_point,y_point] = getClosestCellToPoint(handles.data_c, handles.point);
@@ -70,11 +73,12 @@ else
     handles.message.String = 'Cell not found';
 end
 
+
 function clickOnImage(hObject, eventdata, handles)
 updateImage(hObject, handles);
 handles.point = round(eventdata.IntersectionPoint(1:2));
 displayDotsToCurrentAndPrevious(hObject, eventdata, handles)
-%click_ClickedCallback(hObject, eventdata, handles)
+
 
 function editLinks_OpeningFcn(hObject, ~, handles, varargin)
 handles.dirname_seg = fixDir(getappdata(0, 'dirname_seg'));
@@ -239,6 +243,12 @@ end
 
 % --- Executes on button press in save_link.
 function save_link_Callback(hObject, eventdata, handles)
+if (handles.cell_id.Value)
+    choice = questdlg('You are viewing cell IDs, are you sure you have the region IDs in the boxes?', 'Save the link?', 'Yes', 'No', 'No');
+    if ~strcmp(choice, 'Yes')
+        return
+    end
+end
 add_manual_link_if_missing (handles)
 cur_id = str2double(handles.cur_id.String);
 next_id = str2double(strsplit(handles.next_id.String));
@@ -257,8 +267,16 @@ if numel(cur_id) > 1
     return;
 end
 
+if max(cur_id) > handles.data_c.regs.num_regs
+    errordlg('Current id is larger than the maximum allowed id.');
+    return;
+end
 if isnan(next_id)
     errordlg('Next region ID is empty.');
+    return;
+end
+if max(next_id) > handles.data_f.regs.num_regs
+    errordlg('Next id is larger than the maximum allowed id.');
     return;
 end
 

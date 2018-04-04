@@ -34,28 +34,17 @@ end
 
 dirname = fixDir(dirname);
 
-if ~exist('debug_flag','var') || isempty( debug_flag );
+if ~exist('debug_flag','var') || isempty( debug_flag )
     debug_flag = 0;
 end
 
-if ~exist('clean_flag','var') || isempty( clean_flag );
+if ~exist('clean_flag','var') || isempty( clean_flag )
     clean_flag = 0;
-end
-
-
-manualLink = 0;
-if ~exist('manualLink','var') || isempty( manualLink );
-    manualLink = 0;
-end
-if manualLink == 1
-    clean_flag = 0;
-    startFrom = 0;
 end
 
 if ~exist('header','var')
     header = [];
 end
-
 
 if ~exist('startFrom','var') || isempty(startFrom)
     startFrom = 0;
@@ -105,7 +94,7 @@ elseif ~isempty(contents2)
     end
 end
 
-
+resetRegions = 0;
 finalIteration = 0;
 maxIterPerFrame = 3;
 curIter = 1;
@@ -122,6 +111,9 @@ while time <= numIm
     if CONST.parallel.show_status
         waitbar((numIm-time)/numIm,h,['Linking -- Frame: ',num2str(time),'/',num2str(numIm)]);
     end
+    if verbose
+        disp (['Linking for frame ', num2str(time)])
+    end
     
     if (time == 1)
         data_r = [];
@@ -135,18 +127,19 @@ while time <= numIm
     else
         datafName = [dirname,contents(time+1).name];
         data_f = intDataLoader (datafName);
-        data_f = updateRegionFields (data_f,CONST);  % make regions
+        data_f = updateRegionFields (data_f,CONST);
     end
     
     datacName = [dirname,contents(time).name];
     data_c = intDataLoader (datacName);
-    data_c = updateRegionFields (data_c,CONST);  % make regions
-    lastCellCount = cell_count; % to reset cellID numbering when frame is repeated
-    
-    if verbose
-        disp (['Linking for frame ', num2str(time)])
-    end
-    
+    [data_r,data_f,c_map,c_manual_link] = transferManualLinks (...
+        data_c,data_r,data_f,resetRegions);
+
+    data_c = updateRegionFields (data_c,CONST);
+    data_c.regs.map = c_map;
+    data_c.regs.manual_link = c_manual_link;
+    % Last cellID of previous frame to reset numbering if a frame is repeated.
+    lastCellCount = cell_count;  
     
     if ~isempty(data_r)
         [data_r.regs.map.f,data_r.regs.error.f,data_r.regs.cost.f,...
@@ -160,25 +153,22 @@ while time <= numIm
         data_c.regs.idsC.f,data_c.regs.idsF.f,data_c.regs.dA.f,...
         data_c.regs.revmap.f] = assignmentFun (data_c, data_f,CONST,1,0);
     
-    % error resolution for each frame up to maxIterPerFrame
+    % Only allow to repeat each frame error up to maxIterPerFrame.
     if curIter >= maxIterPerFrame
         finalIteration = 1;
     end
     
-    
-    % error resolution and id assignment
+    % Error resolution and ID assignment.
     [data_c,data_r,cell_count,resetRegions] = errorRez (time, data_c, ...
         data_r, data_f, CONST, cell_count,header, finalIteration, debug_flag);
     curIter = curIter + 1;
-    
-    
+        
     if resetRegions
         if verbose
             disp (['Frame ', num2str(time), ' : segments were reset to resolve error, repeating frame.']);
         end
-        cell_count = lastCellCount;
-        %data_c.regs.ID = zeros(1,data_c.regs.num_regs); % reset cell ids
-        data_c = updateRegionFields (data_c,CONST);    % make regions
+        cell_count = lastCellCount; % Reset back to lastCellCount.
+        data_c.regs.ID = zeros(1,data_c.regs.num_regs); % Reset cell ids.
     else
         time = time + 1;
         finalIteration = 0;
@@ -191,8 +181,7 @@ while time <= numIm
     end
     
     dataname=[datacName(1:end-7),filt2];
-    save(dataname,'-STRUCT','data_c');
-    
+    save(dataname,'-STRUCT','data_c');    
 end
 
 

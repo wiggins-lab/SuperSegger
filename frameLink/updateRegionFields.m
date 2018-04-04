@@ -66,11 +66,9 @@ if ~isempty(data)
         % a flag for ignoring the error in a region.
         data.regs.ignoreError = zeros(1,data.regs.num_regs);
     end
-    if ~isfield (data.regs,'manual_link') ||(numel(data.regs.manual_link.f) ~= data.regs.num_regs)
-        % Notes that a region was linked manually.
-        data.regs.manual_link.f = zeros(1,data.regs.num_regs);
-        data.regs.manual_link.r = zeros(1,data.regs.num_regs);
-    end
+    % Notes that a region was linked manually.
+    data.regs.manual_link.f = zeros(1,data.regs.num_regs);
+    data.regs.manual_link.r = zeros(1,data.regs.num_regs);
     % go through the regions and update info,L1,L2 and scoreRaw.
     for ii = 1:data.regs.num_regs
         [xx,yy] = getBB(data.regs.props(ii).BoundingBox);
