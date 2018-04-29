@@ -13,21 +13,15 @@ for ii = 1:nargin
     del  = [];
     cc   = [];
     com  = [];
-    com2 = [];
-    
-    
+    com2 = [];   
     if iscell( data )
         numin = numel( data );
-        
-
         
         if numin == 0
             
         else
-            im = data{1};
-            
-            jj = 2;
-            
+            im = data{1};         
+            jj = 2;           
             while jj<=numin
                 
                 if ischar(data{jj})

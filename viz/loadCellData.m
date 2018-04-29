@@ -27,8 +27,6 @@ function [data_cell,cell_name] = loadCellData(num, dirname_cell, handles)
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 data_cell = [];
 cell_name = [];
 

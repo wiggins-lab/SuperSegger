@@ -26,9 +26,6 @@ function padStr = getPadSize( dirname, handles )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
 contents = dir([dirname,'*ell*.mat']);
 if numel(contents) == 0
     if isempty(handles)

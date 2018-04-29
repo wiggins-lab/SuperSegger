@@ -6,13 +6,11 @@ if ~exist( 'p_flag' ) || isempty( p_flag )
     disp( 'Set p flag false' );
 end
 
-
 if p_flag
     cm = hotcoldinv(256);
 else
     cm = hotcold(256);
 end
-
 
 % creates axis for the colormap
 if ~exist( 'maxis','var' ) || isempty( maxis )
@@ -21,7 +19,6 @@ if ~exist( 'maxis','var' ) || isempty( maxis )
 else
     caxis( maxis*[-1,1] );
 end
-
 
 colormap(cm);
 

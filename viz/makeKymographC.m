@@ -16,21 +16,21 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       f1mm: is a two value array with the max and min value of channel 1
 %       f2mm: is a two value array with the max and min value of channel 2
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -202,33 +202,33 @@ f2mm(1) = min(Kymo.r(logical(Kymo.b)));
 f2mm(2) = max(Kymo.r(logical(Kymo.b)));
 
 
-    if CONST.view.falseColorFlag
-        % false color figure
-        backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)>1);
-        im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
-        imm =  im.*backer3+.6*(1-backer3);
-    elseif white_bg     
-        % figure with outline and white background     
-        sq = [1 1 1 ; 1 1 1 ; 1 1 1];
-        backer = (ag(~Kymo.b));
-        outline = imdilate(backer,sq) - backer;
-        imm = cat(3, (ag(Kymo.r))+backer+0.2*outline, ...
-            (ag(Kymo.g))+backer+0.2*outline,...
-            backer+0.6*outline);        
-    else
-        % figure without outline and gray background
-        backer = (ag(Kymo.b));
-        backer = 0.3*(max(backer(:))-backer);
-        imm = cat(3, (ag(Kymo.r))+backer, ...
-            (ag(Kymo.g))+backer,...
-            backer);       
-    end
-    
-    if disp_flag
-        figure (2);
-        clf;
-        imagesc(1:num_im,pixelsize*ll1, imm);
-    end
+if CONST.view.falseColorFlag
+    % false color figure
+    backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)>1);
+    im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
+    imm =  im.*backer3+.6*(1-backer3);
+elseif white_bg
+    % figure with outline and white background
+    sq = [1 1 1 ; 1 1 1 ; 1 1 1];
+    backer = (ag(~Kymo.b));
+    outline = imdilate(backer,sq) - backer;
+    imm = cat(3, (ag(Kymo.r))+backer+0.2*outline, ...
+        (ag(Kymo.g))+backer+0.2*outline,...
+        backer+0.6*outline);
+else
+    % figure without outline and gray background
+    backer = (ag(Kymo.b));
+    backer = 0.3*(max(backer(:))-backer);
+    imm = cat(3, (ag(Kymo.r))+backer, ...
+        (ag(Kymo.g))+backer,...
+        backer);
+end
+
+if disp_flag
+    figure (2);
+    clf;
+    imagesc(1:num_im,pixelsize*ll1, imm);
+end
 
 end
 
@@ -252,5 +252,3 @@ catch ME
 end
 roffset = offset(2:-1:1);
 end
-
-

@@ -1,6 +1,6 @@
 function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )
 % makeFrameMosaic: Creates a tower for a single cell.
-% The cell is shown masked. If CONST.view.orientFlag is true the cell 
+% The cell is shown masked. If CONST.view.orientFlag is true the cell
 % is oriented horizontally, it can be shown with FalseColor and
 % in the fluorescent channel.
 %
@@ -50,7 +50,7 @@ else
     orientFlag = true;
 end
 
-if ~isfield( CONST.view, 'background' );
+if ~isfield( CONST.view, 'background' )
     CONST.view.background = [0,0,0];
 end
 
@@ -131,17 +131,13 @@ im2_= uint16(zeros(imdim(1), imdim(2)));
 mask_mosaic = zeros(imdim(1), imdim(2));
 im_list = [];
 
-
-
 for ii = 1:skip:numframe
-    
     yy = floor((ii-1)/nx/skip);
-    xx = (ii-1)/skip-yy*nx;    
-    ss = ssCell{ii};    
+    xx = (ii-1)/skip-yy*nx;
+    ss = ssCell{ii};
     dx = floor((max_x-ss(2))/2);
     dy = floor((max_y-ss(1))/2);
-        
-
+    
     if orientFlag
         mask = imCell{ii};
         mask = (imdilate( mask, strel1 ));
@@ -152,14 +148,14 @@ for ii = 1:skip:numframe
     
     mask_mosaic(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = mask;
     
-        % fluor1
-     if isfield( data.CellA{ii}, 'fluor1' )        
+    % fluor1
+    if isfield( data.CellA{ii}, 'fluor1' )
         if isfield( CONST.view, 'filtered' ) && ...
                 CONST.view.filtered && ...
-                isfield( data.CellA{ii}, 'fluor1_filtered' )           
+                isfield( data.CellA{ii}, 'fluor1_filtered' )
             fluor1 =data.CellA{ii}.fluor1_filtered;
         else
-            fluor1 = data.CellA{ii}.fluor1;            
+            fluor1 = data.CellA{ii}.fluor1;
             if isfield( data.CellA{ii}, 'fl1' ) && ...
                     isfield( data.CellA{ii}.fl1, 'bg' )
                 fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
@@ -168,7 +164,7 @@ for ii = 1:skip:numframe
         
         fluor1 = imrotate(fluor1,alpha(ii),'bilinear');
         fluor1 = fluor1(yyCell{ii}, xxCell{ii});
-        im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;        
+        im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;
         FLAG1 = true;
     else
         im1_ = 0*mask_mosaic;
@@ -176,7 +172,6 @@ for ii = 1:skip:numframe
         f1mm = [0,1];
     end
     
-       
     % fluor2
     flag2 = isfield( data.CellA{ii}, 'fluor2' );
     if isfield( data.CellA{ii}, 'fluor2' ) && 1
@@ -208,7 +203,6 @@ for ii = 1:skip:numframe
         f2mm = [0,1];
     end
     
-    
     if FLAG2
         im_list = [im_list, data.CellA{ii}.fluor1(:)', data.CellA{ii}.fluor2(:)'];
     elseif FLAG1
@@ -216,15 +210,12 @@ for ii = 1:skip:numframe
     else
         im_list = [im_list];
     end
-
+    
 end
-
 
 % autogain the images
 im1_ = ag(im1_);
 im2_ = ag(im2_);
-disk1 = strel('disk',1);
-
 
 % different display methods
 if isfield(CONST.view, 'falseColorFlag') && ...
@@ -239,14 +230,14 @@ if isfield(CONST.view, 'falseColorFlag') && ...
 elseif with_outline
     % plots normal mosaic with region outline
     del = 1;
-    disk1 = strel('disk',1);   
+    disk1 = strel('disk',1);
     outer = imdilate(mask_mosaic, disk1).*double(~mask_mosaic);
     im = cat( 3, ...
         uint8(double(im2_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
         uint8(double(im1_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
         del*ag(1-mask_mosaic)+ag(outer));
 else
-    del = 1;    
+    del = 1;
     disk1 = strel('disk',1);
     im = cat( 3, ...
         uint8(double(im2_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
@@ -254,12 +245,8 @@ else
         del*ag(1-mask_mosaic) );
 end
 
-
-
-
 inv_flag = 0;
 frameNumbers = 1:skip:numframe;
-
 if disp_flag
     figure(2);
     clf;
@@ -275,17 +262,15 @@ if disp_flag
     else
         cc = 'b';
     end
-       
     
-    hold on;    
-    for ii = 1:numel(frameNumbers)        
+    hold on;
+    for ii = 1:numel(frameNumbers)
         yy = floor((ii-1)/nx);
         xx = ii-yy*nx-1;
         y = 1+yy*max_y;
-        x = 1+xx*max_x;                
+        x = 1+xx*max_x;
         text( x+2, y+2, num2str(frameNumbers(ii)*TimeStep),'Color',[0.5, 0.5, 1],'FontSize',15,'VerticalAlignment','Top');
     end
-    
     
     dd = [1,ny*max_y+1];
     for xx = 1:(nx-1)
@@ -297,8 +282,6 @@ if disp_flag
         plot( dd, 0*dd + 1+yy*max_y, [':',cc]);
     end
 end
-
-
 end
 
 

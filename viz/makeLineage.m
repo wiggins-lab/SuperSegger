@@ -42,11 +42,11 @@ clf;
 
 
 clist_ = gate( clist );
-gated  = clist_.data(:,1); 
+gated  = clist_.data(:,1);
 
 
 
-if isempty(clist) 
+if isempty(clist)
     disp ('No clist found');
     return;
 end
@@ -175,9 +175,9 @@ set( gca, 'YScale', 'log'  );
 title( 'Cummulative  Number of Cells' );
 
 try
-ylim_ = data.n1_max;
-ylim( [0.5,2*ylim_]);
-xlim( [-.1,1.1]*height1 );
+    ylim_ = data.n1_max;
+    ylim( [0.5,2*ylim_]);
+    xlim( [-.1,1.1]*height1 );
 end
 
 figure(3);
@@ -190,9 +190,9 @@ title( 'Number of Cells' );
 legend( hh2, legend_text, 'Location' , 'NorthWest' );
 
 try
-ylim_ = data.n2_max;
-ylim( ceil(log([0.5,2*ylim_(end)])/log(2)) );
-xlim( [-.1,1.1]*height1 );
+    ylim_ = data.n2_max;
+    ylim( ceil(log([0.5,2*ylim_(end)])/log(2)) );
+    xlim( [-.1,1.1]*height1 );
 end
 
 set( gca, 'YGrid', 'on')
@@ -232,14 +232,14 @@ else
     if isempty(error_)
         error_ = nan;
     end
-
+    
     if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0) || ~isnan(error_)
         starter = [starter,ID];
         
         if death_ ~= end_time && isnan(error_);
             error_ = death_;
         end
-            
+        
     end
     
     [w1,l1,t1,d1,s1,starter,e1,a1,g1,p1] = intGetWidth( ID1, clist, starter,gen__ + 1 );
@@ -287,14 +287,14 @@ for ii = 1:num
     if ismember( ID, gated )
         style = '-';
     else
-        style = ':';    
+        style = ':';
     end
     
     plot( pos+[0,0], [time(ii)-1,death(ii)], style, 'Color', cc, 'LineWidth', 1);
     hold on;
     
     if ~isnan(error(ii))
-            plot( pos, error(ii), '.', 'Color', 'r', 'MarkerSize', 20 );
+        plot( pos, error(ii), '.', 'Color', 'r', 'MarkerSize', 20 );
     end
     
     
@@ -325,18 +325,13 @@ end
 
 %% Show the cell number;
 figure(2);
-
 tt = sort( time );
-
 nn = 1:numel(tt);
-
 h_ = stairs( tt, nn );
-
 data.n1_max = max( [data.n1_max, max(nn) ] );
 
 
 hh = [hh, h_];
-
 hold on;
 
 cc = get(h_,'Color' );
@@ -357,8 +352,6 @@ data.n = { data.n{:}, nn };
 data.t0 = [ data.t0, first_death_time];
 data.n0 = [ data.n0, nn(ind) ];
 
-
-
 figure(3);
 tt   = sort( time );
 dtt  = sort( death+1 );
@@ -366,11 +359,10 @@ ntt  = ones(size(tt));
 ndtt = -ones(size(dtt));
 
 ntt = [ntt,ndtt];
-tt  = [tt,dtt]; 
+tt  = [tt,dtt];
 [ttt,ord] = sort( tt );
 ntt = ntt(ord);
 nn = cumsum( ntt );
-
 
 [ttt,ord] = unique( ttt );
 nn = nn(ord);
@@ -389,8 +381,6 @@ plot( first_death_time, log(nn(ind))/log(2), '.', ...
     'MarkerSize', 20, 'Color', cc );
 
 hh2 = [hh2, h_];
-
-
 end
 
 
@@ -430,8 +420,3 @@ else
 end
 
 end
-
-
-
-
-

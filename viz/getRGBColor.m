@@ -24,14 +24,12 @@ function colorRBG = getRGBColor( color_name )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
 cyan_col = [0,255,255]/255;
 orange_col = [255,165,0]/255;
 red_col = [255,0,0]/255;
 green_col = [0,255,0]/255;
 blue_col = [0,0,255]/255;
 yellow_col = [255,255,0]/255;
-
 
 if color_name == 'r'
     colorRBG = red_col;

@@ -184,7 +184,7 @@ end
     end
 
 
-    function doFrameMerge( x_, y_ )   
+    function doFrameMerge( x_, y_ )
         if ~isempty( data )
             for kk = 1:data.regs.num_regs
                 rr3 = [x_,y_ ];
@@ -285,8 +285,8 @@ elseif FLAGS.Outline_flag  % it just outlines the cells
     elseif isfield(data,'mask_cell')% no outline field (not loaded through super segger viewer)
         data.outline = xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
         im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
-    end   
-elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.  
+    end
+elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     %% colors :
     % baby-blue : no errors, stat0=2 cells
     % tirquaz :  stat0 = 1 cells
@@ -294,11 +294,11 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     % pink : has error in reverse frame
     % purple : has error in forward frame
     % red outlines : dividing or has just divided
-    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files        
+    if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files
         blueChannel = 0.3*(data.mask_cell);
         reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
         im = reg_color + im;
-    else        
+    else
         if isfield( data.regs, 'ignoreError' )
             ignoreErrorV = data.regs.ignoreError;
         else
@@ -354,7 +354,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             % outline the ones that were just born with stat0 == 1
             map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
             map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
-                    
+            
             redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
             greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
             blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
@@ -480,10 +480,10 @@ while (counter > 0 && kk < data.regs.num_regs)
     ypos = rr(2)+y_+1;
     
     if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)       
+            (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
         counter = counter - 1;
         xpos_id = [xpos_id;xpos];
-        ypos_id = [ypos_id;ypos];     
+        ypos_id = [ypos_id;ypos];
         if FLAGS.cell_flag == 0 || ~isfield( data.regs, 'ID' )
             % plotting region numbers
             id_txt = num2str(kk);
@@ -788,7 +788,7 @@ if isfield( data, 'regs' )
         yymin_ = ceil(tmp_props(1).BoundingBox(2))-pad;
         yymax_ = yymin_ + ceil(tmp_props(1).BoundingBox(4))-1+2*pad;
         xxmin_ = ceil(tmp_props(1).BoundingBox(1))-pad;
-        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;        
+        xxmax_ = xxmin_ + ceil(tmp_props(1).BoundingBox(3))-1+2*pad;
         num_segs = max(data.regs.regs_label(:));
         
         for ii = 2:num_segs

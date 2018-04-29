@@ -56,11 +56,7 @@ function [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, cl
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
 dataImArray = [];
-
 if ~exist( 'skip', 'var' ) || isempty( skip )
     skip = 1;
 end
@@ -82,8 +78,6 @@ else
     clist = [];
 end
 
-
-
 % show images in false color
 if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
@@ -104,19 +98,13 @@ if ~isfield(CONST.view, 'maxNumCell' ) || isempty(CONST.view.maxNumCell)
     CONST.view.maxNumCell = 100;
 end
 
-
 CONST.view.maxNumCell = min (CONST.view.maxNumCell ,numCells);
-
-
 if ~isempty( CONST.view.maxNumCell )
     numCells = min([numCells, CONST.view.maxNumCell] );
 end
 
 disp( ['Computing consensus array (max cell number ',...
     num2str(numCells),')'] );
-
-% ssTot : Keep track of the total size of the tower mosaic.
-
 
 % Manage the waitbar
 h = waitbar(0, 'Computation' );
@@ -147,8 +135,7 @@ for ii = 1:numCells
     cur_cell_num = str2double(cell_name(isnum(cell_name)));
     aboveMinLifetime = numel(data.CellA) > minimumLifetime;
     inClist = isempty( clist ) || ismember( cur_cell_num, row(clist.data(:,1)));
-    
-    
+        
     % Compute consensus images for cell in data
     if aboveMinLifetime && inClist
         kk = kk + 1;
@@ -163,7 +150,6 @@ for ii = 1:numCells
 end
 
 numCells = kk;
-imArray = imArray(1:numCells);
 
 % close the status bar
 close(h);
@@ -178,7 +164,7 @@ function dataArray = intUpdate( dataArray, data, jj )
 
 T0 = numel( data.imCell );
 
-if isempty( dataArray.sumWeight );
+if isempty( dataArray.sumWeight )
     dataArray.sumWeight    = zeros(1,T0);
     dataArray.sumWeightMin = 0;
 end

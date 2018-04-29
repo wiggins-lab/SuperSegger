@@ -30,8 +30,6 @@ function im_new = doColorMap( imOriginal, colormap_ , caxis_ )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 if ~exist( 'caxis_', 'var' ) || isempty( caxis_ )
     caxis_ = [min(imOriginal(:)),max(imOriginal(:))];
 end

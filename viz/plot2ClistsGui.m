@@ -21,11 +21,11 @@ function varargout = plot2ClistsGui(varargin)
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @plot2ClistsGui_OpeningFcn, ...
-                   'gui_OutputFcn',  @plot2ClistsGui_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @plot2ClistsGui_OpeningFcn, ...
+    'gui_OutputFcn',  @plot2ClistsGui_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -45,7 +45,7 @@ handles.char2.Value = 2;
 guidata(hObject, handles);
 uiwait(handles.figure1);
 
-function varargout = plot2ClistsGui_OutputFcn(hObject, eventdata, handles) 
+function varargout = plot2ClistsGui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.clist;
 % The figure can be deleted now
 delete(handles.figure1);
@@ -95,9 +95,9 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 if isequal(get(hObject, 'waitstatus'), 'waiting')
-% The GUI is still in UIWAIT, us UIRESUME
-uiresume(hObject);
+    % The GUI is still in UIWAIT, us UIRESUME
+    uiresume(hObject);
 else
-% The GUI is no longer waiting, just close it
-delete(hObject);
+    % The GUI is no longer waiting, just close it
+    delete(hObject);
 end

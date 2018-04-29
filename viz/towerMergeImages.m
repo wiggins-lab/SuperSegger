@@ -14,7 +14,7 @@ function [imColor, imBW, towerIm, maskCons, nx, ny, max_x, max_y ] = ...
 % OUTPUT :
 %         imColor : rescaled color (jet) consensus image
 %         imBW : rescaled bw consesus image
-%         towerIm : raw consensus image 
+%         towerIm : raw consensus image
 %         maskCons : mask for consensus image
 %         nx : number of cells in x
 %         ny : number of cells in y
@@ -102,7 +102,6 @@ end
 f1mm = [min(towerIm( maskCons(:)>.5 )), max( towerIm( maskCons(:)>.5 ))];
 imBW = ag(towerIm.*maskCons,0,f1mm(2));
 
-
 if CONST.view.falseColorFlag
     % make the false color image
     imColor = ag(doColorMap( imBW, colormap_ ));
@@ -110,13 +109,12 @@ if CONST.view.falseColorFlag
     imColor = uint8(uint8( double(imColor).*mask3));
 else
     % make normal image
-    del = 0.15;     
+    del = 0.15;
     imColor = cat( 3, ...
         0*maskCons, ...
         uint8(double(imBW).*maskCons), ...
         del*ag(maskCons) );
 end
-
 end
 
 

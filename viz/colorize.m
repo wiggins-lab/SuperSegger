@@ -27,9 +27,6 @@ function  imColorized = colorize( im, mask, colormap_, background )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
 if ~exist( 'colormap_', 'var' ) || isempty( colormap_ )
     colormap_ = jet(256);
 end

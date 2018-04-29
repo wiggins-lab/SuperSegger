@@ -1,9 +1,9 @@
 function value = shouldUseErrorFiles(FLAGS)
 % loadCellData : used to load a cell file given it's number
 %
-% INPUT : 
+% INPUT :
 %       FLAGS : input flags
-% OUTPUT : 
+% OUTPUT :
 %       value : 1 if error files should be used
 %
 % Copyright (C) 2016 Wiggins Lab

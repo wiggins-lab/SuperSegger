@@ -14,21 +14,21 @@ function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
 %     imInv : Color cons image (w/ white background)
 %  imMosaic10 : Image mosaic of first 10 cells that make up the consensus image
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -53,11 +53,10 @@ if ~exist( 'fnum', 'var' ) || isempty(fnum)
     fnum = 1;
 end
 
-if ~isstruct(dataImArray) && isdir (dataImArray)
+if ~isstruct(dataImArray) && isfolder (dataImArray)
     cellDir = dataImArray;
     [dataImArray] = makeConsensusArray( cellDir, CONST, skip, mag, fnum, clist);
 end
-
 
 T0 = numel(dataImArray.imCell); % number of frames
 
@@ -65,33 +64,32 @@ for jj = 1:T0
     ssCell{jj} = size(dataImArray.imCell{jj} );
 end
 
-% merge the cell towers
+% Merge the cell towers.
 [ ~, ~, dataImArray.tower, dataImArray.towerMask ] = ...
-    towerMergeImages( dataImArray.imCell, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+    towerMergeImages(dataImArray.imCell, dataImArray.maskCell, ssCell, ...
+    1, skip, mag, CONST );
 
-% Merge the normalized towers into a single image
+% Merge the normalized towers into a single image.
 [ ~, ~, dataImArray.towerNorm, dataImArray.towerMask ] = ...
-    towerMergeImages( dataImArray.imCellNorm, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+    towerMergeImages(dataImArray.imCellNorm, dataImArray.maskCell, ...
+    ssCell, 1, skip, mag, CONST );
 
-% Merge the normalized weighted towers into a single image
+% Merge the normalized weighted towers into a single image.
 [ ~, ~, dataImArray.towerNormW, dataImArray.towerMask ] = ...
-        towerMergeImages( dataImArray.imCellNormW, dataImArray.maskCell, ssCell, 1, skip, mag, CONST );
+    towerMergeImages(dataImArray.imCellNormW, dataImArray.maskCell, ...
+    ssCell, 1, skip, mag, CONST );
 
-
-numIm = numel( dataImArray.tower );
+numIm = numel(dataImArray.tower);
 
 if numIm  > 0
-    % make the color map for the color image
-    
-    [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage( dataImArray.towerNorm, ...
+    % make the color map for the color image    
+    [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = intDoMakeImage(... 
+        dataImArray.towerNorm, ...
         dataImArray.towerMask, dataImArray.towerCArray, ...
         dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );
     imBWunmasked = dataImArray.towerNorm;
-    imBWmask     = dataImArray.towerMask;
-    
-    
+    imBWmask     = dataImArray.towerMask; 
 end
-
 end
 
 function [ imMosaic, imColor, imBW, imInv, imMosaic10] = ...
@@ -123,18 +121,17 @@ cellArrayPos = cell(1,numCells);
 
 % make the color map for the color image
 persistent colormap_;
-if isempty( colormap_ )
+if isempty(colormap_)
     colormap_ = jet(256);
 end
 
-
-imTmp = 255*doColorMap( ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) ), colormap_ );
-mask3 = cat( 3, maskSum, maskSum, maskSum );
+imTmp = 255*doColorMap(ag(imSum, min(imSum(maskSum>.95)), max(imSum(maskSum>.95))), colormap_);
+mask3 = cat(3, maskSum, maskSum, maskSum );
 imColor = uint8(uint8( double(imTmp).*mask3));
-imBW  = uint8( double(ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) )) .* maskSum );
-imTmp = 255*doColorMap( ag(imSum, min(imSum( maskSum>.95 )), max(imSum( maskSum>.95 )) ), 1-colormap_ );
-mask3 = cat( 3, maskSum, maskSum, maskSum );
-imInv = 255-uint8(uint8( double(imTmp).*mask3));
+imBW  = uint8(double(ag(imSum, min(imSum( maskSum>.95)), max(imSum( maskSum>.95 )))) .* maskSum);
+imTmp = 255*doColorMap( ag(imSum, min(imSum( maskSum>.95)), max(imSum( maskSum>.95))), 1-colormap_);
+mask3 = cat(3, maskSum, maskSum, maskSum );
+imInv = 255-uint8(uint8(double(imTmp).*mask3));
 
 % plots the consensus image
 if disp_flag
@@ -144,7 +141,6 @@ if disp_flag
     drawnow;
 end
 
-
 del = 1;
 
 % plots a mosaic of single cell towers
@@ -153,7 +149,6 @@ if CONST.view.falseColorFlag
 else
     imMosaic = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
 end
-
 
 colPos = 1;
 width10 = 0;
@@ -165,11 +160,9 @@ for ii = 1:numCells
         width10 = width10 + ss(2);
         time10  = max([ss(1),time10]);
     end
-    
     imMosaic(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
     cellArrayPos{ii} = colPos + ss(2)/2;
     colPos = colPos + ss(2);
-    
 end
 
 imMosaic10 = imMosaic( 1:time10, 1:width10, : );

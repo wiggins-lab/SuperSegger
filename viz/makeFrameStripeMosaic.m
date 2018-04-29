@@ -30,7 +30,6 @@ if ~exist( 'skip', 'var' )
     skip = [];
 end
 
-
 if ~isfield( CONST, 'view') || CONST.view.showFullCellCycleOnly
     contents = dir([dirName,filesep,'Cell*.mat']);
 else
@@ -58,7 +57,6 @@ for ii = 1:numCells
     end
     
     loadname = [dirName,filesep,contents(ii).name];
-    
     data = load( loadname );
     
     lpos =  find(contents(ii).name == 'l', 1, 'last' );
@@ -106,16 +104,13 @@ if ~CONST.view.saveFiles
         limTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
     end
     
-    
     colPos = 1;
     
     for ii = 1:numCells
-        
         ss = size(cellArray{ii});
         imTot(1:ss(1), colPos:(colPos+ss(2)-1), :) = cellArray{ii};
         cellArrayPos{ii} = colPos + ss(2)/2;
         colPos = colPos + ss(2);
-        
     end
     
     clf;
@@ -132,5 +127,4 @@ if ~CONST.view.saveFiles
         text( cellArrayPos{ii}, 0, num2str(cellArrayNum{ii}), 'Color', cc, 'HorizontalAlignment','center' );
     end
 end
-
 end

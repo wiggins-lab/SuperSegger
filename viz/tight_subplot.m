@@ -1,5 +1,4 @@
 function ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
-
 % tight_subplot : creates "subplot" axes with adjustable gaps and margins
 %
 % ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
@@ -7,11 +6,11 @@ function ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
 %   in:  Nh      number of axes in hight (vertical direction)
 %        Nw      number of axes in width (horizontaldirection)
 %        gap     gaps between the axes in normalized units (0...1)
-%                   or [gap_h gap_w] for different gaps in height and width 
+%                   or [gap_h gap_w] for different gaps in height and width
 %        marg_h  margins in height in normalized units (0...1)
-%                   or [lower upper] for different lower and upper margins 
+%                   or [lower upper] for different lower and upper margins
 %        marg_w  margins in width in normalized units (0...1)
-%                   or [left right] for different left and right margins 
+%                   or [left right] for different left and right margins
 %
 %  out:  ha     array of handles of the axes objects
 %                   starting from upper left corner, going row-wise as in
@@ -27,17 +26,17 @@ function ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
 % BSD LICENSE :
 % Copyright (c) 2016, Pekka Kumpulainen
 % All rights reserved.
-% 
+%
 % Redistribution and use in source and binary forms, with or without
 % modification, are permitted provided that the following conditions are
 % met:
-% 
+%
 % * Redistributions of source code must retain the above copyright
 % notice, this list of conditions and the following disclaimer.
 % * Redistributions in binary form must reproduce the above copyright
 % notice, this list of conditions and the following disclaimer in
 % the documentation and/or other materials provided with the distribution
-% 
+%
 % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 % AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 % IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,26 +49,24 @@ function ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.
 
-
-
 if nargin<3; gap = .02; end
 if nargin<4 || isempty(marg_h); marg_h = .05; end
 if nargin<5; marg_w = .05; end
 
-if numel(gap)==1; 
+if numel(gap)==1
     gap = [gap gap];
 end
-if numel(marg_w)==1; 
+if numel(marg_w)==1
     marg_w = [marg_w marg_w];
 end
-if numel(marg_h)==1; 
+if numel(marg_h)==1
     marg_h = [marg_h marg_h];
 end
 
-axh = (1-sum(marg_h)-(Nh-1)*gap(1))/Nh; 
+axh = (1-sum(marg_h)-(Nh-1)*gap(1))/Nh;
 axw = (1-sum(marg_w)-(Nw-1)*gap(2))/Nw;
 
-py = 1-marg_h(2)-axh; 
+py = 1-marg_h(2)-axh;
 
 ha = zeros(Nh*Nw,1);
 ii = 0;
