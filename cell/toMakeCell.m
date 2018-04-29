@@ -1,5 +1,5 @@
 function celld = toMakeCell(celld, e1_old, props)
-% toMakeCell : calls toMakeCellFast to calculate the properties of a cell.
+% toMakeCell : calculates the properties of a cell.
 % This includes center (center of mass) as well as the principle axis which
 % is assumed to be the axis that diagonalizes the moment of inertia tensor.
 % This gives the axis up to a sign, which is determined by aligning the
@@ -75,7 +75,7 @@ Xcm = props.Centroid(1);
 Ycm = props.Centroid(2);
 rcm = [Xcm,Ycm];
 
-if ~isempty( e1_old );
+if ~isempty( e1_old )
  if sum(e1.*e1_old) < 0
 e1 = -e1;
  end
@@ -127,8 +127,7 @@ celld.pole.np_age = NaN;
 % Debugging info.
 debug_flag = 0;
 
-if debug_flag;
- 
+if debug_flag 
  im_size= size(mask);
  im_size_x = im_size(2);
  im_size_y = im_size(1);

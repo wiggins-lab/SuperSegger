@@ -45,7 +45,6 @@ dirname = fixDir(dirname);
 % Get the track file names...
 contents=dir([dirname '*_err.mat']);
 
-
 if isempty( contents )
     clist.data = [];
     clist.def={};
@@ -69,27 +68,23 @@ else
     [setter,clist.def3D]  = clistSetter ();
     clist.def = setter(:,1)';
     tmpFields = setter(:,2)';
-    clist3d_ind = find([setter{:,4}]);
-    
-    death_ind = find([setter{:,3}]); % death fields : updated in every frame 
+    clist3d_ind = find([setter{:,4}]); % must use find.
+    death_ind = find([setter{:,3}]); % death fields: updated in every frame
     clist_tmp = nan( MAX_CELL, numel( clist.def));
     clist_3D  = nan( MAX_CELL, numel( clist.def3D), num_im );
-
     clist_tmp(:,1) = 0;
-    
     
     % calculating indexes of values used during calculations
     lengthFields = find(strcmp(tmpFields,'data_c.regs.L1'));
     index_lold = intersect(lengthFields,death_ind);
     index_lbirth = setdiff(lengthFields,death_ind);
-    index_ID= find(strcmp(tmpFields,'ID'));
+    index_ID= strcmp(tmpFields,'ID');
     index_dlmaxOld = find(strcmp(tmpFields,'dlmax'));
-    index_dlminOld = find(strcmp(tmpFields,'dlmin'));
+    index_dlminOld = strcmp(tmpFields,'dlmin');
     index_ehist = find(strcmp(tmpFields,'error_frame'));
+    
     % loop through all the images (*err.mat files)
     for i = 1:num_im
-        
-        
         data_c = loaderInternal([dirname,contents(i).name]);
         if ~isempty( data_c.CellA)
             % record the number of cell neighbors
@@ -100,38 +95,36 @@ else
                     data_c.CellA{ii}.numNeighbors = nei_ ;
                 end
             end
-
-
+            
             % figure out which cells are new born.
             maxID = max(clist_tmp(:,index_ID));
             ID = data_c.regs.ID;
             birthID_flag = (ID>maxID);
             ID_non_zero_flag = (ID>0);
-
+            
             ci = and( ~birthID_flag, logical(ID));
-
             IDlog = ID>0;
             ID_non_zero = ID(IDlog);
-
+            
             lold = nan(1,numel(ID));
             lbirth = nan(1,numel(ID));
             dlmaxOld = nan(1,numel(ID));
             dlminOld = nan(1,numel(ID));
             error_frame = nan(1,numel(ID));
-
+            
             error_frame(IDlog) = clist_tmp(ID_non_zero,index_ehist);
             lold(IDlog) = clist_tmp(ID_non_zero,index_lold);
             lbirth(IDlog) = clist_tmp(ID_non_zero,index_lbirth);
             dlmaxOld(IDlog) = clist_tmp(ID_non_zero,index_dlmaxOld);
             dlminOld(IDlog) = clist_tmp(ID_non_zero,index_dlminOld);
-
+            
             regnum = (1:data_c.regs.num_regs)';
             zz = zeros( data_c.regs.num_regs, 1);
-
+            
             ehist = data_c.regs.ehist;
             set_error_this_frame = and( logical(ehist),isnan(error_frame) );
             error_frame(set_error_this_frame) = i;
-
+            
             cell_dist = drill(data_c.CellA,'.cell_dist');
             pole_age  = drill(data_c.CellA,'.pole.op_age');
             fl1sum = drill(data_c.CellA,'.fl1.sum');
@@ -141,89 +134,88 @@ else
             ypos = drill(data_c.CellA,'.coord.rcm(2)');
             numNeighbors = drill(data_c.CellA,'.numNeighbors');
             gray = drill(data_c.CellA,'.gray');
-
+            
             locus1_L1 = drill(data_c.CellA, '.locus1(1).longaxis');
             locus1_L2 = drill(data_c.CellA, '.locus1(1).shortaxis');
             locus1_s = drill(data_c.CellA, '.locus1(1).score');
             locus1_i = drill(data_c.CellA, '.locus1(1).intensity');
-
+            
             locus2_L1 = drill(data_c.CellA, '.locus1(2).longaxis');
             locus2_L2 = drill(data_c.CellA, '.locus1(2).shortaxis');
             locus2_s = drill(data_c.CellA, '.locus1(2).score');
             locus2_i = drill(data_c.CellA, '.locus1(2).intensity');
-
+            
             locus3_L1 = drill(data_c.CellA, '.locus1(3).longaxis');
             locus3_L2 = drill(data_c.CellA, '.locus1(3).shortaxis');
             locus3_s = drill(data_c.CellA, '.locus1(3).score');
             locus3_i = drill(data_c.CellA, '.locus1(3).intensity');
-
+            
             locus4_L1 = drill(data_c.CellA, '.locus1(4).longaxis');
             locus4_L2 = drill(data_c.CellA, '.locus1(4).shortaxis');
             locus4_s = drill(data_c.CellA, '.locus1(4).score');
             locus4_i = drill(data_c.CellA, '.locus1(4).intensity');
-
+            
             locus5_L1 = drill(data_c.CellA, '.locus1(5).longaxis');
             locus5_L2 = drill(data_c.CellA, '.locus1(5).shortaxis');
             locus5_s = drill(data_c.CellA, '.locus1(5).score');
             locus5_i = drill(data_c.CellA, '.locus1(5).intensity');
-
+            
             daughter1_id = drill(data_c.regs.daughterID,'(1)');
             daughter2_id = drill(data_c.regs.daughterID,'(2)');
-
+            
             length1 = drill(data_c.CellA,'.length(1)');
             length2 = drill(data_c.CellA,'.length(2)');
-
+            
             locus1_relL1 = (locus1_L1)./length1;
             locus2_relL1 = (locus2_L1)./length1;
             locus3_relL1 = (locus3_L1)./length1;
             locus4_relL1 = (locus4_L1)./length1;
             locus5_relL1 = (locus5_L1)./length1;
-
+            
             locus1_relL2 = (locus1_L2)./length2;
             locus2_relL2 = (locus2_L2)./length2;
             locus3_relL2 = (locus3_L2)./length2;
             locus4_relL2 = (locus4_L2)./length2;
             locus5_relL2 = (locus5_L2)./length2;
             op_ori =  drill(data_c.CellA, '.pole.op_ori');
-
+            
             locus1_PoleAlign_L1 = locus1_L1 .* op_ori;
             locus1_PoleAlign_L1 (op_ori ==0) = nan;
-
+            
             locus1_PoleAlign_relL1 = locus1_relL1 .* op_ori;
             locus1_PoleAlign_relL1 (op_ori==0) = nan;
-
+            
             locus1_fitSigma  = drill(data_c.CellA,'.locus1(1).fitSigma');
             locus2_fitSigma  = drill(data_c.CellA,'.locus1(2).fitSigma');
             locus3_fitSigma   = drill(data_c.CellA,'.locus1(3).fitSigma');
-
+            
             lnew = data_c.regs.L1;
             dl = (lnew-lold);
             dlmin = nan(size(dl));
             dlmax = nan(size(dl));
-
+            
             indTmp = isnan(dlminOld);
             dlmin( indTmp ) = dl(indTmp);
-
+            
             indTmp = isnan(dlmaxOld);
             dlmax( indTmp ) = dl( indTmp);
-
+            
             indTmp = isnan(dl);
             dlmin( indTmp ) = dlminOld( indTmp);
             dlmax( indTmp ) = dlmaxOld( indTmp);
-
+            
             indTmp = ~isnan(dl+dlminOld);
             dlmin( indTmp ) = min( [dl(indTmp);dlminOld( indTmp )]);
-
+            
             indTmp = ~isnan(dl+dlmaxOld);
             dlmax( indTmp ) = max( [dl( indTmp);dlmaxOld( indTmp )]);
-
+            
             lrel = lnew./lbirth;
-
+            
             longOverShort = data_c.regs.L1./data_c.regs.L2;
             neckWidth =  data_c.regs.info(:,3);
             maxWidth = data_c.regs.info(:,4);
-
-
+            
             % putting all fields in tmp
             tmp = nan (numel(ID),numel(tmpFields));
             for u = 1 : numel(tmpFields)
@@ -231,19 +223,19 @@ else
                 tmp_var = convertToColumn(tmp_var);
                 tmp(:,u) = tmp_var;
             end
-
+            
             % keeping from tmp only the cell that were just born
             try
                 clist_tmp(ID(birthID_flag), : ) = tmp(birthID_flag, :);
                 clist_3D(ID(ID_non_zero_flag), :, i ) = tmp(ID_non_zero_flag, clist3d_ind);
-
+                
             catch ME
                 printError(ME);
             end
-
+            
             % update guys that you want to set to the death value
             clist_tmp(ID(ci), death_ind ) = tmp(ci, death_ind);
-
+            
             if CONST.parallel.show_status
                 waitbar(i/num_im,h,['Clist--Frame: ',num2str(i),'/',num2str(num_im)]);
             elseif CONST.parallel.verbose
@@ -262,24 +254,11 @@ else
     % removes cells with 0 cell id
     clist.data   = clist_tmp(logical(clist_tmp(:,1)),:);
     clist.data3D = clist_3D(clist.data(:,1),:,:);
-
+    
+    % Add time, age and relative age to 3D clist.
     clist = gateTool( clist, 'add3Dt' );
     
-    %add3dtime stuff
-    len_time_ind = grabClistIndex(clist, 'Long axis (L)', 1);
-    
-    ss = size( clist.data3D );
-    if numel(ss) == 2
-        ss(3) = 1;
-    end
-    len  = reshape( ~isnan(squeeze(clist.data3D(:,len_time_ind(1),:))),[ss(1),ss(3)]);
-    age = cumsum( len, 2 );
-    age(~len) = nan;
-    
-    age_rel = age;
-    age_rel = age./(max(age,[],2)*ones([1,size(age,2)]));    
-    time = ones([ss(1),1])*(1:ss(3));
-    
+    % Add growth rate to 3D Clist.
     len_0_ind = grabClistIndex(clist, 'Long axis (L) birth');
     len_0 = clist.data(:,len_0_ind);
     len_1_ind = grabClistIndex(clist, 'Long axis (L) death');
@@ -287,30 +266,15 @@ else
     age_ind = grabClistIndex(clist, 'Cell age');
     age = clist.data(:,age_ind);
     growth_rate = (log(len_1) - log(len_0)) ./ age;
-    
-%     % add time
-%     clist = gateTool( clist, 'add3D', time, 'Time (Frames)' );
-%     % add age
-%      clist = gateTool( clist, 'add3D', age, 'Age (Frames)' );
-%    % add age_rel
-%     clist = gateTool( clist, 'add3D', age_rel, 'Relative Age' );
-   %add growth rate
     clist = gateTool( clist, 'add', growth_rate, 'Growth Rate' );
     
-
     clist.gate = CONST.trackLoci.gate;
     clist.neighbor = [];
     
-
     if CONST.trackOpti.NEIGHBOR_FLAG
         clist.neighbor = trackOptiListNeighbor(dirname,CONST,[]);
     end
 end
-
-
-
-
-
 end
 
 
@@ -320,7 +284,7 @@ function [setter,names_3dclist] = clistSetter ()
 % which it will be set (needs to be calculated in the first function, and
 % the third is 0 if it is set at birth and 1 if it is set at death.
 % the fourth column is for whether the variable should be included in the 3d clist.
-                        
+
 setter = [{'Cell ID'},{'ID'},0,1;
     {'Region num birth'},{'regnum'},0,0;
     {'Region num death'},{'regnum'},1,0;
@@ -423,32 +387,30 @@ setter = [{'Cell ID'},{'ID'},0,1;
 
 
 % used to add numbers in front of the description
-names_3dclist = [];
 counter = 0;
+num_3d_clist = sum([setter{:,4}]);
+names_3dclist = cell(1,num_3d_clist);
 for i = 1 : size(setter,1)
     fieldname = setter{i,1};
     nameWithNum = [num2str(i), ' : ',fieldname];
     setter(i,1) = {nameWithNum};
     if setter{i,4}
         counter = counter + 1;
-        removeBirth  =strfind(fieldname,'birth');
+        removeBirth = strfind(fieldname,'birth');
         if removeBirth > 0
             fieldname = fieldname (1 :removeBirth-1);
         end
         names_3dclist{counter} = [num2str(counter), ' : ', fieldname];
     end
 end
-
-
-
 end
 
 
 function vector = convertToColumn (vector)
 % convertToColumn : converts vector to column vector if row vector
-    if size(vector,1) == 1
-        vector = vector';
-    end
+if size(vector,1) == 1
+    vector = vector';
+end
 end
 
 function data = loaderInternal( filename )

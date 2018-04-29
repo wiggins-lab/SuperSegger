@@ -1,8 +1,8 @@
 function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
 % trackOptiCellFiles : organizes the data into the final cell files that
 % contain all the time lapse data for a single cell.
-% It allows for cell gating. If a clist is passed with an already made gate t
-% code generates cell files for only cells that pass the gate.
+% It allows for cell gating. If a clist is passed with an already made gate
+% the code generates cell files for only cells that pass the gate.
 %
 % INPUT :
 %       dirname : xy directory
@@ -11,21 +11,21 @@ function trackOptiCellFiles( dirname, dirname_cell, CONST, header, clist )
 %       header : string with information
 %       clist : array of cell files, can be used to generate gated cell files
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou & Paul Wiggins.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -36,7 +36,7 @@ else % gating clist
     ID_LIST = clist.data(:,1);
 end
 
-if ~exist('header')
+if ~exist('header','var')
     header = [];
 end
 
@@ -77,7 +77,7 @@ else
         h = [];
     end
     
-    for i = 1:num_im;
+    for i = 1:num_im
         
         if CONST.parallel.show_status
             waitbar(i/num_im,h,['Make Cell Files--Frame: ',num2str(i),'/',num2str(num_im)]);
@@ -95,7 +95,7 @@ else
         for ii = 1:num_regs
             cellNum = data_c.regs.ID(ii);
             max_cell_num = max([max_cell_num, cellNum]);
-          
+            
             if cellNum && ( isempty( ID_LIST ) || ismember( cellNum, ID_LIST ))
                 if data_c.regs.birthF(ii) == 1 && data_c.regs.deathF(ii) == 1
                     % for snapshot images (birth and death are 1)
@@ -133,7 +133,7 @@ else
     for ii=1:MAX_NUM_CELLS
         if ~isempty(DA{ii})
             if verbose
-            disp( ['Missing cell ', num2str(DA{ii}.ID)] );
+                disp( ['Missing cell ', num2str(DA{ii}.ID)] );
             end
             DA{ii} = intDelCell( DA{ii},dirname_cell, ii );
         end
@@ -189,7 +189,7 @@ celld.contactHist = data_c.regs.contactHist(ii);
 celld.stat0  = data_c.regs.stat0(ii);
 
 try
-    data.CellA      = {data.CellA{:},celld};
+    data.CellA = {data.CellA{:},celld};
 catch ME
     printError(ME);
 end
@@ -221,7 +221,7 @@ data.ehist = data.CellA{end}.ehist;
 data.contactHist = data.CellA{end}.contactHist;
 dirToSave = fixDir(dirToSave);
 
-if data.stat0 == 2; % full cell cycle cell.
+if data.stat0 == 2 % full cell cycle cell.
     dataname=[dirToSave,'Cell',sprintf( '%07d', cellNum ),'.mat'];
 else
     dataname=[dirToSave,'cell',sprintf( '%07d', cellNum ),'.mat'];

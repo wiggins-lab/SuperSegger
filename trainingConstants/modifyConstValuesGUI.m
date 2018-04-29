@@ -214,9 +214,18 @@ if imageName~=0
     imshow(settings_mod.phaseImage,[]);
 end
 
+function squareAtCellSize()
+x0 = 10;
+y0 = 10;
+width = 8;
+length = 25;
+rectangle('Position',[x0,y0,length,width],'Edgecolor', 'y');
 
 function updateUI(handles)
 global settings_mod;
+while numel(handles.viewport_modify.Children) > 0
+    delete(handles.viewport_modify.Children(1))
+end
 if ~isempty(settings_mod.data)
     if handles.display_flag == 3
         showSegDataPhase(settings_mod.data, handles.viewport_modify);
@@ -228,8 +237,10 @@ if ~isempty(settings_mod.data)
         imshow(settings_mod.data.phase,[])
     end
 end
+hold on;
+squareAtCellSize();
 if numel(handles.viewport_modify.Children) > 0
-    set(handles.viewport_modify.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+    set(handles.viewport_modify.Children(2),'ButtonDownFcn',@imageButtonDownFcn);
     hold on;
 end
 
@@ -487,7 +498,7 @@ set(handles.mask_th2,'Max',100,'Min',0)
 set(handles.mask_th2,'SliderStep',[0.1 1])
 
 % maximum width
-set(handles.max_wid,'Max',20,'Min',5)
+set(handles.max_wid,'Max',30,'Min',5)
 set(handles.max_wid,'SliderStep',[0.1 1])
 
 getValuesFromConst(handles)
@@ -591,10 +602,15 @@ hold on;
 plot( sub2-1+cmin, sub1-1+rmin, 'o', 'MarkerFaceColor', 'g' );
 
 if ii ~=0
-    settings_mod.handles.width_length_image.String =  (['length : ', num2str(data.regs.info(ii,1)), ...
-        ' max width : ',  num2str(data.regs.info(ii,4))]);
+    cell_width = (data.regs.info(ii,4));
+    length_txt = ['length: ', num2str(data.regs.info(ii,1)), ...
+        ', width: ',num2str(cell_width)];
+    if (cell_width > 10)
+        length_txt = [length_txt, '. Cells at 60X have approximately the width of the yellow rectangle: 8. If your cells are much wider you need to resize your images before segmenting.'];
+    end
+    settings_mod.handles.width_length_image.String =  length_txt;
 else
-    disp ('empty')
+    settings_mod.handles.width_length_image.String =  'No cell selected.';
 end
 
 

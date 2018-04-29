@@ -15,24 +15,23 @@ function [x,regEmin]= simAnnealMap( segs_list, data, ...
 %       x : vector of segments to be on for minimum energy found.
 %       regEmin : energy of every region for the minimum state
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Stella Stylianidou, Paul Wiggins.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
-
 
 num_segs = numel(segs_list);
 
@@ -52,36 +51,39 @@ else
     maxiter = CONST.regionOpti.Nt;
 end
 
-% interval at which it sets the temperature to T0 and starts annealing again
+% Interval at which it sets the temperature to T0 and starts annealing again
 reannealIter = round(maxiter / 2);
-ss = size(data.phase);
 
-% initial state
+% Initial state
 x0 = zeros(num_segs,1);
+vect0=x0;
 
-% a hashmap to find energies of states tried before faster
+% A hashmap to find energies of states tried before faster.
 stateEnergyMap = containers.Map();
 
-% runs simulated anneal
-options = saoptimset('Display',display,'TimeLimit',180,'ReannealInterval',reannealIter,'DataType','custom', 'AnnealingFcn',@newPoint,'StallIterLimit',num_segs*12,'MaxIter',maxiter);
-[x,Emin,exitflag,output] = simulannealbnd(@stateCostFunction,x0,[],[],options);
+% Run simulated anneal.
+options = saoptimset('Display', display, 'TimeLimit', 180, ...
+    'ReannealInterval', reannealIter, 'DataType','custom', ...
+    'AnnealingFcn', @newPoint, 'StallIterLimit', num_segs*12, ...
+    'MaxIter', maxiter);
+[x,Emin,~,~] = simulannealbnd(@stateCostFunction, x0, [], [], options);
 
-% compare to the state with the on/off segments by score and keep that one
-% if it is smaller
+% Compare to the state with the on/off segments by score and keep that one
+% if it is smaller.
 xSegment = data.segs.score(segs_list);
 Esegment = stateCostFunction (xSegment);
 if Esegment < Emin
     x = xSegment;
 end
 
-[Emin,minState] = calculateStateEnergy(cell_mask,vect0,segs_list,data,xx,yy,CONST);
+[Emin,minState] = calculateStateEnergy(cell_mask, vect0, segs_list,...
+    data, xx, yy, CONST);
 regEmin = minState.reg_E; % energy per region
 
 if debug_flag
     disp (['minimum energy is ', num2str(Emin)]);
-    displayState(x,segs_list,data)
+    displayState(x, segs_list, data)
 end
-
 
     function displayState(x,segs_list,data)
         % displayState : displays the modified mask given a vector x of
@@ -89,13 +91,14 @@ end
         cell_mask_mod = cell_mask;
         num_segs = numel(segs_list);
         for kk = 1:num_segs
-            cell_mask_mod = cell_mask_mod - x(kk)*(segs_list(kk)==data.segs.segs_label(yy,xx));
+            cell_mask_mod = cell_mask_mod - x(kk)*...
+                (segs_list(kk)==data.segs.segs_label(yy,xx));
         end
         imshow(cell_mask_mod);
     end
 
 
-    function vect1 = newPoint ( optimvalues,~ )
+    function vect1 = newPoint ( optimvalues, ~ )
         %  newPoint : modifies the previous state to a new state, by
         % switching one of the segments.
         vect0 = optimvalues.x;
@@ -107,10 +110,8 @@ end
 
     function E = stateCostFunction (vect0)
         % stateCostFunction : caclulates the cost function of a given state
-        % vect0
-        
-        key = makeKey(vect0);
-        
+        % vect0 : segments
+        key = makeKey(vect0);        
         if isKey(stateEnergyMap, key)
             % state tried before, get energy from the hashmap
             E = stateEnergyMap(key);
@@ -123,9 +124,10 @@ end
     end
 
     function str = makeKey(vect)
-        % HashMap function, creates a key from a vector of on/off segments
-        % INPUT : vect : logical vector of 1 for segments that are on
-        % OUTPUT : str : hashmap key
+        % Creates a key from a vector of on/off segments.
+        % INPUT : 
+        % vect : logical vector noting on (1) and off (0) segments.
+        % OUTPUT : str : key.
         str = char(double(vect)'+'a');
     end
 

@@ -33,11 +33,11 @@ if ~isempty(dirname)
     
     contents=dir([dirname,file_filter]);
     num_im = numel( contents );
-    if num_im < 0 
+    if num_im < 0
         errordlg('No images found');
     elseif ~isRightNameFormat(dirname)
         errordlg('Incorrect naming convention. Please rename your images first.');
-    else    
+    else
         nt  = [];
         nc  = [];
         nxy = [];
@@ -67,18 +67,16 @@ if ~isempty(dirname)
         
         mkdir(targetd);
         
-        for nnxy = nxy;
+        for nnxy = nxy
             
             % displays the first and last image on top of each other
-            nameInfo.npos(:,1) = [nt(1); nc(1); nnxy; nz(1)];
-            
+            nameInfo.npos(:,1) = [nt(1); nc(1); nnxy; nz(1)];          
             im1   = imread( [dirname, MakeFileName(nameInfo) ]);
-            
             nameInfo.npos(:,1) = [nt(end); nc(1); nnxy; nz(1)];
             imEnd = imread( [dirname, MakeFileName(nameInfo) ]);
+
             figure(1);
-            clf;
-            
+            clf;            
             maxer = max( [im1(:);imEnd(:)]);
             miner = min( [im1(:);imEnd(:)]);
             im = cat(3, ag(im1,miner,maxer), ag(im1,miner,maxer)/2+ag(imEnd,miner,maxer)/2, ag(imEnd,miner,maxer));
@@ -89,8 +87,7 @@ if ~isempty(dirname)
             [~,C] = imcrop( im );
             C = floor( C );
             x = [C(1),C(1)+C(3)];
-            y = [C(2),C(2)+C(4)];
-            
+            y = [C(2),C(2)+C(4)];            
             
             if x(1)<1
                 x(1) = 1;
@@ -112,22 +109,18 @@ if ~isempty(dirname)
             drawnow;
             
             % reads all the images, crops them and saves them
-            for it = nt;
-                for ic = nc;
-                    for iz = nz;
+            for it = nt
+                for ic = nc
+                    for iz = nz
                         nameInfo.npos(:,1) = [it; ic; nnxy; iz];
                         in_name = [dirname, MakeFileName(nameInfo)];
-                        
                         disp( in_name );
-                        
                         im = imread( in_name );
                         out_name = [targetd, MakeFileName(nameInfo)];
                         imwrite( im(yy,xx), out_name, 'TIFF' );
-                    end
-                    
+                    end                   
                 end
-            end
-            
+            end            
         end
     end
 end
