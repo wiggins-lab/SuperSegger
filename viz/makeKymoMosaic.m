@@ -94,11 +94,12 @@ for jj = 1:num_list_
         
         if CONST.view.falseColorFlag
             backer3 = double(cat(3, kymo.b, kymo.b, kymo.b)>1);
-            im = doColorMap( ag(kymo.g,f1mm(1), f1mm(2)), colormap_ );
+            im = doColorMap( ag(kymo.c1,f1mm(1), f1mm(2)), colormap_ );
             data_A{ii} =( im.*backer3+.6*(1-backer3) );
         else
-            data_A{ii} = cat(3,del*ag(1-kymo.b)+ag(kymo.r),...
-                del*ag(1-kymo.b)+ag(kymo.g),del*ag(1-kymo.b));
+            data_A{ii} = comp( {ag(1-kymo.b),[del,del,del]}, ...
+                {ag(kymo.c2),CONST.view.fluorColor{2} },...
+                {ag(kymo.c1),CONST.view.fluorColor{1} });
         end
         
         ss = size(data_A{ii});       

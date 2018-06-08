@@ -1,4 +1,4 @@
-function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )
+function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip, FLAGS )
 % makeFrameMosaic: Creates a tower for a single cell.
 % The cell is shown masked. If CONST.view.orientFlag is true the cell 
 % is oriented horizontally, it can be shown with FalseColor and
@@ -18,7 +18,20 @@ function [im] = makeFrameMosaic( data, CONST, xdim, disp_flag, skip )
 % University of Washington, 2016
 % This file is part of SuperSeggerOpti.
 
-with_outline = 1;
+
+if ~exist( 'FLAGS', 'var' ) || isempty( FLAGS ) 
+    FLAGS.composite = 1;
+    FLAGS.f_flag    = 1;
+    FLAGS.Outline_flag = 0;
+end
+
+    
+
+%which_channel = [1,1,1];
+% if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
+%     which_channel = [1,1,1];
+% end
+
 
 persistent strel1;
 if isempty( strel1 )
@@ -227,31 +240,42 @@ disk1 = strel('disk',1);
 
 
 % different display methods
+
+
 if isfield(CONST.view, 'falseColorFlag') && ...
-        CONST.view.falseColorFlag && ~flag2
+        CONST.view.falseColorFlag
     % false color image - only works if there is only one channel
-    im    = ag(doColorMap( im1_, colormap_ ));
-    back3 = uint8( cat( 3, double(CONST.view.background(1))*double(1-mask_mosaic),...
-        double(CONST.view.background(2))*double(1-mask_mosaic),...
-        double(CONST.view.background(3))*double(1-mask_mosaic)));
-    mask3 = cat( 3, mask_mosaic, mask_mosaic, mask_mosaic );
-    im = uint8(uint8( double(im).*mask3)+back3);
-elseif with_outline
-    % plots normal mosaic with region outline
-    del = 1;
-    disk1 = strel('disk',1);   
-    outer = imdilate(mask_mosaic, disk1).*double(~mask_mosaic);
-    im = cat( 3, ...
-        uint8(double(im2_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
-        uint8(double(im1_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
-        del*ag(1-mask_mosaic)+ag(outer));
+    if FLAGS.f_flag == 1
+        im__    = im1_;
+    else
+        im__    = im2_;
+    end
+  
+    im = comp( {im__,colormap_,'mask', mask_mosaic, 'back' ,CONST.view.background} );
 else
-    del = 1;    
-    disk1 = strel('disk',1);
-    im = cat( 3, ...
-        uint8(double(im2_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
-        uint8(double(im1_).*mask_mosaic)+del*ag(1-mask_mosaic), ...
-        del*ag(1-mask_mosaic) );
+    
+    if FLAGS.Outline_flag
+        
+        disk1 = strel('disk',2);
+        outer = imdilate(mask_mosaic, disk1).*double(~mask_mosaic);
+    else
+        outer = zeros( size( im1_ ) );
+    end
+    
+    % plots normal mosaic with region outline
+    if ~FLAGS.composite
+        if FLAGS.f_flag == 1
+            im2_ = im2_*0;
+        elseif FLAGS.f_flag == 2
+            im1_ = im1_*0;
+        end
+    end
+    
+    im = comp(         {double(im1_),CONST.view.fluorColor{1}},...
+        {double(im2_),CONST.view.fluorColor{2}}   );
+    
+    im = comp( {im,'mask',mask_mosaic,'back',CONST.view.background},...
+        {ag(outer),'b'} );
 end
 
 

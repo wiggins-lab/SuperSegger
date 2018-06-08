@@ -26,12 +26,12 @@ function [rightNames] = isRightNameFormat(dirname)
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-contents = dir([dirname,filesep,'*.tif']);
+contents = dir([dirname,filesep,'*.tif*']);
 filenames = {contents.name}';
 
-nameWithXy=regexpi(filenames,'t\d+xy\d+c\d+.tif','once');
-nameWithoutXy=regexpi(filenames,'t\d+c\d+.tif','once');
-nameWithoutt=regexpi(filenames,'xy\d+c\d+.tif','once');
+nameWithXy=regexpi(filenames,'t\d+xy\d+c\d+.tif+','once');
+nameWithoutXy=regexpi(filenames,'t\d+c\d+.tif+','once');
+nameWithoutt=regexpi(filenames,'xy\d+c\d+.tif+','once');
 
 numWithXy =  sum(~cellfun('isempty',nameWithXy));
 numWithoutXY = sum(~cellfun('isempty',nameWithoutXy));

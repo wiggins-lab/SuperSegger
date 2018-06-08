@@ -134,6 +134,8 @@ for nnxy = nxy
     disp( ['XY: ',num2str( nnxy ),' / ',num2str(numel(nxy))] );
     %loop through times
     
+    % parfor jj = 1:numt
+
     for jj = 1:numt
         
         intDoTimeStep(  nt(jj), data, nnxy )
@@ -168,7 +170,7 @@ for ic = data.nc
         ims(:,:,iz) = tmp;
     end
     
-    if ic == 1
+    if (ic == 1)||(ic == -1 )
         Z2f = makeMergeMap( ims, data );
     end
     

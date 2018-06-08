@@ -396,7 +396,7 @@ else
                 next_arg = varargin{counter};
                 
                 if isnumeric( next_arg )
-                    data.mult = next_arg; 
+                    data.multi = next_arg; 
                 end
                 
             

@@ -51,7 +51,7 @@ end
 dirname_ = fixDir(dirname_);
 
 verbose = CONST.parallel.verbose;
-file_filter = '*.tif';
+file_filter = '*.tif*';
 contents=dir([dirname_ file_filter]);
 num_im = numel( contents );
 
@@ -110,7 +110,8 @@ end
 crop_box = cell(1, num_xy);
 
 % parallelized alignment for each xy
-parfor(jj=1:num_xy, workers)
+for jj=1:num_xy
+%parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
         dirname_, targetd, nameInfo, precision, CONST);
 end
@@ -179,7 +180,7 @@ for it = nt;
             if verbose
                 disp(['trackOptiAlignPad : Image name: ',in_name]);
             end
-            im = imread(in_name);
+            im = intImRead(in_name);
             
             if numel(size(im)) > 2
                 disp('Images are color - they need to be monochromatic.');
@@ -214,8 +215,9 @@ for it = nt;
                 end
             end
             
-            im = intShiftIm(im, out);
-            
+            %im = intShiftIm(im, out);
+            im = intShiftImMod(im, out );
+           
             if SHOW_FLAG
                 if ic == nc(1) % phase image
                     if ic>0
@@ -288,12 +290,12 @@ for it = nt;
             if verbose
                 disp(['Image name: ',in_name]);
             end
-            im_ = imread( in_name );
+            im_ = intImRead( in_name );
             im = zeros(sspad, class(im_) ) + mean( im_(:));
             im((1-miny):(ss(1)-miny),(1-minx):(ss(2)-minx)) = im_;
             out = [0,0,OutArray(countt,:)];
             
-            im = intShiftIm(im, out + CONST.imAlign.out{ic} - ...
+            im = intShiftImMod(im, out + CONST.imAlign.out{ic} - ...
                 CONST.imAlign.out{1});
             
             if ~initFlag % first time through, set previous image
@@ -334,7 +336,7 @@ for it = nt;
             if FocusArray(countt) % image focused, with low error
                 % save shifted image to target directory
                 out_name = [targetd, MakeFileName(nameInfo)];
-                imwrite(uint16(im), out_name ,'tif','Compression', 'none');
+                intImWrite(im, out_name );
                 initFlag = true;
                 
                 if ic == nc(1)

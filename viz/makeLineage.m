@@ -24,6 +24,7 @@ function data = makeLineage( clist, ID_, min_width )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+global mother_index;
 global daughter1_index;
 global daughter2_index;
 global cell_birth_index;
@@ -87,15 +88,18 @@ data.n2_max = [];
 legend_text = {};
 count = 0;
 
-mother_index = grabClistIndex(clist, 'mother id');
-daughter1_index = grabClistIndex(clist, 'daughter1 id');
-daughter2_index = grabClistIndex(clist, 'daughter2 id');
-cell_div_index = grabClistIndex(clist, 'Cell Division Time');
-stat_0_index = grabClistIndex(clist,'stat0');
-cell_birth_index = grabClistIndex(clist,'Cell Birth Time');
-cell_error_index = grabClistIndex(clist,'Error Frame');
-cell_age_index = grabClistIndex(clist,'Cell Age' );
-pole_age_index = grabClistIndex(clist,'Old Pole Age' );
+mother_index     = grabClistIndex(clist, 'mother id');
+daughter1_index  = grabClistIndex(clist, 'daughter1 id');
+daughter2_index  = grabClistIndex(clist, 'daughter2 id');
+cell_div_index   = grabClistIndex(clist, 'Cell Division Time');
+if isempty( cell_div_index )
+    cell_div_index   = grabClistIndex(clist, 'Cell death time');
+end
+stat_0_index     = grabClistIndex(clist, 'stat0');
+cell_birth_index = grabClistIndex(clist, 'Cell Birth Time');
+cell_error_index = grabClistIndex(clist, 'Error Frame');
+cell_age_index   = grabClistIndex(clist, 'Cell Age' );
+pole_age_index   = grabClistIndex(clist, 'Old Pole Age' );
 
 
 if isempty(cell_error_index)
@@ -110,7 +114,8 @@ if isempty( ID_ )
             % Make new lineage
             ID = clist.data(ii,1);
             
-            [width,list,time,death,stat0,starter,error,age,gen,pole] ...
+            [width,list,time,death,stat0,starter,error,age,gen,pole,...
+                mother,daughter1,daughter2] ...
                 = intGetWidth(ID, clist, starter,1);
             
             if (width >= min_width) || time(1) == 1
@@ -118,15 +123,18 @@ if isempty( ID_ )
                     stat0, starter, hh, hh2, error, gated, data );
                 count = count + 1;
                 
-                data.width = width;
-                data.ID    = list;
-                data.birth = time;
-                data.death = death;
-                data.stat0 = stat0;
-                data.error = error;
-                data.age   = age;
-                data.gen   = gen;
-                data.pole  = pole;
+                data.width      = width;
+                data.ID         = list;
+                data.birth      = time;
+                data.death      = death;
+                data.stat0      = stat0;
+                data.error      = error;
+                data.age        = age;
+                data.gen        = gen;
+                data.pole       = pole;
+                data.mother     = mother;
+                data.daughter1  = daughter1;
+                data.daughter2  = daughter2;
                 
                 legend_text{count} = ['Cell ',num2str( ID )];
             end
@@ -138,7 +146,8 @@ else
     for ii = 1:numel(ID_)
         
         ID = ID_(ii);
-        [width,list,time,death,stat0,starter,error,age,gen,pole] = ...
+        [width,list,time,death,stat0,starter,error,age,gen,pole,...
+                mother,daughter1,daughter2] = ...
             intGetWidth(ID, clist, starter, 1);
         
         [hh,hh2,data] = intDoDraw( clist, list, time, death, stat0, starter, ...
@@ -153,6 +162,9 @@ else
         data.age   = age;
         data.gen   = gen;
         data.pole  = pole;
+        data.mother     = mother;
+        data.daughter1  = daughter1;
+        data.daughter2  = daughter2;
         
         legend_text{ii} = ['Cell ',num2str( ID )];
     end
@@ -224,9 +236,12 @@ xlabel( 'Time (frames)' );
 legend( hh, legend_text, 'Location' , 'NorthWest' );
 set( gca, 'YScale', 'log'  );
 
+data = makePed( data );
+
 end
 
-function [width,list,time,death,stat0,starter,error,age,gen,pole] = ...
+function [width,list,time,death,stat0,starter,error,age,gen,pole,...
+                mother,daughter1,daughter2] = ...
     intGetWidth(ID, clist, starter, gen__)
 global cell_birth_index;
 global cell_div_index;
@@ -250,14 +265,18 @@ if isempty(ind) || (ID == 0) || isnan(ID)
     age   = [];
     gen   = [];
     pole  = [];
+    daughter1 = [];
+    daughter2 = [];
+    mother = [];
+    
 else
-    [ID1,ID2] = intGetDaughter( ID, clist );
+    [ID1,ID2,m] = intGetDaughter( ID, clist );
     
     error_ = clist.data(ind,cell_error_index);
     death_ = clist.data(ind,cell_div_index);
     age_   = clist.data(ind,cell_age_index);
     gen_   = gen__;
-    
+
     if isempty(error_)
         error_ = nan;
     end
@@ -271,23 +290,31 @@ else
             
     end
     
-    [w1,l1,t1,d1,s1,starter,e1,a1,g1,p1] = intGetWidth( ID1, clist, starter,gen__ + 1 );
-    [w2,l2,t2,d2,s2,starter,e2,a2,g2,p2] = intGetWidth( ID2, clist, starter,gen__ + 1  );
+    [w1,l1,t1,d1,s1,starter,e1,a1,g1,p1,m1,d11,d12] = intGetWidth( ID1, clist, starter,gen__ + 1 );
+    [w2,l2,t2,d2,s2,starter,e2,a2,g2,p2,m2,d21,d22] = intGetWidth( ID2, clist, starter,gen__ + 1  );
     
     stat0_ = clist.data(ind,stat_0_index);
     time_  = clist.data(ind,cell_birth_index);
     pole_  = clist.data(ind,pole_age_index);
     %death_ = death_ + time_;
     
-    width =  1 + w1 + w2;
-    list  = [ID,l1,l2];
-    time  = [time_,t1,t2];
-    death = [death_,d1,d2];
-    stat0 = [stat0_,s1,s2];
-    error = [error_,e1,e2];
-    age   = [age_,a1,a2];
-    gen   = [gen_,g1,g2];
-    pole  = [pole_,p1,p2];
+    width      =  1 + w1 + w2;
+    list       = [ID,l1,l2];
+    time       = [time_,t1,t2];
+    death      = [death_,d1,d2];
+    stat0      = [stat0_,s1,s2];
+    error      = [error_,e1,e2];
+    age        = [age_,a1,a2];
+    gen        = [gen_,g1,g2];
+    pole       = [pole_,p1,p2];
+    mother     = [m,m1,m2];
+    daughter1  = [ID1,d11,d21];
+    daughter2  = [ID2,d12,d22];
+    
+    if numel(daughter1) ~= numel(mother)
+        'hi';
+    end
+    
 end
 end
 
@@ -451,17 +478,21 @@ end
 end
 
 
-function [ID1,ID2] = intGetDaughter( ID, clist )
+function [ID1,ID2,m] = intGetDaughter( ID, clist )
 global daughter1_index
 global daughter2_index
+global mother_index
+
 ind = find( clist.data(:,1)==ID );
 
 if isempty(ind)
     ID1 = nan;
     ID2 = nan;
+    m   = nan;
 else
     ID1 = clist.data(ind,daughter1_index);
     ID2 = clist.data(ind,daughter2_index);
+    m   = clist.data(ind,mother_index);
 end
 
 end
@@ -470,6 +501,7 @@ function intDoLengthAn( clist, list )
 
 flagger = ismember( clist.data(:,1), list );
 
+list = clist.data(flagger,1);
 
 lengths = squeeze( clist.data3D(flagger,2,:) );
 

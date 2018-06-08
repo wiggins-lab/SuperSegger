@@ -119,7 +119,7 @@ end
 % align frames
 if exist( dirname_, 'dir' )    
     if exist( [dirname_,filesep,'raw_im'] ,'dir') && ...
-            (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif'])) || ...
+            (numel(dir ([dirname_,filesep,'raw_im',filesep,'*.tif*'])) || ...
             exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file'))
         disp('BatchSuperSeggerOpti : images already aligned');
         if exist([dirname_,filesep,'raw_im',filesep,'cropbox.mat'],'file')
@@ -128,7 +128,7 @@ if exist( dirname_, 'dir' )
         else
             crop_box_array = cell(1,10000);
         end
-    elseif numel(dir ([dirname_,filesep,'*.tif']))
+    elseif numel(dir ([dirname_,filesep,'*.tif*']))
         % check naming convention
         if ~isRightNameFormat(dirname_)
             disp('Images in incorrect naming format. Using convertImageNames to convert names.')
@@ -139,8 +139,8 @@ if exist( dirname_, 'dir' )
         if CONST.align.ALIGN_FLAG
             crop_box_array = trackOptiAlignPad( dirname_,...
                 CONST.parallel.parallel_pool_num, CONST);
-            movefile( [dirname_,filesep,'*.tif'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
-            movefile( [dirname_,'align',filesep,'*.tif'], [dirname_,filesep]); % moves aligned back to main folder
+            movefile( [dirname_,filesep,'*.tif*'], [dirname_,filesep,'raw_im'] ) % moves images to raw_im
+            movefile( [dirname_,'align',filesep,'*.tif*'], [dirname_,filesep]); % moves aligned back to main folder
             rmdir( [dirname_,'align'] ); % removes _align directory
         else
             crop_box_array = cell(1,10000);
@@ -209,8 +209,8 @@ else
         cleanup = onCleanup( @()( delete( h ) ) );
     end
     
-    parfor(j = 1:num_xy,workers)
-        %for j = 1:num_xy
+    %parfor(j = 1:num_xy,workers)
+        for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
@@ -250,7 +250,7 @@ function intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...
 % processor all the information it needs to process the images.
 
 % Initialization
-file_filter = '*.tif';
+file_filter = '*.tif*';
 verbose = CONST.parallel.verbose;
 
 % get header to show xy position

@@ -241,12 +241,16 @@ ss = size(data.phase);
 % if the phase image exists use this as the background, else use the cell
 % masks
 phase_level = FLAGS.phase_level;
+cc = phase_level * [1,1,1];
+
 if isfield(data,'phase') && FLAGS.phase_flag
-    back = phase_level * ag(data.phase);
-    im = cat(3,back,back,back);
+    %back = phase_level * ag(data.phase);
+    %im = cat(3,back,back,back);
+    
+    im = comp( {data.phase, cc} );
+    
 else
-    mask = phase_level * ag(~data.mask_cell);
-    im = cat(3, mask,mask,mask);
+    im =  comp( {zeros(ss), cc} ); 
 end
 
 
@@ -276,22 +280,26 @@ end
 
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
-        im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
+        %im(:,:,:) = im(:,:,:) + cat(3,0.4*ag(data.cell_outline),0.4*ag(data.cell_outline),0.5*ag(data.cell_outline));
+        im = comp( im, {double(data.cell_outline), [0,0,.6]} );
     elseif isfield(data,'outline')
-        im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
+        %im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
+        im = comp( im, {double(data.outline), [0,0,.6]} );
     elseif isfield(data,'mask_cell')% no outline field (not loaded through super segger viewer)
         data.outline = xor(bwmorph( data.mask_cell,'dilate'), data.mask_cell);
-        im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
+        %im(:,:,:) = im(:,:,:) + cat(3,0.3*ag(data.outline),0.3*ag(data.outline),0.5*ag(data.outline));
+        im = comp( im, {double(data.outline), [0,0,.6]} );
     end
     
 elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
     
     if ~isfield( data,'regs') || ~isfield( data.regs, 'ID') % no cell ids - seg files
         
-        blueChannel = 0.3*(data.mask_cell);
-        reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
-        im = reg_color + im;
+        %blueChannel = 0.3*(data.mask_cell);
+        %reg_color = uint8( 255*cat(3, 0*blueChannel,blueChannel,blueChannel));
+        %im = reg_color + im;
         
+        im = comp( im, {data.mask_cell, [0,.3,.3]} ); 
     else
         
         if isfield( data.regs, 'ignoreError' )
@@ -299,6 +307,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         else
             ignoreErrorV = 0*data.reg.divide;
         end
+        
         
         % cells in the ID list and in this region
         % if v_flag is off, all cells are in is_in_cell_V
@@ -309,55 +318,74 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             data.regs.error.r),ignoreErrorV)));
         map_err_rev  = double(ismember( data.regs.regs_label, map_error_ind ));
+        cc1 = [0.35,0,0];
         
         % cells with ehist in this frame, but no error current->reverse or ignoreError
         map_ehist_in_frame_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
             ~data.regs.error.r),ignoreErrorV)));
         map_ehist_in_frame  = double(ismember( data.regs.regs_label, map_ehist_in_frame_ind ));
-        
+        cc2 = [0.55,0,0];
         
         % cells without error history
         map_no_err_ind =  find(and(cells_In_Frame,or(~data.regs.ehist,ignoreErrorV)));
         map_no_err  = double(ismember( data.regs.regs_label, map_no_err_ind));
+        cc3 = [0,0.3,0];
         
         % in list, cell was not born in this frame with good division or divided
         % but stat0==2 : succesfful division was observed
         map_stat0_2_ind = find(and(cells_In_Frame,data.regs.stat0==2));
         map_stat0_2 = double(ismember( data.regs.regs_label,map_stat0_2_ind ));
+        cc4 = [0,0,0.7];
         
         % outline the ones that were just born with stat0 == 2
         map_stat0_2O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==2)));
         map_stat0_2_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_2O_ind));
-        
+        cc5 = [0.35,0,0];
         
         % in list, cell was not born in this frame with good division or divided
         % stat0==1 : cell was result of succesfful division
         map_stat0_1_ind  = find(and(cells_In_Frame,data.regs.stat0==1));
         map_stat0_1  = double( ismember( data.regs.regs_label,map_stat0_1_ind ));
+        cc6 = [0,0.2,0.6];
         
         % outline the ones that were just born with stat0 == 1
         map_stat0_1O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==1)));
         map_stat0_1_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_1O_ind));
-        
+        cc7 = [0.35,0,0];
         
         % in list, cell was not born in this frame with good division or divided
         % stat0 == 0  : cell has errors, or division not observed
         map_stat0_0_ind = find(and(cells_In_Frame,data.regs.stat0==0));
         map_stat0_0 = double(ismember( data.regs.regs_label, map_stat0_0_ind ));
+        cc8 = [0,0.2,0.3];
         
         % outline the ones that were just born with stat0 == 1
         map_stat0_0O_ind = find(and(cells_In_Frame,and(cellBorn,data.regs.stat0==0)));
         map_stat0_0_Outline = intDoOutline2(ismember(data.regs.regs_label, map_stat0_0O_ind));
+        cc9 = [0.35,0,0];
         
+tic
+        im = comp( im, {map_err_rev, cc1},...
+                        {map_ehist_in_frame, cc2},...
+                        {map_no_err, cc3},...
+                        {map_stat0_2, cc4},...
+                        {map_stat0_2_Outline, cc5},...
+                        {map_stat0_1, cc6},...
+                        {map_stat0_1_Outline, cc7},...
+                        {map_stat0_0, cc8},...
+                        {map_stat0_0_Outline, cc9});
+                    
+toc
+
+
         
-        
-        redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
-        greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
-        blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
-        
-        reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
-        
-        im = reg_color + im;
+%         redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+%         greenChannel =                     0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
+%         blueChannel = 0.7*(map_stat0_2)+                      0.6*(map_stat0_1)+0.3*(map_stat0_0);
+%         
+%         reg_color = uint8( 255*cat(3, redChannel,greenChannel,blueChannel));
+%         
+%         im = reg_color + im;
         
     end
     %% colors :
@@ -373,18 +401,70 @@ end
 end
 
 
+% function im = updateFluorImage(data, im, channel, FLAGS, CONST)
+% 
+% fluorName =  ['fluor',num2str(channel)];
+% 
+% fluorName =  ['fluor',num2str(channel)];
+% flbgName =  ['fl',num2str(channel),'bg'];
+% if isfield(data, fluorName )
+%     
+%     
+%     if ~isfield (CONST.view,'fluorColor')
+%         CONST.view.fluorColor = {'g','r','b'};
+%     end
+%     
+%     curColor = getRGBColor( CONST.view.fluorColor{channel});
+%     
+%     if FLAGS.filt && isfield( data, [fluorName,'_filtered'] )
+%         fluor_tmp =  data.([fluorName,'_filtered']);
+%     else
+%         fluor_tmp = data.(fluorName);
+%         if isfield( data, 'fl1bg' )
+%             fluor_tmp = fluor_tmp - data.(flbgName);
+%             fluor_tmp( fluor_tmp< 0 ) = 0;
+%         else
+%             fluor_tmp = fluor_tmp-mean(fluor_tmp(:));
+%             fluor_tmp( fluor_tmp< 0 ) = 0;
+%         end
+%     end
+%     
+%     if isfield( CONST.view, 'LogView' ) && CONST.view.LogView && ~FLAGS.composite
+%         fluor_tmp =   ag( double(fluor_tmp).^.6 );
+%     end
+%     
+%     
+%     minner = medfilt2( fluor_tmp, [2,2], 'symmetric' );
+%     maxxer = max( minner(:));
+%     minner = min( minner(:));
+%     if CONST.view.falseColorFlag
+%         im = im + doColorMap( ag(fluor_tmp,minner,maxxer), uint8(255*jet(256)) );
+%     else
+%         imFluor = 0.8*ag(fluor_tmp,minner,maxxer);
+%         im(:,:,1) = im(:,:,1) + curColor(1) * imFluor;
+%         im(:,:,2) = im(:,:,2) + curColor(2) * imFluor;
+%         im(:,:,3) = im(:,:,3) + curColor(3) * imFluor;
+%     end
+%     
+%     
+% end
+% end
+
 function im = updateFluorImage(data, im, channel, FLAGS, CONST)
 
 fluorName =  ['fluor',num2str(channel)];
 
 fluorName =  ['fluor',num2str(channel)];
 flbgName =  ['fl',num2str(channel),'bg'];
+
 if isfield(data, fluorName )
+    
+    
     if ~isfield (CONST.view,'fluorColor')
         CONST.view.fluorColor = {'g','r','b'};
     end
     
-    curColor = getRGBColor( CONST.view.fluorColor{channel});
+    cc = CONST.view.fluorColor{channel};
     
     if FLAGS.filt && isfield( data, [fluorName,'_filtered'] )
         fluor_tmp =  data.([fluorName,'_filtered']);
@@ -407,13 +487,12 @@ if isfield(data, fluorName )
     minner = medfilt2( fluor_tmp, [2,2], 'symmetric' );
     maxxer = max( minner(:));
     minner = min( minner(:));
+    
+    
     if CONST.view.falseColorFlag
-        im = im + doColorMap( ag(fluor_tmp,minner,maxxer), uint8(255*jet(256)) );
+        im = comp( im, {fluor_tmp,[minner,maxxer],jet(256)} );
     else
-        imFluor = 0.8*ag(fluor_tmp,minner,maxxer);
-        im(:,:,1) = im(:,:,1) + curColor(1) * imFluor;
-        im(:,:,2) = im(:,:,2) + curColor(2) * imFluor;
-        im(:,:,3) = im(:,:,3) + curColor(3) * imFluor;
+        im = comp( im, {fluor_tmp,[minner,maxxer],.8,cc} );
     end
     
     

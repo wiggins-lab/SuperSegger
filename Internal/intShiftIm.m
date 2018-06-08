@@ -44,4 +44,6 @@ fftB = fftB.*exp(1i*2*pi*(deltar*Nr/nr+deltac*Nc/nc));
 
 imOut  = (real(ifft2(fftB).*exp(-1i*phase)));
 
+%imOut2 = imtranslate( imIn, -out([4,3]),'FillValues', mean(imIn(:)));
+
 end

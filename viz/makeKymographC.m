@@ -1,4 +1,4 @@
-function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_channel )
+function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, FLAGS )
 % makeKymographC : creates a kymograph for given cell data file..
 % A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
@@ -16,23 +16,34 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, which_ch
 %       f1mm: is a two value array with the max and min value of channel 1
 %       f2mm: is a two value array with the max and min value of channel 2
 %
-% Copyright (C) 2016 Wiggins Lab 
+% Copyright (C) 2016 Wiggins Lab
 % Written by Paul Wiggins, Stella Stylianidou.
 % University of Washington, 2016
 % This file is part of SuperSegger.
-% 
+%
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % SuperSegger is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+if ~exist( 'FLAGS', 'var' ) || isempty( FLAGS ) 
+    FLAGS.composite = 1;
+    FLAGS.f_flag    = 1;
+    FLAGS.Outline_flag = 0;
+    FLAGS.filt = 0;
+end
+
+
 
 white_bg = 0; % set to 1 for white background, outlined kymo
 Kymo = [];
@@ -58,9 +69,7 @@ if ~isfield(CONST.view, 'filtered' )
     CONST.view.filtered = true;
 end
 
-filt_channel =  CONST.view.filtered ;
-
-
+filt_channel =  FLAGS.filt;%CONST.view.filtered ;
 
 persistent colormap_;
 if isempty( colormap_ )
@@ -151,9 +160,9 @@ for ii = 1:num_im
     mask  = data.CellA{ii}.mask;
     
     % Make all the images the same sizes
-    [rChan,~] = (fixIm(double((fluor2)).*double(mask),ss));
-    [gChan,~] = (fixIm(double((fluor1)).*double(mask),ss));
-    [bChan,roffset] = fixIm(mask,ss);
+    [Chan2,~] = (fixIm(double((fluor2)).*double(mask),ss));
+    [Chan1,~] = (fixIm(double((fluor1)).*double(mask),ss));
+    [ChanB,roffset] = fixIm(mask,ss);
     
     ro = data.CellA{ii}.r_offset;
     r = data.CellA{ii}.r;
@@ -164,17 +173,17 @@ for ii = 1:num_im
     LL1x =  LL1*e1(1)+LL2*e2(1)+r(1)-ro(1)+1+roffset(1);
     LL2y =  LL1*e1(2)+LL2*e2(2)+r(2)-ro(2)+1+roffset(2);
     
-    rChanp = (interp2(XX,YY,double(rChan),LL1x,LL2y));
-    gChanp = (interp2(XX,YY,double(gChan),LL1x,LL2y));
-    bChanp = (interp2(XX,YY,double(bChan),LL1x,LL2y));
+    Chan2p = (interp2(XX,YY,double(Chan2),LL1x,LL2y));
+    Chan1p = (interp2(XX,YY,double(Chan1),LL1x,LL2y));
+    ChanBp = (interp2(XX,YY,double(ChanB),LL1x,LL2y));
     
-    rChanps = sum( double(rChanp) );
-    gChanps = sum( double(gChanp) );
-    bChanps = sum( double(bChanp) );
+    Chan2ps = sum( double(Chan2p) );
+    Chan1ps = sum( double(Chan1p) );
+    ChanBps = sum( double(ChanBp) );
     
-    kymoR(:,ii) = rChanps';
-    kymoG(:,ii) = gChanps';
-    kymoB(:,ii) = bChanps';
+    kymo2(:,ii) = Chan2ps';
+    kymo1(:,ii) = Chan1ps';
+    kymoB(:,ii) = ChanBps';
 end
 
 Kymo = [];
@@ -185,50 +194,62 @@ end
 
 
 if data.CellA{1}.pole.op_ori < 0 % flip the kymograph
-    Kymo.g = kymoG(end:-1:1,:);
+    Kymo.c1 = kymo1(end:-1:1,:);
     Kymo.b = kymoB(end:-1:1,:);
     Kymo.b(isnan(Kymo.b)) = 0;
-    Kymo.r = kymoR(end:-1:1,:);
+    Kymo.c2 = kymo2(end:-1:1,:);
 else
-    Kymo.g = kymoG;
+    Kymo.c1 = kymo1;
     Kymo.b = kymoB;
     Kymo.b(isnan(Kymo.b)) = 0;
-    Kymo.r = kymoR;
+    Kymo.c2 = kymo2;
 end
 
-f1mm(1) = min(Kymo.g(logical(Kymo.b)));
-f1mm(2) = max(Kymo.g(logical(Kymo.b)));
-f2mm(1) = min(Kymo.r(logical(Kymo.b)));
-f2mm(2) = max(Kymo.r(logical(Kymo.b)));
+f1mm(1) = min(Kymo.c1(logical(Kymo.b)));
+f1mm(2) = max(Kymo.c1(logical(Kymo.b)));
+f2mm(1) = min(Kymo.c2(logical(Kymo.b)));
+f2mm(2) = max(Kymo.c2(logical(Kymo.b)));
 
 
-    if CONST.view.falseColorFlag
-        % false color figure
-        backer3 = double(cat(3, Kymo.b, Kymo.b, Kymo.b)>1);
-        im = doColorMap( ag(Kymo.g,f1mm(1), f1mm(2)), colormap_ );
-        imm =  im.*backer3+.6*(1-backer3);
-    elseif white_bg     
-        % figure with outline and white background     
-        sq = [1 1 1 ; 1 1 1 ; 1 1 1];
-        backer = (ag(~Kymo.b));
-        outline = imdilate(backer,sq) - backer;
-        imm = cat(3, (ag(Kymo.r))+backer+0.2*outline, ...
-            (ag(Kymo.g))+backer+0.2*outline,...
-            backer+0.6*outline);        
+if CONST.view.falseColorFlag
+    % false color figure
+    
+    if FLAGS.f_flag == 1
+        im__ = ag(Kymo.c1, f1mm(1), f1mm(2));
+    elseif FLAGS.f_flag == 2
+        im__ = ag(Kymo.c2, f2mm(1), f2mm(2));
     else
-        % figure without outline and gray background
-        backer = (ag(Kymo.b));
-        backer = 0.3*(max(backer(:))-backer);
-        imm = cat(3, (ag(Kymo.r))+backer, ...
-            (ag(Kymo.g))+backer,...
-            backer);       
+        im__ = zeros(size(Kymo.c1));
     end
     
-    if disp_flag
-        figure (2);
-        clf;
-        imagesc(1:num_im,pixelsize*ll1, imm);
+    tmp = Kymo.b;
+    tmp(tmp>1)=1;
+    
+    imm = comp( {im__,colormap_,'mask',tmp,'back', CONST.view.background} );
+    
+else
+    
+    tmp = Kymo.b;
+    tmp(tmp>1)=1;
+    
+    if FLAGS.composite
+        imm = comp( {Kymo.c1, CONST.view.fluorColor{1}},...
+            {Kymo.c2, CONST.view.fluorColor{2}} );
+    elseif FLAGS.f_flag == 1
+        imm = comp( {ag(Kymo.c1), CONST.view.fluorColor{1}} );
+    elseif  FLAGS.f_flag == 2
+        imm = comp( {ag(Kymo.c2), CONST.view.fluorColor{2}} );
     end
+    
+    imm = comp( {imm, 'mask', tmp, 'back', CONST.view.background} );
+    
+end
+
+if disp_flag
+    figure (2);
+    clf;
+    imagesc(1:num_im,pixelsize*ll1, imm);
+end
 
 end
 

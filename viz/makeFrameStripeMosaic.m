@@ -89,21 +89,22 @@ if disp_flag
 end
 
 if ~CONST.view.saveFiles
+
     
+    tmptmp = ones( [ssTot(1), ssTot(2)] );
+
     if CONST.view.falseColorFlag
         
         if ~isfield( CONST.view, 'background' );
             CONST.view.background = [0,0,0];
         end
         
-        tmptmp = zeros( [ssTot(1), ssTot(2)] );
-        imTot = uint8( cat( 3, tmptmp + CONST.view.background(1),...
-            tmptmp + CONST.view.background(2),...
-            tmptmp + CONST.view.background(3)));
+        imTot = comp( {tmptmp, CONST.view.background} ); 
         
     else
         del = 0.0;
-        limTot = uint8(zeros( [ssTot(1), ssTot(2), 3] ));
+        imTot = comp( {tmptmp, CONST.view.background} ); 
+
     end
     
     

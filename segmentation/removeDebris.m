@@ -31,8 +31,8 @@ function [ mask_mod ] = removeDebris( mask_bg, phase, aK )
 
 
 INTENSITY_DIF = 0.2;
-PEBBLE_CONST = 5;
-debugFlag = false;
+PEBBLE_CONST = 1;
+debugFlag = true;
 pad = 6;
 
 ss = size( phase );
@@ -93,9 +93,12 @@ if debugFlag
     
     figure(8);
     clf;        
-    halo_keep = find( DI>.2 );
-    pebble_keep = find( I_K>5 );
-    imshow( comp( phase, mask_bg, ismember( label_bg,halo_keep ), ismember( label_bg,pebble_keep) ) );
+    halo_keep = find( DI> INTENSITY_DIF);
+    pebble_keep = find( I_K> PEBBLE_CONST );
+    comp( phase, ...
+        {mask_bg,.3}, ...
+        {ismember( label_bg,halo_keep ),.3},...
+        {ismember( label_bg,pebble_keep),.3} );
        
     for ii = 1:num_reg
         text( props(ii).Centroid(1),props(ii).Centroid(2), [num2str( -I_m(ii)+I_p(ii), '%2.2g' ),',',num2str( I_K(ii), '%2.2g' )] );
@@ -103,7 +106,7 @@ if debugFlag
     
     figure(9);
     clf    
-    imshow( comp( phase, ~ismember( label_bg, keeper)));
+    comp( phase, {~ismember( label_bg, keeper),.3} );
 end
 
 end

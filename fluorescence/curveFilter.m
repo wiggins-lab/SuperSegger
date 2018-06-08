@@ -35,6 +35,9 @@ function [M_, G_, C1_, C2_, M, G, C1, C2, im_xx, im_yy, im_xy] = curveFilter( im
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+
+oldflag = true;
+
 im = double(im);
 
 % filter width
@@ -52,10 +55,16 @@ R2 = X.^2+Y.^2;
 v = filterWidth^2;
 
 gau = 1/(2*pi*v) * exp( -R2/(2*v) );
-f_xx = (2*pi*v^2)*((X/v).^2-1/v).*gau;
-f_yy = (2*pi*v^2)*((Y/v).^2-1/v).*gau;
-f_xy = (2*pi*v^2)*X.*Y.*gau/v^2;
 
+if oldflag
+    f_xx = (2*pi*v^2)*((X/v).^2-1/v).*gau;
+    f_yy = (2*pi*v^2)*((Y/v).^2-1/v).*gau;
+    f_xy = (2*pi*v^2)*X.*Y.*gau/v^2;
+else
+    f_xx = ((X/v).^2-1/v).*gau;
+    f_yy = ((Y/v).^2-1/v).*gau;
+    f_xy = X.*Y.*gau/v^2;
+end
 % Do filtering
 im_xx = imfilter( im, f_xx, 'replicate' );
 im_yy = imfilter( im, f_yy, 'replicate' );

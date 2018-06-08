@@ -90,6 +90,7 @@ CONST.trackLoci.fluorFlag = false ;    % compute integrated fluorescence (defaul
 CONST.trackOpti.NEIGHBOR_FLAG = false; % calculate number of neighbors (default = false)
 CONST.imAlign.AlignChannel = 1; % change this if you want the images to be aligned to fluorescence channel
 
+CONST.view.fluorColor = {'y','r','b'};
 
 %% Skip Frames for Segmentation
 % For fast time-lapse or slow growth you can skip phase image frames 

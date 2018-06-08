@@ -187,11 +187,11 @@ if isempty(mask)
     
     [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
     aK = abs(K);
-    mask_colonies = removeDebris( mask_colonies, phaseNormUnfilt, aK );
+    mask_colonies_ = removeDebris( mask_colonies, phaseNormUnfilt, aK );
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
-    mask_bg = logical((mask_colonies-mask_halos)>0);
+    mask_bg = logical((mask_colonies_-mask_halos)>0);
     
     % removes micro-colonies with background level outline intensity - not dark enough
     mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST );
@@ -270,6 +270,13 @@ else
                     break
                 end
             end
+            
+            tmp_3s = compConn( logical(wsl_segs_good), 4 );
+            tmp_3s([1,end],:) = 0;
+            tmp_3s(:,[1,end]) = 0;
+            
+            wsl_segs_good(tmp_3s==0)=0;
+            
             ws(yy,xx) = double(0<(ws(yy,xx) + wsl_segs_good));
         end
     end

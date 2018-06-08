@@ -211,7 +211,9 @@ for ii = 1:data.regs.num_regs
     
     focus = focusInit;
     if numel(sortedFoci) > 0
-        maxIndex = find([sortedFoci.intensity] > 0.333 * sortedFoci(1).intensity);
+        %maxIndex = find([sortedFoci.intensity] > 0.333 * sortedFoci(1).intensity);
+        maxIndex = 1:numel(sortedFoci);
+        
         if numel(maxIndex) > CONST.trackLoci.numSpots(channelID)
             maxIndex = maxIndex(1:CONST.trackLoci.numSpots(channelID));
         end

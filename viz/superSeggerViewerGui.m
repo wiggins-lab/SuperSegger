@@ -273,7 +273,8 @@ end
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
-    CONST = load([dirname0, 'CONST.mat']);
+    %CONST = load([dirname0, 'CONST.mat']);
+    CONST = loadConstantsFile( [dirname0,'CONST.mat'] );
     if isfield(CONST, 'CONST')
         CONST = CONST.CONST;
     end
@@ -1271,7 +1272,7 @@ else
         if ~isempty( data_cell )
             figure(2);
             clf;
-            makeKymographC(data_cell, 1, handles.CONST,[]);
+            makeKymographC(data_cell, 1, handles.CONST,handles.FLAGS);
             title(cell_name);
             ylabel('Long Axis (pixels)');
             xlabel('Time (frames)' );
@@ -1312,33 +1313,35 @@ else
 end
 
 
-function hanldes = makeCellTower( handles)
-if ~areCellsLoaded(handles)
-    errordlg('No cell files found');
-else
-    if ~isempty(handles.FLAGS)
-        c = str2num(handles.cell_no.String);
-        if numel(c) > 1
-            c = c(1);
-        end
-        if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-            handles.message.String = ['Invalid cell number'];
+
+    function hanldes = makeCellTower( handles)
+        if ~areCellsLoaded(handles)
+            errordlg('No cell files found');
         else
-            
-            handles.cell_no.String = num2str(c);
-            xdim = 4; %str2double(handles.no_columns.String);
-            [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
-            if ~isempty( data_cell )
-                handles.message.String = ['Cell Tower for cell ', cell_name];
-                figure(2);
-                clf;
-                makeFrameMosaic(data_cell, handles.CONST, xdim);
-                title(cell_name);
+            %     if ~isempty(handles.FLAGS)
+            c = str2num(handles.cell_no.String);
+            if numel(c) > 1
+                c = c(1);
+            end
+            if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+                handles.message.String = ['Invalid cell number'];
+            else
+                
+                handles.cell_no.String = num2str(c);
+                xdim = 4; %str2double(handles.no_columns.String);
+                [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
+                if ~isempty( data_cell )
+                    handles.message.String = ['Cell Tower for cell ', cell_name];
+                    figure(2);
+                    clf;
+                    %makeFrameMosaic(data_cell, handles.CONST, xdim);
+                    makeFrameMosaic(data_cell, handles.CONST, xdim,[],[],handles.FLAGS);
+                    title(cell_name);
+                end
             end
         end
-    end
-end
-
+    
+    
 
 function [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
 prompt = {'Start frame:', 'End frame:','Choose Total # frames :','or Skip Frames :'};
