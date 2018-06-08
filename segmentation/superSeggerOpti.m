@@ -181,21 +181,28 @@ C2phaseThresh = double(uint16(C2phase-MAGIC_THRESHOLD));
 % the smaller background regions between cells.
 if isempty(mask)
     % no background making mask
-    filt_3 = fspecial( 'gaussian',25, 15 );
-    filt_4 = fspecial( 'gaussian',5, 1/2 );
-    mask_colonies = makeBgMask(phaseNormFilt,filt_3,filt_4,MIN_BG_AREA, CONST, crop_box);
+    filt_3 = fspecial('gaussian',25, 15);
+    filt_4 = fspecial('gaussian',5, 1/2);
+    mask_colonies = makeBgMask(phaseNormFilt, filt_3, filt_4, MIN_BG_AREA, CONST, crop_box);
     
-    [~,~,~,~,~,K,~,~] = curveFilter( phaseNormUnfilt, 3 );
+    [~,~,~,~,~,K,~,~] = curveFilter(phaseNormUnfilt, 3 );
     aK = abs(K);
-    mask_colonies_ = removeDebris( mask_colonies, phaseNormUnfilt, aK );
+
+    
+    if CONST.superSeggerOpti.remove_debris
+        mask_colonies = removeDebris(mask_colonies, phaseNormUnfilt, aK, CONST);
+    end
+
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
     mask_bg = logical((mask_colonies_-mask_halos)>0);
     
-    % removes micro-colonies with background level outline intensity - not dark enough
-    mask_bg = intRemoveFalseMicroCol( mask_bg, phaseOrig,CONST );
+    % removes micro-colonies with background level outline intensity - not bright enough
     
+    if CONST.superSeggerOpti.remove_microcolonies
+        mask_bg = intRemoveFalseMicroCol(mask_bg, phaseOrig, CONST);
+    end
     
 else
     mask_bg = mask;

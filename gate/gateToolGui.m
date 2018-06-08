@@ -755,13 +755,21 @@ for i = 1 : numel(fh)
     end
 end
 
-
 % --- Executes on button press in clear_gate.
 function clear_gate_Callback(hObject, eventdata, handles)
 % hObject    handle to clear_gate (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.multi_clist = gateTool(handles.multi_clist,'clear');
+
+if handles.clist_choice.Value == 1
+   handles.multi_clist = gateTool(handles.multi_clist,'clear');
+elseif isstruct(handles.multi_clist)
+   handles.multi_clist(handles.clist_choice.Value-1) = gateTool(handles.multi_clist(handles.clist_choice.Value-1),'clear');
+else
+   handles.multi_clist{handles.clist_choice.Value-1} = gateTool(handles.multi_clist{handles.clist_choice.Value-1},'clear');
+end
+
+updateGui(hObject,handles);
 guidata(hObject,handles);
 
 function handles = naming_func (handles,name)

@@ -52,6 +52,10 @@ originalImage = double(data.(['fluor',num2str(channelID)]));
 hg = fspecial( 'gaussian' , 210, 30 );
 highPassImage = originalImage - imfilter( originalImage, hg, 'replicate' );
 cytoplasmicFlourescenceSTD = std(double(highPassImage(data.mask_bg)));
+if isnan(cytoplasmicFlourescenceSTD)
+    cytoplasmicFlourescenceSTD = 1;
+    disp ('Possibly empty mask for image - foci may not be found');
+end
 normalizedImage = originalImage/cytoplasmicFlourescenceSTD; % normalization so that intensities;
 
 %Take only pixels above 1 std (noise reduction?)

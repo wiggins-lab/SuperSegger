@@ -84,6 +84,15 @@ if ~exist(dataname,'file')
     end
     
     if ~mod(i-1,skip)
+        
+        if CONST.superSeggerOpti.segmenting_fluorescence
+            % for segmenting fluorescence images 
+            % the images are inverted and the debris removal is turned off.
+            CONST.superSeggerOpti.remove_debris = 0;
+            CONST.superSeggerOpti.remove_microcolonies = 0;
+            phase = max(phase(:)) - phase;           
+        end
+        
         % do the segmentation here
         [data, ~] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box);
         if ~isempty( crop_box )

@@ -40,6 +40,7 @@ if ~exist( 'imin', 'var') || isempty( imin )
 else
     imin = double( imin );
 end
+
     
 if ~exist( 'imax', 'var') || isempty( imax )
     imax = max( im(:) );
@@ -57,5 +58,6 @@ end
     
 % autogain and normalization to uint8
 im = uint8(255*im);
+
 
 end

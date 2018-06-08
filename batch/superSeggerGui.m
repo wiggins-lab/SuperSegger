@@ -65,19 +65,24 @@ function help_ClickedCallback(hObject, eventdata, handles)
 msgbox('Examples for image conversion : ')
 
 function convert_names_help_Callback(hObject, eventdata, handles)
-
 Opt.Interpreter = 'tex';
 Opt.WindowStyle = 'normal';
-msgbox({'NAMING CONVERSION:',
-    '',
-    'Our naming convention is : \bf[name]t001xy1c1.tif\rm where t is the prefix for time, xy the prefix for position number and c the prefix for channel number.',
-    '',
-    'The convert script accepts the characters before and after the frame and position numbers, and the characters indicating the channels.',
-  '',
-    'For example if your naming convetion is \bf[name]-pos1-p-001.tif\rm, you can use for channel names : \bf-p-\rm, position prefix : \bfpos\rm, time suffix : \bf.tif\rm.',
-'If your naming convetion is \bf[name]{\_}00000000t{\_}BF.tif\rm and \bfname{\_}00000000t{\_}GFP.tif\rm, you can use for channel names : \bfBF,GFP\rm, time prefix : \bf{\_}\rm and time suffix : \bft{\_}\rm.'
-}, 'Title','none',Opt);
-
+h = msgbox({'Your file names have to be on the format \bf[basename]t[number]xy[number]c[number].tif\rm, where the first number (after \bft\rm) indicates the time frame number, the second number (after \bfxy\rm) is for the different timelapse positions, and finally the third number (after \bfc\rm) are for the different channels (\bfc1\rm are the phase images while \bfc2\rm and onwards are for fluorescence channels), e.g. \bfMG1655{\_}t001xy1c1.tif\rm (where the basename is \bfMG1655{\_}\rm).',
+'',
+'If your image files do not have this name format you can use the GUI to convert the names. The way the name conversion works is that the user indicates the characters before and after the time frame numbers, before and after the xy numbers, and the characters that indicate the channel. The program can then find the numbers and rename the images to the required naming convention.',
+'',
+'The different fields are: \bfImage directory\rm: directory where the .tif images are stored. \bfBasename\rm: how you want your images to be named e.g. strain. \bfChannels\rm: an array of strings seperated by comma that indicate the different channels in your filenames e.g. BF,GFP. The one that will be converted to c1 (phase image) should be listed first. \bfTime prefix\rm: characters in you current filename before the number that indicates the time frame. \bfTime suffix\rm: characters in you current filename after the number that indicates the time frame. \bfXY prefix\rm: characters in you current filename before the number that indicates the xy position. \bfXY suffix\rm: characters in you current filename after the number that indicates the xy position.',
+'',
+'The program can segment images for snapshots (i.e. if \bft\rm is missing from the filename, \bf[basename]xy[number]c[number].tif\rm) or for one xy position (i.e. if \bfxy\rm is missing from the filename, \bf[basename]t[number]c[number].tif\rm).',
+'',
+'The program can still rename the images if you leave blank either the prefix or the suffix. If both the prefix and suffix are left blank the number 1 is set as default.',
+'',
+'Example 1: Suppose your images files currently are named \bfstrain-pos1-p-0001.tif\rm and \bfstrain-pos1-g-0001.tif\rm. Then in order to convert the names to the required naming convention, you will have to type: \bfBasename\rm: strain \bfChannels\rm: -p-,-g- \bfTime prefix\rm: - \bfTime suffix\rm: .tif \bfXY prefix\rm: pos \bfXY suffix\rm: - When you press the Name Conversion button, your image files will then be renamed to \bfstraint0001xy1c1.tif\rm and \bfstraint0001xy1c2.tif\rm.',
+'',
+'Example 2: Suppose your image files currently are named \bfstrain{\_}0001t{\_}BF.tif\rm and \bfstrain{\_}0001t{\_}GFP.tif\rm. Then in order to convert the names to the required naming convention, you will have to type: \bfBasename\rm: strain \bfChannels\rm: BF,GFP \bfTime prefix\rm: {\_} \bfTime suffix\rm: t{\_} \bfXY prefix\rm: (left empty) \bfXY suffix\rm: (left empty) When you press the Name Conversion button, your image files will then be renamed to \bfstraint001xy1c1.tif\rm and \bfstraint001xy1c2.tif\rm.',
+'',
+'Keep in mind that the program will search for the specified prefixes and suffixes in your current file names, and use them to identify which number in the current file names correspond for time and which number that correpond for xy position. It is therefore important that you type in as much as possible in the prefixes and suffixes fields so the program is able to uniquely identify the correct numbers.'
+}, 'Naming Conversion', 'none', Opt);
 
 function convert_names_help_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -197,10 +202,15 @@ CONST.trackLoci.numSpots = str2num(handles.fociNum.String);
 CONST.getLocusTracks.TimeStep = str2num(handles.timestep.String);
 CONST.trackOpti.MIN_CELL_AGE = str2num(handles.cell_age.String);
 CONST.trackOpti.REMOVE_STRAY = handles.remove_stray.Value;
+CONST.superSeggerOpti.REMOVE_STRAY = handles.remove_stray.Value;
+CONST.superSeggerOpti.segmenting_fluorescence = handles.segmenting_fluor.Value;
+
 clean_flag = handles.clean_flag.Value;
 skip = str2double(handles.skip.String);
-
-BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST);
+start_step = str2num(handles.start_step.String);
+end_step = str2num(handles.end_step.String);
+startEnd = [start_step end_step];
+BatchSuperSeggerOpti(dirname, skip, clean_flag, CONST, startEnd);
 
 
 % tries different constants
@@ -250,6 +260,62 @@ end
 
 function constants_list_Callback(hObject, eventdata, handles)
 function constants_list_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in segmenting_fluor.
+function segmenting_fluor_Callback(hObject, eventdata, handles)
+% hObject    handle to segmenting_fluor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of segmenting_fluor
+
+
+
+function start_step_Callback(hObject, eventdata, handles)
+% hObject    handle to start_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of start_step as text
+%        str2double(get(hObject,'String')) returns contents of start_step as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function start_step_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to start_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function end_step_Callback(hObject, eventdata, handles)
+% hObject    handle to end_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of end_step as text
+%        str2double(get(hObject,'String')) returns contents of end_step as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function end_step_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to end_step (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

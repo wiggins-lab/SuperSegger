@@ -102,6 +102,8 @@ cell_age_index   = grabClistIndex(clist, 'Cell Age' );
 pole_age_index   = grabClistIndex(clist, 'Old Pole Age' );
 
 
+
+
 if isempty(cell_error_index)
     disp ('no error frame found in clist')
 end
@@ -284,7 +286,7 @@ else
     if isnan(ID1) || isnan(ID2) || (ID1==0) || (ID2==0) || ~isnan(error_)
         starter = [starter,ID];
         
-        if death_ ~= end_time && isnan(error_);
+        if death_ ~= end_time && isnan(error_)
             error_ = death_;
         end
             

@@ -87,7 +87,7 @@ if ~exist(dirOriginal,'dir') % make original directory
 end
 
 if isempty(imagesInOrig) % move original images
-    movefile('*.tif*',dirOriginal); % move all images to dir original
+    movefile([dirname,filesep,'*.tif*'],dirOriginal); % move all images to dir original
 end
 
 images = dir([dirOriginal,filesep,'*.tif*']);
@@ -111,7 +111,7 @@ for j = 1: numel (images)
         end
     end
     
-
+    
     if isnumeric(xyFilterBefore ) && isnumeric(xyFilterAfter)
         currentXY = str2double(fileName(xyFilterBefore:xyFilterAfter));
         if ~isnumeric((currentXY))
@@ -127,14 +127,16 @@ for j = 1: numel (images)
     end
     
     channelPos = [];
-    c = 0;
+    % find out channel
     if isempty(channelNames) || isempty(channelNames{1})
         c = 1;
         channelPos = 1;
     else
-        while isempty(channelPos)
-            c = c +1;
-            channelPos = strfind(fileName, channelNames {c}); % find out channel
+        for c = 1:numel(channelNames)
+            channelPos = strfind(fileName, channelNames {c});
+            if ~isempty(channelPos)
+                break;
+            end
         end
     end
     
@@ -144,7 +146,7 @@ for j = 1: numel (images)
     end
     
     newFileName = [basename,elementsTime,sprintf('%05d',currentTime),elementsXY,sprintf('%03d',currentXY),elementsPhase,num2str(c)];
-    copyfile([dirOriginal,filesep,images(j).name],[ newFileName,'.tif']);
+    copyfile([dirOriginal,filesep,images(j).name],[dirname,filesep,newFileName,'.tif']);
     
 end
 
@@ -157,7 +159,6 @@ function numbers = findNumbers (fileName, patternBefore, patternAfter)
 is_num_mask = ismember( fileName,'01234567890'); % 1 where there are numbers
 timeStart = 0 ;
 timeEnd = 0 ;
-
 
 % both empty set numbers to 1
 if strcmp(patternBefore,'') && strcmp(patternAfter, '') ||...

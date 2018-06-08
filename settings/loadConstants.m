@@ -81,6 +81,12 @@ CONST.imAlign.AlignChannel = 1; % channel to use for alignment
 CONST.imAlign.medFilt = false; % use median filter during alignment
 CONST.align.ALIGN_FLAG = 1; % align images (boolean)
 
+% segmenation default parameters
+CONST.superSeggerOpti.segmenting_fluorescence = false;
+CONST.superSeggerOpti.remove_debris = true;
+CONST.superSeggerOpti.INTENSITY_DIF = 0.15;
+CONST.superSeggerOpti.PEBBLE_CONST = 3;
+CONST.superSeggerOpti.remove_microcolonies = true;
 
 % region optimization parameters
 CONST.regionOpti.MAX_NUM_RESOLVE = 10000; % no region optimization above this number of segments
@@ -101,13 +107,12 @@ CONST.trackOpti.OVERLAP_LIMIT_MIN = 0.0800;
 CONST.trackOpti.DA_MAX = 0.3; % maximum area change in linking from r->c
 CONST.trackOpti.DA_MIN = -0.2; % minimum area change in linking from r->c
 CONST.trackOpti.LYSE_FLAG = 0; % not working anymore.
-CONST.trackOpti.REMOVE_STRAY = 1; % deletes stray regions and their children
+CONST.trackOpti.REMOVE_STRAY = 0; % deletes stray regions and their children
 CONST.trackOpti.MIN_CELL_AGE = 5; % minimum cell age for full cell cycle
 CONST.trackOpti.linkFun = @multiAssignmentSparse; % function used for linking cells
 CONST.trackOpti.SMALL_AREA_MERGE = 55; % in the linking phase, this regions with this area are merged with the ones next to them.
 CONST.trackOpti.MIN_AREA_NO_NEIGH = 30; % regions with area below this and no neighbors are discarded;
 CONST.trackOpti.MIN_AREA = 5; % minimum area a cell region can have, otherwise it is discarded.
-
 
 % Fluorescence calculations : locates foci and caclulates fluorescence
 % statistics.
@@ -119,10 +124,10 @@ CONST.trackLoci.gate  = [];
 
 
 % pixelsize in um
-if all(ismember('100X',upper(res))) % 60 nm per pixel
-    CONST.getLocusTracks.PixelSize        = 6/100;
-elseif all(ismember('60X',upper(res))) % 100 nm per pixel
+if all(ismember('100X',res)) % 60 nm per pixel
     CONST.getLocusTracks.PixelSize        = 6/60;
+elseif all(ismember('60X',res)) % 100 nm per pixel
+    CONST.getLocusTracks.PixelSize        = 6/100;
 else
     CONST.getLocusTracks.PixelSize        = [];
 end
@@ -209,6 +214,32 @@ end
 % from the default and should be loaded from your constants file.
 
 % segmentation parameters
+
+% removes debris using the texture of the colonies, and the intensity
+% difference of the halo and inside the cells
+
+% updated values
+if isfield (ConstLoaded.superSeggerOpti,'remove_debris')
+    CONST.superSeggerOpti.remove_debris = ConstLoaded.superSeggerOpti.remove_debris;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'INTENSITY_DIF')
+   CONST.superSeggerOpti.INTENSITY_DIF = ConstLoaded.superSeggerOpti.INTENSITY_DIF;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'PEBBLE_CONST')
+  CONST.superSeggerOpti.PEBBLE_CONST = ConstLoaded.superSeggerOpti.PEBBLE_CONST;
+end
+
+if isfield (ConstLoaded.superSeggerOpti,'segmenting_fluorescence')
+    CONST.superSeggerOpti.segmenting_fluorescence = ConstLoaded.superSeggerOpti.segmenting_fluorescence;
+end
+
+% removes false microcolonies if using the mean intensity
+if isfield (ConstLoaded.superSeggerOpti,'remove_microcolonies')
+    CONST.superSeggerOpti.remove_microcolonies = ConstLoaded.superSeggerOpti.remove_microcolonies;
+end
+
 % max number of total segments for segmentation
 CONST.superSeggerOpti.MAX_SEG_NUM = 50000;
 
@@ -251,12 +282,15 @@ CONST.seg = ConstLoaded.seg; % defines segments scoring functions
 CONST.regionOpti.MIN_LENGTH = ConstLoaded.regionOpti.MIN_LENGTH ;
 CONST.regionScoreFun = ConstLoaded.regionScoreFun; % defines region scoring functions
 
-if isfield(ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
+if isfield (ConstLoaded.trackOpti,'SMALL_AREA_MERGE')
 CONST.trackOpti.SMALL_AREA_MERGE = ConstLoaded.trackOpti.SMALL_AREA_MERGE; % in the linking phase, this regions with this area are merged with the ones next to them.
+end
+
+if isfield (ConstLoaded.trackOpti,'MIN_AREA_NO_NEIGH')
 CONST.trackOpti.MIN_AREA_NO_NEIGH = ConstLoaded.trackOpti.MIN_AREA_NO_NEIGH; % regions with area below this and no neighbors are discarded;
 end
 
-if isfield(ConstLoaded.trackOpti,'MIN_AREA')
+if isfield (ConstLoaded.trackOpti,'MIN_AREA')
 CONST.trackOpti.MIN_AREA = ConstLoaded.trackOpti.MIN_AREA;  % minimum area a cell region can have, otherwise it is discarded.
 end
 

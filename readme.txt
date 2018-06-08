@@ -27,16 +27,26 @@ Global Optimization Toolbox
 Parallel Computing Toolbox (not necessary)
 
 
+Software Availability and Documentation
+========================================
+The website for the software can be found at http://mtshasta.phys.washington.edu/website/SuperSegger.php and the software code can be downloaded at the GitHub repository https://github.com/wiggins-lab/SuperSegger/. 
+The GitHub wiki contains tutorials on how to use the software, information about the fields of the output, and a general overview of the methods https://github.com/wiggins-lab/SuperSegger/wiki. In the wiki, the Segmenting your images section has a tutorial on how to start image segmentation. The SuperSeggerViewer section explains the  post processing  and image visualization tools of SuperSeggerViewerGui. The Output section contains all the field definitions of the clist, cell files and frame files. For more information on the code, all available methods and their dependencies can be found at http://mtshasta.phys.washington.edu/website/superSegger/.
+
+
 Main functions you may need
 ===========================
+The wiki (https://github.com/wiggins-lab/SuperSegger/wiki) contains full tutorials on how to segment your images and use the tools available.  We include here the main functions you may need. To start using them type in the command line the name of the functions found inside the ''.
 
 GUIs :
-superSeggerGui : to segment your images
-superSeggerViewerGui : to see the final result after segmentation and use the post processing tools.
-trainingGui : to train your own constants.
+'superSeggerGui' : Segments and processes your images. Select the folder you want to segment, the parameters of segmentation and click 'Start SuperSegger'.
+'superSeggerViewerGui' : Results of segmentation and analysis tools.
+'trainingGui' : Training your own segmentation parameters.
+'gateToolGui' : Gui for gating and plotting functionalities of clists.
+
 
 Non - GUI :
-ProcessExp : set your parameters and run BatchSuperSeggerOpti. (You can use this instead of superSeggerGui)
+'ProcessExp' : Set your parameters and run BatchSuperSeggerOpti. (You can use this instead of superSeggerGui)
+'gateTool' : Gating and plotting functionalities for the clist. (Same as gateToolGui with more functionality)
 
 You can download a sample dataset and a bootcamp folder from our website to try the software.
 
@@ -53,7 +63,6 @@ Some information about the parameters currently provided with the software :
 60XBay : Trained on A.baylyi on LB pads, 100nm/pix.
 60XPa : Trained on P.aeruginosa, 100nm/pix.
 60XCaulob : Trained on snapshots of C.crescentus, 130 nm/pixel.
-
 
 
 General Process and output 
@@ -81,6 +90,11 @@ Example of two time points, two xy positions and one fluorescent channel
 
 superSeggerGui provides a function to rename your images
 
+
+Output
+=======
+SuperSegger generates three different types of outputs: Frame files, Clist matrices and Cell files.  The frame files (*seg.mat and *err.mat files) contain information about the specific frame, the clist matrices are 
+matrices of cells versus about 100 cellular descriptors, and the cell files contain information for each cell. For more information about each of these outputs visit the output section of the wiki (https://github.com/wiggins-lab/SuperSegger/wiki).
 
 Collecting Images
 ==================

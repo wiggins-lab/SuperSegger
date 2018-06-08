@@ -183,8 +183,8 @@ for it = nt;
             im = intImRead(in_name);
             
             if numel(size(im)) > 2
-                disp('Images are color - they need to be monochromatic.');
-                im = squeeze(im(:,:,1));
+                disp('Images are in color - attempting to convert to monochromatic.');
+                im = convertToMonochromatic(im);
             end
             
             if (ic == nc(1)) && (iz == nnz2 | iz == -1)
@@ -195,7 +195,7 @@ for it = nt;
                 
                 % applies a median filter to the phase image
                 if isfield(CONST.imAlign,'medFilt') && CONST.imAlign.medFilt
-                    im_     = medfilt2( im,     [3,3], 'symmetric' );
+                    im_     = medfilt2( im, [3,3], 'symmetric' );
                     phaseBef_ = medfilt2( phaseBef, [3,3], 'symmetric' );
                 else
                     im_     = im;
@@ -291,6 +291,12 @@ for it = nt;
                 disp(['Image name: ',in_name]);
             end
             im_ = intImRead( in_name );
+
+            if numel(size(im_)) > 2
+                disp('Images are in color - attempting to convert to monochromatic.');
+                im_ = convertToMonochromatic(im_);
+            end
+            
             im = zeros(sspad, class(im_) ) + mean( im_(:));
             im((1-miny):(ss(1)-miny),(1-minx):(ss(2)-minx)) = im_;
             out = [0,0,OutArray(countt,:)];
