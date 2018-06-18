@@ -196,7 +196,7 @@ if isempty(mask)
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
-    mask_bg = logical((mask_colonies_-mask_halos)>0);
+    mask_bg = logical((mask_colonies-mask_halos)>0);
     
     % removes micro-colonies with background level outline intensity - not bright enough
     

@@ -1,4 +1,4 @@
-function im = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
+function [im, im_ptr] = showSeggerImage( data, data_r, data_f, FLAGS, clist, CONST, gui_fig)
 % showSeggerImage : produces the superSeggerViewer image according to clist and
 % flags. If the clist has a gate it outlines cells passing the gate.
 %
@@ -61,7 +61,7 @@ if ~exist('gui_fig','var') || isempty(gui_fig)
 end
 
 % fix are any missing flags
-FLAGS = intFixFlags( FLAGS );
+FLAGS = fixFlags( FLAGS );
 
 % if there is a clist enables look only cells included in the clist
 if exist('clist','var') && ~isempty( clist );
@@ -80,7 +80,7 @@ end
 
 [xx,yy] = intGetImSize( data, FLAGS );
 mask_full = data.mask_cell;
-im = makeIm( data, FLAGS, ID_LIST, CONST );
+im = makeIm( data, FLAGS, ID_LIST, CONST, clist );
 
 if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image view
     if isempty(data_r)
@@ -88,7 +88,7 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
         im_r = cat(3,mask_full_r,mask_full_r,mask_full_r);
     else
         mask_full_r = data_r.mask_cell;
-        im_r = makeIm( data_r, FLAGS );
+        im_r = makeIm( data_r, FLAGS, [], [], clist );
     end
     
     if isempty(data_f)
@@ -96,7 +96,7 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
         im_f = cat(3,mask_full_f,mask_full_f,mask_full_f);
     else
         mask_full_f = data_f.mask_cell;
-        im_f = makeIm( data_f, FLAGS );
+        im_f = makeIm( data_f, FLAGS, [], [], clist );
     end
     
     im =  [im_r(yy,xx,:),im(yy,xx,:); im_f(yy,xx,:), ...
@@ -106,10 +106,10 @@ if FLAGS.m_flag % mask flag : shows reverse, forward, current, and masked image 
 end
 
 if isempty(gui_fig)
-    imshow(im)
+    im_ptr = imshow(im)
 else
     axes(gui_fig);
-    imshow(im);
+    im_ptr = imshow(im);
     FLAGS.axis = axis;
 end
 hold on;
@@ -169,9 +169,8 @@ end
             end
             
             % plots spots, only if we are at fluorescence view
-            if FLAGS.f_flag && FLAGS.s_flag && isfield(data_,'CellA')
-                intPlotSpot( data_, x_, y_, FLAGS, ID_LIST, CONST );
-            end
+            intPlotSpot( data_, x_, y_, FLAGS, ID_LIST, CONST );
+           
             
             % plots poles
             if FLAGS.p_flag
@@ -220,7 +219,7 @@ end
 end
 
 
-function im = makeIm( data, FLAGS, ID_LIST, CONST )
+function im = makeIm( data, FLAGS, ID_LIST, CONST, clist )
 % makeIm puts together the image if data is segmented
 % but not the text/pole/other labels.
 % INPUT :
@@ -229,10 +228,9 @@ function im = makeIm( data, FLAGS, ID_LIST, CONST )
 % ID_LIST : are the ids of cells selected through a clist
 % CONST : are the segmentation constants
 
-persistent colormap_;
-if isempty( colormap_ )
-    colormap_ = colormap( 'jet' );
-end
+nc = intGetChannelNum( data );
+
+    
 
 % get the image size
 ss = size(data.phase);
@@ -240,43 +238,8 @@ ss = size(data.phase);
 
 % if the phase image exists use this as the background, else use the cell
 % masks
-phase_level = FLAGS.phase_level;
-cc = phase_level * [1,1,1];
+im = intMakeMultiChannel( data, FLAGS, CONST, clist, nc );
 
-if isfield(data,'phase') && FLAGS.phase_flag
-    %back = phase_level * ag(data.phase);
-    %im = cat(3,back,back,back);
-    
-    im = comp( {data.phase, cc} );
-    
-else
-    im =  comp( {zeros(ss), cc} );
-end
-
-
-% this code highlights the lysed cells
-if isfield( data, 'regs' ) && isfield( data.regs, 'lyse' ) && FLAGS.lyse_flag
-    is_lyse = and( or( data.regs.lyse.errorColor1bCum, ...
-        data.regs.lyse.errorColor2bCum), data.regs.lyse.errorShapeCum);
-    lyse_im = intDoOutline2(ismember( ...
-        data.regs.regs_label,find(is_lyse)));
-else
-    lyse_im = zeros( ss );
-end
-
-
-
-% if you are in fluorescence mode (f_flag) draw the fluor channels
-if FLAGS.composite
-    nc = numel(find(~cellfun('isempty',strfind(fieldnames(data),'fluor'))));
-    
-    for i = 1 : nc
-        im = updateFluorImage(data, im, i, FLAGS, CONST);
-    end
-    
-elseif FLAGS.f_flag > 0
-    im = updateFluorImage(data, im, FLAGS.f_flag, FLAGS, CONST);
-end
 
 if FLAGS.Outline_flag  % it just outlines the cells
     if FLAGS.cell_flag && isfield(data,'cell_outline')
@@ -314,7 +277,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
         cells_In_Frame   = ismember( data.regs.ID, ID_LIST);
         cellBorn = or(and(data.regs.birthF,data.regs.stat0),data.regs.divide);
         
-        if 1
+        if 0
             % cells with ehist & error current->reverse or ignoreError
             map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
                 data.regs.error.r),ignoreErrorV)));
@@ -380,6 +343,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
             
             
         else
+            %tic
             if ~isempty(cells_In_Frame)
                 % cells with ehist & error current->reverse or ignoreError
                 map_error_ind = find(and(cells_In_Frame,or(and(data.regs.ehist,...
@@ -427,7 +391,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
                 
                 
                 
-                redChannel =  double(lyse_im)+0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
+                redChannel =  0.5*(0.7*(map_err_rev)+1.1*(map_ehist_in_frame)+.7*(map_stat0_2_Outline+map_stat0_1_Outline +map_stat0_0_Outline));
                 greenChannel =  0.3*(map_no_err) - 0.2*(map_stat0_1)+0.2*(map_stat0_0);
                 blueChannel = 0.7*(map_stat0_2)+ 0.6*(map_stat0_1)+0.3*(map_stat0_0);
                 
@@ -435,6 +399,7 @@ elseif FLAGS.P_flag  % if P_flag is true, it shows the regions with color.
                 
                 im = reg_color + im;
             end
+            %toc
         end
         
         
@@ -501,7 +466,7 @@ end
 % end
 % end
 
-function im = updateFluorImage(data, im, channel, FLAGS, CONST)
+function im = updateFluorImage(data, im, channel, FLAGS, CONST, clist)
 
 fluorName =  ['fluor',num2str(channel)];
 
@@ -517,7 +482,7 @@ if isfield(data, fluorName )
     
     cc = CONST.view.fluorColor{channel};
     
-    if FLAGS.filt && isfield( data, [fluorName,'_filtered'] )
+    if FLAGS.filt(channel) && isfield( data, [fluorName,'_filtered'] )
         fluor_tmp =  data.([fluorName,'_filtered']);
     else
         fluor_tmp = data.(fluorName);
@@ -530,20 +495,26 @@ if isfield(data, fluorName )
         end
     end
     
-    if isfield( CONST.view, 'LogView' ) && CONST.view.LogView && ~FLAGS.composite
-        fluor_tmp =   ag( double(fluor_tmp).^.6 );
+   
+    if ~FLAGS.filt(channel) && ...
+            isfield( clist, 'imRangeGlobal' ) && ...
+            isempty( clist.imRangeGlobal ) && ...
+            FLAGS.gbl_auto(channel+1)
+        
+    
+        minner = clist.imRangeGlobal( 1, channel+1 );
+        maxxer = clist.imRangeGlobal( 2, channel+1 );
+    
+    else    
+        minner = medfilt2( fluor_tmp, [2,2], 'symmetric' );
+        maxxer = max( minner(:));
+        minner = min( minner(:));
     end
     
-    
-    minner = medfilt2( fluor_tmp, [2,2], 'symmetric' );
-    maxxer = max( minner(:));
-    minner = min( minner(:));
-    
-    
-    if CONST.view.falseColorFlag
+    if CONST.view.falseColorFlag && ~FLAGS.composite
         im = comp( im, {fluor_tmp,[minner,maxxer],jet(256)} );
     else
-        im = comp( im, {fluor_tmp,[minner,maxxer],.8,cc} );
+        im = comp( im, {fluor_tmp,[minner,maxxer],FLAGS.level(channel+1),cc} );
     end
     
     
@@ -669,76 +640,71 @@ end
 function intPlotSpot( data, x_, y_, FLAGS, ID_LIST, CONST )
 % intPlotSpot : plots each foci in the cells
 
+nc = intGetChannelNum( data );
 
-if isfield( data, 'CellA' ) && ~isempty( data.CellA ) && ...
-        (isfield( data.CellA{1}, 'locus1') || (isfield( data.CellA{1}, 'locus2')))
+if isfield( data, 'CellA' ) && ~isempty( data.CellA ) 
     
-    counter1 = 0;
-    counter2 = 0;
-    maxCounter1 = 500;
-    maxCounter2 = 500;
-    locus_1_txt = {};
-    locus1_x = [];
-    locus1_y = [];
-    locus_2_txt = {};
-    locus2_x = [];
-    locus2_y = [];
-    for kk = 1:data.regs.num_regs
-        % only plot spots in the cell that are gated.
-        if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
-            % locus 1
-            if isfield( data.CellA{kk}, 'locus1') &&  ( FLAGS.f_flag == 1 );
-                num_spot = numel( data.CellA{kk}.locus1);
-                mm = 0;
-                while mm < num_spot && counter1 < maxCounter1
-                    mm = mm + 1;
-                    r = data.CellA{kk}.locus1(mm).r;
-                    text_ = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                    if data.CellA{kk}.locus1(mm).score > CONST.getLocusTracks.FLUOR1_MIN_SCORE
-                        xpos = r(1)+x_;
-                        ypos = r(2)+y_;
-                        if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
-                            counter1 = counter1 + 1;
-                            locus_1_txt{end+1} = [num2str(data.CellA{kk}.locus1(mm).score, '%0.1f')];
-                            locus1_x = [locus1_x;xpos];
-                            locus1_y = [locus1_y;ypos];
+    
+    
+    ind = find( FLAGS.s_flag );
+    
+    for jj = ind;
+        
+        counter1 = 0;
+        maxCounter1 = 500;
+        locus_1_txt = {};
+        locus1_x = [];
+        locus1_y = [];
+        
+        for kk = 1:data.regs.num_regs
+            % only plot spots in the cell that are gated.
+            if (~FLAGS.cell_flag || ismember(data.regs.ID(kk), ID_LIST))
+                
+                
+                
+                
+                % locus
+                locusName = [ 'locus',num2str(jj)'];
+                
+                if isfield( data.CellA{kk},locusName )
+                    num_spot = numel( data.CellA{kk}.(locusName));
+                    mm = 0;
+                    
+                    while mm < num_spot && counter1 < maxCounter1
+                        mm = mm + 1;
+                        r = data.CellA{kk}.(locusName)(mm).r;
+                        text_ = [num2str(data.CellA{kk}.(locusName)(mm).score, '%0.1f')];
+                        
+                        scoreName = [ 'FLUOR',num2str(jj),'_MIN_SCORE'];
+                        if ~isfield( CONST.getLocusTracks, scoreName )
+                            CONST.getLocusTracks.(scoreName) = 0;
+                        end
+                        
+                        if data.CellA{kk}.(locusName)(mm).score > CONST.getLocusTracks.(scoreName)
+                            xpos = r(1)+x_;
+                            ypos = r(2)+y_;
+                            if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
+                                    (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
+                                counter1 = counter1 + 1;
+                                locus_1_txt{end+1} = [num2str(data.CellA{kk}.(locusName)(mm).score, ...
+                                    '%0.1f')];
+                                locus1_x = [locus1_x;xpos];
+                                locus1_y = [locus1_y;ypos];
+                            end
                         end
                     end
-                end
-            end
-            
-            % locus 2
-            if isfield( data.CellA{kk}, 'locus2') && (FLAGS.f_flag == 2 )
-                num_spot = numel( data.CellA{kk}.locus2);
-                mm = 0;
-                while mm < num_spot && counter2 < maxCounter2
-                    mm = mm + 1;
-                    r = data.CellA{kk}.locus2(mm).r;
-                    if data.CellA{kk}.locus2(mm).score > CONST.getLocusTracks.FLUOR2_MIN_SCORE && ...
-                            data.CellA{kk}.locus2(mm).b < 3
-                        xpos = r(1)+x_;
-                        ypos = r(2)+y_;
-                        if (FLAGS.axis(1)<xpos) && (FLAGS.axis(2)>xpos) && ...
-                                (FLAGS.axis(3)<ypos) && (FLAGS.axis(4)>ypos)
-                            counter2 = counter2 + 1;
-                            locus_2_txt{end+1} = [num2str(data.CellA{kk}.locus2(mm).score, '%0.1f')];
-                            locus2_x = [locus2_x;xpos];
-                            locus2_y = [locus2_y;ypos];
-                        end
+                    
+                    
+                    if FLAGS.scores_flag(jj)
+                        text( locus1_x+1, locus1_y, locus_1_txt, 'Color',CONST.view.fluorColor{jj} );
                     end
+                    plot( locus1_x, locus1_y, '.', 'Color',CONST.view.fluorColor{jj} );
+                    
                 end
             end
         end
+        
     end
-    
-    
-    text( locus2_x+1, locus2_y, locus_2_txt, 'Color', [1,0.5,0.5]);
-    plot( locus2_x, locus2_y, '.', 'Color', [1,0.5,0.5]);
-    
-    text( locus1_x+1, locus1_y, locus_1_txt, 'Color', [0.5,1,0.5]);
-    plot( locus1_x, locus1_y, '.', 'Color', [0.5,1,0.5]);
-    
 end
 end
 
@@ -978,103 +944,108 @@ else
 end
 end
 
-function FLAGS = intFixFlags( FLAGS )
-% intFixFlags :  sets default flag values if the value is missing.
-% Outline_flag
-% ID_flag
-% lyse_flag
-% m_flag
-% c_flag
-
-if ~isfield(FLAGS, 'legend');
-    disp('there is no flag field legend');
-    FLAGS.legend = 1;
-end
-
-if ~isfield(FLAGS, 'Outline_flag');
-    disp('there is no flag field Outline_flag');
-    FLAGS.Outline_flag = 0;
-end
-if ~isfield(FLAGS, 'ID_flag');
-    disp('there is no flag field ID_flag');
-    FLAGS.ID_flag = 1;
-end
-
-if ~isfield(FLAGS, 'lyse_flag');
-    disp('there is no flag field lyse_flag')
-    FLAGS.lyse_flag = 0;
-end
-
-if ~isfield(FLAGS,'m_flag');
-    disp('there is no flag field m_flag')
-    FLAGS.m_flag = 0;
-end
-
-if ~isfield(FLAGS, 'c_flag');
-    disp('there is no flag field c_flag')
-    FLAGS.c_flag = 0;
-end
-
-if ~isfield(FLAGS, 'P_flag');
-    disp('there is no flag field P_flag')
-    FLAGS.P_flag = 1;
-end
-
-
-if ~isfield(FLAGS, 'phase_flag');
-    disp('there is no flag field P_flag')
-    FLAGS.phase_flag = 1;
-end
-
-if ~isfield(FLAGS, 'phase_level');
-    disp('there is no flag field P_flag')
-    FLAGS.phase_level = 1;
-end
-
-if ~isfield(FLAGS, 'cell_flag' );
-    disp('there is no flag field cell_flag')
-    FLAGS.cell_flag = 0;
-end
-
-if ~isfield(FLAGS, 'f_flag');
-    disp('there is no flag field f_flag')
-    FLAGS.f_flag = 0;
-end
-
-if ~isfield(FLAGS, 's_flag');
-    disp('there is no flag field s_flag')
-    FLAGS.s_flag = 0;
-end
-
-if ~isfield(FLAGS, 'T_flag');
-    disp('there is no flag field T_flag')
-    FLAGS.T_flag = 0;
-end
-
-if ~isfield(FLAGS, 'filt')
-    disp('there is not field filt_flag')
-    FLAGS.filt = [0,0,0];
-end
-
-if ~isfield(FLAGS, 'p_flag');
-    disp('there is not field p_flag')
-    FLAGS.p_flag = 0;
-end
-
-if ~isfield(FLAGS,'composite')
-    disp('there is not field composite')
-    FLAGS.composite  = 0;
-end
-
-
-if ~isfield(FLAGS, 'showLinks');
-    disp('there is not field showLinks')
-    FLAGS.showLinks = 0;
-end
-
-FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
-
-end
+% function FLAGS = intFixFlags( FLAGS )
+% % intFixFlags :  sets default flag values if the value is missing.
+% % Outline_flag
+% % ID_flag
+% % lyse_flag
+% % m_flag
+% % c_flag
+% 
+% if ~isfield(FLAGS, 'autoscale');
+%     disp('there is no flag field legend');
+%     FLAGS.autoscale = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'legend');
+%     disp('there is no flag field legend');
+%     FLAGS.legend = 1;
+% end
+% 
+% if ~isfield(FLAGS, 'Outline_flag');
+%     disp('there is no flag field Outline_flag');
+%     FLAGS.Outline_flag = 0;
+% end
+% if ~isfield(FLAGS, 'ID_flag');
+%     disp('there is no flag field ID_flag');
+%     FLAGS.ID_flag = 1;
+% end
+% 
+% if ~isfield(FLAGS, 'lyse_flag');
+%     disp('there is no flag field lyse_flag')
+%     FLAGS.lyse_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS,'m_flag');
+%     disp('there is no flag field m_flag')
+%     FLAGS.m_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'c_flag');
+%     disp('there is no flag field c_flag')
+%     FLAGS.c_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'P_flag');
+%     disp('there is no flag field P_flag')
+%     FLAGS.P_flag = 1;
+% end
+% 
+% 
+% if ~isfield(FLAGS, 'phase_flag');
+%     disp('there is no flag field P_flag')
+%     FLAGS.phase_flag = 1;
+% end
+% 
+% if ~isfield(FLAGS, 'phase_level');
+%     disp('there is no flag field P_flag')
+%     FLAGS.phase_level = 1;
+% end
+% 
+% if ~isfield(FLAGS, 'cell_flag' );
+%     disp('there is no flag field cell_flag')
+%     FLAGS.cell_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'f_flag');
+%     disp('there is no flag field f_flag')
+%     FLAGS.f_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 's_flag');
+%     disp('there is no flag field s_flag')
+%     FLAGS.s_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'T_flag');
+%     disp('there is no flag field T_flag')
+%     FLAGS.T_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS, 'filt')
+%     disp('there is not field filt_flag')
+%     FLAGS.filt = [0,0,0];
+% end
+% 
+% if ~isfield(FLAGS, 'p_flag');
+%     disp('there is not field p_flag')
+%     FLAGS.p_flag = 0;
+% end
+% 
+% if ~isfield(FLAGS,'composite')
+%     disp('there is not field composite')
+%     FLAGS.composite  = 0;
+% end
+% 
+% 
+% if ~isfield(FLAGS, 'showLinks');
+%     disp('there is not field showLinks')
+%     FLAGS.showLinks = 0;
+% end
+% 
+% FLAGS.link_flag = FLAGS.s_flag || FLAGS.ID_flag;
+% 
+% end
 
 function outline = intDoOutline( map )
 persistent sqrStrel;
@@ -1092,3 +1063,8 @@ if isempty( sqrStrel );
 end
 outline = double(imdilate( map, sqrStrel ))-double(map);
 end
+
+
+
+
+    

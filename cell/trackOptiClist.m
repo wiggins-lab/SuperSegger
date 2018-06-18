@@ -45,6 +45,7 @@ dirname = fixDir(dirname);
 % Get the track file names...
 contents=dir([dirname '*_err.mat']);
 
+imRangeGlobal = [];
 
 if isempty( contents )
     clist.data = [];
@@ -91,6 +92,20 @@ else
         
         
         data_c = loaderInternal([dirname,contents(i).name]);
+        
+        % get info on max and min values of each channel over all timesteps
+        if isfield( data_c, 'imRange' )
+            if isempty( imRangeGlobal )
+                imRangeGlobal = data_c.imRange;
+            else
+               
+                for kk = 1:size( imRangeGlobal, 2 )                    
+                    imRangeGlobal(1,kk) = min( [data_c.imRange(1,kk),imRangeGlobal(1,kk)] );
+                    imRangeGlobal(2,kk) = max( [data_c.imRange(2,kk),imRangeGlobal(2,kk)] );
+                end
+            end
+        end
+        
         if ~isempty( data_c.CellA)
             % record the number of cell neighbors
             if CONST.trackOpti.NEIGHBOR_FLAG && ...
@@ -264,6 +279,10 @@ else
     clist.data3D = clist_3D(clist.data(:,1),:,:);
 
     clist = gateTool( clist, 'add3Dt' );
+    
+    % add channel max and min
+    clist.imRangeGlobal = imRangeGlobal;
+
     
     %add3dtime stuff
     len_time_ind = grabClistIndex(clist, 'Long axis (L)', 1);

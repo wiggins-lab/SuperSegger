@@ -36,6 +36,7 @@ data_c = loaderInternal([dirname,contents(nn).name], clist);
 data_r = [];
 data_f = [];
 if shouldLoadNeighborFrames(FLAGS)
+    'boom'
     if nn > 1
         data_r = loaderInternal([dirname,contents(nn-1).name], clist);
     end

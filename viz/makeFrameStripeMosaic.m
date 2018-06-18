@@ -1,4 +1,4 @@
-function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag, clist )
+function [imTot] = makeFrameStripeMosaic( dirName, CONST, skip, disp_flag, clist, FLAGS )
 % makeFrameStripeMosaic :  Creates a long stripe with all the cell towers.
 %
 % INPUT :
@@ -71,7 +71,7 @@ for ii = 1:numCells
         cellArrayNum{ii} = floor(str2num(contents(ii).name(lpos+1:ppos-1)));
     end
     
-    tmp_im = makeFrameMosaic(data,CONST,1,false, skip );
+    tmp_im = makeFrameMosaic(data,CONST,1,false, skip, FLAGS );
     
     if isfield( CONST.view, 'saveFiles' ) && CONST.view.saveFiles
         loadname(end-2:end)='png';

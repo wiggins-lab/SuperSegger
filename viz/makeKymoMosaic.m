@@ -1,4 +1,4 @@
-function [im]= makeKymoMosaic (dirname, CONST)
+function [im]= makeKymoMosaic (dirname, CONST, FLAGS)
 % makeKymoMosaic creates a mosaic kymograph of multiple cells.
 % make kymo mosaic is only for fl1 in makeKymograph, which is currently
 % set to gfp. A kymograph shows the fluorescence of the cell along the
@@ -87,21 +87,23 @@ for jj = 1:num_list_
         ii = ii + 1;
         filename = [dirname,filesep,dir_list(jj).name];
         data = load(filename);
-        [kymo,~,f1mm,~] = makeKymographC(data,0,CONST);
+        data_A{ii} = makeKymographC(data, 0, CONST, FLAGS);
         
         name(jj) = data.ID;
         pole(jj) = getPoleSign( data );
         
-        if CONST.view.falseColorFlag
-            backer3 = double(cat(3, kymo.b, kymo.b, kymo.b)>1);
-            im = doColorMap( ag(kymo.c1,f1mm(1), f1mm(2)), colormap_ );
-            data_A{ii} =( im.*backer3+.6*(1-backer3) );
-        else
-            data_A{ii} = comp( {ag(1-kymo.b),[del,del,del]}, ...
-                {ag(kymo.c2),CONST.view.fluorColor{2} },...
-                {ag(kymo.c1),CONST.view.fluorColor{1} });
-        end
+%         if CONST.view.falseColorFlag
+%             backer3 = double(cat(3, kymo.b, kymo.b, kymo.b)>1);
+%             im = doColorMap( ag(kymo.c1,f1mm(1), f1mm(2)), colormap_ );
+%             data_A{ii} =( im.*backer3+.6*(1-backer3) );
+%         else
+%             data_A{ii} = comp( {ag(1-kymo.b),[del,del,del]}, ...
+%                 {ag(kymo.c2),CONST.view.fluorColor{2} },...
+%                 {ag(kymo.c1),CONST.view.fluorColor{1} });
+%         end
         
+
+
         ss = size(data_A{ii});       
         max_x = max([max_x,ss(1)]);
         max_t = max([max_t,ss(2)]);        
@@ -124,7 +126,10 @@ end
 if CONST.view.falseColorFlag
     cc = 'w';
     im = (zeros(imdim(1), imdim(2), 3 ));
-    im(:,:,:) = del*0;
+
+    for ii = 1:3
+        im(:,:,ii) = uint8(CONST.view.background(ii)*255);
+    end
     
     for ii = 1:num_list
         yy = floor((ii-1)/numb);
@@ -138,7 +143,9 @@ if CONST.view.falseColorFlag
 else
     cc = 'w';
     im = uint8(zeros(imdim(1), imdim(2), 3 ));
-    im(:,:,:) = del*255;
+    for ii = 1:3
+        im(:,:,ii) = uint8(CONST.view.background(ii)*255);
+    end
     
     for ii = 1:num_list
         yy = floor((ii-1)/numb);
@@ -150,6 +157,8 @@ else
         im(1+yy*max_x+(1:ss(1))+dx, 1+xx*max_t+(1:ss(2)),:) =  data_A{ii};
     end
 end
+
+im = uint8( im );
 
 ss = size(im);
 

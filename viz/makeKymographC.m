@@ -1,4 +1,4 @@
-function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, FLAGS )
+function [imm] = makeKymographC( data, disp_flag, CONST, FLAGS )
 % makeKymographC : creates a kymograph for given cell data file..
 % A kymograph shows the fluorescence of the cell along the long axis
 % of the cell, with time.
@@ -34,13 +34,14 @@ function [Kymo,ll1,f1mm,f2mm] = makeKymographC( data, disp_flag, CONST, FLAGS )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
-
+% compute number of channels
+nc = intGetChannelNum( data.CellA{1} );
 
 if ~exist( 'FLAGS', 'var' ) || isempty( FLAGS ) 
     FLAGS.composite = 1;
     FLAGS.f_flag    = 1;
     FLAGS.Outline_flag = 0;
-    FLAGS.filt = 0;
+    FLAGS.filt = zeros( [1,10] );;
 end
 
 
@@ -61,9 +62,9 @@ if ~isfield(CONST.view, 'falseColorFlag' )
     CONST.view.falseColorFlag = false;
 end
 
-if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
-    which_channel = [1,1,1];
-end
+% if ~exist( 'which_channel', 'var' ) || isempty(which_channel)
+%     which_channel = [1,1,1];
+% end
 
 if ~isfield(CONST.view, 'filtered' )
     CONST.view.filtered = true;
@@ -113,56 +114,19 @@ ll2 = [-ll(2):ll(2)];
 
 nn = numel( ll1 );
 
-kymoR = zeros(nn,num_im);
-kymoG = zeros(nn,num_im);
-kymoB = zeros(nn,num_im);
+kymo_cell = cell([1,nc]);
 
+
+if ~isfield(data.CellA{1}, 'pole');
+    data.CellA{1}.pole.op_ori = 1;
+end
 
 for ii = 1:num_im
-    
+
     mask  = data.CellA{ii}.mask;
-    
-    if isfield( data.CellA{ii}, 'fluor1') && which_channel(1)
-        if filt_channel && isfield( data.CellA{ii},'fluor1_filtered')
-            fluor1 =data.CellA{ii}.fluor1_filtered;
-        else
-            fluor1  = data.CellA{ii}.fluor1;
-            if isfield( data.CellA{ii}, 'fl1' ) && isfield( data.CellA{ii}.fl1, 'bg' )
-                fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
-                fluor1(fluor1<0) = 0;
-            else
-                fluor1 = fluor1 - mean( fluor1(mask));
-                fluor1(fluor1<0) = 0;
-            end
-        end
-    else
-        fluor1 = 0*mask;
-    end
-    
-    if isfield( data.CellA{ii}, 'fluor2') && which_channel(2)
-        if filt_channel && isfield( data.CellA{ii}, 'fluor2_filtered' )
-            fluor2 = data.CellA{ii}.fluor2_filtered;
-        else
-            fluor2 = data.CellA{ii}.fluor2;
-            if isfield( data.CellA{ii}, 'fl12' ) && ...
-                    isfield( data.CellA{ii}.fl2, 'bg' )
-                fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
-                fluor2(fluor1<0) = 0;
-            else
-                fluor2 = fluor2 - mean( fluor2(mask));
-                fluor2(fluor2<0) = 0;
-            end
-        end
-    else
-        fluor2 = 0*data.CellA{ii}.mask;
-    end
-    
-    mask  = data.CellA{ii}.mask;
-    
-    % Make all the images the same sizes
-    [Chan2,~] = (fixIm(double((fluor2)).*double(mask),ss));
-    [Chan1,~] = (fixIm(double((fluor1)).*double(mask),ss));
-    [ChanB,roffset] = fixIm(mask,ss);
+
+    % take care of background image first
+    [Chan_tmp,roffset] = fixIm(mask,ss);
     
     ro = data.CellA{ii}.r_offset;
     r = data.CellA{ii}.r;
@@ -173,75 +137,92 @@ for ii = 1:num_im
     LL1x =  LL1*e1(1)+LL2*e2(1)+r(1)-ro(1)+1+roffset(1);
     LL2y =  LL1*e1(2)+LL2*e2(2)+r(2)-ro(2)+1+roffset(2);
     
-    Chan2p = (interp2(XX,YY,double(Chan2),LL1x,LL2y));
-    Chan1p = (interp2(XX,YY,double(Chan1),LL1x,LL2y));
-    ChanBp = (interp2(XX,YY,double(ChanB),LL1x,LL2y));
+    Chan_tmp = (interp2(XX,YY,double(Chan_tmp),LL1x,LL2y));
+    Chan_tmp = sum( double(Chan_tmp) );
+    kymo_back(:,ii) = Chan_tmp';
     
-    Chan2ps = sum( double(Chan2p) );
-    Chan1ps = sum( double(Chan1p) );
-    ChanBps = sum( double(ChanBp) );
+    if data.CellA{1}.pole.op_ori < 0 % flip the kymograph
+            kymo_back(:,ii) = kymo_back(end:-1:1,ii);
+    end
+    % compute fluor channels
     
-    kymo2(:,ii) = Chan2ps';
-    kymo1(:,ii) = Chan1ps';
-    kymoB(:,ii) = ChanBps';
+    
+    for jj = 1:nc
+        
+            
+        fluorName =  ['fluor',num2str(jj)];
+        ffiltName =  ['fluor',num2str(jj),'_filtered'];
+        flName    =  ['fl',num2str(jj)];
+        
+        if isfield( data.CellA{ii}, fluorName ) && ...
+                ( FLAGS.f_flag == jj || FLAGS.composite )
+            
+            
+            if ii == 1
+                kymo_cell{jj} = zeros(nn,num_im);
+            end
+            
+            if filt_channel(jj) && isfield( data.CellA{ii},ffiltName)
+                fluor_tmp =data.CellA{ii}.(ffiltName);
+            else
+                fluor_tmp  = data.CellA{ii}.(fluorName);
+                
+                if isfield( data.CellA{ii}, flName  ) && isfield( data.CellA{ii}.(flName), 'bg' )
+                    fluor_tmp = fluor_tmp - data.CellA{ii}.(flName).bg;
+                    fluor_tmp(fluor_tmp<0) = 0;
+                else
+                    fluor_tmp = fluor_tmp - mean( fluor_tmp(mask));
+                    fluor_tmp(fluor_tmp<0) = 0;
+                end
+            end
+        else
+            fluor_tmp = [];
+        end
+        
+        if ~isempty( fluor_tmp )
+            [Chan_tmp,~] = (fixIm(double((fluor_tmp)).*double(mask),ss));
+            
+            Chan_tmp = (interp2(XX,YY,double(Chan_tmp),LL1x,LL2y));
+            Chan_tmp = sum( double(Chan_tmp) );
+            kymo_cell{jj}(:,ii) = Chan_tmp';
+            
+            if data.CellA{1}.pole.op_ori < 0 % flip the kymograph
+                kymo_cell{jj}(:,ii) = kymo_cell{jj}(end:-1:1,ii);
+            end
+        end
+
+    end
 end
 
-Kymo = [];
+kymo_back(isnan(kymo_back)) = 0;
 
-if ~isfield(data.CellA{1}, 'pole');
-    data.CellA{1}.pole.op_ori = 1;
+kymo_back(kymo_back>1) = 1;
+    
+% get min and mask values in masked region for each channel
+imRange = nan( [2,nc] );
+for jj = 1:nc
+    if ~isempty(kymo_cell{jj})
+        imRange(:,jj) = intRange(kymo_cell{jj}(logical(kymo_back)));
+    end
 end
 
 
-if data.CellA{1}.pole.op_ori < 0 % flip the kymograph
-    Kymo.c1 = kymo1(end:-1:1,:);
-    Kymo.b = kymoB(end:-1:1,:);
-    Kymo.b(isnan(Kymo.b)) = 0;
-    Kymo.c2 = kymo2(end:-1:1,:);
+if CONST.view.falseColorFlag && FLAGS.f_flag > 0
+    imm = comp( {kymo_cell{FLAGS.f_flag},imRange(:,FLAGS.f_flag),...
+        colormap_,'mask',kymo_back,'back', CONST.view.background} );
 else
-    Kymo.c1 = kymo1;
-    Kymo.b = kymoB;
-    Kymo.b(isnan(Kymo.b)) = 0;
-    Kymo.c2 = kymo2;
-end
-
-f1mm(1) = min(Kymo.c1(logical(Kymo.b)));
-f1mm(2) = max(Kymo.c1(logical(Kymo.b)));
-f2mm(1) = min(Kymo.c2(logical(Kymo.b)));
-f2mm(2) = max(Kymo.c2(logical(Kymo.b)));
-
-
-if CONST.view.falseColorFlag
-    % false color figure
+    imm = [];
     
-    if FLAGS.f_flag == 1
-        im__ = ag(Kymo.c1, f1mm(1), f1mm(2));
-    elseif FLAGS.f_flag == 2
-        im__ = ag(Kymo.c2, f2mm(1), f2mm(2));
-    else
-        im__ = zeros(size(Kymo.c1));
+    for jj = 1:nc
+        if ~isempty( kymo_cell{jj} ) && (FLAGS.composite || FLAGS.f_flag==jj )
+            if FLAGS.include( jj+1)
+                imm = comp( {imm}, {kymo_cell{jj}, imRange(:,jj),...
+                    CONST.view.fluorColor{jj}, FLAGS.level(jj+1)} );
+            end
+        end
     end
     
-    tmp = Kymo.b;
-    tmp(tmp>1)=1;
-    
-    imm = comp( {im__,colormap_,'mask',tmp,'back', CONST.view.background} );
-    
-else
-    
-    tmp = Kymo.b;
-    tmp(tmp>1)=1;
-    
-    if FLAGS.composite
-        imm = comp( {Kymo.c1, CONST.view.fluorColor{1}},...
-            {Kymo.c2, CONST.view.fluorColor{2}} );
-    elseif FLAGS.f_flag == 1
-        imm = comp( {ag(Kymo.c1), CONST.view.fluorColor{1}} );
-    elseif  FLAGS.f_flag == 2
-        imm = comp( {ag(Kymo.c2), CONST.view.fluorColor{2}} );
-    end
-    
-    imm = comp( {imm, 'mask', tmp, 'back', CONST.view.background} );
+    imm = comp( {imm, 'mask', kymo_back , 'back', CONST.view.background} );
     
 end
 

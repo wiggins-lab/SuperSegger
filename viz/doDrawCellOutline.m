@@ -18,8 +18,8 @@ function doDrawCellOutline( data, ids1, ids2)
 %
 % Copyright (C) 2016 Wiggins Lab
 % Written by Silas Boye Nissen, Connor Brennan, Stella Stylianidou.
-% University of Washington, 2016
-% This file is part of SuperSegger.
+% University of Washington, 2016. Modified in 2018 by S Mangiameli and 
+% P. Wiggins. This file is part of SuperSegger.
 %
 % SuperSegger is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by

@@ -28,7 +28,7 @@ function targetd = trackOptiCropMulti(dirname,xydir,targetd)
 
 if ~isempty(dirname)
     
-    file_filter = '*.tif';
+    file_filter = '*.tif*';
     dirname = fixDir(dirname);
     
     contents=dir([dirname,file_filter]);
@@ -72,10 +72,10 @@ if ~isempty(dirname)
             % displays the first and last image on top of each other
             nameInfo.npos(:,1) = [nt(1); nc(1); nnxy; nz(1)];
             
-            im1   = imread( [dirname, MakeFileName(nameInfo) ]);
+            im1   = intImRead( [dirname, MakeFileName(nameInfo) ]);
             
             nameInfo.npos(:,1) = [nt(end); nc(1); nnxy; nz(1)];
-            imEnd = imread( [dirname, MakeFileName(nameInfo) ]);
+            imEnd = intImRead( [dirname, MakeFileName(nameInfo) ]);
             figure(1);
             clf;
             
@@ -120,9 +120,9 @@ if ~isempty(dirname)
                         
                         disp( in_name );
                         
-                        im = imread( in_name );
+                        im = intImRead( in_name );
                         out_name = [targetd, MakeFileName(nameInfo)];
-                        imwrite( im(yy,xx), out_name, 'TIFF' );
+                        intImWrite( im(yy,xx), out_name );
                     end
                     
                 end

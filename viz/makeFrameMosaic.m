@@ -32,6 +32,8 @@ end
 %     which_channel = [1,1,1];
 % end
 
+nc = intGetChannelNum( data.CellA{1} );
+
 
 persistent strel1;
 if isempty( strel1 )
@@ -145,16 +147,17 @@ mask_mosaic = zeros(imdim(1), imdim(2));
 im_list = [];
 
 
+imm = cell([1,nc]);
 
 for ii = 1:skip:numframe
-    
+   
     yy = floor((ii-1)/nx/skip);
-    xx = (ii-1)/skip-yy*nx;    
-    ss = ssCell{ii};    
+    xx = (ii-1)/skip-yy*nx;
+    ss = ssCell{ii};
     dx = floor((max_x-ss(2))/2);
     dy = floor((max_y-ss(1))/2);
-        
-
+    
+    
     if orientFlag
         mask = imCell{ii};
         mask = (imdilate( mask, strel1 ));
@@ -165,93 +168,66 @@ for ii = 1:skip:numframe
     
     mask_mosaic(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = mask;
     
-        % fluor1
-     if isfield( data.CellA{ii}, 'fluor1' )        
-        if isfield( CONST.view, 'filtered' ) && ...
-                CONST.view.filtered && ...
-                isfield( data.CellA{ii}, 'fluor1_filtered' )           
-            fluor1 =data.CellA{ii}.fluor1_filtered;
-        else
-            fluor1 = data.CellA{ii}.fluor1;            
-            if isfield( data.CellA{ii}, 'fl1' ) && ...
-                    isfield( data.CellA{ii}.fl1, 'bg' )
-                fluor1 = fluor1 - data.CellA{ii}.fl1.bg;
+    FLAG_ = zeros([1,nc]);
+    % fluor1
+    % loop over channels
+    
+    for jj = 1:nc
+        
+        if ii==1
+           imm{jj} = mask_mosaic; 
+        end
+        
+        fluorName =  ['fluor',num2str(jj)];
+        ffiltName =  ['fluor',num2str(jj),'_filtered'];
+        flName    =  ['fl',num2str(jj)];
+        
+        if isfield( data.CellA{ii}, fluorName )
+            if FLAGS.filt(jj) && ...
+                    isfield( data.CellA{ii}, ffiltName )
+                fluor_tmp =data.CellA{ii}.(ffiltName);
+            else
+                fluor_tmp = data.CellA{ii}.(fluorName);
+                if isfield( data.CellA{ii}, flName ) && ...
+                        isfield( data.CellA{ii}.(flName), 'bg' )
+                    fluor_tmp = fluor_tmp - data.CellA{ii}.(flName).bg;
+                end
             end
-        end
-        
-        fluor1 = imrotate(fluor1,alpha(ii),'bilinear');
-        fluor1 = fluor1(yyCell{ii}, xxCell{ii});
-        im1_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor1;        
-        FLAG1 = true;
-    else
-        im1_ = 0*mask_mosaic;
-        FLAG1 = false;
-        f1mm = [0,1];
-    end
-    
-       
-    % fluor2
-    flag2 = isfield( data.CellA{ii}, 'fluor2' );
-    if isfield( data.CellA{ii}, 'fluor2' ) && 1
-        
-        if isfield( CONST.view, 'filtered' ) && ...
-                CONST.view.filtered && ...
-                isfield( data.CellA{ii}, 'fluor2_filtered' )
             
-            fluor2 =data.CellA{ii}.fluor2_filtered;
+            fluor_tmp = imrotate(fluor_tmp, alpha(ii), 'bilinear');
+            fluor_tmp = fluor_tmp(yyCell{ii}, xxCell{ii});
+            imm{jj}(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor_tmp;
+            
+            FLAG_(jj) = true;
         else
-            fluor2 = data.CellA{ii}.fluor2;
+            %im1_      = 0*mask_mosaic;
+            FLAG_(jj) = false;
+            f1mm      = [0,1];
         end
+                
+%         if FLAG2
+%             im_list = [im_list, data.CellA{ii}.fluor1(:)', data.CellA{ii}.fluor2(:)'];
+%         elseif FLAG1
+%             im_list = [im_list, data.CellA{ii}.fluor1(:)'];
+%         else
+%             im_list = [im_list];
+%         end
         
-        fluor2 = imrotate(fluor2,alpha(ii),'bilinear');
-        fluor2 = fluor2(yyCell{ii}, xxCell{ii});
-        
-        
-        if isfield( data.CellA{ii}, 'fl2' ) && ...
-                isfield( data.CellA{ii}.fl2, 'bg' )
-            fluor2 = fluor2 - data.CellA{ii}.fl2.bg;
-            fluor2(fluor2<0) = 0;
-        end
-        
-        im2_(1+yy*max_y+(1:ss(1))+dy, 1+xx*max_x+(1:ss(2))+dx) = fluor2;
-        FLAG2 = true;
-    else
-        im2_ = uint8(0*mask_mosaic);
-        FLAG2 = false;
-        f2mm = [0,1];
     end
-    
-    
-    if FLAG2
-        im_list = [im_list, data.CellA{ii}.fluor1(:)', data.CellA{ii}.fluor2(:)'];
-    elseif FLAG1
-        im_list = [im_list, data.CellA{ii}.fluor1(:)'];
-    else
-        im_list = [im_list];
-    end
-
 end
 
 
 % autogain the images
-im1_ = ag(im1_);
-im2_ = ag(im2_);
+%im1_ = ag(im1_);
+%im2_ = ag(im2_);
 disk1 = strel('disk',1);
 
 
 % different display methods
-
-
 if isfield(CONST.view, 'falseColorFlag') && ...
         CONST.view.falseColorFlag
     % false color image - only works if there is only one channel
-    if FLAGS.f_flag == 1
-        im__    = im1_;
-    else
-        im__    = im2_;
-    end
-  
-    im = comp( {im__,colormap_,'mask', mask_mosaic, 'back' ,CONST.view.background} );
+    im = comp( {imm{jj},colormap_,'mask', mask_mosaic, 'back' ,CONST.view.background} );
 else
     
     if FLAGS.Outline_flag
@@ -263,22 +239,18 @@ else
     end
     
     % plots normal mosaic with region outline
-    if ~FLAGS.composite
-        if FLAGS.f_flag == 1
-            im2_ = im2_*0;
-        elseif FLAGS.f_flag == 2
-            im1_ = im1_*0;
+    im = [];
+    for jj = 1:nc
+        if FLAGS.composite || FLAGS.f_flag == jj
+           if FLAGS.include(jj+1)
+                im = comp( {im}, {imm{jj}, CONST.view.fluorColor{jj}, FLAGS.level(jj+1)} );
+           end
         end
     end
-    
-    im = comp(         {double(im1_),CONST.view.fluorColor{1}},...
-        {double(im2_),CONST.view.fluorColor{2}}   );
     
     im = comp( {im,'mask',mask_mosaic,'back',CONST.view.background},...
         {ag(outer),'b'} );
 end
-
-
 
 
 inv_flag = 0;

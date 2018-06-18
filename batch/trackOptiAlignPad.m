@@ -110,8 +110,8 @@ end
 crop_box = cell(1, num_xy);
 
 % parallelized alignment for each xy
-for jj=1:num_xy
-%parfor(jj=1:num_xy, workers)
+%for jj=1:num_xy
+parfor(jj=1:num_xy, workers)
     crop_box{jj} = intFrameAlignXY( SHOW_FLAG, nt, nz, nc, nxy(jj), ...
         dirname_, targetd, nameInfo, precision, CONST);
 end
@@ -182,11 +182,6 @@ for it = nt;
             end
             im = intImRead(in_name);
             
-            if numel(size(im)) > 2
-                disp('Images are in color - attempting to convert to monochromatic.');
-                im = convertToMonochromatic(im);
-            end
-            
             if (ic == nc(1)) && (iz == nnz2 | iz == -1)
                 % align phase image at half the z axis
                 if ~initFlag % first time through, or high error
@@ -236,11 +231,11 @@ for it = nt;
                     
                     figure(ic)
                     clf;
-                    if mod(ic,2) == 0
-                        imshow( cat( 3, backer, backer0+fluor, backer0));
-                    else
-                        imshow( cat( 3, backer+fluor, backer0, backer0));
+                    
+                    if ~isfield (CONST.view,'fluorColor')
+                        CONST.view.fluorColor = {'g','r','b'};
                     end
+                    comp( {backer}, {fluor,CONST.view.fluorColor{ic-1}} );
                 end
                 drawnow;
             end
@@ -322,11 +317,11 @@ for it = nt;
                     
                     figure(ic)
                     clf;
-                    if mod(ic,2) == 0
-                        imshow( cat( 3, backer, backer0+fluor, backer0));
-                    else
-                        imshow( cat( 3, backer+fluor, backer0, backer0));
+                    
+                    if ~isfield (CONST.view,'fluorColor')
+                        CONST.view.fluorColor = {'g','r','b'};
                     end
+                    comp( {backer}, {fluor,CONST.view.fluorColor{ic-1}} );
                 end
                 drawnow;
                 hold on;

@@ -209,8 +209,8 @@ else
         cleanup = onCleanup( @()( delete( h ) ) );
     end
     
-    %parfor(j = 1:num_xy,workers)
-        for j = 1:num_xy
+    parfor(j = 1:num_xy,workers)
+        %for j = 1:num_xy
         
         dirname_xy = dirname_list{j};
         intProcessXY( dirname_xy, skip, nc, num_c, clean_flag, ...

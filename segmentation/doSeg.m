@@ -83,6 +83,8 @@ if ~exist(dataname,'file')
         phase = mean( phaseCat, 3);      
     end
     
+    imRange = nan( [2, num_c ] );
+    
     if ~mod(i-1,skip)
         
         if CONST.superSeggerOpti.segmenting_fluorescence
@@ -92,6 +94,8 @@ if ~exist(dataname,'file')
             CONST.superSeggerOpti.remove_microcolonies = 0;
             phase = max(phase(:)) - phase;           
         end
+        
+        imRange(:,1) = intRange( phase(:) );
         
         % do the segmentation here
         [data, ~] = CONST.seg.segFun( phase, CONST, header, dataname, crop_box);
@@ -107,8 +111,12 @@ if ~exist(dataname,'file')
             nameInfo_tmp.npos(4,1) = 1;
             name = MakeFileName( nameInfo_tmp );
             fluor_tmp = intImRead( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name] );         
-            data.(['fluor',num2str(nc(k)-1)])=fluor_tmp;            
+            data.(['fluor',num2str(nc(k)-1)])=fluor_tmp;        
+            
+            imRange(:,k) = intRange( fluor_tmp(:) );
         end
+        
+        data.imRange = imRange;
                 
         save(dataname,'-STRUCT','data'); % Save data structure into the seg file.
     end

@@ -14,6 +14,11 @@ if numel(out_name) > 4
     end
 end
 
+
+if numel(size(im)) > 2
+    disp('Images are in color - attempting to convert to monochromatic.');
+    im = convertToMonochromatic(im);
+end
 end
 
 
