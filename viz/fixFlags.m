@@ -29,6 +29,11 @@ if ~isfield(FLAGS,'edit_links')
     FLAGS.edit_links = 0;
 end
 
+if ~isfield(FLAGS, 'autoscale');
+    disp('there is no flag field legend');
+    FLAGS.autoscale = 0;
+end
+
 % displays legend for regions/ poles
 if ~isfield(FLAGS,'legend')
     FLAGS.legend = 1;
@@ -60,6 +65,11 @@ if ~isfield(FLAGS,'P_flag')
 end
 
 % shows region outlines
+if ~isfield(FLAGS,'log_view')
+    FLAGS.log_view  = zeros( [1,10] );;
+end
+
+% shows region outlines
 if ~isfield(FLAGS,'Outline_flag')
     FLAGS.Outline_flag  = 0;
 end
@@ -76,7 +86,7 @@ end
 
 % shows composite image of all fluor channels found
 if ~isfield(FLAGS,'composite')
-    FLAGS.composite  = 0;
+    FLAGS.composite  = 1;
 end
 
 % shows poles
@@ -84,10 +94,16 @@ if ~isfield(FLAGS,'p_flag')
     FLAGS.p_flag  = 0;
 end
 
-% shows foci scores
-if ~isfield(FLAGS,'s_flag')
-    FLAGS.s_flag  = 1;
+% shows foci 
+if ~isfield(FLAGS,'s_flag') || numel( FLAGS.s_flag )==1
+    FLAGS.s_flag  = zeros( [1,10] );
 end
+
+% shows foci scores
+if ~isfield(FLAGS,'scores_flag') || numel( FLAGS.scores_flag )==1
+    FLAGS.scores_flag  = zeros( [1,10] );
+end
+
 
 
 if ~isfield(FLAGS,'c_flag')
@@ -97,18 +113,55 @@ end
 
 % shows filtered fluorescence
 if ~isfield(FLAGS,'filt')
-    FLAGS.filt = 1;
+    FLAGS.filt = zeros( [1,10] );
+elseif numel(FLAGS.filt) < 10;
+    FLAGS.filt = zeros( [1,10] );
 end
 
+
+
 % shows phase image or mask if it is 0
-if ~isfield(FLAGS, 'phase_flag');
-    FLAGS.phase_flag = 1;
+if ~isfield(FLAGS, 'phase_flag') || numel( FLAGS.phase_flag ) == 1;
+    FLAGS.phase_flag = ones([1,10]);
 end
 
 % modifies the transparency of the phase/mask - use as double from 0 - 1
 if ~isfield(FLAGS, 'phase_level');
     FLAGS.phase_level = 1;
 end
+
+
+% modifies the transparency of the phase/mask - use as double from 0 - 1
+if ~isfield(FLAGS, 'level');
+    FLAGS.level = 0.8*ones([1,10]);
+end
+
+% modifies the transparency of the phase/mask - use as double from 0 - 1
+if ~isfield(FLAGS, 'lut_min');
+    FLAGS.lut_min = nan([1,10]);
+end
+
+% modifies the transparency of the phase/mask - use as double from 0 - 1
+if ~isfield(FLAGS, 'lut_max');
+    FLAGS.lut_max = nan([1,10]);
+end
+
+% modifies the transparency of the phase/mask - use as double from 0 - 1
+if ~isfield(FLAGS, 'include');
+    FLAGS.include = ones([1,10]);
+end
+
+
+% modifies the transparency of the phase/mask - use as double from 0 - 1
+if ~isfield(FLAGS, 'manual_lut');
+    FLAGS.manual_lut = zeros([1,10]);
+end
+
+
+if ~isfield(FLAGS, 'gbl_auto');
+    FLAGS.gbl_auto = zeros([1,10]);
+end
+
 
 % not used
 if ~isfield(FLAGS,'lyse_flag')

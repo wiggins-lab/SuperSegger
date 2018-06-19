@@ -30,9 +30,11 @@ function [ mask_mod ] = removeDebris( mask_bg, phase, aK, CONST )
 
 
 
+
 INTENSITY_DIF = CONST.superSeggerOpti.INTENSITY_DIF;
 PEBBLE_CONST = CONST.superSeggerOpti.PEBBLE_CONST;
 debugFlag = false;
+
 pad = 6;
 
 ss = size( phase );
@@ -93,9 +95,14 @@ if debugFlag
     
     figure(8);
     clf;        
-    halo_keep = find( DI>INTENSITY_DIF );
-    pebble_keep = find( I_K>PEBBLE_CONST );
-    imshow( comp( phase, mask_bg, ismember( label_bg,halo_keep ), ismember( label_bg,pebble_keep) ) );
+
+    halo_keep = find( DI> INTENSITY_DIF);
+    pebble_keep = find( I_K> PEBBLE_CONST );
+    comp( phase, ...
+        {mask_bg,.3}, ...
+        {ismember( label_bg,halo_keep ),.3},...
+        {ismember( label_bg,pebble_keep),.3} );
+
        
     for ii = 1:num_reg
         text( props(ii).Centroid(1),props(ii).Centroid(2), [num2str( -I_m(ii)+I_p(ii), '%2.2g' ),',',num2str( I_K(ii), '%2.2g' )] );
@@ -103,7 +110,7 @@ if debugFlag
     
     figure(9);
     clf    
-    imshow( comp( phase, ~ismember( label_bg, keeper)));
+    comp( phase, {~ismember( label_bg, keeper),.3} );
 end
 
 end

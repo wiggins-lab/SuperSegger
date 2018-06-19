@@ -34,6 +34,9 @@ function CONST = loadConstants( res, PARALLEL_FLAG, dispText )
 % You should have received a copy of the GNU General Public License
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
+
 % gets the list of all possible constants in the settings folder
 [possibleConstants, list, filepath] = getConstantsList();
 
@@ -144,7 +147,7 @@ CONST.view.fluorColor = {'g','r','b','c','o','y'}; % order of channel colors to 
 CONST.view.LogView = false;
 CONST.view.filtered = 1;
 CONST.view.maxNumCell = []; % maximum number of cells used for analysis tools
-
+CONST.view.background = [0.7, 0.7, 0.7];
 
 % super resolution constants - not used in released version
 % Const for findFocusSR

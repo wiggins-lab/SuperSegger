@@ -138,6 +138,7 @@ CONSTtemp = settings_train.CONST;
 CONSTtemp.parallel.verbose = 1;
 CONSTtemp.align.ALIGN_FLAG = 0;
 CONSTtemp.seg.OPTI_FLAG = 1;
+
 BatchSuperSeggerOpti(settings_train.imageDirectory, skip, clean_flag, CONSTtemp, start_end_steps, 1);
 
 % make a backup of the seg files
@@ -146,6 +147,8 @@ copyfile ([settings_train.loadDirectory,'*seg.mat'],[settings_train.loadDirector
 
 settings_train.frameNumber = 1;
 setWorkingDirectory(settings_train.loadDirectory(1:end-9));
+
+
 updateUI(handles);
 
 % --- Executes on button press in try_const.

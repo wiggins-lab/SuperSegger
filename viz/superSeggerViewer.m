@@ -110,7 +110,8 @@ else
 end
 
 if exist([dirname0,'CONST.mat'],'file')
-    CONST = load([dirname0,'CONST.mat']);
+    %CONST = load([dirname0,'CONST.mat']);
+    CONST = loadConstantsFile( [dirname0,'CONST.mat'] );
     if isfield( CONST, 'CONST' )
         CONST = CONST.CONST;
     end
@@ -594,7 +595,7 @@ while runFlag
                     if ~isempty( data_cell )
                         figure(2);
                         clf;
-                        im_tmp = makeFrameMosaic(data_cell, CONST, xdim__);
+                        im_tmp = makeFrameMosaic(data_cell, CONST, xdim__,[],[],FLAGS.filt));
                     end
                     
                 end
@@ -612,7 +613,7 @@ while runFlag
             if ~isempty( data_cell )
                 figure(2);
                 clf;
-                makeKymographC(data_cell, 1, CONST,[],FLAGS.filt);
+                makeKymographC(data_cell, 1, CONST,[],FLAGS);
                 ylabel('Long Axis (pixels)');
                 xlabel('Time (frames)' );
                 disp('Press enter to continue');

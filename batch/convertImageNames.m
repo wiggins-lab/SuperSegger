@@ -43,11 +43,11 @@ function convertImageNames(dirname, basename, timeFilterBefore, ...
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
-images = dir([dirname,filesep,'*.tif']);
+images = dir([dirname,filesep,'*.tif*']);
 
 % directory to move original images
 dirOriginal  = [dirname,filesep,'original',filesep] ;
-imagesInOrig = dir([dirOriginal,filesep,'*.tif']);
+imagesInOrig = dir([dirOriginal,filesep,'*.tif*']);
 
 elementsTime='t';
 elementsXY ='xy';
@@ -87,10 +87,13 @@ if ~exist(dirOriginal,'dir') % make original directory
 end
 
 if isempty(imagesInOrig) % move original images
-    movefile([dirname,filesep,'*.tif'],dirOriginal); % move all images to dir original
+
+    
+    movefile([dirname,filesep,'*.tif*'],dirOriginal); % move all images to dir original
+
 end
 
-images = dir([dirOriginal,filesep,'*.tif']);
+images = dir([dirOriginal,filesep,'*.tif*']);
 
 % go through every image
 for j = 1: numel (images)

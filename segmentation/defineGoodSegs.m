@@ -159,7 +159,17 @@ for ii = 1:numSegs
     if calcScores    
         % Calculate the score to determine if the seg will be included.
         % if score is less than 0 set the segment off
-        [scoreRaw(ii)] = CONST.seg.segmentScoreFun( seg_info(ii,:), A );
+        
+        if isfield( CONST.seg, 'forceOff' ) && CONST.seg.forceOff 
+            % this allows all segments to be turned off 
+            scoreRaw(ii) = -infty;
+        elseif isfield( CONST.seg, 'forceOn' ) && CONST.seg.forceOn
+            % this allows all sgments to be turned on
+            scoreRaw(ii) = infty;
+        else
+            [scoreRaw(ii)] = CONST.seg.segmentScoreFun( seg_info(ii,:), A );
+        end
+        
         score(ii) = double( 0 < scoreRaw (ii));
 
         % update the good and bad segs images.

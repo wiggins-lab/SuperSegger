@@ -238,8 +238,14 @@ handles.cell_numbers.Value = FLAGS.ID_flag;
 handles.cell_poles.Value = FLAGS.p_flag;
 handles.legend_box.Value = FLAGS.legend;
 handles.outline_cells.Value = FLAGS.Outline_flag;
-handles.fluor_foci_scores.Value = FLAGS.s_flag;
-handles.filtered_fluorescence.Value = FLAGS.filt;
+handles.foci_box.Value = FLAGS.s_flag;
+handles.scores_foci.Value = FLAGS.scores_flag;
+
+if FLAGS.f_flag
+    handles.filt.Value = FLAGS.filt(FLAGS.f_flag);
+else
+    handles.filt.Value = 0;
+end
 handles.region_outlines.Value = FLAGS.P_flag;
 handles.region_scores.Value = FLAGS.regionScores;
 handles.use_seg_files.Value = FLAGS.useSegs;
@@ -254,12 +260,15 @@ if exist('nn','var');
 else
     handles.go_to_frame_no.String = '1';
 end
-
+handles.autoscale.Value = FLAGS.autoscale;
 handles.kymograph_cell_no.String = '';
 handles.movie_cell_no.String = '';
 handles.cell_no.String = '';
 handles.max_cell_no.String = '';
 handles.find_cell_no.String = '';
+
+handles.channel_color.String = {'r','m','y','g','c','b','w'};
+
 
 handles.contents = dir([handles.dirname_seg, file_filter]);
 handles.contents_seg = dir([handles.dirname_seg, '*seg.mat']);
@@ -275,7 +284,8 @@ end
 handles.use_seg_files.Value = FLAGS.useSegs;
 
 if exist([dirname0, 'CONST.mat'], 'file')
-    CONST = load([dirname0, 'CONST.mat']);
+    %CONST = load([dirname0, 'CONST.mat']);
+    CONST = loadConstantsFile( [dirname0,'CONST.mat'] );
     if isfield(CONST, 'CONST')
         CONST = CONST.CONST;
     end
@@ -296,11 +306,28 @@ handles.contents_xy = contents_xy;
 handles.filename_flags = filename_flags;
 handles.FLAGS.f_flag = 0;
 handles.channel.String = 0;
-handles.go_to_frame_no_text.String = ['Go to frame # (max ' num2str(handles.num_im) ')'];
+handles.go_to_frame_no_text.String = ['Time (frames) max: ', num2str(handles.num_im)];
 update_clist_panel(hObject, handles)
 handles = updateOutputPanel (handles);
 handles = updateImage(hObject, handles);
 guidata(hObject, handles);
+
+c = FLAGS.f_flag;
+if c == 0
+    handles.color.String = '';
+    handles.min_score.String = '';
+else
+    handles.color.String = CONST.view.fluorColor{c};
+    
+    scoreName = [ 'FLUOR',num2str(c),'_MIN_SCORE'];
+    
+    if isfield( CONST.getLocusTracks, scoreName )
+        handles.min_score.String = num2str(CONST.getLocusTracks.(scoreName) );
+    else
+        handles.min_score.String = '';
+    end
+end
+
 
 function handles = updateImage(hObject, handles)
 delete(get(handles.axes1, 'Children'))
@@ -349,7 +376,13 @@ else
         delete(findall(findall(gcf, 'Type', 'axe'), 'Type', 'text'))
         [handles.data_r, handles.data_c, handles.data_f] = intLoadDataViewer(handles.dirname_seg, handles.contents, ...
             nn, handles.num_im, handles.clist, forcedFlags);
-        showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
+        [~,im_ptr] = showSeggerImage(handles.data_c, handles.data_r, handles.data_f, forcedFlags, handles.clist, handles.CONST, handles.axes1);
+        set(im_ptr,'ButtonDownFcn',{@clickOnImageInfo,handles} );
+
+        
+        intShowLUT( handles );
+        
+        
         try
             save(handles.filename_flags, 'FLAGS', 'nn', 'dirnum' );
         catch
@@ -364,11 +397,22 @@ else
         makeActive(handles.use_seg_files);
     end
     
+    makeActive(handles.autoscale)
+    
     if handles.num_seg  == 0
         handles.use_seg_files.Enable = 'off';
     end
     
-    handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
+    %handles.switch_xy_directory_text.String = ['Switch xy (', num2str(handles.num_xy), ')'];
+    for kk = 1:handles.num_xy
+        handles.xy_popup.String{kk} = num2str(kk);
+    end
+    
+    nc = intGetChannelNum(handles.data_c);
+    for kk = 0:nc
+        handles.channel_popup.String{kk+1} = num2str(kk);
+    end
+    
     f = 0;
     while true
         if isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
@@ -378,20 +422,17 @@ else
         end
     end
     handles.channel_text.String = ['Channel (', num2str(f), ')'];
-    if handles.FLAGS.f_flag >= 1 && ~handles.FLAGS.composite% Fluorescence
+    if handles.FLAGS.f_flag >= 1 %&& ~handles.FLAGS.composite% Fluorescence
         makeActive(handles.log_view);
         makeActive(handles.false_color);
         if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
-            makeActive(handles.fluor_foci_scores);
-            makeActive(handles.filtered_fluorescence);
+            makeActive(handles.foci_box);
         else
-            makeInactive(handles.fluor_foci_scores);
-            makeInactive(handles.filtered_fluorescence);
+            makeInactive(handles.foci_box);
         end
     else
         makeInactive(handles.log_view);
-        makeInactive(handles.fluor_foci_scores);
-        makeInactive(handles.filtered_fluorescence);
+        makeInactive(handles.foci_box);
         makeInactive(handles.false_color);
     end
     if shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
@@ -508,6 +549,15 @@ if ~isempty(handles.FLAGS)
     go_to_frame_no_Callback(hObject, eventdata, handles);
 end
 
+
+function save_CONST_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+     CONST = handles.CONST;
+     
+    save( [handles.dirname0,'CONST.mat'], '-STRUCT',  'CONST' );
+end
+
+
 function max_cell_no_Callback(hObject, eventdata, handles)
 handles.CONST.view.maxNumCell = round(str2double(handles.max_cell_no.String));
 handles.max_cell_no.String = num2str(round(str2double(handles.max_cell_no.String)));
@@ -567,21 +617,6 @@ end
 
 % Display options
 
-function channel_Callback(hObject, eventdata, handles)
-if ~isempty(handles.FLAGS)
-    f = 0;
-    while isfield(handles,'data_c') && isfield(handles.data_c, ['fluor' num2str(f+1)] )
-       f = f+1;
-    end
-    c = round(str2double(handles.channel.String));
-    if isnan(c) || c < 0 || c > f
-        handles.channel.String = '0';
-    else
-        handles.channel.String = num2str(c);
-    end
-    handles.FLAGS.f_flag = c;
-    updateImage(hObject, handles);
-end
 
 function channel_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject, 'BackgroundColor'), get(0, 'defaultUicontrolBackgroundColor'))
@@ -596,6 +631,9 @@ end
 
 function find_cell_no(handles)
 if ~isempty(handles.FLAGS)
+    
+    axes( handles.axes1 );
+    
     c = round(str2double(handles.find_cell_no.String));
     maxIndex = handles.data_c.regs.num_regs;
     if areCellsLoaded(handles)
@@ -608,6 +646,7 @@ if ~isempty(handles.FLAGS)
         if handles.FLAGS.cell_flag && shouldUseErrorFiles(handles.FLAGS, handles.canUseErr)
             regnum = find(handles.data_c.regs.ID == c);
             if ~isempty(regnum)
+             
                 plot(handles.data_c.regs.props(regnum).Centroid(1),...
                     handles.data_c.regs.props(regnum).Centroid(2),'yx','MarkerSize',50);
             else
@@ -674,26 +713,48 @@ if ~isempty(handles.FLAGS)
     updateImage(hObject, handles);
 end
 
-function filtered_fluorescence_Callback(hObject, eventdata, handles)
+function gbl_auto_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.filt = handles.filtered_fluorescence.Value;
-    handles.CONST.view.filtered = handles.filtered_fluorescence.Value;
+        
+    chan = handles.FLAGS.f_flag;
+    
+    handles.FLAGS.gbl_auto(chan+1) = handles.gbl_auto.Value;
     updateImage(hObject, handles);
 end
 
-function fluor_foci_scores_Callback(hObject, eventdata, handles)
+function filt_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.s_flag = handles.fluor_foci_scores.Value;
+    
+    channel = handles.FLAGS.f_flag;
+    handles.FLAGS.filt(channel) = handles.filt.Value;
+    handles.CONST.view.filtered = handles.filt.Value;
     updateImage(hObject, handles);
 end
+
+function foci_box_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    
+    chan = handles.FLAGS.f_flag;
+    handles.FLAGS.s_flag(chan) = handles.foci_box.Value;
+    updateImage(hObject, handles);
+end
+
+function fluor_scores_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    
+    chan = handles.FLAGS.f_flag;
+
+    handles.FLAGS.scores_flag(chan) = handles.scores_foci.Value;
+    updateImage(hObject, handles);
+end
+
 
 function log_view_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
-    if ~isfield( handles.CONST, 'view' ) || ~isfield( handles.CONST.view, 'LogView' ) || isempty( handles.CONST.view.LogView )
-        handles.CONST.view.LogView = true;
-    else
-        handles.CONST.view.LogView = handles.log_view.Value;
-    end
+   
+    chan = handles.FLAGS.f_flag;
+    
+    handles.FLAGS.log_view(chan) = handles.log_view.Value;
     updateImage(hObject, handles);
 end
 
@@ -737,6 +798,21 @@ if ~isempty(handles.FLAGS)
     end
 end
 
+function manual_lut_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+        chan = handles.FLAGS.f_flag;
+        handles.FLAGS.manual_lut(chan+1) = handles.manual_lut.Value;
+        updateImage(hObject, handles);
+end
+
+function level_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+        chan = handles.FLAGS.f_flag;
+        handles.FLAGS.level(chan+1) = str2double(handles.level.String);
+        updateImage(hObject, handles);
+end
+
+
 % Gate options
 
 function clear_gates_Callback(hObject, eventdata, handles)
@@ -772,10 +848,110 @@ if ~isempty(handles.FLAGS)
     gateHist(handles.clist, handles.histogram_clist.Value);
 end
 
+
+function channel_color_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    chan = handles.FLAGS.f_flag;
+    if chan
+            handles.CONST.view.fluorColor{chan} = ...
+                handles.channel_color.String{handles.channel_color.Value};
+            updateImage(hObject, handles);
+        
+    end
+    
+end
+        
+function channel_popup_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+                
+     nc = intGetChannelNum( handles.data_c );
+                
+     c = handles.channel_popup.Value-1;
+                
+     if c == 0
+                    handles.color_popup.Value = 1;
+                    handles.min_score.String = '';
+                    
+     else
+                    handles.channel_color.Value = ...
+                        intGetColorValue(handles.CONST.view.fluorColor{c}, ...
+                        handles.channel_color.String );
+                    
+                    scoreName = [ 'FLUOR',num2str(c),'_MIN_SCORE'];
+                    
+          if isfield( handles.CONST.getLocusTracks, scoreName )
+                        handles.min_score.String = num2str(handles.CONST.getLocusTracks.(scoreName) );
+          else
+                        handles.min_score.String = '';
+          end
+      end
+            
+      handles.FLAGS.f_flag = c;
+      updateImage(hObject, handles);
+end
+
+function xy_popup_Callback(hObject, eventdata, handles)
+if ~isempty(handles.FLAGS)
+    ll_ = handles.xy_popup.Value;
+    dirname0 = handles.dirname0;
+    if isnumeric(ll_)
+
+        if ~isempty(ll_) && (ll_ >= 1) && (ll_ <= handles.num_xy)
+            try
+                clist = handles.clist;
+                if ~isempty(clist)
+                    save( [dirname0,handles.contents_xy(handles.dirnum).name,filesep,'clist.mat'],'-STRUCT','clist');
+                end
+            catch ME
+                printError(ME);
+                handles.message.String = 'Error writing clist file';
+            end
+            handles.dirnum = ll_;
+            handles.dirname_seg = [dirname0,handles.contents_xy(ll_).name,filesep,'seg',filesep];
+            handles.dirname_cell = [dirname0,handles.contents_xy(ll_).name,filesep,'cell',filesep];
+            handles.dirname_xy = [dirname0,handles.contents_xy(ll_).name,filesep];
+            ixy = sscanf( handles.contents_xy(handles.dirnum).name, 'xy%d' );
+            handles.header = ['xy',num2str(ixy),': '];
+            handles.contents = dir([handles.dirname_seg, '*seg.mat']);
+            handles.num_im = numel(handles.contents);
+            enable_all_panels(hObject,handles)
+            if exist([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat'])
+                handles.clist = load([dirname0,handles.contents_xy(ll_).name,filesep,'clist.mat']);
+                update_clist_panel(hObject, handles)
+            else
+                handles.clist = []
+                update_clist_panel(hObject, handles)
+            end
+            updateImage(hObject, handles);
+        else
+            handles.message.String = 'Incorrect number for xy position';
+        end
+    else
+        handles.message.String = 'Number of xy position missing';
+    end
+end
+guidata(hObject, handles);
+
 function histogram_clist_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+function channel_color_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function channel_popup_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function xy_popup_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
 
 function make_gate_Callback(hObject, eventdata, handles)
 if ~isempty(handles.FLAGS)
@@ -1051,7 +1227,8 @@ function phase_flag_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of phase_flag
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.phase_flag = get(hObject,'Value');
+    chan = handles.FLAGS.f_flag;
+    handles.FLAGS.phase_flag(chan+1) = get(hObject,'Value');
     updateImage(hObject, handles);
 end
 
@@ -1063,10 +1240,81 @@ function phase_level_txt_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of phase_level_txt as text
 %        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
 if ~isempty(handles.FLAGS)
-    handles.FLAGS.phase_level = str2double(get(hObject,'String'));
+    handles.FLAGS.level(handles.FLAGS.f_flag+1) = str2double(get(hObject,'String'));
     updateImage(hObject, handles);
 end
 
+
+function lut_min_Callback(hObject, eventdata, handles)
+% hObject    handle to phase_level_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of phase_level_txt as text
+%        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.lut_min(handles.FLAGS.f_flag+1) = str2double(get(hObject,'String'));
+    updateImage(hObject, handles);
+end
+
+function lut_max_Callback(hObject, eventdata, handles)
+% hObject    handle to phase_level_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of phase_level_txt as text
+%        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
+if ~isempty(handles.FLAGS)
+   handles.FLAGS.lut_max(handles.FLAGS.f_flag+1) = str2double(get(hObject,'String'));
+    updateImage(hObject, handles);
+end
+
+
+function min_score_Callback(hObject, eventdata, handles)
+% hObject    handle to phase_level_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of phase_level_txt as text
+%        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
+if ~isempty(handles.FLAGS)
+    
+    chan = handles.FLAGS.f_flag;
+    if chan
+        scoreName = [ 'FLUOR',num2str(chan),'_MIN_SCORE'];
+
+        tmp = str2double(get(hObject,'String'));
+        handles.CONST.getLocusTracks.(scoreName) = tmp;
+        updateImage(hObject, handles);
+    end
+    
+end
+
+function color_Callback(hObject, ~, handles)
+% hObject    handle to phase_level_txt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of phase_level_txt as text
+%        str2double(get(hObject,'String')) returns contents of phase_level_txt as a double
+if ~isempty(handles.FLAGS)
+    
+    chan = handles.FLAGS.f_flag;
+    if chan
+       
+        tmp = get(hObject,'String');
+        
+        if iscell( tmp )
+            tmp = tmp{1};
+        end
+        
+        if ~isempty( tmp ) && ischar( tmp(1) )
+            handles.CONST.view.fluorColor{chan} = tmp(1);
+            updateImage(hObject, handles);
+        end
+    end
+    
+end
 
 % --- Executes during object creation, after setting all properties.
 function phase_level_txt_CreateFcn(hObject, eventdata, handles)
@@ -1092,6 +1340,20 @@ if ~isempty(handles.FLAGS)
     handles.FLAGS.composite = get(hObject,'Value') ;
     updateImage(hObject, handles);
 end
+
+
+% --- Executes on button press in composite.
+function include_Callback(hObject, eventdata, handles)
+% hObject    handle to composite (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of composite
+if ~isempty(handles.FLAGS)
+    handles.FLAGS.include(handles.FLAGS.f_flag+1) = get(hObject,'Value') ;
+    updateImage(hObject, handles);
+end
+
 
 
 % --- Executes on button press in region_ids.
@@ -1121,7 +1383,9 @@ names = [{'Cell Kymo'},1,0;
     {'Field Movie'},0,0;
     {'Field Mosaic'},0,0;
     {'Consensus'},1,0;
-    {'Consensus Kymo'},1,0];
+    {'Outline figure'},1,0;
+    {'Consensus Kymo'},1,0;
+    {'Cell Info'},1,0];
 
 
 
@@ -1144,7 +1408,7 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
             errordlg('No cell files found');
         else
             figure(2);
-            im = makeKymoMosaic( handles.dirname_cell, handles.CONST );
+            im = makeKymoMosaic( handles.dirname_cell, handles.CONST, handles.FLAGS );
             if handles.save_output.Value
                 savename = [handles.dirSave, 'mosaic_kymograph'];
                 save (savename, 'im');
@@ -1153,6 +1417,8 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
         end
     elseif strcmp('Cell Tower',value)
         makeCellTower(handles);
+    elseif strcmp('Outline figure',value)
+        makeOutlineFigure(handles);    
     elseif strcmp('Cell Tower Mosaic',value)
         cell_tower_mosaic(handles);
     elseif strcmp('Lineage',value)
@@ -1167,29 +1433,76 @@ if ~isempty(get(hObject, 'UserData')) && get(hObject, 'UserData') == get(hObject
             makeLineage( handles.clist, ids, min_width );
         end
     elseif strcmp('Field Movie',value)
-        makeFieldMovie(handles);
+        makeFieldMovie(hObject,handles);
     elseif strcmp('Field Mosaic',value)
         handles = field_mosaic( handles)
     elseif strcmp('Consensus',value);
         handles = consensus_image(handles)
     elseif strcmp('Consensus Kymo',value)
         handles = consensus_kymo(handles);
+    elseif strcmp('Cell Info',value)
+        handles = cell_info(hObject, eventdata, handles);
     end
 end
 
 set(hObject, 'UserData', get(hObject, 'Value')); % for double click selection
 
-function cell_info_Callback(hObject, eventdata, handles)
-global settings;
-state = get(hObject,'Value');
-if state == get(hObject,'Max')
-    settings.hObject = hObject;
-    settings.handles = handles;
-    settings.function = 'cell_info';
-    settings.eventdata = eventdata;
-    set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
-elseif state == get(hObject,'Min')
-    updateImage(hObject, handles);
+function handles = cell_info(hObject, eventdata, handles)
+% global settings;
+% state = get(hObject,'Value');
+% if state == get(hObject,'Max')
+%     settings.hObject = hObject;
+%     settings.handles = handles;
+%     settings.function = 'cell_info';
+%     settings.eventdata = eventdata;
+%     set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+% elseif state == get(hObject,'Min')
+%     updateImage(hObject, handles);
+%     
+ ii = [];
+ 
+if ~isempty( handles.cell_no.String )
+    cell_num = str2num(handles.cell_no.String);
+    if (cell_num)
+        if isfield( handles, 'data_c' )
+           if isfield( handles.data_c, 'regs' )
+              if isfield( handles.data_c.regs, 'ID' )
+                 reg_num = find(  handles.data_c.regs.ID == cell_num );
+                 
+                 if ~isempty( reg_num )
+                     ii = reg_num(1);
+                 else
+                    errordlg( 'reg number is empty' ); 
+                 end
+              else
+                  errordlg( 'no ID field' );
+              end
+           else
+               errordlg( 'no regs field' );
+           end
+            
+        else
+            errordlg( 'no data_c field.' );
+        end
+    else
+        errordlg( 'cell number isnt valid.' );
+    end
+else
+    errordlg('Please enter a cell number.' );
+end
+        
+if ~isempty( ii )
+    if isfield(handles.data_c,'CellA')
+        disp(['Pole orientation : ',  num2str(handles.data_c.CellA{ii}.pole.op_ori)]);
+        disp(['BoundingBox : ',       num2str(handles.data_c.CellA{ii}.BB)]);
+        disp(['Axis Lengths : ',      num2str(handles.data_c.CellA{ii}.length)]);
+        disp(['Cell Length : ',       num2str(handles.data_c.CellA{ii}.cellLength(1))]);
+        disp(['Mean Width : ',        num2str(handles.data_c.CellA{ii}.cellLength(2))]);
+        disp(['Cell distance : ',     num2str(handles.data_c.CellA{ii}.cell_dist)]);
+        disp(['Cell Old Pole Age : ', num2str( handles.data_c.CellA{ii}.pole.op_age)]);
+        disp(['Cell New Pole Age : ', num2str(handles.data_c.CellA{ii}.pole.np_age)]);
+    end
+    
 end
 
 function handles = consensus_kymo(handles)
@@ -1260,7 +1573,7 @@ else
         if ~isempty( data_cell )
             figure(2);
             clf;
-            makeKymographC(data_cell, 1, handles.CONST,[]);
+            makeKymographC(data_cell, 1, handles.CONST,handles.FLAGS);
             title(cell_name);
             ylabel('Long Axis (pixels)');
             xlabel('Time (frames)' );
@@ -1285,7 +1598,7 @@ else
         
         if ~isempty(data_cell)
             handles.message.String = ['Movie for cell ', cell_name];
-            mov = makeCellMovie(data_cell);
+            mov = makeCellMovie(data_cell, handles.CONST, handles.FLAGS, handles.clist);
             choice = questdlg('Save movie?', 'Save movie?', 'Yes', 'No', 'No');
             if strcmp(choice, 'Yes')
                 saveFilename = [handles.dirSave,cell_name(1:end-4),'.avi'];
@@ -1301,33 +1614,60 @@ else
 end
 
 
-function handles = makeCellTower( handles)
-if ~areCellsLoaded(handles)
-    errordlg('No cell files found');
-else
-    if ~isempty(handles.FLAGS)
-        c = str2double(handles.cell_no.String);
-        if numel(c) > 1
-            c = c(1);
-        end
-        if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
-            handles.message.String = ['Invalid cell number'];
+
+
+    function hanldes = makeCellTower( handles)
+        if ~areCellsLoaded(handles)
+            errordlg('No cell files found');
         else
-            
-            handles.cell_no.String = num2str(c);
-            xdim = 4; %str2double(handles.no_columns.String);
-            [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
-            if ~isempty( data_cell )
-                handles.message.String = ['Cell Tower for cell ', cell_name];
-                figure(2);
-                clf;
-                makeFrameMosaic(data_cell, handles.CONST, xdim);
-                title(cell_name);
+            %     if ~isempty(handles.FLAGS)
+            c = str2num(handles.cell_no.String);
+            if numel(c) > 1
+                c = c(1);
+            end
+            if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
+                handles.message.String = ['Invalid cell number'];
+            else
+                
+                handles.cell_no.String = num2str(c);
+                xdim = 4; %str2double(handles.no_columns.String);
+                [data_cell,cell_name] = loadCellData(c, handles.dirname_cell, handles);
+                if ~isempty( data_cell )
+                    handles.message.String = ['Cell Tower for cell ', cell_name];
+                    figure(2);
+                    clf;
+                    %makeFrameMosaic(data_cell, handles.CONST, xdim);
+                    makeFrameMosaic(data_cell, handles.CONST, xdim,[],[],handles.FLAGS);
+                    title(cell_name);
+                end
             end
         end
-    end
-end
+    
+  function hanldes = makeOutlineFigure( handles)
+        if ~areCellsLoaded(handles)
+            errordlg('No cell files found');
+        else
+            %     if ~isempty(handles.FLAGS)
+ 
+            if isfield(handles, 'data_c'  )
+                
+                tmp_axis = axis;
+                
+                figure(2);
+                clf;
+                axis(tmp_axis);
+                
+               showSeggerImage( handles.data_c, [], [], handles.FLAGS, handles.clist, handles.CONST, [] );
 
+               clist_tmp = gate( handles.clist );
+               ID_LIST = clist_tmp.data(:,1);
+               
+               doDrawCellOutlinePAW(  handles.data_c, ID_LIST );
+            else
+                errordlg('No data_c field found');
+            end
+        end
+            
 
 function [startFr,endFr,skip] = dialogBoxStartEndSkip (handles)
 prompt = {'Start frame:', 'End frame:','Choose Total # frames :','or Skip Frames :'};
@@ -1414,15 +1754,18 @@ end
 
 
 
-function makeFieldMovie(handles)
+function makeFieldMovie(hObject,handles)
 % makes field movie
 if ~isempty(handles.FLAGS)
+    tmp = handles.go_to_frame_no.String;
+
     clear mov;
     [startFr,endFr,skip] = dialogBoxStartEndSkip (handles);
     if ~isempty(startFr)
         mov.cdata = [];
         mov.colormap = [];
         counter = 1;
+        
         for ii = round(startFr:skip: endFr)
             delete(get(handles.axes1, 'Children'))
             [data_r, data_c, data_f] = intLoadDataViewer( handles.dirname_seg, ...
@@ -1447,6 +1790,9 @@ if ~isempty(handles.FLAGS)
             end
         end
     end
+    
+    handles.go_to_frame_no.String = tmp;
+    updateImage(hObject, handles);
 end
 
 
@@ -1454,7 +1800,8 @@ function cell_tower_mosaic(handles)
 if ~isempty(handles.FLAGS) && areCellsLoaded(handles)
     figure(2);
     clf;
-    imTot = makeFrameStripeMosaic([handles.dirname_cell], handles.CONST, [], true);
+    imTot = makeFrameStripeMosaic([handles.dirname_cell], ...
+        handles.CONST, [], true, handles.clist, handles.FLAGS );
     if handles.save_output.Value
         save ([handles.dirSave,'tower_cells'],'imTot');
     end
@@ -1520,3 +1867,139 @@ if strcmp(choice, 'Yes')
     setappdata(0, 'nn', str2double(handles.go_to_frame_no.String));
     editLinks();
 end
+
+function ind = intGetColorValue( str, lib );
+       ind =  find(strcmp(lib , str));        
+
+       
+function intShowLUT( handles )
+  
+    handles.FLAGS.phase_flag = double(logical(handles.FLAGS.phase_flag));
+    
+    % do the show lut stuff
+    chan = handles.FLAGS.f_flag;
+    if chan == 0
+        im = handles.data_c.phase;
+        cc = 'w';
+    else
+        im = handles.data_c.(['fluor',num2str(chan)]);
+        cc = handles.CONST.view.fluorColor{chan};
+    end
+   
+    axes(handles.lut_show )
+    [y,x] = hist( double(im(:)), 100 );
+    plot( x,y, '.', 'Color', cc );    
+    set(gca, 'Yscale', 'log', 'Color', [0,0,0] );
+    
+    % now set everything in the channel pannel
+    handles.include.Value    = handles.FLAGS.include(chan+1);
+    handles.level.String     = num2str(handles.FLAGS.level(chan+1));
+    handles.lut_min.String   = num2str(handles.FLAGS.lut_min(chan+1));
+    handles.lut_max.String   = num2str(handles.FLAGS.lut_max(chan+1));
+    handles.manual_lut.Value = handles.FLAGS.manual_lut(chan+1);
+    handles.phase_flag.Value = handles.FLAGS.phase_flag(chan+1);
+    handles.gbl_auto.Value   = handles.FLAGS.gbl_auto(chan+1);
+
+
+    if chan == 0       
+       makeInactive(handles.channel_color);
+       makeInactive(handles.phase_flag);
+       makeInactive(handles.log_view);
+       makeInactive(handles.false_color);
+       makeInactive(handles.foci_box);
+       makeInactive(handles.scores_foci);
+       makeInactive(handles.min_score);
+       makeInactive(handles.filt);
+
+       handles.foci_box.Value = 0;
+       handles.scores_foci.Value      = 0;
+       handles.min_score.String        = '';
+       handles.log_view.Value = 0;
+       
+    else
+       makeActive(handles.channel_color);
+       makeActive(handles.phase_flag);
+       makeActive(handles.log_view);
+       
+       handles.log_view.Value = handles.FLAGS.log_view(chan);
+       
+       filtname = ['fluor',num2str(chan),'_filtered'];
+       if isfield( handles.data_c, filtname );
+            makeActive(handles.filt);
+            handles.filt.Value = handles.FLAGS.filt(chan);
+       else
+           makeInactive(handles.filt);
+           handles.filt.Value = 0;
+           handles.FLAGS.filt(chan) = 0;
+       end
+
+       
+       makeActive(handles.false_color);
+
+       filtname = ['locus',num2str(chan)];
+       if isfield( handles.data_c.CellA{1}, filtname );
+           makeActive(handles.foci_box);
+           makeActive(handles.scores_foci);
+           makeActive(handles.min_score);
+           
+           handles.channel_color.Value = ...
+               intGetColorValue(handles.CONST.view.fluorColor{chan}, ...
+               handles.channel_color.String );
+           
+           handles.foci_box.Value = handles.FLAGS.s_flag(chan);
+           handles.scores_foci.Value       = handles.FLAGS.scores_flag(chan);
+           
+           scoreName = [ 'FLUOR',num2str(chan),'_MIN_SCORE'];
+           
+           
+           if ~isfield( handles.CONST.getLocusTracks, scoreName )
+               handles.CONST.getLocusTracks.(scoreName) = 0;
+           end
+           
+           handles.min_score.String        = num2str(handles.CONST.getLocusTracks.(scoreName));
+       else
+           makeInactive(handles.foci_box);
+           handles.foci_box.Value = 0;
+           handles.FLAGS.s_flag(chan) = 0;
+           
+           makeInactive(handles.scores_foci);
+           handles.scores_foci.Value       = 0;
+           handles.FLAGS.scores_flag(chan) = 0;
+           
+           makeInactive(handles.min_score);
+           handles.min_score.String = '';
+       end
+      
+    end
+    
+    
+    
+function ImageClickCallback ( objectHandle , eventData )
+    axesHandle  = get(objectHandle,'Parent');
+    coordinates = get(axesHandle,'CurrentPoint'); 
+    coordinates = coordinates(1,1:2);
+    message     = sprintf('x: %.1f , y: %.1f',coordinates (1) ,coordinates (2));
+    helpdlg(message);
+    
+    
+function clickOnImageInfo(hObject, eventdata, handles)
+    point = round(eventdata.IntersectionPoint(1:2));
+    
+    reg_num = handles.data_c.regs.regs_label( point(2), point(1) );
+    
+    if reg_num
+        cell_num = handles.data_c.regs.ID( reg_num );
+    else
+        cell_num = 0;
+    end
+    
+    handles.message.String = ['Cell number: ',num2str(cell_num),...
+        '    Region number: ',num2str(reg_num)];
+    
+    if cell_num
+        handles.cell_no.String = num2str( cell_num );
+    end
+
+
+
+

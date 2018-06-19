@@ -136,8 +136,9 @@ nameInfo_tmp.npos(1,1) = nt(i);
 nameInfo_tmp.npos(4,1) = 1;
 name = MakeFileName(nameInfo_tmp);
 
+
 % do the min merge of z phase
-phase = imread( [dirname_xy,'phase',filesep,name] );
+phase = intImRead( [dirname_xy,'phase',filesep,name] );
 for k = 2:num_z
     nameInfo_tmp.npos(4,1) = nz(k);
     name  = MakeFileName(nameInfo_tmp);
@@ -155,9 +156,15 @@ name_ref  = name_ref( 1:max(nameInfo_tmp_ref.npos(:,3)));
 dataname_ref = [dirname_xy,'seg', filesep,name_ref,'_err.mat'];
 data = load(dataname_ref);
 
+
+
 % loads the data reference for the min merge of z phase, sets tha name and
 % nameInfo, and the fluorescence field from the image to be merged.
 if mod(i-1,skip)
+    
+    imRange = nan( [2, num_c ] );
+    imRange(:,1) = intRange( phase(:) );
+
     data.phase = phase;
     data.basename = name;
     nameInfo_tmp = nameInfo;
@@ -169,8 +176,14 @@ if mod(i-1,skip)
         name = MakeFileName( nameInfo_tmp );
         fluorImage = imread( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name]);
         data.(['fluor',num2str(nc(k)-1)]) = fluorImage;
-    end    
+        
+        imRange(:,k) = intRange( fluorImage(:) );
+    end  
+    
+    data.imRange = imRange;
+
 end
+
 
 save(dataname2,'-STRUCT','data');
 

@@ -58,7 +58,8 @@ if isnan(cytoplasmicFlourescenceSTD)
     cytoplasmicFlourescenceSTD = 1;
     disp ('Possibly empty mask for image - foci may not be found');
 end
-normalizedImage = originalImage/cytoplasmicFlourescenceSTD;
+
+normalizedImage = originalImage/cytoplasmicFlourescenceSTD; % normalization so that intensities;
 
 %Take only pixels above 1 std (noise reduction)
 normalizedImage = normalizedImage - 1;
@@ -219,9 +220,10 @@ for ii = 1:data.regs.num_regs
     
     focus = focusInit;
     if numel(sortedFoci) > 0
-        flagFoci =  (([sortedFoci.intensity] > 0.33 * ...
-            sortedFoci(1).intensity) | [sortedFoci.intensity] > 5);
-        maxIndex = find(flagFoci);
+
+        %maxIndex = find([sortedFoci.intensity] > 0.333 * sortedFoci(1).intensity);
+        maxIndex = 1:numel(sortedFoci);
+        
         if numel(maxIndex) > CONST.trackLoci.numSpots(channelID)
             maxIndex = maxIndex(1:CONST.trackLoci.numSpots(channelID));
         end

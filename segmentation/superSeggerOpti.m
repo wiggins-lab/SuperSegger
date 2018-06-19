@@ -183,10 +183,12 @@ if isempty(mask)
     
     [~,~,~,~,~,K,~,~] = curveFilter(phaseNormUnfilt, 3 );
     aK = abs(K);
+
     
     if CONST.superSeggerOpti.remove_debris
         mask_colonies = removeDebris(mask_colonies, phaseNormUnfilt, aK, CONST);
     end
+
     
     % remove bright halos from the mask
     mask_halos = (magicPhase>CUT_INT);
@@ -270,6 +272,13 @@ else
                     break
                 end
             end
+            
+            tmp_3s = compConn( logical(wsl_segs_good), 4 );
+            tmp_3s([1,end],:) = 0;
+            tmp_3s(:,[1,end]) = 0;
+            
+            wsl_segs_good(tmp_3s==0)=0;
+            
             ws(yy,xx) = double(0<(ws(yy,xx) + wsl_segs_good));
         end
     end
