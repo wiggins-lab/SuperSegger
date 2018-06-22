@@ -1,4 +1,4 @@
-function [ imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage ...
+function [ imMosaic, imColor, imBW, imInv, imMosaic10, towerMask ] = makeConsensusImage ...
     (dataImArray, CONST, skip, mag, disp_flag, fnum, clist)
 % makeConsensusImage : Computes consensus fluorescence localization from cells in a cell files
 %
@@ -89,6 +89,8 @@ if numIm  > 0
         dataImArray.ssTot, dataImArray.cellArrayNum, CONST, disp_flag );
     imBWunmasked = dataImArray.towerNorm;
     imBWmask     = dataImArray.towerMask; 
+    
+    towerMask = dataImArray.towerMask;
 end
 end
 

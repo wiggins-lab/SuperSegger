@@ -245,18 +245,6 @@ im = intMakeMultiChannel( data, FLAGS, CONST, clist, nc );
 
 
 
-% if you are in fluorescence mode (f_flag) draw the fluor channels
-if FLAGS.composite
-    nc = numel(find(~cellfun('isempty',strfind(fieldnames(data),'fluor'))));
-    for i = 1 : nc
-        im = updateFluorImage(data, im, i, FLAGS, CONST, clist);
-    end
-    
-elseif FLAGS.f_flag > 0
-    im = updateFluorImage(data, im, FLAGS.f_flag, FLAGS, CONST);
-end
-
-
 if FLAGS.colored_regions
     im = label2rgb (data.regs.regs_label, 'lines', 'k');
 elseif FLAGS.Outline_flag  % it just outlines the cells

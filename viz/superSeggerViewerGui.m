@@ -1534,35 +1534,66 @@ global dataImArray
 if ~areCellsLoaded(handles)
     errordlg('No cell files found');
 else
-    if ~exist('dataImArray','var') || isempty(dataImArray)
-        fnum = handles.FLAGS.f_flag;
-        if fnum == 0
-            fnum = 1;
+    if true % ~exist('dataImArray','var') || isempty(dataImArray)
+        
+        nc = intGetChannelNum(handles.data_c);
+        
+        if handles.FLAGS.composite
+            ranger = find(  handles.FLAGS.include(2:nc+1) );
+        else
+            ranger = handles.FLAGS.f_flag;
         end
-        [dataImArray] = makeConsensusArray( handles.dirname_cell, handles.CONST...
-            , 5,[], fnum, handles.clist);
-        save ([handles.dirSave,'dataImArray'],'dataImArray');
+        
+        imm = {};
+        
+        for ff = ranger
+            tmpskip = 1;
+            
+            tmp = makeConsensusArray( handles.dirname_cell, handles.CONST...
+                , tmpskip,[], ff, handles.clist);
+            
+            
+            
+            [imMosaic, imColor, imBW, imInv, imMosaic10, towerMask ] ...
+                = makeConsensusImage(tmp,handles.CONST,tmpskip,4,0);
+            
+            if handles.FLAGS.composite || ~handles.CONST.view.falseColorFlag
+                comm = { imBW, handles.CONST.view.fluorColor{ff}, handles.FLAGS.level(ff+1) };
+            else
+                comm = { imBW, jet(256) };
+            end
+            
+            imm = comp( {imm}, comm );
+        end
+        
+        if ~isempty( imm )
+            imm = comp( {imm, 'mask', towerMask} );
+        end
+        
     else
         handles.message.String = 'dataImArray already calculated';
     end
-    [imMosaic, imColor, imBW, imInv, imMosaic10 ] = makeConsensusImage(dataImArray,handles.CONST,5,4,0);
-    if handles.save_output.Value
-        save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    
+    %     if handles.save_output.Value
+    %         save ([handles.dirSave, 'show_consensus'], 'imMosaic', 'imColor', 'imBW', 'imInv', 'imMosaic10');
+    %     end
+    
+    if ~isempty( imm )
+        figure(2);
+        clf;
+        imshow(imm);
     end
-    figure(2);
-    clf;
-    imshow(imColor);
     
 end
 
 
-function makeCellKymo(handles)
-if ~areCellsLoaded(handles)
-    errordlg('No cell files found');
-else
-    c = str2double(handles.cell_no.String);
-    if numel(c) > 1
-        c = c(1);
+    function makeCellKymo(handles)
+        if ~areCellsLoaded(handles)
+            errordlg('No cell files found');
+        else
+            c = str2double(handles.cell_no.String);
+            if numel(c) > 1
+                c = c(1);
     end
     if isempty(c) || isnan(c) || c < 1 || c > max(handles.data_c.regs.ID)
         handles.message.String = ['Invalid cell number'];
