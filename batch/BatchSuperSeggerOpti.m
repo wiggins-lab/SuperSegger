@@ -54,6 +54,8 @@ function BatchSuperSeggerOpti(dirname_,skip,clean_flag,res,startEnd,showWarnings
 
 % Init
 
+intCheckForInstallLib
+
 if (nargin < 1) || isempty( dirname_ ) || strcmp(dirname_ ,'.')
     dirname_ = pwd;
 end
