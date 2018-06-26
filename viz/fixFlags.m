@@ -133,7 +133,7 @@ end
 
 % modifies the transparency of the phase/mask - use as double from 0 - 1
 if ~isfield(FLAGS, 'level');
-    FLAGS.level = 0.8*ones([1,10]);
+    FLAGS.level = 0.5*ones([1,10]);
 end
 
 % modifies the transparency of the phase/mask - use as double from 0 - 1

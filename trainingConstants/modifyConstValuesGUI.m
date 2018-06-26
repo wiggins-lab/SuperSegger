@@ -209,7 +209,7 @@ function image_folder_ClickedCallback(hObject, eventdata, handles)
 [imageName,directoryName , ~] = uigetfile('*.tif', 'Pick an image file');
 if imageName~=0
     handles.directory.String = [directoryName,filesep,imageName];
-    settings_mod.phaseImage = imread(handles.directory.String);
+    settings_mod.phaseImage = intImRead(handles.directory.String);
     axes(handles.viewport_modify);
     imshow(settings_mod.phaseImage,[]);
 end
@@ -517,7 +517,7 @@ imageName = handles.directory.String;
 if numel(imageName)<3 || ~strcmp(imageName(end-3:end), '.tif')
     image_folder_ClickedCallback([],[],handles);
 end
-phaseIm = imread(handles.directory.String);
+phaseIm = intImRead(handles.directory.String);
 
 set(gcf,'Pointer','watch');
 settings_mod.data = superSeggerOpti(phaseIm,[],0,CONST);

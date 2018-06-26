@@ -50,7 +50,7 @@ if ~isempty(dirname)
         image_name  = contents(i).name;
         image_folder = contents(i).folder;
         disp(image_name);
-        im = imread([image_folder,'/',image_name]);
+        im = intImRead([image_folder,'/',image_name]);
         out_name = [targetd, image_name];
         imwrite(imresize(im,scale), out_name, 'TIFF');        
     end

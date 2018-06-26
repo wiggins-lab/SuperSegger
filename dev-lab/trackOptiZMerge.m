@@ -77,7 +77,7 @@ end
 
 %% Load up first images and get the size
 
-im = imread( [dirname,contents(1).name] );
+im = intImRead( [dirname,contents(1).name] );
 
 if numel(size(im)) > 2
     im = im(:,:,2);
@@ -162,7 +162,7 @@ for ic = data.nc
         nameInfo_in.npos(:,1) = [it; ic; nnxy; iz];
         in_name =  [data.dirname, MakeFileName(nameInfo_in)];
         
-        tmp = imread( in_name );
+        tmp = intImRead( in_name );
         
         if numel(size(tmp)) > 2
             tmp = tmp(:,:,2);

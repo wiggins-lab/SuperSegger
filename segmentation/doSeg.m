@@ -69,8 +69,8 @@ if ~exist(dataname,'file')
     nameInfo_tmp.npos(4,1) = 1; % z value
     name = MakeFileName(nameInfo_tmp);
     namePhase = [dirname_xy,'phase',filesep,name];    
-    phase = intImRead( namePhase );
-    
+    phase = intImLoader( namePhase, CONST );
+        
     if num_z > 1 % if there are z frames
         phaseCat = zeros( [size(phase), num_z], 'uint16' );
         phaseCat(:,:,1) = phase;
@@ -78,7 +78,8 @@ if ~exist(dataname,'file')
         for iz = 2:num_z
             nameInfo_tmp.npos(4,1) = iz;
             name = MakeFileName(nameInfo_tmp);
-            phaseCat(:,:,iz) = intImRead( [dirname_xy,'phase',filesep,name] );
+            phaseCat(:,:,iz) = intImLoader( ...
+                [dirname_xy,'phase',filesep,name], CONST );
         end        
         phase = mean( phaseCat, 3);      
     end
@@ -110,7 +111,8 @@ if ~exist(dataname,'file')
             nameInfo_tmp.npos(2,1) = nc(k);
             nameInfo_tmp.npos(4,1) = 1;
             name = MakeFileName( nameInfo_tmp );
-            fluor_tmp = intImRead( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name] );         
+            fluor_tmp = intImLoader( [dirname_xy,...
+                'fluor',num2str(nc(k)-1),filesep,name], CONST );         
             data.(['fluor',num2str(nc(k)-1)])=fluor_tmp;        
             
             imRange(:,k) = intRange( fluor_tmp(:) );
@@ -125,3 +127,4 @@ else
 end
 
 end
+

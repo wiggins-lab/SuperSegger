@@ -37,7 +37,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 
-function disable_all_panels (hObject,handles)
+function disable_all_panels (~,handles)
 set(findall(handles.gate_options_text, '-property', 'enable'), 'enable', 'off')
 set(findall(handles.output_options_text, '-property', 'enable'), 'enable', 'off')
 set(findall(handles.display_options_text, '-property', 'enable'), 'enable', 'off')
@@ -131,6 +131,9 @@ handles.num_xy = 0;
 handles.num_errs = 0;
 handles.canUseErr = 0;
 
+axes(handles.axes1);
+axis tight
+cla;
 
 if (nargin<1 || isempty(handles.image_directory.String))
     handles.image_directory.String = pwd;
@@ -147,8 +150,7 @@ handles.image_directory.String = dirname;
 
 file_filter = '';
 CONST = [];
-axis tight
-cla;
+
 
 dirname = fixDir(dirname);
 dirname0 = dirname;
@@ -238,21 +240,21 @@ handles.cell_numbers.Value = FLAGS.ID_flag;
 handles.cell_poles.Value = FLAGS.p_flag;
 handles.legend_box.Value = FLAGS.legend;
 handles.outline_cells.Value = FLAGS.Outline_flag;
-handles.foci_box.Value = FLAGS.s_flag;
-handles.scores_foci.Value = FLAGS.scores_flag;
-
 if FLAGS.f_flag
+    handles.foci_box.Value = FLAGS.s_flag(FLAGS.f_flag);
+    handles.scores_foci.Value = FLAGS.scores_flag;
     handles.filt.Value = FLAGS.filt(FLAGS.f_flag);
+    handles.phase_flag.Value = FLAGS.phase_flag(FLAGS.f_flag);
 else
     handles.filt.Value = 0;
 end
+
 handles.region_outlines.Value = FLAGS.P_flag;
 handles.region_scores.Value = FLAGS.regionScores;
 handles.use_seg_files.Value = FLAGS.useSegs;
 handles.show_daughters.Value = FLAGS.showDaughters;
 handles.show_mothers.Value = FLAGS.showMothers;
 handles.show_linking.Value = FLAGS.showLinks;
-handles.phase_flag.Value = FLAGS.phase_flag;
 handles.phase_level_txt.String = num2str(FLAGS.phase_level);
 handles.composite.Value = FLAGS.composite;
 if exist('nn','var');

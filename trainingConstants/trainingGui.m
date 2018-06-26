@@ -753,7 +753,7 @@ if settings_train.dataSegmented
         settings_train.currentData = load([settings_train.loadDirectory,settings_train.loadFiles(frameNumber).name]);
     end
 else
-    settings_train.currentData = imread([settings_train.imageDirectory,settings_train.loadFiles(frameNumber).name]);
+    settings_train.currentData = intImRead([settings_train.imageDirectory,settings_train.loadFiles(frameNumber).name]);
 end
 settings_train.currentIsBad = strfind(settings_train.loadFiles(frameNumber).name, '_mod.mat');
 
@@ -865,7 +865,7 @@ if newDir ~= 0
     cropY = ceil(handles.viewport_train.YLim(1):handles.viewport_train.YLim(2) - 1);
     
     for i = 1:settings_train.frameSkip:maxFrames
-        tempImage = imread([settings_train.imageDirectory,settings_train.loadFiles(i).name]);
+        tempImage = intImRead([settings_train.imageDirectory,settings_train.loadFiles(i).name]);
         saveName = [newDir, filesep, settings_train.loadFiles(i).name];
         imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
     end
@@ -977,7 +977,7 @@ cropY = ceil(handles.viewport_train.YLim(1):handles.viewport_train.YLim(2) - 1);
 i = settings_train.frameNumber;
 filename =[ settings_train.imageDirectory,filesep,settings_train.loadFiles(i).name];
 
-tempImage = imread([filename]);
+tempImage = intImRead([filename]);
 saveName = [filename];
 imwrite( tempImage(cropY, cropX), saveName, 'TIFF' );
 

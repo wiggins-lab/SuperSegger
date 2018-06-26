@@ -42,7 +42,7 @@ end
 % imfinfo()
 
 if strcmp(filename(end-3:end), '.tif')
-    tempImage = imread(filename);
+    tempImage = intImRead(filename);
 else % it is a folder
     filename = fixDir(filename);
     images = dir([filename,'*c1*.tif']);
@@ -55,7 +55,7 @@ else % it is a folder
     else
         lastPhaseImage = images(end).name;
     end
-    tempImage = imread([filename,lastPhaseImage]);  
+    tempImage = intImRead([filename,lastPhaseImage]);  
 end
 
 phase = intCropImage (tempImage);  

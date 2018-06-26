@@ -142,7 +142,7 @@ phase = intImRead( [dirname_xy,'phase',filesep,name] );
 for k = 2:num_z
     nameInfo_tmp.npos(4,1) = nz(k);
     name  = MakeFileName(nameInfo_tmp);
-    phase =  min(phase, double(imread( [dirname_xy,'phase',filesep,name] )));
+    phase =  min(phase, double(intImRead( [dirname_xy,'phase',filesep,name] )));
 end
 
 % Loads the reference _err file for the image already segmented
@@ -174,7 +174,7 @@ if mod(i-1,skip)
         nameInfo_tmp.npos(2,1) = nc(k);
         nameInfo_tmp.npos(4,1) = 1;
         name = MakeFileName( nameInfo_tmp );
-        fluorImage = imread( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name]);
+        fluorImage = intImRead( [dirname_xy,'fluor',num2str(nc(k)-1),filesep,name]);
         data.(['fluor',num2str(nc(k)-1)]) = fluorImage;
         
         imRange(:,k) = intRange( fluorImage(:) );
