@@ -84,13 +84,13 @@ function [data,A]  = superSeggerOpti(phaseOrData, mask, disp_flag, CONST, adapt_
 
 % Load the constants from the package settings file
 
+%% Handles inputs here
 MIN_BG_AREA     = CONST.superSeggerOpti.MIN_BG_AREA;
 MAGIC_RADIUS    = CONST.superSeggerOpti.MAGIC_RADIUS;
 MAGIC_THRESHOLD = CONST.superSeggerOpti.MAGIC_THRESHOLD;
 CUT_INT         = CONST.superSeggerOpti.CUT_INT;
 SMOOTH_WIDTH    = CONST.superSeggerOpti.SMOOTH_WIDTH;
 MAX_WIDTH       = CONST.superSeggerOpti.MAX_WIDTH;
-A               = CONST.superSeggerOpti.A;
 verbose         = CONST.parallel.verbose;
 
 
@@ -134,6 +134,8 @@ else
     data.phase = phaseOrig;
 end
 
+%% Start segementation process here
+
 % Initial image smoothing to reduce the camera and read noise in the raw
 % phase image. Without it, the watershed algorithm will over-segment the
 % image.
@@ -149,6 +151,17 @@ mult_min = 0.3;
 mean_phase = mean(phaseNorm(:));
 phaseNorm(phaseNorm > (mult_max*mean_phase)) = mult_max*mean_phase;
 phaseNorm(phaseNorm < (mult_min*mean_phase)) = mult_min*mean_phase;
+
+% Filter to remove internal structure from phase image ofcells here 
+% (and little pieces of debris from the background
+if isfield( CONST.superSeggerOpti, 'remove_int_struct' ) && ...    
+        CONST.superSeggerOpti.remove_int_struct.flag
+        tmp_im = imclose( phaseNorm, strel('disk',...
+           CONST.superSeggerOpti.remove_int_struct.radius ));
+       W = CONST.superSeggerOpti.remove_int_struct.weight;
+       phaseNorm = (1-W)*phaseNorm + W*tmp_im;
+end
+
 
 % if the size of the matrix is even, we get a half pixel shift in the
 % position of the mask which turns out to be a problem later.
@@ -210,6 +223,14 @@ end
 
 if nargin < 5 || isempty(adapt_flag)
     adapt_flag=1;
+end
+
+
+% Remove CellASIC pillars here
+if isfield( CONST.superSeggerOpti, 'remove_pillars' ) &&  ...
+    CONST.superSeggerOpti.remove_pillars.flag 
+    mask_to_remove = ~intRemovePillars(phaseOrig,CONST);
+    mask_bg(mask_to_remove) = false;
 end
 
 %% Split up the micro colonies into watershed regions to assemble cells
@@ -287,7 +308,12 @@ end
 %% Remake the data structure
 
 % Determine the "good" and "bad" segments
-data = defineGoodSegs(data,ws,phaseNormUnfilt,C2phaseThresh,mask_bg, A,CONST, ~dataFlag );
+data.mask_bg       = mask_bg;
+data.phaseNorm     = phaseNormUnfilt;
+data.C2phaseThresh = C2phaseThresh;
+
+data = defineGoodSegs(data, ws, CONST, ~dataFlag );
+
 data.mask_colonies = mask_colonies;
 
 % copy the existing score into the data structure
@@ -315,7 +341,7 @@ data.mask_cell = double((mask_bg - data.segs.segs_good - data.segs.segs_3n)>0);
 
 
 if disp_flag
-    figure(1)
+    figure( 'name', 'SuperSegger frame segmentation' )
     clf;
     showSegDataPhase(data);
     drawnow;

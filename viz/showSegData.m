@@ -29,6 +29,8 @@ segs_3n = data.segs.segs_3n;
 segs_good = data.segs.segs_good;
 segs_bad = data.segs.segs_bad;
 mask_bg = data.mask_bg;
+ss = size(mask_bg);
+
 
 if ~exist('im_flag','var')
     im_flag = 1;
@@ -39,16 +41,30 @@ cell_mask = (mask_bg .* ~segs_good .* ~segs_3n);
 
 if  ~exist('gui_fig','var') || isempty(gui_fig)
     figure(1);
+    tmp = [1 1 1 1];
 else
     axes(gui_fig); % new, ie. used in the GUI version
+    tmp = axis;
 end
 
 if im_flag == 1 % displays good, 3n and bad segments
     phaseBackag = (ag((~data.mask_cell)));
-    imshow( cat(3, 0.2*(phaseBackag) + 0.3*ag(segs_3n) + ag(segs_good), ...
-        0.2*(phaseBackag) + 0.3*ag(segs_3n)  , ...
-        0.2*(phaseBackag) + 0.3*ag(segs_3n) + ag(segs_bad) ), 'InitialMagnification', 'fit');
+     imshow( cat(3, 0.2*(phaseBackag) + 0.3*ag(segs_3n) + ag(segs_good), ...
+         0.2*(phaseBackag) + 0.3*ag(segs_3n)  , ...
+         0.2*(phaseBackag) + 0.3*ag(segs_3n) + ag(segs_bad) ), ...
+         'InitialMagnification', 'fit',...
+         'Parent', gui_fig);
     
+axes(  gui_fig );   
+
+if all( tmp == [0 1 0 1] );
+axis( [1,ss(2),1,ss(1)] );
+else
+    axis(tmp )
+end
+    
+    
+   % 'hi'
 elseif im_flag == 2 % displays cell mask
     cc = bwconncomp(cell_mask, 4);
     labeled = labelmatrix(cc);

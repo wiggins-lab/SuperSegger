@@ -26,6 +26,12 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OutputFcn',  @editSegmentsGui_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
+               
+               
+               
+
+
+
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -39,13 +45,39 @@ function varargout = editSegmentsGui_OutputFcn(hObject, eventdata, handles)
 
 % Global functions
 
-function clickOnImage(hObject, eventdata, handles)
-global settings
-FLAGS.im_flag = settings.handles.im_flag;
-currentData = load([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name]);
-[data, list] = updateTrainingImage(currentData, FLAGS, eventdata.IntersectionPoint(1:2));
-save([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name], '-STRUCT', 'data');
-updateUI(settings.hObject, settings.handles);
+function clickOnImage(hObject, eventdata, handles, hObject2)
+%global settings
+disp( 'clickOnImage' );
+hObject
+handles
+
+FLAGS.im_flag = handles.im_flag;
+FLAGS.EdgeToggleRadioButtonFlag = 1;
+FLAGS.RemoveCellRadioButtonFlag = 2;
+FLAGS.BackgroundRadioButtonFlag = 3;
+FLAGS.CellMaskRadioButtonFlag   = 4;
+FLAGS.CONST                     = handles.CONST;
+
+
+%currentData   = load([settings.handles.dirname, settings.handles.contents(str2double(settings.handles.frame_no.String)).name]);
+
+if handles.EdgeToggleRadioButton.Value 
+    FLAGS.whichButton = FLAGS.EdgeToggleRadioButtonFlag;
+elseif handles.RemoveCellRadioButton.Value
+    FLAGS.whichButton = FLAGS.RemoveCellRadioButtonFlag;
+elseif handles.BackgroundRadioButton.Value
+    FLAGS.whichButton = FLAGS.BackgroundRadioButtonFlag;
+elseif handles.CellMaskRadioButton.Value 
+    FLAGS.whichButton = FLAGS.CellMaskRadioButtonFlag;
+else
+   disp( 'Error in radio buttons for editSegments' ); 
+end
+
+
+
+[handles.data, list]  = updateTrainingImage( handles.data, FLAGS, eventdata.IntersectionPoint(1:2));
+
+updateUI(hObject2, handles);
 
 function data = loaderInternal(filename)
 data = load(filename);
@@ -62,17 +94,32 @@ handles.contents = dir([handles.dirname '*_seg.mat']);
 handles.num_im = length(handles.contents);
 handles.im_flag = 1;
 axis tight;
+
+handles.EdgeToggleRadioButton.Value = 1;
+handles.RemoveCellRadioButton.Value = 0;
+handles.BackgroundRadioButton.Value = 0;
+handles.CellMaskRadioButton.Value   = 0;
+
+handles.data = loaderInternal([handles.dirname, ...
+    handles.contents(str2double(handles.frame_no.String)).name]);
+
 updateUI(hObject, handles);
 
 function updateUI(hObject, handles)
-global settings
+disp('updateUI');
+hObject
+handles
+
+%global settings
 delete(get(handles.axes1, 'Children'));
-data = loaderInternal([handles.dirname, handles.contents(str2double(handles.frame_no.String)).name]);
-data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
+
+data = handles.data;
+
+handles.data.mask_cell = double((data.mask_bg - data.segs.segs_good - data.segs.segs_3n) > 0);
 showSegData(data, handles.im_flag, handles.axes1);
-settings.handles = handles;
-settings.hObject = hObject;
-set(handles.axes1.Children, 'ButtonDownFcn', @clickOnImage);
+%settings.handles = handles;
+%settings.hObject = hObject;
+set(handles.axes1.Children, 'ButtonDownFcn', {@clickOnImage, handles, hObject});
 guidata(hObject, handles);
 
 function figure1_CloseRequestFcn(hObject, eventdata, handles)
@@ -91,7 +138,12 @@ elseif isnan(c) || c < 1;
 else
     handles.frame_no.String = num2str(c);
 end
+
+handles.data = loaderInternal([handles.dirname, ...
+    handles.contents(str2double(handles.frame_no.String)).name]);
+
 updateUI(hObject, handles)
+guidata(hObject, handles);
 
 function frame_no_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -146,3 +198,95 @@ if strcmp(choice, 'Yes')
     header = 'Relink: ';
     trackOpti(handles.dirname_xy,skip, handles.CONST, header, startEnd);
 end
+
+
+% --- Executes on button press in EdgeToggleRadioButton.
+function EdgeToggleRadioButton_Callback(hObject, eventdata, handles)
+% hObject    handle to EdgeToggleRadioButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of EdgeToggleRadioButton
+
+handles.RemoveCellRadioButton.Value = 0;
+handles.BackgroundRadioButton.Value = 0;
+handles.CellMaskRadioButton.Value   = 0;
+
+disp('EdgeToggleRadioButton_Callback');
+hObject
+handles
+
+% --- Executes on button press in RemoveCellRadioButton.
+function RemoveCellRadioButton_Callback(hObject, eventdata, handles)
+% hObject    handle to RemoveCellRadioButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of RemoveCellRadioButton
+
+handles.EdgeToggleRadioButton.Value = 0;
+handles.BackgroundRadioButton.Value = 0;
+handles.CellMaskRadioButton.Value   = 0;
+
+disp('RemoveCellRadioButton_Callback');
+hObject
+handles
+
+% --- Executes on button press in BackgroundRadioButton.
+function BackgroundRadioButton_Callback(hObject, eventdata, handles)
+% hObject    handle to BackgroundRadioButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of BackgroundRadioButton
+
+handles.EdgeToggleRadioButton.Value = 0;
+handles.RemoveCellRadioButton.Value = 0;
+handles.CellMaskRadioButton.Value   = 0;
+
+disp('BackgroundRadioButton_Callback');
+hObject
+handles
+
+% --- Executes on button press in CellMaskRadioButton.
+function CellMaskRadioButton_Callback(hObject, eventdata, handles)
+% hObject    handle to CellMaskRadioButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of CellMaskRadioButton
+
+
+handles.RemoveCellRadioButton.Value = 0;
+handles.BackgroundRadioButton.Value = 0;
+handles.EdgeToggleRadioButton.Value = 0;
+
+disp('CellMaskRadioButton_Callback');
+hObject
+handles
+
+% --- Executes on button press in SavePushButton.
+function SavePushButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SavePushButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% --- Executes on button press in RevertPushButton.
+
+
+data  = handles.data;
+
+save([handles.dirname, handles.contents(...
+    str2double(handles.frame_no.String)).name], '-STRUCT', 'data');
+
+
+function RevertPushButton_Callback(hObject, eventdata, handles)
+% hObject    handle to RevertPushButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.data = loaderInternal([handles.dirname, handles.contents(...
+    str2double(handles.frame_no.String)).name]);
+
+updateUI(hObject, handles);
+guidata(hObject, handles);

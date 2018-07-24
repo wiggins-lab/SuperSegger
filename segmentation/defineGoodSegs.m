@@ -1,5 +1,4 @@
-function [data] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
-    mask_bg, A, CONST, calcScores)
+function [data] = defineGoodSegs(data, ws, CONST, calcScores)
 % defineGoodSegs sets the segments to good, bad and 3n set by the watershed algorithm
 % "Good" segments (segs_good) are the ones that lie along a real cellular
 % boundary, "bad" segments, lie along spurious boundaries
@@ -11,9 +10,6 @@ function [data] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
 % INPUT :
 %   data : data segmentation frame file
 %   ws : watersehd image
-%   phaseNorm : normalized phase image
-%   C2phaseThresh : c2 (curvature) calculated image
-%   mask_bg : background mask
 %   A : scoring coefficients
 %   CONST : segmentation parameters
 %   caclScores : boolean to calculate scores
@@ -39,6 +35,13 @@ function [data] = defineGoodSegs(data, ws, phaseNorm, C2phaseThresh, ...
 % along with SuperSegger.  If not, see <http://www.gnu.org/licenses/>.
 
 
+%   phaseNorm : normalized phase image
+%   C2phaseThresh : c2 (curvature) calculated image
+%   mask_bg : background mask
+mask_bg       = data.mask_bg;
+phaseNorm     = data.phaseNorm;
+C2phaseThresh = data.C2phaseThresh;
+A             = CONST.superSeggerOpti.A;
 
 sim = size( phaseNorm );
 

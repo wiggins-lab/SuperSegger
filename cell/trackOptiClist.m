@@ -89,6 +89,9 @@ else
     index_dlminOld = strcmp(tmpFields,'dlmin');
     index_ehist = find(strcmp(tmpFields,'error_frame'));
     
+    
+    prog  = [];
+    prog0 = [];
     % loop through all the images (*err.mat files)
     for i = 1:num_im
         data_c = loaderInternal([dirname,contents(i).name]);
@@ -182,6 +185,57 @@ else
             
             daughter1_id = drill(data_c.regs.daughterID,'(1)');
             daughter2_id = drill(data_c.regs.daughterID,'(2)');
+            mother_id    = data_c.regs.motherID;
+            
+            % get lineage stuff done here
+            
+            if i == 1
+                prog =    ID;
+                gen0 =  0*ID;
+                gen  =  0*ID;
+                
+            else
+                % copy info from previous IDs
+                prog = nan( size( ID ) );
+                gen0 = nan( size( ID ) );
+                gen  = nan( size( ID ) );
+                
+                prog(~birthID_flag) = prog_(ID(~birthID_flag));
+                gen0(~birthID_flag) = gen0_(ID(~birthID_flag));
+                gen(~birthID_flag)  = gen_(ID(~birthID_flag));
+                
+                % now take care of new cells
+                mother_list = mother_id(birthID_flag);
+                
+                prog_tmp = nan( size( mother_list ));
+                gen0_tmp = nan( size( mother_list ));
+                gen_tmp = nan( size( mother_list ));
+                
+                prog_tmp(mother_list>0) = prog_(mother_list(mother_list>0));
+                gen0_tmp(mother_list>0) = gen0_(mother_list(mother_list>0))+1;
+                gen_tmp(mother_list>0)  = gen_(mother_list(mother_list>0))+1;
+                
+                ID_ml = ID(birthID_flag);
+                prog_tmp(mother_list==0) = ID_ml(mother_list==0);
+                gen0_tmp(mother_list==0) = nan;
+                gen_tmp(mother_list==0)  = 0;  
+                
+                prog(birthID_flag) = prog_tmp;
+                gen0(birthID_flag) = gen0_tmp;
+                gen(birthID_flag)  = gen_tmp;
+            end
+            
+            IDmax = max(ID);
+            
+            gen0_     = nan( [1,IDmax] );
+            gen0_(ID) = gen0;
+            
+            gen_      = nan( [1,IDmax] );
+            gen_(ID)  = gen;
+            
+            prog_     = nan( [1,IDmax] );
+            prog_(ID) = prog;
+            % done lineage stuff.    
             
             length1 = drill(data_c.CellA,'.length(1)');
             length2 = drill(data_c.CellA,'.length(2)');
@@ -421,6 +475,9 @@ setter = [{'Cell ID'},{'ID'},0,1;
     {'Neck width'},{'neckWidth'},0,0;
     {'Maximum width'},{'maxWidth'},0,0;
     {'Cell dist to edge'},{'cell_dist'},1,0;
+    {'Generation'},{'gen'},0,0;
+    {'Generation0'},{'gen0'},0,0;
+    {'Progenitor'},{'prog'},0,0;
     ];
 
 
