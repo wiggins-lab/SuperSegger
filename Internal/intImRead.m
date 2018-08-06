@@ -12,6 +12,12 @@ if numel(out_name) > 4
     elseif strcmp(out_name([end-3:end]), '.tif' )
         im = imread( out_name );
     end
+    
+    if isempty( im )
+       error( ['Could not open ', out_name,...
+           '. Check to make sure files have the correct name',...
+           'structure including consistent case.'] ); 
+    end
 end
 
 
