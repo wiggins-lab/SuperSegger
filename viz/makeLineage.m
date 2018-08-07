@@ -213,6 +213,12 @@ end
 set( gca, 'YGrid', 'on')
 
 
+list = unique([mother,daughter1, daughter2]);
+list = list(~isnan(list));
+list = list(list>0);
+
+intDoLengthAn( clist, list );
+
 
 figure(4);
 ylabel( 'Length' );
@@ -485,10 +491,16 @@ list = clist.data(flagger,1);
 
 lengths = squeeze( clist.data3D(flagger,2,:) );
 
+if size( lengths, 1 ) > size( lengths, 2 )
+    lengths = lengths';
+end
+
 figure(4);
 
 n_ii = numel(list);
 for ii = 1:n_ii
+    
+    
     ll = lengths(ii,:);
 
     h = semilogy( ll );
