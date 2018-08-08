@@ -406,7 +406,7 @@ if settings_train.dataSegmented
         FLAGS.t_flag = 0;
         showSegRuleGUI(settings_train.currentData, FLAGS, handles.viewport_train);
         if numel(handles.viewport_train.Children) > 0
-            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',{@imageButtonDownFcn,handles});
         end
         
     elseif settings_train.axisFlag == 4
@@ -420,7 +420,7 @@ if settings_train.dataSegmented
         % deleting regions
         maskFigure()
         if numel(handles.viewport_train.Children) > 0
-            set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+            set(handles.viewport_train.Children(1),'ButtonDownFcn',{@imageButtonDownFcn,handles});
         end
         
         if numel(settings_train.firstPosition) > 0
@@ -436,7 +436,7 @@ end
 if settings_train.cropTime
     % deleting areas in square
     if numel(handles.viewport_train.Children) > 0
-        set(handles.viewport_train.Children(1),'ButtonDownFcn',@imageButtonDownFcn);
+        set(handles.viewport_train.Children(1),'ButtonDownFcn',{@imageButtonDownFcn,handles});
     end
     
     if numel(settings_train.firstPosition) > 0
@@ -726,9 +726,10 @@ elseif settings_train.axisFlag == 1 || settings_train.axisFlag == 2
     FLAGS.im_flag = settings_train.axisFlag;
     FLAGS.S_flag = 0;
     FLAGS.t_flag = 0;
+       
     
     addUndo();
-    [settings_train.currentData, list] = updateTrainingImage(settings_train.currentData, FLAGS, eventdata.IntersectionPoint(1:2));
+    [settings_train.currentData, list] = updateTrainingImageTrain(settings_train.currentData, FLAGS, eventdata.IntersectionPoint(1:2));
     if settings_train.axisFlag == 1 && numel(list) > 0
         settings_train.currentData = intMakeRegs( settings_train.currentData, settings_train.CONST, [], [] );
     end
