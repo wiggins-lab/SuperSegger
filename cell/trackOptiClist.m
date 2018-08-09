@@ -64,7 +64,7 @@ else
     num_im = numel(contents);
     
     if CONST.parallel.show_status
-        h = waitbar( 0, 'Making Cells.');
+        h = waitbar( 0, 'Clist is being built.');
         cleanup = onCleanup( @()( delete( h ) ) );
     else
         h = [];
@@ -189,6 +189,8 @@ else
             
             % get lineage stuff done here
             
+            ind_tmp0 = (ID==0);
+
             if i == 1
                 prog =    ID;
                 gen0 =  0*ID;
@@ -201,7 +203,6 @@ else
                 gen  = nan( size( ID ) );
                 
                 
-                ind_tmp0 = (ID==0);
                 ind_tmp1 = and( ind_tmp0,~birthID_flag);
                 ind_tmp2 = and( ~ind_tmp0,~birthID_flag);
                 
@@ -211,7 +212,8 @@ else
                 
                 % Start this should never run
                 if sum(ind_tmp0) > 0 
-                    disp( 'ID = 0 detected! Possible tracking problems.' );
+                    disp( [header, 'Clist frame: ',num2str(i), ...
+                        ': ID = 0 detected! Possible tracking problems.'] );
                 end
                 
                 prog(ind_tmp1) = 0;
@@ -245,13 +247,13 @@ else
             IDmax = max(ID);
             
             gen0_     = nan( [1,IDmax] );
-            gen0_(ID) = gen0;
+            gen0_(ID(~ind_tmp0)) = gen0(~ind_tmp0);
             
             gen_      = nan( [1,IDmax] );
-            gen_(ID)  = gen;
+            gen_(ID(~ind_tmp0))  = gen(~ind_tmp0);
             
             prog_     = nan( [1,IDmax] );
-            prog_(ID) = prog;
+            prog_(ID(~ind_tmp0)) = prog(~ind_tmp0);
             % done lineage stuff.    
             
             length1 = drill(data_c.CellA,'.length(1)');
