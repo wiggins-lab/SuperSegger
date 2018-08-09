@@ -200,9 +200,26 @@ else
                 gen0 = nan( size( ID ) );
                 gen  = nan( size( ID ) );
                 
-                prog(~birthID_flag) = prog_(ID(~birthID_flag));
-                gen0(~birthID_flag) = gen0_(ID(~birthID_flag));
-                gen(~birthID_flag)  = gen_(ID(~birthID_flag));
+                
+                ind_tmp0 = (ID==0);
+                ind_tmp1 = and( ind_tmp0,~birthID_flag);
+                ind_tmp2 = and( ~ind_tmp0,~birthID_flag);
+                
+                prog(ind_tmp2) = prog_(ID(ind_tmp2));
+                gen0(ind_tmp2) = gen0_(ID(ind_tmp2));
+                gen(ind_tmp2)  = gen_(ID(ind_tmp2));
+                
+                % Start this should never run
+                if sum(ind_tmp0) > 0 
+                    disp( 'ID = 0 detected! Possible tracking problems.' );
+                end
+                
+                prog(ind_tmp1) = 0;
+                gen0(ind_tmp1) = 0;
+                gen(ind_tmp1)  = 0;
+                % End this should never run
+
+                
                 
                 % now take care of new cells
                 mother_list = mother_id(birthID_flag);
