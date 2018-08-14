@@ -41,7 +41,9 @@ if ~exist( 'FLAGS', 'var' ) || isempty( FLAGS )
     FLAGS.composite = 1;
     FLAGS.f_flag    = 1;
     FLAGS.Outline_flag = 0;
-    FLAGS.filt = zeros( [1,10] );;
+    FLAGS.filt = zeros( [1,10] );
+    FLAGS.include = true( [1,10] );
+    FLAGS.level = 0.7*ones( [1,10] );
 end
 
 
