@@ -58,6 +58,11 @@ data_c.regs.ID = zeros(1,data_c.regs.num_regs);
 modRegions = [];
 
 for regNum =  1 : data_c.regs.num_regs
+    
+%     if regNum == 37;
+%         'hi'
+%     end
+    
     if isfield (data_c.regs, 'manual_link')
         manual_link = data_c.regs.manual_link.r(regNum);
     else
@@ -301,8 +306,13 @@ for regNum =  1 : data_c.regs.num_regs
             end
             
         end
-        
     end
+    
+    % if the current ID is still zero, make a new cell
+    if data_c.regs.ID(regNum) == 0
+          [data_c,cell_count] = createNewCell (data_c, regNum, time, cell_count);        
+    end
+    
 end
 %intDisplay (data_c,regToDelete,data_f,[]);
 [data_c] = deleteRegions( data_c,regToDelete);
@@ -316,6 +326,7 @@ function intDisplay (data_c,regC,data_f,regF)
 % reg : maskF
 % green : maskC
 % blue : all cell masks  in c
+
 
 
 maskC = data_c.regs.regs_label*0;
@@ -336,7 +347,8 @@ if ~isempty (data_f)
                 maskF = maskF + (data_f.regs.regs_label == regF(f))>0;
             end
         end
-        imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
+            imshow (cat(3,ag(maskF),ag(maskC),ag(data_c.mask_cell)));
+        
     end
 end
 end
