@@ -92,6 +92,11 @@ else
     
     prog  = [];
     prog0 = [];
+    prog_ = [];
+    gen_  = [];
+    gen0_ = [];
+
+    
     % loop through all the images (*err.mat files)
     for i = 1:num_im
         data_c = loaderInternal([dirname,contents(i).name]);
@@ -191,7 +196,8 @@ else
             
             ind_tmp0 = (ID==0);
 
-            if i == 1
+            
+            if isempty( gen_ )
                 prog =    ID;
                 gen0 =  0*ID;
                 gen  =  0*ID;
@@ -246,13 +252,8 @@ else
             
             IDmax = max(ID);
             
-            gen0_     = nan( [1,IDmax] );
             gen0_(ID(~ind_tmp0)) = gen0(~ind_tmp0);
-            
-            gen_      = nan( [1,IDmax] );
             gen_(ID(~ind_tmp0))  = gen(~ind_tmp0);
-            
-            prog_     = nan( [1,IDmax] );
             prog_(ID(~ind_tmp0)) = prog(~ind_tmp0);
             % done lineage stuff.    
             
