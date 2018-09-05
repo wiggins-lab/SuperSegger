@@ -43,5 +43,36 @@ else
     rightNames = false;
 end
 
+
+%% fix the padding if required
+contents = dir([dirname,filesep,'*.tif*']);
+
+num_im = numel(contents);
+pad = [];
+
+for i = 1:num_im;
+    nameInfo = ReadFileName( contents(i).name );
+    pad = [pad, nameInfo.npos(1,4)];
+end
+
+if 1 ~= numel( unique( pad ) )
+   
+    maxpad = max( pad );
+    
+    ind = find( pad < maxpad );
+    
+    for i = ind
+        nameInfo  = ReadFileName( contents(i).name );
+        
+        nameInfo.npos(1,4) = maxpad;
+        
+        movefile( [dirname,filesep,contents(i).name], ...
+            [dirname,filesep,MakeFileName(nameInfo)] );        
+    end
+end
+
+
+
+
 end
 
